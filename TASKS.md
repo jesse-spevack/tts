@@ -30,6 +30,8 @@ Build a Ruby script that converts markdown files to MP3 audio files using a TTS 
   - [ ] 2.4 Handle: headers, bold, italic, links, code blocks, lists, images
   - [ ] 2.5 Write unit tests for common markdown to text cases
 
+### STOP HERE
+
 - [ ] 3.0 TTS Provider Selection and Integration
   - [ ] 3.0.1 Research Google, OpenAI, ElevenLabs integration docs
     - for each provider, create a step by step markdown integration guide including everything you will need me to do:
