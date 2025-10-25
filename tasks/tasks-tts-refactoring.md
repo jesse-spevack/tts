@@ -79,19 +79,19 @@ ruby test/tts/config_test.rb
 
 ### Sub-tasks:
 
-- [ ] 2.1 Add logger dependency and attribute
+- [x] 2.1 Add logger dependency and attribute
   - Add `require 'logger'` to `lib/tts.rb` (Ruby standard library)
   - Add `@logger` instance variable to TTS class
   - Accept optional `logger:` parameter in `initialize` method
   - Default to `Logger.new($stdout)` if not provided (standard Ruby Logger)
   - Example: `def initialize(provider:, config: nil, logger: Logger.new($stdout))`
 
-- [ ] 2.2 Replace puts in `synthesize_google` method (lines 44, 63, 66)
+- [x] 2.2 Replace puts in `synthesize_google` method (lines 44, 63, 66)
   - Line 44: Replace `puts` with `@logger.info`
   - Line 63: Replace `puts` with `@logger.info`
   - Line 66: Replace `puts` with `@logger.error`
 
-- [ ] 2.3 Replace puts in `synthesize_google_chunked` method (lines 73-76, 87, 95, 98, 101, 113-114, 132-133, 136-138)
+- [x] 2.3 Replace puts in `synthesize_google_chunked` method (lines 73-76, 87, 95, 98, 101, 113-114, 132-133, 136-138)
   - Lines 73-76: Replace `puts` with `@logger.info` (4 statements)
   - Line 87: Replace `puts` with `@logger.info`
   - Line 95: Replace `puts` with `@logger.info`
@@ -101,16 +101,16 @@ ruby test/tts/config_test.rb
   - Line 133: Replace `puts` with `@logger.warn`
   - Lines 136-138: Replace `puts` with `@logger.info` (3 statements)
 
-- [ ] 2.4 Replace puts in `synthesize_google_with_retry` method (lines 152, 162)
+- [x] 2.4 Replace puts in `synthesize_google_with_retry` method (lines 152, 162)
   - Line 152: Replace `puts` with `@logger.warn`
   - Line 162: Replace `puts` with `@logger.warn`
 
-- [ ] 2.5 Set appropriate log levels
+- [x] 2.5 Set appropriate log levels
   - INFO: Normal operation messages (API calls, progress)
   - WARN: Retries, skipped chunks, content filtering
   - ERROR: Failed operations, exceptions
 
-- [ ] 2.6 Test silent mode
+- [x] 2.6 Test silent mode - SKIPPED (not needed per user request)
   - Verify `TTS.new(provider: :google, logger: Logger.new(File::NULL))` produces no output
   - Verify functionality still works correctly
 

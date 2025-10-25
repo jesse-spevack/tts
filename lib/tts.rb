@@ -1,12 +1,14 @@
 require 'google/cloud/text_to_speech'
 require 'concurrent'
+require 'logger'
 require_relative 'tts/config'
 
 class TTS
   GOOGLE_BYTE_LIMIT = 850  # Gemini TTS limit for text field
 
-  def initialize(provider:)
+  def initialize(provider:, logger: Logger.new($stdout))
     @provider = provider
+    @logger = logger
 
     case @provider
     when :google
@@ -42,7 +44,7 @@ class TTS
       return synthesize_google_chunked(text, voice)
     end
 
-    puts "    Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
+    @logger.info "Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
 
     input = { text: text }
     voice_params = {
@@ -61,20 +63,20 @@ class TTS
       audio_config: audio_config
     )
 
-    puts "    API call successful (#{response.audio_content.bytesize} bytes audio)"
+    @logger.info "API call successful (#{response.audio_content.bytesize} bytes audio)"
     response.audio_content
   rescue => e
-    puts "    API call failed: #{e.message}"
+    @logger.error "API call failed: #{e.message}"
     raise
   end
 
   def synthesize_google_chunked(text, voice)
     chunks = chunk_text(text, GOOGLE_BYTE_LIMIT)
 
-    puts "  Text too long, splitting into #{chunks.length} chunks..."
-    puts "  Processing with 10 concurrent threads (Chirp3 quota: 200/min)..."
-    puts "  Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
-    puts ""
+    @logger.info "Text too long, splitting into #{chunks.length} chunks..."
+    @logger.info "Processing with 10 concurrent threads (Chirp3 quota: 200/min)..."
+    @logger.info "Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
+    @logger.info ""
 
     start_time = Time.now
     pool = Concurrent::FixedThreadPool.new(10)
@@ -85,7 +87,7 @@ class TTS
     chunks.each_with_index do |chunk, i|
       promise = Concurrent::Promise.execute(executor: pool) do
         chunk_preview = chunk[0..60].gsub(/\n/, ' ')
-        puts "  Chunk #{i + 1}/#{chunks.length}: Starting (#{chunk.bytesize} bytes)"
+        @logger.info "Chunk #{i + 1}/#{chunks.length}: Starting (#{chunk.bytesize} bytes)"
 
         chunk_start = Time.now
         audio = nil
@@ -93,13 +95,13 @@ class TTS
         begin
           audio = synthesize_google_with_retry(chunk, voice, max_retries: 3)
           chunk_duration = Time.now - chunk_start
-          puts "  Chunk #{i + 1}/#{chunks.length}: ✓ Done in #{chunk_duration.round(2)}s"
+          @logger.info "Chunk #{i + 1}/#{chunks.length}: ✓ Done in #{chunk_duration.round(2)}s"
         rescue => e
           if e.message.include?("sensitive or harmful content")
-            puts "  Chunk #{i + 1}/#{chunks.length}: ⚠ SKIPPED - Content filter"
+            @logger.warn "Chunk #{i + 1}/#{chunks.length}: ⚠ SKIPPED - Content filter"
             skipped_chunks << i + 1
           else
-            puts "  Chunk #{i + 1}/#{chunks.length}: ✗ Failed - #{e.message}"
+            @logger.error "Chunk #{i + 1}/#{chunks.length}: ✗ Failed - #{e.message}"
             raise
           end
         end
@@ -111,8 +113,8 @@ class TTS
     end
 
     # Wait for all promises to complete
-    puts ""
-    puts "  Waiting for all chunks to complete..."
+    @logger.info ""
+    @logger.info "Waiting for all chunks to complete..."
     results = promises.map(&:value)
 
     # Sort by index and extract non-nil audio
@@ -129,14 +131,14 @@ class TTS
 
     total_duration = Time.now - start_time
 
-    puts ""
+    @logger.info ""
     if skipped_chunks.any?
-      puts "  ⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_chunks.sort.join(', ')}"
+      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_chunks.sort.join(', ')}"
     end
 
-    puts "  Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
-    puts "  Total processing time: #{total_duration.round(2)}s"
-    puts "  Average time per chunk: #{(total_duration / chunks.length).round(2)}s"
+    @logger.info "Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
+    @logger.info "Total processing time: #{total_duration.round(2)}s"
+    @logger.info "Average time per chunk: #{(total_duration / chunks.length).round(2)}s"
     audio_parts.join
   end
 
@@ -150,7 +152,7 @@ class TTS
       if retries < max_retries
         retries += 1
         wait_time = 2 ** retries
-        puts "    Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
+        @logger.warn "Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
         sleep(wait_time)
         retry
       else
@@ -160,7 +162,7 @@ class TTS
       # Other transient Google Cloud errors
       if retries < max_retries && e.message.include?("Deadline Exceeded")
         retries += 1
-        puts "    Timeout, retrying (#{retries}/#{max_retries})"
+        @logger.warn "Timeout, retrying (#{retries}/#{max_retries})"
         sleep(1)
         retry
       else
