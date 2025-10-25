@@ -12,12 +12,12 @@ This document tracks the refactoring of `/Users/jesse/code/tts/lib/tts.rb` to im
 
 ### Sub-tasks:
 
-- [ ] 1.1 Create new file `lib/tts/config.rb`
+- [x] 1.1 Create new file `lib/tts/config.rb`
   - Create the `TTS` module if not already present
   - Define `TTS::Config` class
   - Add `require_relative 'tts/config'` to `lib/tts.rb`
 
-- [ ] 1.2 Add configuration attributes with defaults
+- [x] 1.2 Add configuration attributes with defaults
   - Add `attr_accessor :voice_name` (default: "en-GB-Chirp3-HD-Enceladus")
   - Add `attr_accessor :language_code` (default: "en-GB")
   - Add `attr_accessor :speaking_rate` (default: 1.5)
@@ -28,20 +28,20 @@ This document tracks the refactoring of `/Users/jesse/code/tts/lib/tts.rb` to im
   - Add `attr_accessor :thread_pool_size` (default: 10)
   - Add `attr_accessor :byte_limit` (default: 850)
 
-- [ ] 1.3 Implement initialize method
+- [x] 1.3 Implement initialize method
   - Accept optional hash of configuration overrides
   - Set all attributes to their default values
   - Apply any overrides passed in the hash
   - Example: `config = TTS::Config.new(speaking_rate: 2.0, thread_pool_size: 5)`
 
-- [ ] 1.4 Add validation (optional but recommended)
+- [x] 1.4 Add validation (optional but recommended)
   - Validate `speaking_rate` is between 0.25 and 4.0 (Google TTS limits)
   - Validate `pitch` is between -20.0 and 20.0 (Google TTS limits)
   - Validate `thread_pool_size` is positive integer
   - Validate `byte_limit` is positive integer
   - Validate `max_retries` is non-negative integer
 
-- [ ] 1.5 Add class-level documentation
+- [x] 1.5 Add class-level documentation
   - Document each configuration option
   - Include usage examples
   - Document validation ranges

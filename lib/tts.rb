@@ -1,5 +1,6 @@
 require 'google/cloud/text_to_speech'
 require 'concurrent'
+require_relative 'tts/config'
 
 class TTS
   GOOGLE_BYTE_LIMIT = 850  # Gemini TTS limit for text field
