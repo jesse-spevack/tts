@@ -44,18 +44,18 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 4.7 Format pubDate in RFC 822 format (required by RSS spec)
   - [x] 4.8 Add optional artwork URL support if provided in podcast config
 
-- [ ] 5.0 Integrate podcast pipeline into generate.rb
-  - [ ] 5.1 Add require statements for new dependencies (MetadataExtractor, GCSUploader, EpisodeManifest, RSSGenerator)
-  - [ ] 5.2 Load podcast config from `config/podcast.yml` at startup
-  - [ ] 5.3 Add metadata extraction step after markdown processing (extract frontmatter before TextProcessor)
-  - [ ] 5.4 Add `--local-only` flag to skip GCS upload (for testing)
-  - [ ] 5.5 After MP3 generation, upload MP3 to GCS in `episodes/` directory with timestamp-slug naming
-  - [ ] 5.6 Get MP3 metadata (file size, public URL) from GCS after upload
-  - [ ] 5.7 Load episode manifest from GCS, add new episode, and save back
-  - [ ] 5.8 Generate RSS feed from updated manifest using RSSGenerator
-  - [ ] 5.9 Upload RSS feed to GCS as `feed.xml`
-  - [ ] 5.10 Display final output including feed URL and episode count
-  - [ ] 5.11 Add progress indicators for each pipeline phase
+- [x] 5.0 Integrate podcast pipeline into generate.rb
+  - [x] 5.1 Add require statements for new dependencies (MetadataExtractor, GCSUploader, EpisodeManifest, RSSGenerator)
+  - [x] 5.2 Load podcast config from `config/podcast.yml` at startup
+  - [x] 5.3 Add metadata extraction step after markdown processing (extract frontmatter before TextProcessor)
+  - [x] 5.4 Add `--local-only` flag to skip GCS upload (for testing)
+  - [x] 5.5 After MP3 generation, upload MP3 to GCS in `episodes/` directory with timestamp-slug naming
+  - [x] 5.6 Get MP3 metadata (file size, public URL) from GCS after upload
+  - [x] 5.7 Load episode manifest from GCS, add new episode, and save back
+  - [x] 5.8 Generate RSS feed from updated manifest using RSSGenerator
+  - [x] 5.9 Upload RSS feed to GCS as `feed.xml`
+  - [x] 5.10 Display final output including feed URL and episode count
+  - [x] 5.11 Add progress indicators for each pipeline phase
 
 - [ ] 6.0 Testing, validation, and documentation
   - [ ] 6.1 Run full test suite with `rake test` and ensure all tests pass
