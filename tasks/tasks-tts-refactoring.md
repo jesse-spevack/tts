@@ -153,32 +153,32 @@ ruby -e "require 'logger'; require_relative 'lib/tts'; logger = Logger.new($stdo
 
 ### Sub-tasks:
 
-- [ ] 3.1 Update TTS#initialize to accept config parameter
+- [x] 3.1 Update TTS#initialize to accept config parameter
   - Add optional `config:` keyword parameter
   - Default to `TTS::Config.new` if not provided
   - Store config in `@config` instance variable
   - Example: `def initialize(provider:, config: nil, logger: nil)`
 
-- [ ] 3.2 Update Google client initialization to use config.timeout (line 13)
+- [x] 3.2 Update Google client initialization to use config.timeout (line 13)
   - Change `config.timeout = 300` to `config.timeout = @config.timeout`
   - Note: This is Google Cloud client config, not TTS::Config
 
-- [ ] 3.3 Update synthesize_google to use config values
+- [x] 3.3 Update synthesize_google to use config values
   - Line 38: Change default voice to use `@config.voice_name`
   - Line 48: Change `language_code:` to use `@config.language_code`
   - Line 52: Change `audio_encoding:` to use `@config.audio_encoding`
   - Line 53: Change `speaking_rate:` to use `@config.speaking_rate`
   - Line 54: Change `pitch:` to use `@config.pitch`
 
-- [ ] 3.4 Update chunk_text calls to use config.byte_limit
+- [x] 3.4 Update chunk_text calls to use config.byte_limit
   - Line 40: Change `GOOGLE_BYTE_LIMIT` to `@config.byte_limit`
   - Line 71: Change `GOOGLE_BYTE_LIMIT` to `@config.byte_limit`
 
-- [ ] 3.5 Update thread pool initialization to use config.thread_pool_size
+- [x] 3.5 Update thread pool initialization to use config.thread_pool_size
   - Line 79: Change `Concurrent::FixedThreadPool.new(10)` to `Concurrent::FixedThreadPool.new(@config.thread_pool_size)`
   - Line 74: Update log message to use `@config.thread_pool_size` instead of hardcoded "10"
 
-- [ ] 3.6 Update retry logic to use config.max_retries
+- [x] 3.6 Update retry logic to use config.max_retries
   - Line 93: Change method parameter to use default from config: `max_retries: @config.max_retries`
   - Or remove parameter and always use `@config.max_retries`
 

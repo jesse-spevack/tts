@@ -1,5 +1,5 @@
-require 'minitest/autorun'
-require_relative '../lib/text_processor'
+require "minitest/autorun"
+require_relative "../lib/text_processor"
 
 class TestTextProcessor < Minitest::Test
   def test_removes_headers
@@ -136,8 +136,8 @@ class TestTextProcessor < Minitest::Test
 
   def test_reads_from_file_path
     # Create a temporary markdown file
-    require 'tempfile'
-    file = Tempfile.new(['test', '.md'])
+    require "tempfile"
+    file = Tempfile.new(["test", ".md"])
     file.write("# Hello World")
     file.close
 
@@ -148,8 +148,8 @@ class TestTextProcessor < Minitest::Test
   end
 
   def test_reads_from_file_object
-    require 'tempfile'
-    file = Tempfile.new(['test', '.md'])
+    require "tempfile"
+    file = Tempfile.new(["test", ".md"])
     file.write("# Hello from File")
     file.rewind
 

@@ -94,7 +94,7 @@ class TTS
 
     @logger.info "Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
 
-    input = {text: text}
+    input = { text: text }
     voice_params = {
       language_code: @config.language_code,
       name: voice
@@ -113,7 +113,7 @@ class TTS
 
     @logger.info "API call successful (#{response.audio_content.bytesize} bytes audio)"
     response.audio_content
-  rescue => e
+  rescue StandardError => e
     @logger.error "API call failed: #{e.message}"
     raise
   end
@@ -131,7 +131,7 @@ class TTS
 
     @logger.info "Text too long, splitting into #{chunks.length} chunks..."
     @logger.info "Processing with #{@config.thread_pool_size} concurrent threads (Chirp3 quota: 200/min)..."
-    @logger.info "Chunk sizes: #{chunks.map(&:bytesize).join(", ")} bytes"
+    @logger.info "Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
     @logger.info ""
 
     start_time = Time.now
@@ -152,10 +152,10 @@ class TTS
           audio = synthesize_google_with_retry(chunk, voice, max_retries: @config.max_retries)
           chunk_duration = Time.now - chunk_start
           @logger.info "Chunk #{i + 1}/#{chunks.length}: ✓ Done in #{chunk_duration.round(2)}s"
-        rescue => e
+        rescue StandardError => e
           if e.message.include?(CONTENT_FILTER_ERROR)
             @logger.warn "Chunk #{i + 1}/#{chunks.length}: ⚠ SKIPPED - Content filter"
-            skipped_chunks << i + 1
+            skipped_chunks << (i + 1)
           else
             @logger.error "Chunk #{i + 1}/#{chunks.length}: ✗ Failed - #{e.message}"
             raise
@@ -176,10 +176,10 @@ class TTS
     # Sort by index and extract non-nil audio
     # Filter out nil results (from failed promises) before sorting
     audio_parts = results
-      .compact
-      .sort_by { |idx, _| idx }
-      .map { |_, audio| audio }
-      .compact # Remove nils from skipped chunks
+                  .compact
+                  .sort_by { |idx, _| idx }
+                  .map { |_, audio| audio }
+                  .compact # Remove nils from skipped chunks
 
     # Clean up thread pool
     pool.shutdown
@@ -189,7 +189,7 @@ class TTS
 
     @logger.info ""
     if skipped_chunks.any?
-      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_chunks.sort.join(", ")}"
+      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_chunks.sort.join(', ')}"
     end
 
     @logger.info "Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."

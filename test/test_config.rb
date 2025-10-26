@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require 'minitest/autorun'
-require_relative '../lib/tts/config'
+require "minitest/autorun"
+require_relative "../lib/tts/config"
 
 class TestConfig < Minitest::Test
   def test_default_configuration
     config = TTS::Config.new
 
-    assert_equal 'en-GB-Chirp3-HD-Enceladus', config.voice_name
-    assert_equal 'en-GB', config.language_code
+    assert_equal "en-GB-Chirp3-HD-Enceladus", config.voice_name
+    assert_equal "en-GB", config.language_code
     assert_equal 1.5, config.speaking_rate
     assert_equal 0.0, config.pitch
-    assert_equal 'MP3', config.audio_encoding
+    assert_equal "MP3", config.audio_encoding
     assert_equal 300, config.timeout
     assert_equal 3, config.max_retries
     assert_equal 10, config.thread_pool_size
@@ -28,7 +28,7 @@ class TestConfig < Minitest::Test
     assert_equal 2.0, config.speaking_rate
     assert_equal 5, config.thread_pool_size
     assert_equal 1000, config.byte_limit
-    assert_equal 'en-GB-Chirp3-HD-Enceladus', config.voice_name # default still applies
+    assert_equal "en-GB-Chirp3-HD-Enceladus", config.voice_name # default still applies
   end
 
   def test_attribute_setters
@@ -56,7 +56,7 @@ class TestConfig < Minitest::Test
 
   def test_speaking_rate_validation_not_numeric
     error = assert_raises(ArgumentError) do
-      TTS::Config.new(speaking_rate: 'fast')
+      TTS::Config.new(speaking_rate: "fast")
     end
     assert_match(/speaking_rate must be between 0.25 and 4.0/, error.message)
   end

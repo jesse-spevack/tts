@@ -10,4 +10,4 @@ gem "minitest"
 gem "google-cloud-text_to_speech", "~> 2.0"
 
 # Development
-gem "standard", group: :development
+gem "rubocop", group: :development

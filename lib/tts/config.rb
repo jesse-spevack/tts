@@ -35,7 +35,7 @@ class TTS
   # - byte_limit: Maximum bytes per API request (default: 850, Google TTS byte limit - can be overridden via config)
   class Config
     attr_accessor :voice_name, :language_code, :speaking_rate, :pitch, :audio_encoding, :timeout, :max_retries,
-      :thread_pool_size, :byte_limit
+                  :thread_pool_size, :byte_limit
 
     def initialize(
       voice_name: "en-GB-Chirp3-HD-Enceladus",

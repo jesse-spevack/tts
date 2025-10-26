@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative 'lib/text_processor'
+require_relative "lib/text_processor"
 
 if ARGV.empty?
   puts "Usage: ruby process_markdown.rb <markdown_file>"
@@ -16,7 +16,7 @@ begin
   puts "\n=== Stats ==="
   puts "Characters: #{text.length}"
   puts "Words: #{text.split.length}"
-rescue => e
+rescue StandardError => e
   puts "Error: #{e.message}"
   exit 1
 end

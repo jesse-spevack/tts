@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
-require 'dotenv/load'
-require 'optparse'
-require_relative 'lib/text_processor'
-require_relative 'lib/tts'
+require "dotenv/load"
+require "optparse"
+require_relative "lib/text_processor"
+require_relative "lib/tts"
 
 # Parse command-line arguments
 options = {}
@@ -68,7 +68,7 @@ begin
   audio_content = tts.synthesize(text, voice: options[:voice])
   puts "✓ Audio generated successfully"
   puts "  Audio size: #{audio_content.bytesize} bytes"
-rescue => e
+rescue StandardError => e
   puts "✗ Error generating audio: #{e.message}"
   exit 1
 end
@@ -80,18 +80,18 @@ begin
   basename = File.basename(input_file, File.extname(input_file))
   output_file = File.join("output", "#{basename}.mp3")
 
-  File.write(output_file, audio_content, mode: 'wb')
+  File.write(output_file, audio_content, mode: "wb")
   puts "✓ Audio saved to: #{output_file}"
 
   # Show file info
   file_size_kb = (File.size(output_file) / 1024.0).round(1)
   puts "  File size: #{file_size_kb} KB"
-rescue => e
+rescue StandardError => e
   puts "✗ Error saving file: #{e.message}"
   exit 1
 end
 
-puts "\n" + "=" * 60
+puts "\n#{'=' * 60}"
 puts "✓ SUCCESS! Audio file generated successfully"
 puts "=" * 60
 puts "\nTo play the audio:"
