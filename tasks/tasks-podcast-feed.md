@@ -12,7 +12,7 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 1.3 Add YAML frontmatter parsing logic (extract title, description, author from markdown)
   - [x] 1.4 Validate required fields (title and description) and raise errors if missing
 
-- [ ] 2.0 Implement Google Cloud Storage integration for file uploads
+- [x] 2.0 Implement Google Cloud Storage integration for file uploads
   - [x] 2.0.1 Write simple unit tests in `test/test_gcs_uploader.rb` (may require mocking or integration tests)
   - [x] 2.1 Add `google-cloud-storage` gem to Gemfile and run `bundle install`
   - [x] 2.2 Create `.env.example` documenting required environment variables (GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_BUCKET, GOOGLE_APPLICATION_CREDENTIALS)
@@ -24,13 +24,13 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 2.7 Add error handling for missing credentials and network failures
 
 - [ ] 3.0 Implement episode manifest management
-  - [ ] 3.0.1 Write unit tests in `test/test_episode_manifest.rb` covering load, add, save, and sorting
-  - [ ] 3.1 Implement `EpisodeManifest` class in `lib/episode_manifest.rb`
-  - [ ] 3.2 Add `initialize(gcs_uploader)` to set up GCS dependency
-  - [ ] 3.3 Add `load` method to download manifest.json from GCS (or initialize empty array if doesn't exist)
-  - [ ] 3.4 Add `add_episode(episode_data)` method that appends episode and sorts by published_at (newest first)
-  - [ ] 3.5 Add `save` method to upload updated manifest.json back to GCS
-  - [ ] 3.6 Add logic to generate unique episode GUID (timestamp + slug)
+  - [x] 3.0.1 Write unit tests in `test/test_episode_manifest.rb` covering load, add, save, and sorting
+  - [x] 3.1 Implement `EpisodeManifest` class in `lib/episode_manifest.rb`
+  - [x] 3.2 Add `initialize(gcs_uploader)` to set up GCS dependency
+  - [x] 3.3 Add `load` method to download manifest.json from GCS (or initialize empty array if doesn't exist)
+  - [x] 3.4 Add `add_episode(episode_data)` method that appends episode and sorts by published_at (newest first)
+  - [x] 3.5 Add `save` method to upload updated manifest.json back to GCS
+  - [x] 3.6 Add logic to generate unique episode GUID (timestamp + slug)
 
 - [ ] 4.0 Implement RSS feed generation with iTunes podcast tags
   - [ ] 4.0.1 Write unit tests in `test/test_rss_generator.rb` validating XML structure and required fields

@@ -32,6 +32,34 @@ class GCSUploader
     end
   end
 
+  # Upload content directly to GCS (for JSON, XML, etc.)
+  # @param content [String] Content to upload
+  # @param remote_path [String] Destination path in GCS bucket
+  # @return [String] Public URL of the uploaded content
+  def upload_content(content:, remote_path:)
+    begin
+      file = bucket.create_file(StringIO.new(content), remote_path)
+      file.acl.public!
+      get_public_url(remote_path: remote_path)
+    rescue Google::Cloud::Error => e
+      raise UploadError, "Failed to upload content: #{e.message}"
+    end
+  end
+
+  # Download file content from GCS
+  # @param remote_path [String] Path to file in GCS bucket
+  # @return [String] File content as string
+  def download_file(remote_path:)
+    begin
+      file = bucket.file(remote_path)
+      raise UploadError, "File not found: #{remote_path}" unless file
+
+      file.download.read
+    rescue Google::Cloud::Error => e
+      raise UploadError, "Failed to download file: #{e.message}"
+    end
+  end
+
   # Get public URL for a file in the bucket
   # @param remote_path [String] Path to file in GCS bucket
   # @return [String] Public HTTPS URL
