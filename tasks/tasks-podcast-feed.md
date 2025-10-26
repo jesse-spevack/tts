@@ -5,7 +5,7 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
 
 ## Tasks
 
-- [ ] 1.0 Implement metadata extraction from markdown frontmatter
+- [x] 1.0 Implement metadata extraction from markdown frontmatter
   - [x] 1.0.1 Write unit tests in `test/test_metadata_extractor.rb` covering valid frontmatter, missing fields, and invalid YAML
   - [x] 1.1 Create `config/podcast.yml` with podcast-level metadata (title, description, author, email, language, category, explicit flag)
   - [x] 1.2 Implement `MetadataExtractor` class in `lib/metadata_extractor.rb`
@@ -13,15 +13,15 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 1.4 Validate required fields (title and description) and raise errors if missing
 
 - [ ] 2.0 Implement Google Cloud Storage integration for file uploads
-  - [ ] 2.0.1 Write simple unit tests in `test/test_gcs_uploader.rb` (may require mocking or integration tests)
-  - [ ] 2.1 Add `google-cloud-storage` gem to Gemfile and run `bundle install`
-  - [ ] 2.2 Create `.env.example` documenting required environment variables (GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_BUCKET, GOOGLE_APPLICATION_CREDENTIALS)
+  - [x] 2.0.1 Write simple unit tests in `test/test_gcs_uploader.rb` (may require mocking or integration tests)
+  - [x] 2.1 Add `google-cloud-storage` gem to Gemfile and run `bundle install`
+  - [x] 2.2 Create `.env.example` documenting required environment variables (GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_BUCKET, GOOGLE_APPLICATION_CREDENTIALS)
     - Explain necessary configuration in google cloud console
-  - [ ] 2.3 Implement `GCSUploader` class in `lib/gcs_uploader.rb`
-  - [ ] 2.4 Add `initialize` method accepting bucket name from environment
-  - [ ] 2.5 Add `upload_file(local_path:, remote_path:)` method that uploads and sets public read permissions
-  - [ ] 2.6 Add `get_public_url(remote_path:)` method returning public HTTPS URL
-  - [ ] 2.7 Add error handling for missing credentials and network failures
+  - [x] 2.3 Implement `GCSUploader` class in `lib/gcs_uploader.rb`
+  - [x] 2.4 Add `initialize` method accepting bucket name from environment
+  - [x] 2.5 Add `upload_file(local_path:, remote_path:)` method that uploads and sets public read permissions
+  - [x] 2.6 Add `get_public_url(remote_path:)` method returning public HTTPS URL
+  - [x] 2.7 Add error handling for missing credentials and network failures
 
 - [ ] 3.0 Implement episode manifest management
   - [ ] 3.0.1 Write unit tests in `test/test_episode_manifest.rb` covering load, add, save, and sorting
