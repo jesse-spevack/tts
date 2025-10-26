@@ -1,10 +1,13 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-ruby '~> 3.4.5'
+ruby "~> 3.4.5"
 
-gem 'dotenv'
-gem 'minitest'
-gem 'concurrent-ruby'
+gem "concurrent-ruby"
+gem "dotenv"
+gem "minitest"
 
 # TTS providers
-gem 'google-cloud-text_to_speech', '~> 2.0'
+gem "google-cloud-text_to_speech", "~> 2.0"
+
+# Development
+gem "standard", group: :development

@@ -32,17 +32,17 @@ class TTS
   # - timeout: API timeout in seconds (default: 300)
   # - max_retries: Retry attempts for failed requests (default: 3)
   # - thread_pool_size: Concurrent threads for chunking (default: 10)
-  # - byte_limit: Maximum bytes per API request (default: 850)
+  # - byte_limit: Maximum bytes per API request (default: 850, Google TTS byte limit - can be overridden via config)
   class Config
     attr_accessor :voice_name, :language_code, :speaking_rate, :pitch, :audio_encoding, :timeout, :max_retries,
-                  :thread_pool_size, :byte_limit
+      :thread_pool_size, :byte_limit
 
     def initialize(
-      voice_name: 'en-GB-Chirp3-HD-Enceladus',
-      language_code: 'en-GB',
+      voice_name: "en-GB-Chirp3-HD-Enceladus",
+      language_code: "en-GB",
       speaking_rate: 1.5,
       pitch: 0.0,
-      audio_encoding: 'MP3',
+      audio_encoding: "MP3",
       timeout: 300,
       max_retries: 3,
       thread_pool_size: 10,
