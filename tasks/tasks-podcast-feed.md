@@ -23,7 +23,7 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 2.6 Add `get_public_url(remote_path:)` method returning public HTTPS URL
   - [x] 2.7 Add error handling for missing credentials and network failures
 
-- [ ] 3.0 Implement episode manifest management
+- [x] 3.0 Implement episode manifest management
   - [x] 3.0.1 Write unit tests in `test/test_episode_manifest.rb` covering load, add, save, and sorting
   - [x] 3.1 Implement `EpisodeManifest` class in `lib/episode_manifest.rb`
   - [x] 3.2 Add `initialize(gcs_uploader)` to set up GCS dependency
@@ -33,16 +33,16 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 3.6 Add logic to generate unique episode GUID (timestamp + slug)
 
 - [ ] 4.0 Implement RSS feed generation with iTunes podcast tags
-  - [ ] 4.0.1 Write unit tests in `test/test_rss_generator.rb` validating XML structure and required fields
-  - [ ] 4.1 Add `builder` gem to Gemfile and run `bundle install`
-  - [ ] 4.2 Implement `RSSGenerator` class in `lib/rss_generator.rb`
-  - [ ] 4.3 Add `initialize(podcast_config, episodes)` accepting config hash and episode array
-  - [ ] 4.4 Add `generate` method that returns RSS 2.0 XML string using Builder gem
-  - [ ] 4.5 Include podcast-level tags (title, description, language, itunes:author, itunes:category, itunes:explicit)
-  - [ ] 4.6 Include episode-level tags for each item (title, description, enclosure with file size, guid, pubDate, itunes:author)
+  - [x] 4.0.1 Write unit tests in `test/test_rss_generator.rb` validating XML structure and required fields
+  - [x] 4.1 Add `builder` gem to Gemfile and run `bundle install`
+  - [x] 4.2 Implement `RSSGenerator` class in `lib/rss_generator.rb`
+  - [x] 4.3 Add `initialize(podcast_config, episodes)` accepting config hash and episode array
+  - [x] 4.4 Add `generate` method that returns RSS 2.0 XML string using Builder gem
+  - [x] 4.5 Include podcast-level tags (title, description, language, itunes:author, itunes:category, itunes:explicit)
+  - [x] 4.6 Include episode-level tags for each item (title, description, enclosure with file size, guid, pubDate, itunes:author)
     - Note: itunes:duration is optional and omitted for MVP (can add later if needed)
-  - [ ] 4.7 Format pubDate in RFC 822 format (required by RSS spec)
-  - [ ] 4.8 Add optional artwork URL support if provided in podcast config
+  - [x] 4.7 Format pubDate in RFC 822 format (required by RSS spec)
+  - [x] 4.8 Add optional artwork URL support if provided in podcast config
 
 - [ ] 5.0 Integrate podcast pipeline into generate.rb
   - [ ] 5.1 Add require statements for new dependencies (MetadataExtractor, GCSUploader, EpisodeManifest, RSSGenerator)
