@@ -10,10 +10,6 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = "Usage: ruby generate.rb [options] INPUT_FILE"
 
-  opts.on("-p", "--provider PROVIDER", "TTS provider (google, open_ai, eleven_labs)") do |p|
-    options[:provider] = p.to_sym
-  end
-
   opts.on("-v", "--voice VOICE", "Voice name (default: en-GB-Chirp3-HD-Enceladus)") do |v|
     options[:voice] = v
   end
@@ -39,14 +35,12 @@ unless File.exist?(input_file)
 end
 
 # Set defaults
-options[:provider] ||= :google
 options[:voice] ||= "en-GB-Chirp3-HD-Enceladus"
 
 puts "=" * 60
 puts "Text-to-Speech Generator"
 puts "=" * 60
 puts "Input file: #{input_file}"
-puts "Provider: #{options[:provider]}"
 puts "Voice: #{options[:voice]}"
 puts "=" * 60
 
@@ -62,9 +56,9 @@ rescue ArgumentError => e
 end
 
 # Step 2: Generate audio
-puts "\n[2/3] Generating audio with #{options[:provider]}..."
+puts "\n[2/3] Generating audio..."
 begin
-  tts = TTS.new(provider: options[:provider])
+  tts = TTS.new
   audio_content = tts.synthesize(text, voice: options[:voice])
   puts "✓ Audio generated successfully"
   puts "  Audio size: #{audio_content.bytesize} bytes"

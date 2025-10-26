@@ -6,8 +6,8 @@ require_relative "lib/tts"
 # Test the TTS module with a short sample
 puts "Testing Google Cloud TTS..."
 
-# Initialize TTS with Google provider
-tts = TTS.new(provider: :google)
+# Initialize TTS
+tts = TTS.new
 
 # Test text
 test_text = "Hello! This is a test of the Ruby TTS module using Google Cloud Text to Speech."

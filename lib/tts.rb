@@ -16,7 +16,7 @@ require_relative "tts/config"
 # - Structured logging with customizable logger
 #
 # @example Basic usage with default configuration
-#   tts = TTS.new(provider: :google)
+#   tts = TTS.new
 #   audio_data = tts.synthesize("Hello, world!")
 #   File.write("output.mp3", audio_data)
 #
@@ -26,16 +26,16 @@ require_relative "tts/config"
 #     thread_pool_size: 5,
 #     byte_limit: 1000
 #   )
-#   tts = TTS.new(provider: :google, config: config)
+#   tts = TTS.new(config: config)
 #   audio_data = tts.synthesize("Long text...", voice: "en-US-Chirp3-HD-Galahad")
 #
 # @example Custom logger
 #   logger = Logger.new('tts.log')
 #   logger.level = Logger::WARN
-#   tts = TTS.new(provider: :google, logger: logger)
+#   tts = TTS.new(logger: logger)
 #
 # @example Silent mode (no logging output)
-#   tts = TTS.new(provider: :google, logger: Logger.new(File::NULL))
+#   tts = TTS.new(logger: Logger.new(File::NULL))
 #
 class TTS
   CONTENT_FILTER_ERROR = "sensitive or harmful content"
@@ -43,55 +43,41 @@ class TTS
 
   # Initialize a new TTS instance.
   #
-  # @param provider [Symbol] The TTS provider to use (currently only :google is supported)
   # @param config [TTS::Config] Configuration object (defaults to TTS::Config.new)
   # @param logger [Logger] Logger instance (defaults to Logger.new($stdout))
-  # @raise [NotImplementedError] if provider is not :google
-  # @raise [ArgumentError] if provider is unknown
-  def initialize(provider:, config: Config.new, logger: Logger.new($stdout))
-    @provider = provider
+  def initialize(config: Config.new, logger: Logger.new($stdout))
     @config = config
     @logger = logger
 
-    case @provider
-    when :google
-      @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
-        client_config.timeout = @config.timeout
-      end
-    when :open_ai, :eleven_labs
-      raise NotImplementedError, "#{@provider} provider not yet implemented"
-    else
-      raise ArgumentError, "Unknown provider: #{@provider}. Supported: :google, :open_ai, :eleven_labs"
+    @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
+      client_config.timeout = @config.timeout
     end
   end
 
-  # Converts text to speech and returns audio content as binary data
+  # Converts text to speech and returns audio content as binary data.
+  # Automatically routes to chunked synthesis if text exceeds byte limit.
+  #
   # @param text [String] The text to convert to speech
-  # @param voice [String] Voice name (optional, uses default if not provided)
-  # @return [String] Binary audio data (MP3 format)
+  # @param voice [String, nil] Voice name (optional, uses config default if not provided)
+  # @return [String] Binary MP3 audio data
+  # @raise [Google::Cloud::Error] if API call fails
   def synthesize(text, voice: nil)
-    case @provider
-    when :google
-      synthesize_google(text, voice)
-    else
-      raise NotImplementedError, "#{@provider} provider not yet implemented"
-    end
+    voice ||= @config.voice_name
+
+    return synthesize_chunked(text, voice) if text.bytesize > @config.byte_limit
+
+    make_api_call(text, voice)
   end
 
   private
 
-  # Synthesizes text using Google Cloud TTS API.
-  # Automatically routes to chunked synthesis if text exceeds byte limit.
+  # Makes a single API call to Google Cloud TTS.
   #
   # @param text [String] The text to convert to speech
-  # @param voice [String, nil] Voice name (uses config default if nil)
+  # @param voice [String] Voice name to use
   # @return [String] Binary MP3 audio data
   # @raise [Google::Cloud::Error] if API call fails
-  def synthesize_google(text, voice)
-    voice ||= @config.voice_name
-
-    return synthesize_google_chunked(text, voice) if text.bytesize > @config.byte_limit
-
+  def make_api_call(text, voice)
     @logger.info "Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
 
     input = { text: text }
@@ -126,7 +112,7 @@ class TTS
   # @param voice [String] Voice name to use
   # @return [String] Concatenated binary MP3 audio data
   # @raise [Google::Cloud::Error] if any chunk fails (except content filter)
-  def synthesize_google_chunked(text, voice)
+  def synthesize_chunked(text, voice)
     chunks = chunk_text(text, @config.byte_limit)
 
     @logger.info "Text too long, splitting into #{chunks.length} chunks..."
@@ -149,7 +135,7 @@ class TTS
         audio = nil
 
         begin
-          audio = synthesize_google_with_retry(chunk, voice, max_retries: @config.max_retries)
+          audio = synthesize_with_retry(chunk, voice, max_retries: @config.max_retries)
           chunk_duration = Time.now - chunk_start
           @logger.info "Chunk #{i + 1}/#{chunks.length}: ✓ Done in #{chunk_duration.round(2)}s"
         rescue StandardError => e
@@ -189,7 +175,8 @@ class TTS
 
     @logger.info ""
     if skipped_chunks.any?
-      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_chunks.sort.join(', ')}"
+      skipped_list = skipped_chunks.sort.join(", ")
+      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_list}"
     end
 
     @logger.info "Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
@@ -208,11 +195,11 @@ class TTS
   # @return [String] Binary MP3 audio data
   # @raise [Google::Cloud::ResourceExhaustedError] if max retries exceeded on rate limit
   # @raise [Google::Cloud::Error] if max retries exceeded on timeout or other errors
-  def synthesize_google_with_retry(chunk, voice, max_retries:)
+  def synthesize_with_retry(chunk, voice, max_retries:)
     retries = 0
 
     begin
-      synthesize_google(chunk, voice)
+      make_api_call(chunk, voice)
     rescue Google::Cloud::ResourceExhaustedError => e
       # Rate limit hit
       raise unless retries < max_retries

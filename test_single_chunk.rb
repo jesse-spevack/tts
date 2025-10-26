@@ -12,7 +12,7 @@ input_file = "input/2025-10-25-window-into-modern-loan-origination.md"
 text = TextProcessor.markdown_to_text(input_file)
 
 # Get just the first chunk
-tts = TTS.new(provider: :google)
+tts = TTS.new
 chunks = tts.send(:chunk_text, text, 850)
 
 puts "Total chunks available: #{chunks.length}"
