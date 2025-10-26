@@ -1,13 +1,6 @@
 # Text-to-Speech Converter
 
-A Ruby script that converts markdown files to MP3 audio files using a TTS API.
-
-## Project Status
-
-Currently implemented:
-- [x] Project setup with directory structure
-- [x] Text processing module (markdown to plain text conversion)
-- [x] Unit tests for text processor
+Convert markdown files to MP3 audio using Google Cloud Text-to-Speech API.
 
 ## Setup
 
@@ -16,19 +9,14 @@ Currently implemented:
 bundle install
 ```
 
-2. Configure API keys in `.env` file (for TTS providers - not yet implemented)
+2. Set up Google Cloud credentials:
+   - Create a service account in Google Cloud Console
+   - Download the JSON credentials file
+   - Place it in the project root (it will be gitignored)
 
 ## Usage
 
-### Text Processing (Current)
-
-Convert a markdown file to plain text:
-
-```bash
-ruby test_processor.rb input/sample.md
-```
-
-### Full TTS Conversion (Coming Soon)
+Convert a markdown file to audio:
 
 ```bash
 ruby generate.rb input/article.md
@@ -36,51 +24,37 @@ ruby generate.rb input/article.md
 
 This will create `output/article.mp3`.
 
-## Project Structure
+### Options
 
-```
-.
-├── input/          # Place markdown files here
-├── output/         # Generated MP3 files (gitignored)
-├── lib/
-│   └── text_processor.rb   # Markdown to text conversion
-├── test/
-│   └── test_text_processor.rb   # Unit tests
-├── Gemfile         # Ruby dependencies
-├── .env            # API keys (gitignored)
-└── README.md       # This file
+```bash
+# Use a different voice
+ruby generate.rb -v en-US-Chirp3-HD-Galahad input/article.md
+
+# See all options
+ruby generate.rb --help
 ```
 
-## Text Processing Features
+## Features
 
-The text processor handles:
-- Headers (removes # symbols)
-- Bold and italic text
-- Links (keeps link text, removes URLs)
-- Images (removes completely)
-- Code blocks (removes completely)
-- Inline code (removes backticks)
-- Lists (removes markers)
-- Blockquotes (removes > markers)
-- HTML tags
-- Horizontal rules
-- Strikethrough text
+- Converts markdown to plain text (strips formatting)
+- Handles long documents by chunking text automatically
+- Concurrent processing for faster generation
+- Content filter handling (skips problematic chunks)
+- Automatic retry for rate limits and timeouts
 
 ## Testing
 
-Run unit tests:
+Run all tests:
 
 ```bash
-ruby test/test_text_processor.rb
+rake test
 ```
 
-## Next Steps
+Run RuboCop linter:
 
-See TASKS.md for the full implementation plan. The next phase includes:
-- TTS provider integration (Google Cloud TTS, OpenAI, or ElevenLabs)
-- Audio file generation
-- Main script integration
-- End-to-end testing
+```bash
+rake rubocop
+```
 
 ## License
 
