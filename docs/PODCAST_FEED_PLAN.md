@@ -70,7 +70,7 @@ author: "Episode Author"  # optional, falls back to podcast author
 2. Implement `MetadataExtractor` class
    - Parse YAML frontmatter from markdown files
    - Validate required fields (title, description)
-   - Fall back to filename-based title if no frontmatter
+   - Hard error if required fields are missing or otherwise invalid 
 3. Add frontmatter parsing to `generate.rb` workflow
 
 **Success Criteria:** Can extract episode metadata from markdown files with frontmatter
@@ -94,8 +94,8 @@ GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
 ```
 gs://your-bucket-name/
 ├── episodes/
-│   ├── episode-name-2025-10-25.mp3
-│   └── another-episode-2025-10-26.mp3
+│   ├── 20251025-episode-name.mp3
+│   └── 20251026-another-episode-name.mp3
 ├── feed.xml
 └── manifest.json
 ```
@@ -134,7 +134,7 @@ end
 {
   "episodes": [
     {
-      "id": "episode-name-2025-10-25",
+      "id": "20251025-episode-name",
       "title": "Episode Title",
       "description": "Episode description",
       "author": "Author Name",

@@ -1,0 +1,16 @@
+# Podcast Feed Configuration
+# This file contains podcast-level metadata used to generate the RSS feed
+
+# Required fields
+title: "Very normal podcast"
+description: "Readings turned to audio by text to speech app."
+author: "Jesse Spevack"
+email: "jspevack@gmail.com"
+
+# Podcast settings
+language: "en-us"
+category: "Technology"
+explicit: false
+
+# Optional fields
+artwork_url: "https://verynormal.info/content/images/2022/11/verynormallogo2.png"  # 1400x1400 to 3000x3000 pixels recommended
