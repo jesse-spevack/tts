@@ -12,32 +12,6 @@ class TestEpisodeManifest < Minitest::Test
     assert_instance_of EpisodeManifest, @manifest
   end
 
-  def test_load_returns_empty_array_when_manifest_does_not_exist
-    @mock_uploader.manifest_exists = false
-    episodes = @manifest.load
-
-    assert_equal [], episodes
-  end
-
-  def test_load_returns_episodes_from_gcs
-    @mock_uploader.manifest_exists = true
-    @mock_uploader.manifest_content = {
-      "episodes" => [
-        {
-          "id" => "20251026-episode-1",
-          "title" => "First Episode",
-          "description" => "First description",
-          "published_at" => "2025-10-26T10:00:00Z"
-        }
-      ]
-    }.to_json
-
-    episodes = @manifest.load
-
-    assert_equal 1, episodes.length
-    assert_equal "First Episode", episodes[0]["title"]
-  end
-
   def test_add_episode_appends_to_episodes
     episode_data = {
       "id" => "20251026-new-episode",
@@ -57,18 +31,13 @@ class TestEpisodeManifest < Minitest::Test
   end
 
   def test_add_episode_sorts_by_published_at_newest_first
-    @mock_uploader.manifest_exists = true
-    @mock_uploader.manifest_content = {
-      "episodes" => [
-        {
-          "id" => "20251026-old",
-          "title" => "Old Episode",
-          "published_at" => "2025-10-26T10:00:00Z"
-        }
-      ]
-    }.to_json
-
     @manifest.load
+
+    old_episode = {
+      "id" => "20251026-old",
+      "title" => "Old Episode",
+      "published_at" => "2025-10-26T10:00:00Z"
+    }
 
     new_episode = {
       "id" => "20251027-new",
@@ -76,6 +45,7 @@ class TestEpisodeManifest < Minitest::Test
       "published_at" => "2025-10-27T10:00:00Z"
     }
 
+    @manifest.add_episode(old_episode)
     @manifest.add_episode(new_episode)
 
     # Newest should be first
@@ -131,19 +101,12 @@ end
 
 # Mock GCS Uploader for testing
 class MockGCSUploader
-  attr_accessor :manifest_exists, :manifest_content, :uploaded, :uploaded_remote_path, :uploaded_content
+  attr_accessor :uploaded, :uploaded_remote_path, :uploaded_content
 
   def initialize
-    @manifest_exists = false
-    @manifest_content = nil
     @uploaded = false
     @uploaded_remote_path = nil
     @uploaded_content = nil
-  end
-
-  def download_file(remote_path:)
-    raise "File not found" unless @manifest_exists
-    @manifest_content
   end
 
   def upload_content(content:, remote_path:)

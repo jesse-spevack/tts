@@ -46,10 +46,10 @@ class EpisodeManifest
   def self.generate_guid(title)
     timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
     slug = title.downcase
-               .gsub(/[^a-z0-9\s-]/, "") # Remove special characters
-               .gsub(/\s+/, "-")          # Replace spaces with hyphens
-               .gsub(/-+/, "-")           # Collapse multiple hyphens
-               .strip
+                .gsub(/[^a-z0-9\s-]/, "") # Remove special characters
+                .gsub(/\s+/, "-")          # Replace spaces with hyphens
+                .gsub(/-+/, "-")           # Collapse multiple hyphens
+                .strip
 
     "#{timestamp}-#{slug}"
   end

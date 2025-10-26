@@ -165,7 +165,6 @@ class TestMetadataExtractor < Minitest::Test
     file.unlink
   end
 
-
   def test_trims_whitespace_from_fields
     markdown = <<~MD
       ---

@@ -14,8 +14,6 @@ class MetadataExtractor
     validate_and_normalize(frontmatter)
   end
 
-  private
-
   # Parse YAML frontmatter from markdown content
   def self.parse_frontmatter(content)
     # Match frontmatter between --- delimiters at the start of the file

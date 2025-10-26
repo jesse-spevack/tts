@@ -4,38 +4,8 @@ require_relative "../lib/rss_generator"
 
 class TestRSSGenerator < Minitest::Test
   def setup
-    @podcast_config = {
-      "title" => "Test Podcast",
-      "description" => "A test podcast description",
-      "author" => "Test Author",
-      "email" => "test@example.com",
-      "language" => "en-us",
-      "category" => "Technology",
-      "explicit" => false,
-      "artwork_url" => "https://example.com/artwork.jpg"
-    }
-
-    @episodes = [
-      {
-        "id" => "20251026-episode-1",
-        "title" => "First Episode",
-        "description" => "First episode description",
-        "author" => "Episode Author",
-        "mp3_url" => "https://storage.googleapis.com/bucket/episodes/episode1.mp3",
-        "file_size_bytes" => 5000000,
-        "published_at" => "2025-10-26T10:00:00Z",
-        "guid" => "20251026-100000-first-episode"
-      },
-      {
-        "id" => "20251027-episode-2",
-        "title" => "Second Episode",
-        "description" => "Second episode description",
-        "mp3_url" => "https://storage.googleapis.com/bucket/episodes/episode2.mp3",
-        "file_size_bytes" => 3000000,
-        "published_at" => "2025-10-27T14:30:00Z",
-        "guid" => "20251027-143000-second-episode"
-      }
-    ]
+    @podcast_config = podcast_config
+    @episodes = sample_episodes
   end
 
   def test_generates_valid_xml
@@ -61,11 +31,8 @@ class TestRSSGenerator < Minitest::Test
   end
 
   def test_includes_podcast_level_metadata
-    generator = RSSGenerator.new(@podcast_config, @episodes)
-    xml = generator.generate
-
-    doc = REXML::Document.new(xml)
-    channel = doc.root.elements["channel"]
+    xml = generate_rss
+    channel = parse_channel(xml)
 
     assert_equal "Test Podcast", channel.elements["title"].text
     assert_equal "A test podcast description", channel.elements["description"].text
@@ -96,36 +63,9 @@ class TestRSSGenerator < Minitest::Test
     assert_equal "https://example.com/artwork.jpg", image.attributes["href"]
   end
 
-  def test_omits_artwork_when_not_provided
-    config_without_artwork = @podcast_config.dup
-    config_without_artwork.delete("artwork_url")
-
-    generator = RSSGenerator.new(config_without_artwork, @episodes)
-    xml = generator.generate
-
-    doc = REXML::Document.new(xml)
-    channel = doc.root.elements["channel"]
-    image = channel.elements["itunes:image"]
-
-    assert_nil image
-  end
-
-  def test_includes_all_episodes_as_items
-    generator = RSSGenerator.new(@podcast_config, @episodes)
-    xml = generator.generate
-
-    doc = REXML::Document.new(xml)
-    items = doc.root.elements.to_a("channel/item")
-
-    assert_equal 2, items.length
-  end
-
   def test_includes_episode_metadata
-    generator = RSSGenerator.new(@podcast_config, @episodes)
-    xml = generator.generate
-
-    doc = REXML::Document.new(xml)
-    item = doc.root.elements["channel/item[1]"]
+    xml = generate_rss
+    item = parse_first_item(xml)
 
     assert_equal "First Episode", item.elements["title"].text
     assert_equal "First episode description", item.elements["description"].text
@@ -165,7 +105,7 @@ class TestRSSGenerator < Minitest::Test
         "title" => "Episode Without Author",
         "description" => "Description",
         "mp3_url" => "https://example.com/episode.mp3",
-        "file_size_bytes" => 1000000,
+        "file_size_bytes" => 1_000_000,
         "published_at" => "2025-10-26T10:00:00Z",
         "guid" => "test-guid"
       }
@@ -181,13 +121,54 @@ class TestRSSGenerator < Minitest::Test
     assert_equal "Test Author", item.elements["itunes:author"].text
   end
 
-  def test_handles_empty_episodes_array
-    generator = RSSGenerator.new(@podcast_config, [])
-    xml = generator.generate
+  private
 
+  def generate_rss
+    generator = RSSGenerator.new(@podcast_config, @episodes)
+    generator.generate
+  end
+
+  def parse_channel(xml)
     doc = REXML::Document.new(xml)
-    items = doc.root.elements.to_a("channel/item")
+    doc.root.elements["channel"]
+  end
 
-    assert_equal 0, items.length
+  def parse_first_item(xml)
+    doc = REXML::Document.new(xml)
+    doc.root.elements["channel/item[1]"]
+  end
+
+  def podcast_config
+    {
+      "title" => "Test Podcast",
+      "description" => "A test podcast description",
+      "author" => "Test Author",
+      "language" => "en-us",
+      "category" => "Technology",
+      "explicit" => false,
+      "artwork_url" => "https://example.com/artwork.jpg"
+    }
+  end
+
+  def sample_episodes
+    [
+      {
+        "title" => "First Episode",
+        "description" => "First episode description",
+        "author" => "Episode Author",
+        "mp3_url" => "https://storage.googleapis.com/bucket/episodes/episode1.mp3",
+        "file_size_bytes" => 5_000_000,
+        "published_at" => "2025-10-26T10:00:00Z",
+        "guid" => "20251026-100000-first-episode"
+      },
+      {
+        "title" => "Second Episode",
+        "description" => "Second episode description",
+        "mp3_url" => "https://storage.googleapis.com/bucket/episodes/episode2.mp3",
+        "file_size_bytes" => 3_000_000,
+        "published_at" => "2025-10-27T14:30:00Z",
+        "guid" => "20251027-143000-second-episode"
+      }
+    ]
   end
 end

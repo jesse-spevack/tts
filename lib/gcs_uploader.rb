@@ -37,27 +37,23 @@ class GCSUploader
   # @param remote_path [String] Destination path in GCS bucket
   # @return [String] Public URL of the uploaded content
   def upload_content(content:, remote_path:)
-    begin
-      file = bucket.create_file(StringIO.new(content), remote_path)
-      file.acl.public!
-      get_public_url(remote_path: remote_path)
-    rescue Google::Cloud::Error => e
-      raise UploadError, "Failed to upload content: #{e.message}"
-    end
+    file = bucket.create_file(StringIO.new(content), remote_path)
+    file.acl.public!
+    get_public_url(remote_path: remote_path)
+  rescue Google::Cloud::Error => e
+    raise UploadError, "Failed to upload content: #{e.message}"
   end
 
   # Download file content from GCS
   # @param remote_path [String] Path to file in GCS bucket
   # @return [String] File content as string
   def download_file(remote_path:)
-    begin
-      file = bucket.file(remote_path)
-      raise UploadError, "File not found: #{remote_path}" unless file
+    file = bucket.file(remote_path)
+    raise UploadError, "File not found: #{remote_path}" unless file
 
-      file.download.read
-    rescue Google::Cloud::Error => e
-      raise UploadError, "Failed to download file: #{e.message}"
-    end
+    file.download.read
+  rescue Google::Cloud::Error => e
+    raise UploadError, "Failed to download file: #{e.message}"
   end
 
   # Get public URL for a file in the bucket
@@ -65,7 +61,7 @@ class GCSUploader
   # @return [String] Public HTTPS URL
   def get_public_url(remote_path:)
     # Remove leading slash if present
-    path = remote_path.start_with?("/") ? remote_path[1..-1] : remote_path
+    path = remote_path.start_with?("/") ? remote_path[1..] : remote_path
     "https://storage.googleapis.com/#{bucket_name}/#{path}"
   end
 
@@ -74,7 +70,10 @@ class GCSUploader
   # Lazy-load storage client
   def storage
     @storage ||= begin
-      raise MissingCredentialsError, "GOOGLE_APPLICATION_CREDENTIALS not set" unless ENV["GOOGLE_APPLICATION_CREDENTIALS"]
+      unless ENV["GOOGLE_APPLICATION_CREDENTIALS"]
+        raise MissingCredentialsError,
+              "GOOGLE_APPLICATION_CREDENTIALS not set"
+      end
 
       Google::Cloud::Storage.new
     rescue Google::Cloud::Error => e
@@ -87,6 +86,7 @@ class GCSUploader
     @bucket ||= begin
       b = storage.bucket(bucket_name)
       raise UploadError, "Bucket '#{bucket_name}' not found" unless b
+
       b
     end
   end

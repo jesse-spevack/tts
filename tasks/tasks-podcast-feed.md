@@ -32,7 +32,7 @@ Transform the existing markdown-to-MP3 TTS tool into an automated podcast feed g
   - [x] 3.5 Add `save` method to upload updated manifest.json back to GCS
   - [x] 3.6 Add logic to generate unique episode GUID (timestamp + slug)
 
-- [ ] 4.0 Implement RSS feed generation with iTunes podcast tags
+- [x] 4.0 Implement RSS feed generation with iTunes podcast tags
   - [x] 4.0.1 Write unit tests in `test/test_rss_generator.rb` validating XML structure and required fields
   - [x] 4.1 Add `builder` gem to Gemfile and run `bundle install`
   - [x] 4.2 Implement `RSSGenerator` class in `lib/rss_generator.rb`
