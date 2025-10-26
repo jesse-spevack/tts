@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-require "google/cloud/text_to_speech"
-require "concurrent"
 require "logger"
 require_relative "tts/config"
+require_relative "tts/api_client"
+require_relative "tts/text_chunker"
+require_relative "tts/chunked_synthesizer"
 
 # Text-to-Speech conversion library using Google Cloud Text-to-Speech API.
 #
@@ -38,9 +39,6 @@ require_relative "tts/config"
 #   tts = TTS.new(logger: Logger.new(File::NULL))
 #
 class TTS
-  CONTENT_FILTER_ERROR = "sensitive or harmful content"
-  DEADLINE_EXCEEDED_ERROR = "Deadline Exceeded"
-
   # Initialize a new TTS instance.
   #
   # @param config [TTS::Config] Configuration object (defaults to TTS::Config.new)
@@ -49,13 +47,13 @@ class TTS
     @config = config
     @logger = logger
 
-    @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
-      client_config.timeout = @config.timeout
-    end
+    @api_client = TTS::APIClient.new(config, logger)
+    @text_chunker = TTS::TextChunker.new
+    @chunked_synthesizer = TTS::ChunkedSynthesizer.new(@api_client, config, logger)
   end
 
   # Converts text to speech and returns audio content as binary data.
-  # Automatically routes to chunked synthesis if text exceeds byte limit.
+  # Automatically chunks text if it exceeds byte limit.
   #
   # @param text [String] The text to convert to speech
   # @param voice [String, nil] Voice name (optional, uses config default if not provided)
@@ -64,201 +62,12 @@ class TTS
   def synthesize(text, voice: nil)
     voice ||= @config.voice_name
 
-    return synthesize_chunked(text, voice) if text.bytesize > @config.byte_limit
+    chunks = @text_chunker.chunk(text, @config.byte_limit)
 
-    make_api_call(text, voice)
-  end
-
-  private
-
-  # Makes a single API call to Google Cloud TTS.
-  #
-  # @param text [String] The text to convert to speech
-  # @param voice [String] Voice name to use
-  # @return [String] Binary MP3 audio data
-  # @raise [Google::Cloud::Error] if API call fails
-  def make_api_call(text, voice)
-    @logger.info "Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
-
-    input = { text: text }
-    voice_params = {
-      language_code: @config.language_code,
-      name: voice
-    }
-    audio_config = {
-      audio_encoding: @config.audio_encoding,
-      speaking_rate: @config.speaking_rate,
-      pitch: @config.pitch
-    }
-
-    response = @client.synthesize_speech(
-      input: input,
-      voice: voice_params,
-      audio_config: audio_config
-    )
-
-    @logger.info "API call successful (#{response.audio_content.bytesize} bytes audio)"
-    response.audio_content
-  rescue StandardError => e
-    @logger.error "API call failed: #{e.message}"
-    raise
-  end
-
-  # Synthesizes long text by splitting into chunks and processing concurrently.
-  # Chunks are processed in parallel using a thread pool and concatenated together.
-  # Chunks that trigger content filters are skipped with a warning.
-  #
-  # @param text [String] The text to convert (must exceed byte_limit)
-  # @param voice [String] Voice name to use
-  # @return [String] Concatenated binary MP3 audio data
-  # @raise [Google::Cloud::Error] if any chunk fails (except content filter)
-  def synthesize_chunked(text, voice)
-    chunks = chunk_text(text, @config.byte_limit)
-
-    @logger.info "Text too long, splitting into #{chunks.length} chunks..."
-    @logger.info "Processing with #{@config.thread_pool_size} concurrent threads (Chirp3 quota: 200/min)..."
-    @logger.info "Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
-    @logger.info ""
-
-    start_time = Time.now
-    pool = Concurrent::FixedThreadPool.new(@config.thread_pool_size)
-    promises = []
-    skipped_chunks = Concurrent::Array.new # Thread-safe array
-
-    # Launch all chunks as concurrent promises
-    chunks.each_with_index do |chunk, i|
-      promise = Concurrent::Promise.execute(executor: pool) do
-        chunk[0..60].tr("\n", " ")
-        @logger.info "Chunk #{i + 1}/#{chunks.length}: Starting (#{chunk.bytesize} bytes)"
-
-        chunk_start = Time.now
-        audio = nil
-
-        begin
-          audio = synthesize_with_retry(chunk, voice, max_retries: @config.max_retries)
-          chunk_duration = Time.now - chunk_start
-          @logger.info "Chunk #{i + 1}/#{chunks.length}: ✓ Done in #{chunk_duration.round(2)}s"
-        rescue StandardError => e
-          if e.message.include?(CONTENT_FILTER_ERROR)
-            @logger.warn "Chunk #{i + 1}/#{chunks.length}: ⚠ SKIPPED - Content filter"
-            skipped_chunks << (i + 1)
-          else
-            @logger.error "Chunk #{i + 1}/#{chunks.length}: ✗ Failed - #{e.message}"
-            raise
-          end
-        end
-
-        [i, audio] # Return index and audio (audio may be nil if skipped)
-      end
-
-      promises << promise
+    if chunks.length == 1
+      @api_client.call(text: chunks[0], voice: voice)
+    else
+      @chunked_synthesizer.synthesize(chunks, voice)
     end
-
-    # Wait for all promises to complete
-    @logger.info ""
-    @logger.info "Waiting for all chunks to complete..."
-    results = promises.map(&:value)
-
-    # Sort by index and extract non-nil audio
-    # Filter out nil results (from failed promises) before sorting
-    audio_parts = results
-                  .compact
-                  .sort_by { |idx, _| idx }
-                  .map { |_, audio| audio }
-                  .compact # Remove nils from skipped chunks
-
-    # Clean up thread pool
-    pool.shutdown
-    pool.wait_for_termination
-
-    total_duration = Time.now - start_time
-
-    @logger.info ""
-    if skipped_chunks.any?
-      skipped_list = skipped_chunks.sort.join(", ")
-      @logger.warn "⚠ Warning: Skipped #{skipped_chunks.length} chunk(s) due to content filtering: #{skipped_list}"
-    end
-
-    @logger.info "Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
-    @logger.info "Total processing time: #{total_duration.round(2)}s"
-    @logger.info "Average time per chunk: #{(total_duration / chunks.length).round(2)}s"
-    audio_parts.join
-  end
-
-  # Synthesizes a single chunk with automatic retry logic.
-  # Retries on rate limits (ResourceExhaustedError) and timeouts (Deadline Exceeded).
-  # Uses exponential backoff for rate limits.
-  #
-  # @param chunk [String] The text chunk to synthesize
-  # @param voice [String] Voice name to use
-  # @param max_retries [Integer] Maximum number of retry attempts
-  # @return [String] Binary MP3 audio data
-  # @raise [Google::Cloud::ResourceExhaustedError] if max retries exceeded on rate limit
-  # @raise [Google::Cloud::Error] if max retries exceeded on timeout or other errors
-  def synthesize_with_retry(chunk, voice, max_retries:)
-    retries = 0
-
-    begin
-      make_api_call(chunk, voice)
-    rescue Google::Cloud::ResourceExhaustedError => e
-      # Rate limit hit
-      raise unless retries < max_retries
-
-      retries += 1
-      wait_time = 2**retries
-      @logger.warn "Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
-      sleep(wait_time)
-      retry
-    rescue Google::Cloud::Error => e
-      # Other transient Google Cloud errors
-      raise unless retries < max_retries && e.message.include?(DEADLINE_EXCEEDED_ERROR)
-
-      retries += 1
-      @logger.warn "Timeout, retrying (#{retries}/#{max_retries})"
-      sleep(1)
-      retry
-    end
-  end
-
-  # Splits text into chunks that fit within the byte limit.
-  # Attempts to split at sentence boundaries first, then at punctuation marks if needed.
-  # Preserves natural reading flow by keeping sentences together when possible.
-  #
-  # @param text [String] The text to split into chunks
-  # @param max_bytes [Integer] Maximum byte size for each chunk
-  # @return [Array<String>] Array of text chunks, each <= max_bytes
-  def chunk_text(text, max_bytes)
-    return [text] if text.bytesize <= max_bytes
-
-    chunks = []
-    current_chunk = ""
-
-    sentences = text.split(/(?<=[.!?])\s+/)
-
-    sentences.each do |sentence|
-      if sentence.bytesize > max_bytes
-        parts = sentence.split(/(?<=[,;:])\s+/)
-        parts.each do |part|
-          test_chunk = current_chunk.empty? ? part : "#{current_chunk} #{part}"
-          if test_chunk.bytesize > max_bytes
-            chunks << current_chunk.strip unless current_chunk.empty?
-            current_chunk = part
-          else
-            current_chunk = test_chunk
-          end
-        end
-      else
-        test_chunk = current_chunk.empty? ? sentence : "#{current_chunk} #{sentence}"
-        if test_chunk.bytesize > max_bytes
-          chunks << current_chunk.strip unless current_chunk.empty?
-          current_chunk = sentence
-        else
-          current_chunk = test_chunk
-        end
-      end
-    end
-
-    chunks << current_chunk.strip unless current_chunk.empty?
-    chunks
   end
 end

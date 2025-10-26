@@ -92,8 +92,8 @@ class TestTextProcessor < Minitest::Test
     assert_equal expected, TextProcessor.convert_to_plain_text(markdown)
   end
 
-  def test_complex_markdown
-    markdown = <<~MD
+  def markdown
+    <<~MD
       # My Blog Post
 
       This is a **great** article about *programming*.
@@ -114,7 +114,9 @@ class TestTextProcessor < Minitest::Test
 
       > Remember: always test your code!
     MD
+  end
 
+  def test_complex_markdown
     result = TextProcessor.convert_to_plain_text(markdown)
 
     assert_includes result, "My Blog Post"
