@@ -9,7 +9,7 @@ class TestConfig < Minitest::Test
 
     assert_equal "en-GB-Chirp3-HD-Enceladus", config.voice_name
     assert_equal "en-GB", config.language_code
-    assert_equal 1.5, config.speaking_rate
+    assert_equal 1.25, config.speaking_rate
     assert_equal 0.0, config.pitch
     assert_equal "MP3", config.audio_encoding
     assert_equal 300, config.timeout
