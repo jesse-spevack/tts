@@ -6,6 +6,7 @@ title: "Very normal podcast"
 description: "Readings turned to audio by text to speech app."
 author: "Jesse Spevack"
 email: "jspevack@gmail.com"
+link: "https://verynormal.info"  # Podcast website URL
 
 # Podcast settings
 language: "en-us"

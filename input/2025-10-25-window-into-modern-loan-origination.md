@@ -1,5 +1,9 @@
-A window into modern loan origination
-Patrick McKenzie (patio11) • Oct 10th, 2025
+---
+title: "A window into modern loan origination"
+description: "How consumer credit issuance enables home improvements through a sophisticated four-party lending system that underwrites loans in 15 minutes. An exploration of modern installment loan origination as a service."
+author: "Patrick McKenzie (patio11)"
+---
+
 A window into modern loan origination
 The ultimate goal of financial plumbing is to enable commerce in the real economy. Consider the humble window: it is a fairly expensive, surprisingly high-tech manufactured good, installed by the dozen in homes by artisans. A window represents a supply chain, and one part of that supply chain is a sales process, convincing a homeowner of the desirability of updating their windows. The sales representative running that process would urgently prefer to leave their single visit to the home with not just tentative measurements but with a durable commitment to buying the window and financing firmly in place for it.
 

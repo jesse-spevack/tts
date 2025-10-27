@@ -40,6 +40,9 @@ class TextProcessor
   def self.convert_to_plain_text(content)
     text = content.dup
 
+    # Remove YAML frontmatter (--- at start, content, --- delimiter)
+    text.gsub!(/\A---\s*\n.*?\n---\s*\n/m, "")
+
     # Remove code blocks (fenced with ``` or indented)
     text.gsub!(/```[\s\S]*?```/m, "")
     text.gsub!(/^\s{4,}.*$/, "")

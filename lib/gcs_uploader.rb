@@ -37,8 +37,15 @@ class GCSUploader
   # @param remote_path [String] Destination path in GCS bucket
   # @return [String] Public URL of the uploaded content
   def upload_content(content:, remote_path:)
+    # Upload the file
     file = bucket.create_file(StringIO.new(content), remote_path)
     file.acl.public!
+
+    # Set cache control for RSS feeds to prevent stale content
+    if remote_path == "feed.xml"
+      file.cache_control = "no-cache, max-age=0"
+    end
+
     get_public_url(remote_path: remote_path)
   rescue Google::Cloud::Error => e
     raise UploadError, "Failed to upload content: #{e.message}"

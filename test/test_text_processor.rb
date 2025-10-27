@@ -86,6 +86,29 @@ class TestTextProcessor < Minitest::Test
     assert_equal expected, TextProcessor.convert_to_plain_text(markdown)
   end
 
+  def test_removes_yaml_frontmatter
+    markdown = <<~MD
+      ---
+      title: "My Post"
+      description: "A great post"
+      author: "John Doe"
+      ---
+
+      # Actual Content
+
+      This is the real content that should be converted to speech.
+    MD
+
+    result = TextProcessor.convert_to_plain_text(markdown)
+
+    refute_includes result, "title:"
+    refute_includes result, "description:"
+    refute_includes result, "author:"
+    refute_includes result, "---"
+    assert_includes result, "Actual Content"
+    assert_includes result, "This is the real content"
+  end
+
   def test_removes_html_tags
     markdown = "This is <strong>HTML</strong> text"
     expected = "This is HTML text"

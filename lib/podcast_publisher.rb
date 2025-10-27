@@ -55,7 +55,9 @@ class PodcastPublisher
   end
 
   def upload_rss_feed
-    rss_generator = RSSGenerator.new(@podcast_config, @episode_manifest.episodes)
+    feed_url = @gcs_uploader.get_public_url(remote_path: "feed.xml")
+    config_with_feed_url = @podcast_config.merge("feed_url" => feed_url)
+    rss_generator = RSSGenerator.new(config_with_feed_url, @episode_manifest.episodes)
     rss_xml = rss_generator.generate
     @gcs_uploader.upload_content(content: rss_xml, remote_path: "feed.xml")
   end

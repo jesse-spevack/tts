@@ -126,7 +126,9 @@ unless options[:local_only]
       episode_manifest: episode_manifest
     )
 
-    feed_url = publisher.publish(output_file, metadata)
+    # Convert symbol keys to string keys for publisher
+    metadata_with_string_keys = metadata.transform_keys(&:to_s)
+    feed_url = publisher.publish(output_file, metadata_with_string_keys)
 
     puts "✓ Episode published successfully"
     puts "  Feed URL: #{feed_url}"

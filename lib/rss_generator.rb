@@ -18,7 +18,8 @@ class RSSGenerator
 
     xml.rss version: "2.0",
             "xmlns:itunes" => "http://www.itunes.com/dtds/podcast-1.0.dtd",
-            "xmlns:content" => "http://purl.org/rss/1.0/modules/content/" do
+            "xmlns:content" => "http://purl.org/rss/1.0/modules/content/",
+            "xmlns:atom" => "http://www.w3.org/2005/Atom" do
       xml.channel do
         add_podcast_metadata(xml)
         add_episodes(xml)
@@ -33,8 +34,11 @@ class RSSGenerator
   def add_podcast_metadata(xml)
     xml.title @podcast_config["title"]
     xml.description @podcast_config["description"]
+    xml.link @podcast_config["link"] if @podcast_config["link"]
+    xml.tag! "atom:link", href: @podcast_config["feed_url"], rel: "self", type: "application/rss+xml" if @podcast_config["feed_url"]
     xml.language @podcast_config["language"]
     xml.tag! "itunes:author", @podcast_config["author"]
+    xml.tag! "itunes:email", @podcast_config["email"] if @podcast_config["email"]
     xml.tag! "itunes:explicit", @podcast_config["explicit"].to_s
     xml.tag! "itunes:category", text: @podcast_config["category"]
 
