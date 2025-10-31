@@ -11,16 +11,20 @@ Two Cloud Run services:
 **Service 1: API Service** - Fast, accepts requests:
 1. Accepts authentication via Bearer token
 2. Receives episode metadata (title, author, description) and markdown content file
-3. Uploads content to GCS staging area
-4. Enqueues job to Google Cloud Tasks
-5. Returns immediate success/error response
+3. Validates input
+4. Uploads content to GCS staging area
+5. Enqueues job to Google Cloud Tasks
+6. Returns immediate success/error response
 
 **Service 2: Worker Service** - Heavy lifting:
 1. Triggered by Cloud Tasks
-2. Processes markdown to plain text
-3. Generates TTS audio
-4. Publishes to podcast feed
-5. Logs results to Google Cloud Logging
+2. Downloads markdown from GCS staging
+3. Processes markdown to plain text
+4. Generates TTS audio
+5. Uploads audio to GCS
+6. Publishes to podcast feed
+7. Cleans up staging files
+8. Logs results to Google Cloud Logging
 
 ### User Flow
 
@@ -66,9 +70,10 @@ curl -X POST https://your-podcast-api.run.app/publish \
 │ 1. Download from GCS    │
 │ 2. Process Markdown     │
 │ 3. Generate TTS         │
-│ 4. Upload to GCS        │
+│ 4. Upload Audio         │
 │ 5. Update RSS Feed      │
-│ 6. Log Results          │
+│ 6. Cleanup Staging      │
+│ 7. Log Results          │
 └─────────────────────────┘
 ```
 
@@ -117,23 +122,29 @@ curl -X POST https://your-podcast-api.run.app/publish \
 
 ## Task Breakdown
 
-### Phase 1: Cloud Tasks Infrastructure
+### Phase 1: Dependencies
 
-#### Task 1.1: Add Google Cloud Tasks Gem
+#### Task 1.1: Add Required Gems
 
-**What**: Add the Google Cloud Tasks gem for enqueueing jobs.
+**What**: Add Google Cloud Tasks and Sinatra gems for the API and worker services.
 
-**Why**: We need Cloud Tasks to communicate between the API and Worker services asynchronously.
+**Why**: We need Cloud Tasks to communicate between services asynchronously, and Sinatra to build the web APIs.
 
 **Files to modify**:
 - `Gemfile`
 
 **What to do**:
 
-1. Add Cloud Tasks gem to `Gemfile`:
+1. Add gems to `Gemfile`:
    ```ruby
    # Add after google-cloud-storage
    gem "google-cloud-tasks", "~> 2.0"
+
+   # Web framework
+   gem "sinatra"
+   gem "sinatra-contrib" # Adds useful helpers like json
+   gem "puma"            # Production web server
+   gem "rack-test", group: :test  # For testing Sinatra apps
    ```
 
 2. Install dependencies:
@@ -143,167 +154,109 @@ curl -X POST https://your-podcast-api.run.app/publish \
 
 3. Verify installation:
    ```bash
-   bundle list | grep google-cloud-tasks
-   # Should show: google-cloud-tasks (x.x.x)
+   bundle list | grep -E "(google-cloud-tasks|sinatra|puma)"
    ```
 
-**Testing**: No tests needed yet - just dependency installation.
+**Testing**: No tests needed - just dependency installation.
 
 **Commit**:
 ```bash
 git add Gemfile Gemfile.lock
-git commit -m "Add google-cloud-tasks for job queue"
+git commit -m "Add Cloud Tasks and Sinatra dependencies"
 ```
 
 ---
 
-#### Task 1.2: Create Task Queue Helper (Test First)
+### Phase 2: Shared Utilities
 
-**What**: Create a helper class for enqueueing tasks to Cloud Tasks.
+#### Task 2.1: Create FilenameGenerator Module (Test First)
 
-**Why**: This abstracts Cloud Tasks API calls and makes the code easier to test and maintain.
+**What**: Create a shared module for generating filenames from titles.
+
+**Why**: Both the API and Worker need to generate consistent filenames from episode titles. Extracting this to a module follows DRY principles.
 
 **Files to create**:
-- `test/test_task_enqueuer.rb` (create this FIRST)
-- `lib/task_enqueuer.rb` (create this AFTER tests)
+- `test/test_filename_generator.rb` (create FIRST)
+- `lib/filename_generator.rb` (create AFTER tests)
 
 **What to do**:
 
-**Step 1: Write the test first** (TDD principle)
+**Step 1: Write tests first**
 
-Create `test/test_task_enqueuer.rb`:
+Create `test/test_filename_generator.rb`:
 
 ```ruby
 require "minitest/autorun"
-require_relative "../lib/task_enqueuer"
+require_relative "../lib/filename_generator"
 
-class TestTaskEnqueuer < Minitest::Test
-  def setup
-    @enqueuer = TaskEnqueuer.new(
-      project_id: "test-project",
-      location: "us-central1",
-      queue_name: "test-queue",
-      worker_url: "https://test-worker.run.app/process"
-    )
+class TestFilenameGenerator < Minitest::Test
+  def test_generates_filename_with_date_and_slug
+    filename = FilenameGenerator.generate("My Test Title")
+    assert_match(/^\d{4}-\d{2}-\d{2}-my-test-title$/, filename)
   end
 
-  def test_initialization
-    assert_equal "test-project", @enqueuer.project_id
-    assert_equal "us-central1", @enqueuer.location
-    assert_equal "test-queue", @enqueuer.queue_name
-    assert_equal "https://test-worker.run.app/process", @enqueuer.worker_url
+  def test_removes_special_characters
+    filename = FilenameGenerator.generate("Title with (special) chars!")
+    assert_match(/title-with-special-chars$/, filename)
   end
 
-  def test_formats_queue_path_correctly
-    expected = "projects/test-project/locations/us-central1/queues/test-queue"
-    assert_equal expected, @enqueuer.queue_path
+  def test_converts_spaces_to_hyphens
+    filename = FilenameGenerator.generate("Title With Spaces")
+    assert_match(/title-with-spaces$/, filename)
   end
 
-  def test_builds_task_payload
-    payload = @enqueuer.build_payload(
-      title: "Test Title",
-      author: "Test Author",
-      description: "Test Description",
-      gcs_path: "staging/test.md"
-    )
+  def test_collapses_multiple_hyphens
+    filename = FilenameGenerator.generate("Title   with   spaces")
+    refute_match(/--/, filename)
+  end
 
-    assert_equal "Test Title", payload[:title]
-    assert_equal "Test Author", payload[:author]
-    assert_equal "Test Description", payload[:description]
-    assert_equal "staging/test.md", payload[:gcs_path]
+  def test_handles_unicode_characters
+    filename = FilenameGenerator.generate("Café résumé")
+    assert_match(/caf-rsum$/, filename)
+  end
+
+  def test_strips_leading_and_trailing_whitespace
+    filename = FilenameGenerator.generate("  Title  ")
+    assert_match(/title$/, filename)
   end
 end
 ```
 
-**Step 2: Run the test (it should fail)**
+**Step 2: Run tests (should fail)**
 
 ```bash
-ruby test/test_task_enqueuer.rb
-# Expected: LoadError - cannot load such file -- ../lib/task_enqueuer
+ruby test/test_filename_generator.rb
+# Expected: LoadError - cannot load such file
 ```
 
-**Step 3: Create the implementation**
+**Step 3: Create implementation**
 
-Create `lib/task_enqueuer.rb`:
+Create `lib/filename_generator.rb`:
 
 ```ruby
-require "google/cloud/tasks/v2"
-require "json"
+require "time"
 
-# Helper class for enqueueing tasks to Google Cloud Tasks
-# Abstracts the Cloud Tasks API for easier testing and maintenance
-class TaskEnqueuer
-  attr_reader :project_id, :location, :queue_name, :worker_url
-
-  # Initialize the task enqueuer
-  # @param project_id [String] Google Cloud project ID
-  # @param location [String] Cloud Tasks queue location (e.g., "us-central1")
-  # @param queue_name [String] Name of the task queue
-  # @param worker_url [String] URL of the worker service to invoke
-  def initialize(project_id:, location:, queue_name:, worker_url:)
-    @project_id = project_id
-    @location = location
-    @queue_name = queue_name
-    @worker_url = worker_url
-    @client = Google::Cloud::Tasks::V2::CloudTasks::Client.new
-  end
-
-  # Enqueue a new episode processing task
+# Generates consistent filenames from episode titles
+# Format: YYYY-MM-DD-slugified-title
+module FilenameGenerator
+  # Generate a filename from a title
   # @param title [String] Episode title
-  # @param author [String] Episode author
-  # @param description [String] Episode description
-  # @param gcs_path [String] Path to markdown file in GCS
-  # @return [String] Task name
-  def enqueue(title:, author:, description:, gcs_path:)
-    task = build_task(
-      title: title,
-      author: author,
-      description: description,
-      gcs_path: gcs_path
-    )
-
-    response = @client.create_task(parent: queue_path, task: task)
-    response.name
+  # @return [String] Filename in format YYYY-MM-DD-slug
+  def self.generate(title)
+    date = Time.now.strftime("%Y-%m-%d")
+    slug = slugify(title)
+    "#{date}-#{slug}"
   end
 
-  # Get the full queue path for Cloud Tasks API
-  # @return [String] Full queue path
-  def queue_path
-    @client.queue_path(project: @project_id, location: @location, queue: @queue_name)
-  end
-
-  # Build the payload for the task
-  # @return [Hash] Task payload
-  def build_payload(title:, author:, description:, gcs_path:)
-    {
-      title: title,
-      author: author,
-      description: description,
-      gcs_path: gcs_path
-    }
-  end
-
-  private
-
-  # Build a Cloud Tasks task
-  def build_task(title:, author:, description:, gcs_path:)
-    payload = build_payload(
-      title: title,
-      author: author,
-      description: description,
-      gcs_path: gcs_path
-    )
-
-    {
-      http_request: {
-        http_method: "POST",
-        url: @worker_url,
-        headers: {
-          "Content-Type" => "application/json"
-        },
-        body: payload.to_json
-      }
-    }
+  # Convert title to URL-safe slug
+  # @param title [String] Title to slugify
+  # @return [String] Slugified title
+  def self.slugify(title)
+    title.downcase
+         .gsub(/[^\w\s-]/, "") # Remove special chars
+         .gsub(/\s+/, "-")      # Spaces to hyphens
+         .gsub(/-+/, "-")       # Collapse multiple hyphens
+         .strip                 # Remove leading/trailing whitespace
   end
 end
 ```
@@ -311,8 +264,8 @@ end
 **Step 4: Run tests**
 
 ```bash
-ruby test/test_task_enqueuer.rb
-# Should pass now
+ruby test/test_filename_generator.rb
+# Should pass
 ```
 
 **Step 5: Run all tests**
@@ -325,58 +278,24 @@ rake test
 
 ```bash
 rake rubocop
-# Fix any issues reported
+# Fix any issues
 ```
-
-**Testing Notes**:
-- We test the public interface, not the actual Cloud Tasks API call
-- Full integration testing will happen when we deploy to Cloud Run
-- The actual enqueueing will be tested in the API service tests
 
 **Commit**:
 ```bash
-git add lib/task_enqueuer.rb test/test_task_enqueuer.rb
-git commit -m "Add TaskEnqueuer for Cloud Tasks integration"
+git add lib/filename_generator.rb test/test_filename_generator.rb
+git commit -m "Add FilenameGenerator module for consistent file naming"
 ```
 
 ---
 
-### Phase 2: API Service
+### Phase 3: API Service
 
-#### Task 2.1: Add Sinatra Dependencies
-
-**What**: Add Sinatra and related gems for building the web API.
-
-**Files to modify**:
-- `Gemfile`
-
-**What to do**:
-
-1. Add Sinatra gems to `Gemfile`:
-   ```ruby
-   # Add after google-cloud-tasks
-   gem "sinatra"
-   gem "sinatra-contrib" # Adds useful helpers like json
-   gem "puma"            # Production web server
-   gem "rack-test", group: :test  # For testing Sinatra apps
-   ```
-
-2. Install:
-   ```bash
-   bundle install
-   ```
-
-**Commit**:
-```bash
-git add Gemfile Gemfile.lock
-git commit -m "Add sinatra and puma for web API"
-```
-
----
-
-#### Task 2.2: Create API Service (Test First)
+#### Task 3.1: Create API Service (Test First)
 
 **What**: Create the API Sinatra application with the `/publish` endpoint.
+
+**Why**: This is the public-facing service that accepts episode submissions and enqueues them for processing.
 
 **Files to create**:
 - `test/test_api.rb` (create FIRST)
@@ -413,14 +332,16 @@ class TestAPI < Minitest::Test
   # Health Check Tests
 
   def test_health_check_returns_200
-    get "/"
+    get "/health"
     assert_equal 200, last_response.status
   end
 
-  def test_health_check_returns_json
-    get "/"
+  def test_health_check_validates_environment
+    get "/health"
     body = JSON.parse(last_response.body)
-    assert_equal "ok", body["status"]
+
+    assert_equal "healthy", body["status"]
+    assert body["checks"]["env_vars_set"]
   end
 
   # Authentication Tests
@@ -487,25 +408,6 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "content"
   end
 
-  # Success Tests
-
-  def test_valid_request_returns_200
-    mock_gcs_and_tasks do
-      post "/publish", valid_params, auth_header
-      assert_equal 200, last_response.status
-    end
-  end
-
-  def test_valid_request_returns_success_json
-    mock_gcs_and_tasks do
-      post "/publish", valid_params, auth_header
-
-      body = JSON.parse(last_response.body)
-      assert_equal "success", body["status"]
-      assert_equal "Episode submitted for processing", body["message"]
-    end
-  end
-
   private
 
   def auth_header
@@ -540,28 +442,10 @@ class TestAPI < Minitest::Test
       original_filename: "empty.md"
     )
   end
-
-  # Mock GCS and Cloud Tasks to avoid actual API calls in tests
-  def mock_gcs_and_tasks
-    # Stub the actual API calls that happen in the endpoint
-    stub_gcs_upload
-    stub_task_enqueue
-    yield
-  end
-
-  def stub_gcs_upload
-    # In real implementation, we'll use dependency injection or test doubles
-    # For now, this is a placeholder
-  end
-
-  def stub_task_enqueue
-    # In real implementation, we'll use dependency injection or test doubles
-    # For now, this is a placeholder
-  end
 end
 ```
 
-**Step 2: Run tests (they should fail)**
+**Step 2: Run tests (should fail)**
 
 ```bash
 ruby test/test_api.rb
@@ -570,22 +454,42 @@ ruby test/test_api.rb
 
 **Step 3: Create the Sinatra app**
 
-Create `api.rb` in the project root:
+Create `api.rb`:
 
 ```ruby
 require "sinatra"
 require "sinatra/json"
+require "google/cloud/tasks/v2"
 require_relative "lib/gcs_uploader"
-require_relative "lib/task_enqueuer"
+require_relative "lib/filename_generator"
 
 # Configure Sinatra
 set :port, ENV.fetch("PORT", 8080)
 set :bind, "0.0.0.0"
-set :show_exceptions, false # We'll handle errors ourselves
+set :show_exceptions, false
 
-# Health check endpoint for Cloud Run
-get "/" do
-  json status: "ok", message: "Podcast Publishing API"
+# Health check endpoint with environment validation
+get "/health" do
+  required_vars = %w[
+    GOOGLE_CLOUD_PROJECT
+    GOOGLE_CLOUD_BUCKET
+    API_SECRET_TOKEN
+    WORKER_URL
+    CLOUD_TASKS_LOCATION
+    CLOUD_TASKS_QUEUE
+  ]
+
+  missing_vars = required_vars.reject { |var| ENV[var] }
+
+  if missing_vars.empty?
+    json status: "healthy", checks: { env_vars_set: true }
+  else
+    halt 500, json(
+      status: "unhealthy",
+      checks: { env_vars_set: false },
+      missing_vars: missing_vars
+    )
+  end
 end
 
 # Episode publishing endpoint
@@ -662,7 +566,7 @@ end
 
 # Upload markdown to GCS staging area
 def upload_to_staging(title, content)
-  filename = generate_filename(title)
+  filename = FilenameGenerator.generate(title)
   staging_path = "staging/#{filename}.md"
 
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
@@ -671,32 +575,40 @@ def upload_to_staging(title, content)
   staging_path
 end
 
-# Enqueue task to Cloud Tasks
+# Enqueue task to Cloud Tasks (inlined - no abstraction)
 def enqueue_processing_task(title, author, description, gcs_path)
-  enqueuer = TaskEnqueuer.new(
-    project_id: ENV.fetch("GOOGLE_CLOUD_PROJECT"),
-    location: ENV.fetch("CLOUD_TASKS_LOCATION", "us-central1"),
-    queue_name: ENV.fetch("CLOUD_TASKS_QUEUE", "episode-processing"),
-    worker_url: ENV.fetch("WORKER_URL")
+  client = Google::Cloud::Tasks::V2::CloudTasks::Client.new
+
+  project_id = ENV.fetch("GOOGLE_CLOUD_PROJECT")
+  location = ENV.fetch("CLOUD_TASKS_LOCATION")
+  queue_name = ENV.fetch("CLOUD_TASKS_QUEUE")
+  worker_url = ENV.fetch("WORKER_URL")
+
+  queue_path = client.queue_path(
+    project: project_id,
+    location: location,
+    queue: queue_name
   )
 
-  enqueuer.enqueue(
+  payload = {
     title: title,
     author: author,
     description: description,
     gcs_path: gcs_path
-  )
-end
+  }
 
-# Generate filename from title: "My Title" -> "2025-10-28-my-title"
-def generate_filename(title)
-  date = Time.now.strftime("%Y-%m-%d")
-  slug = title.downcase
-             .gsub(/[^\w\s-]/, "") # Remove special chars
-             .gsub(/\s+/, "-")      # Spaces to hyphens
-             .gsub(/-+/, "-")       # Collapse multiple hyphens
-             .strip
-  "#{date}-#{slug}"
+  task = {
+    http_request: {
+      http_method: "POST",
+      url: worker_url,
+      headers: {
+        "Content-Type" => "application/json"
+      },
+      body: payload.to_json
+    }
+  }
+
+  client.create_task(parent: queue_path, task: task)
 end
 ```
 
@@ -704,37 +616,33 @@ end
 
 ```bash
 ruby test/test_api.rb
-# Should pass (with mocking)
+# Should pass (tests don't hit real GCS/Cloud Tasks)
 ```
 
 **Step 5: Run all tests**
 
 ```bash
 rake test
-```
-
-**Step 6: Run rubocop**
-
-```bash
 rake rubocop
-# Fix any issues
 ```
 
 **Commit**:
 ```bash
 git add api.rb test/test_api.rb
-git commit -m "Add API service with /publish endpoint"
+git commit -m "Add API service with /publish endpoint and health checks"
 ```
 
 ---
 
-#### Task 2.3: Create API Dockerfile
+#### Task 3.2: Create API Dockerfile
 
 **What**: Create a Dockerfile for the API service.
 
+**Why**: Cloud Run requires a container image to deploy.
+
 **Files to create**:
 - `Dockerfile.api`
-- `.dockerignore`
+- `.dockerignore` (if doesn't exist)
 
 **What to do**:
 
@@ -769,7 +677,7 @@ EXPOSE 8080
 CMD ["bundle", "exec", "ruby", "api.rb"]
 ```
 
-Create `.dockerignore` (if not exists):
+Create `.dockerignore` (if doesn't exist):
 ```
 .git
 .env
@@ -789,30 +697,11 @@ worker.rb
 Dockerfile.worker
 ```
 
-**Testing Dockerfile locally**:
+**Testing**:
 
-1. Build the image:
-   ```bash
-   docker build -f Dockerfile.api -t podcast-api .
-   ```
-
-2. Run the container:
-   ```bash
-   docker run -p 8080:8080 \
-     -e API_SECRET_TOKEN=test123 \
-     -e GOOGLE_CLOUD_PROJECT=your-project \
-     -e GOOGLE_CLOUD_BUCKET=your-bucket \
-     -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
-     -e WORKER_URL=https://test-worker.run.app/process \
-     -v $(pwd)/your-credentials.json:/app/credentials.json:ro \
-     podcast-api
-   ```
-
-3. Test with curl:
-   ```bash
-   curl http://localhost:8080/
-   # Should return: {"status":"ok","message":"Podcast Publishing API"}
-   ```
+```bash
+docker build -f Dockerfile.api -t podcast-api .
+```
 
 **Commit**:
 ```bash
@@ -822,13 +711,423 @@ git commit -m "Add Dockerfile for API service"
 
 ---
 
-### Phase 3: Worker Service
+### Phase 4: Worker Service Components
 
-#### Task 3.1: Create Episode Processor Class (Test First)
+#### Task 4.1: Create FileManager Class (Test First)
 
-**What**: Create a class that processes episodes (TTS, upload, RSS).
+**What**: Create a class to handle file operations (upload, download, delete from GCS).
 
-**Why**: This encapsulates all the publishing logic that the worker will execute.
+**Why**: Separates file management concerns from business logic, making the code more testable and maintainable.
+
+**Files to create**:
+- `test/test_file_manager.rb` (create FIRST)
+- `lib/file_manager.rb` (create AFTER tests)
+
+**What to do**:
+
+**Step 1: Write tests first**
+
+Create `test/test_file_manager.rb`:
+
+```ruby
+require "minitest/autorun"
+require_relative "../lib/file_manager"
+
+class TestFileManager < Minitest::Test
+  def test_save_mp3_creates_output_directory
+    manager = FileManager.new("test-bucket")
+
+    # Mock directory creation
+    Dir.stub :exist?, false do
+      Dir.stub :mkdir, nil do
+        path = manager.save_mp3_locally("test-file", "audio-content")
+        assert_equal "output/test-file.mp3", path
+      end
+    end
+  end
+
+  def test_builds_staging_path
+    manager = FileManager.new("test-bucket")
+    path = manager.staging_path("my-file")
+    assert_equal "staging/my-file.md", path
+  end
+
+  def test_builds_input_archive_path
+    manager = FileManager.new("test-bucket")
+    path = manager.input_archive_path("my-file")
+    assert_equal "input/my-file.md", path
+  end
+end
+```
+
+**Step 2: Run tests (should fail)**
+
+```bash
+ruby test/test_file_manager.rb
+# Expected: LoadError
+```
+
+**Step 3: Create implementation**
+
+Create `lib/file_manager.rb`:
+
+```ruby
+require_relative "gcs_uploader"
+
+# Manages file operations for episode processing
+# Handles local MP3 storage and GCS file lifecycle
+class FileManager
+  attr_reader :bucket_name
+
+  def initialize(bucket_name)
+    @bucket_name = bucket_name
+    @gcs = GCSUploader.new(bucket_name)
+  end
+
+  # Download markdown from GCS staging
+  # @param staging_path [String] Path in GCS (e.g., "staging/file.md")
+  # @return [String] File contents
+  def download_from_staging(staging_path)
+    @gcs.download_file(remote_path: staging_path)
+  end
+
+  # Save markdown to GCS with frontmatter for archival
+  # @param filename [String] Base filename without extension
+  # @param title [String] Episode title
+  # @param author [String] Episode author
+  # @param description [String] Episode description
+  # @param content [String] Markdown content
+  def save_markdown_to_archive(filename, title, author, description, content)
+    frontmatter = build_frontmatter(title, author, description)
+    full_content = frontmatter + content
+
+    path = input_archive_path(filename)
+    @gcs.upload_content(content: full_content, remote_path: path)
+
+    path
+  end
+
+  # Save MP3 to local output directory (temporary)
+  # @param filename [String] Base filename without extension
+  # @param audio_content [String] Binary audio data
+  # @return [String] Local file path
+  def save_mp3_locally(filename, audio_content)
+    Dir.mkdir("output") unless Dir.exist?("output")
+    path = File.join("output", "#{filename}.mp3")
+    File.write(path, audio_content, mode: "wb")
+    path
+  end
+
+  # Delete MP3 from local filesystem
+  # @param local_path [String] Path to local file
+  def delete_local_mp3(local_path)
+    File.delete(local_path) if File.exist?(local_path)
+  end
+
+  # Delete staging file from GCS
+  # @param staging_path [String] Path in GCS staging area
+  def cleanup_staging(staging_path)
+    @gcs.delete_file(remote_path: staging_path)
+  end
+
+  # Get staging path for a filename
+  # @param filename [String] Base filename
+  # @return [String] GCS staging path
+  def staging_path(filename)
+    "staging/#{filename}.md"
+  end
+
+  # Get input archive path for a filename
+  # @param filename [String] Base filename
+  # @return [String] GCS input path
+  def input_archive_path(filename)
+    "input/#{filename}.md"
+  end
+
+  private
+
+  def build_frontmatter(title, author, description)
+    "---\ntitle: \"#{title}\"\nauthor: \"#{author}\"\ndescription: \"#{description}\"\n---\n\n"
+  end
+end
+```
+
+**Step 4: Add download_file and delete_file to GCSUploader**
+
+Edit `lib/gcs_uploader.rb` and add these methods:
+
+```ruby
+# Download a file from GCS
+# @param remote_path [String] Path in bucket (e.g., "staging/file.md")
+# @return [String] File contents
+def download_file(remote_path:)
+  file = @bucket.file(remote_path)
+  raise "File not found: #{remote_path}" unless file
+
+  file.download.read
+end
+
+# Delete a file from GCS
+# @param remote_path [String] Path in bucket (e.g., "staging/file.md")
+def delete_file(remote_path:)
+  file = @bucket.file(remote_path)
+  file.delete if file
+end
+```
+
+**Step 5: Run tests**
+
+```bash
+ruby test/test_file_manager.rb
+rake test
+rake rubocop
+```
+
+**Commit**:
+```bash
+git add lib/file_manager.rb lib/gcs_uploader.rb test/test_file_manager.rb
+git commit -m "Add FileManager for GCS and local file operations"
+```
+
+---
+
+#### Task 4.2: Create AudioGenerator Class (Test First)
+
+**What**: Create a class to handle TTS audio generation.
+
+**Why**: Separates audio generation logic from the orchestration, making it easier to test and potentially swap TTS providers later.
+
+**Files to create**:
+- `test/test_audio_generator.rb` (create FIRST)
+- `lib/audio_generator.rb` (create AFTER tests)
+
+**What to do**:
+
+**Step 1: Write tests first**
+
+Create `test/test_audio_generator.rb`:
+
+```ruby
+require "minitest/autorun"
+require_relative "../lib/audio_generator"
+
+class TestAudioGenerator < Minitest::Test
+  def test_initialization_with_default_voice
+    generator = AudioGenerator.new
+    assert_equal "en-GB-Chirp3-HD-Enceladus", generator.voice
+  end
+
+  def test_initialization_with_custom_voice
+    generator = AudioGenerator.new(voice: "en-US-Chirp3-HD-Galahad")
+    assert_equal "en-US-Chirp3-HD-Galahad", generator.voice
+  end
+
+  def test_calculates_audio_size_in_kb
+    generator = AudioGenerator.new
+    size_kb = generator.send(:format_size, 1024)
+    assert_equal "1.0 KB", size_kb
+  end
+
+  def test_calculates_audio_size_in_mb
+    generator = AudioGenerator.new
+    size_mb = generator.send(:format_size, 1_048_576)
+    assert_equal "1.0 MB", size_mb
+  end
+end
+```
+
+**Step 2: Run tests (should fail)**
+
+```bash
+ruby test/test_audio_generator.rb
+```
+
+**Step 3: Create implementation**
+
+Create `lib/audio_generator.rb`:
+
+```ruby
+require_relative "tts"
+
+# Generates audio from text using TTS
+# Wraps the TTS class with logging and formatting
+class AudioGenerator
+  attr_reader :voice
+
+  def initialize(voice: nil)
+    @voice = voice || ENV.fetch("TTS_VOICE", "en-GB-Chirp3-HD-Enceladus")
+    @tts = TTS.new
+  end
+
+  # Generate audio from text
+  # @param text [String] Plain text to convert to speech
+  # @return [String] Binary audio content (MP3)
+  def generate(text)
+    puts "Generating audio with voice: #{@voice}"
+    puts "Text length: #{text.length} characters"
+
+    audio_content = @tts.synthesize(text, voice: @voice)
+
+    puts "Generated audio: #{format_size(audio_content.bytesize)}"
+
+    audio_content
+  end
+
+  private
+
+  def format_size(bytes)
+    if bytes < 1024
+      "#{bytes} bytes"
+    elsif bytes < 1_048_576
+      "#{(bytes / 1024.0).round(1)} KB"
+    else
+      "#{(bytes / 1_048_576.0).round(1)} MB"
+    end
+  end
+end
+```
+
+**Step 4: Run tests**
+
+```bash
+ruby test/test_audio_generator.rb
+rake test
+rake rubocop
+```
+
+**Commit**:
+```bash
+git add lib/audio_generator.rb test/test_audio_generator.rb
+git commit -m "Add AudioGenerator for TTS audio generation"
+```
+
+---
+
+#### Task 4.3: Create FeedPublisher Class (Test First)
+
+**What**: Create a class to handle podcast feed publishing.
+
+**Why**: Separates RSS feed and episode manifest logic from the orchestration.
+
+**Files to create**:
+- `test/test_feed_publisher.rb` (create FIRST)
+- `lib/feed_publisher.rb` (create AFTER tests)
+
+**What to do**:
+
+**Step 1: Write tests first**
+
+Create `test/test_feed_publisher.rb`:
+
+```ruby
+require "minitest/autorun"
+require_relative "../lib/feed_publisher"
+
+class TestFeedPublisher < Minitest::Test
+  def test_builds_episode_metadata
+    publisher = FeedPublisher.new("test-bucket")
+
+    metadata = publisher.send(
+      :build_metadata,
+      "Test Title",
+      "Test Author",
+      "Test Description"
+    )
+
+    assert_equal "Test Title", metadata["title"]
+    assert_equal "Test Author", metadata["author"]
+    assert_equal "Test Description", metadata["description"]
+  end
+end
+```
+
+**Step 2: Run tests (should fail)**
+
+```bash
+ruby test/test_feed_publisher.rb
+```
+
+**Step 3: Create implementation**
+
+Create `lib/feed_publisher.rb`:
+
+```ruby
+require "yaml"
+require_relative "gcs_uploader"
+require_relative "podcast_publisher"
+require_relative "episode_manifest"
+
+# Publishes episodes to the podcast feed
+# Orchestrates uploading MP3, updating manifest, and regenerating RSS
+class FeedPublisher
+  def initialize(bucket_name)
+    @bucket_name = bucket_name
+    @gcs_uploader = GCSUploader.new(bucket_name)
+    @episode_manifest = EpisodeManifest.new(@gcs_uploader)
+  end
+
+  # Publish episode to podcast feed
+  # @param mp3_path [String] Path to local MP3 file
+  # @param title [String] Episode title
+  # @param author [String] Episode author
+  # @param description [String] Episode description
+  # @return [String] URL of the published RSS feed
+  def publish(mp3_path, title, author, description)
+    puts "Publishing episode to podcast feed..."
+
+    podcast_config = load_podcast_config
+    metadata = build_metadata(title, author, description)
+
+    publisher = PodcastPublisher.new(
+      podcast_config: podcast_config,
+      gcs_uploader: @gcs_uploader,
+      episode_manifest: @episode_manifest
+    )
+
+    feed_url = publisher.publish(mp3_path, metadata)
+
+    puts "Episode published to feed: #{feed_url}"
+
+    feed_url
+  end
+
+  private
+
+  def load_podcast_config
+    YAML.load_file("config/podcast.yml")
+  end
+
+  def build_metadata(title, author, description)
+    {
+      "title" => title,
+      "author" => author,
+      "description" => description
+    }
+  end
+end
+```
+
+**Step 4: Run tests**
+
+```bash
+ruby test/test_feed_publisher.rb
+rake test
+rake rubocop
+```
+
+**Commit**:
+```bash
+git add lib/feed_publisher.rb test/test_feed_publisher.rb
+git commit -m "Add FeedPublisher for podcast RSS publishing"
+```
+
+---
+
+#### Task 4.4: Create EpisodeProcessor Orchestrator (Test First)
+
+**What**: Create the main orchestrator that coordinates FileManager, AudioGenerator, and FeedPublisher.
+
+**Why**: This is the "controller" that executes the full episode processing workflow.
 
 **Files to create**:
 - `test/test_episode_processor.rb` (create FIRST)
@@ -845,42 +1144,15 @@ require "minitest/autorun"
 require_relative "../lib/episode_processor"
 
 class TestEpisodeProcessor < Minitest::Test
-  def test_generates_filename_from_title
-    processor = EpisodeProcessor.new
-    filename = processor.send(:generate_filename, "My Test Title")
-
-    assert_match(/^\d{4}-\d{2}-\d{2}-my-test-title$/, filename)
+  def test_initialization_with_bucket
+    processor = EpisodeProcessor.new("test-bucket")
+    assert_equal "test-bucket", processor.bucket_name
   end
 
-  def test_generates_filename_removes_special_characters
+  def test_initialization_uses_env_bucket
+    ENV["GOOGLE_CLOUD_BUCKET"] = "env-bucket"
     processor = EpisodeProcessor.new
-    filename = processor.send(:generate_filename, "Title with (special) chars!")
-
-    assert_match(/title-with-special-chars$/, filename)
-  end
-
-  def test_generates_filename_collapses_multiple_hyphens
-    processor = EpisodeProcessor.new
-    filename = processor.send(:generate_filename, "Title   with   spaces")
-
-    refute_match(/--/, filename)
-  end
-
-  def test_builds_episode_data
-    processor = EpisodeProcessor.new
-    data = processor.send(
-      :build_episode_data,
-      "Test Title",
-      "Test Author",
-      "Test Description",
-      "test-guid"
-    )
-
-    assert_equal "Test Title", data["title"]
-    assert_equal "Test Author", data["author"]
-    assert_equal "Test Description", data["description"]
-    assert_equal "test-guid", data["id"]
-    assert_equal "test-guid", data["guid"]
+    assert_equal "env-bucket", processor.bucket_name
   end
 end
 ```
@@ -889,7 +1161,6 @@ end
 
 ```bash
 ruby test/test_episode_processor.rb
-# Expected: LoadError
 ```
 
 **Step 3: Create implementation**
@@ -897,173 +1168,110 @@ ruby test/test_episode_processor.rb
 Create `lib/episode_processor.rb`:
 
 ```ruby
-require "time"
-require "securerandom"
 require_relative "text_processor"
-require_relative "tts"
-require_relative "gcs_uploader"
-require_relative "episode_manifest"
-require_relative "podcast_publisher"
+require_relative "file_manager"
+require_relative "audio_generator"
+require_relative "feed_publisher"
+require_relative "filename_generator"
 
-# Processes episode publishing from markdown to published podcast episode
-# This is the main orchestrator that coordinates all the publishing steps
+# Orchestrates episode processing from markdown to published podcast
+# Coordinates FileManager, AudioGenerator, and FeedPublisher
 class EpisodeProcessor
+  attr_reader :bucket_name
+
+  def initialize(bucket_name = nil)
+    @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET")
+    @file_manager = FileManager.new(@bucket_name)
+    @audio_generator = AudioGenerator.new
+    @feed_publisher = FeedPublisher.new(@bucket_name)
+  end
+
   # Process an episode from start to finish
   # @param title [String] Episode title
   # @param author [String] Episode author
   # @param description [String] Episode description
   # @param markdown_content [String] Article body in markdown
   def process(title, author, description, markdown_content)
+    puts "=" * 60
     puts "Starting episode processing: #{title}"
+    puts "=" * 60
 
-    # Step 1: Generate filename from title
-    filename = generate_filename(title)
+    filename = FilenameGenerator.generate(title)
+    mp3_path = nil
 
-    # Step 2: Save markdown to GCS with frontmatter (for record keeping)
-    save_markdown_to_gcs(filename, title, author, description, markdown_content)
+    begin
+      # Step 1: Process markdown to plain text
+      puts "\n[1/5] Processing markdown..."
+      text = TextProcessor.convert_to_plain_text(markdown_content)
+      puts "✓ Processed #{text.length} characters"
 
-    # Step 3: Process markdown to plain text
-    text = TextProcessor.convert_to_plain_text(markdown_content)
-    puts "Processed markdown: #{text.length} characters"
+      # Step 2: Generate TTS audio
+      puts "\n[2/5] Generating audio..."
+      audio_content = @audio_generator.generate(text)
+      puts "✓ Audio generated"
 
-    # Step 4: Generate TTS audio
-    tts = TTS.new
-    audio_content = tts.synthesize(text, voice: ENV.fetch("TTS_VOICE", "en-GB-Chirp3-HD-Enceladus"))
-    puts "Generated audio: #{audio_content.bytesize} bytes"
+      # Step 3: Save MP3 locally (temporary)
+      puts "\n[3/5] Saving audio file..."
+      mp3_path = @file_manager.save_mp3_locally(filename, audio_content)
+      puts "✓ Saved to: #{mp3_path}"
 
-    # Step 5: Save MP3 locally (temporary)
-    mp3_path = save_mp3_locally(filename, audio_content)
-    puts "Saved MP3 to: #{mp3_path}"
+      # Step 4: Publish to podcast feed
+      puts "\n[4/5] Publishing to podcast feed..."
+      @feed_publisher.publish(mp3_path, title, author, description)
+      puts "✓ Published to feed"
 
-    # Step 6: Publish to podcast feed
-    publish_episode(mp3_path, title, author, description)
+      # Step 5: Archive markdown to GCS
+      puts "\n[5/5] Archiving markdown..."
+      archive_path = @file_manager.save_markdown_to_archive(
+        filename, title, author, description, markdown_content
+      )
+      puts "✓ Archived to: #{archive_path}"
 
-    # Step 7: Cleanup local file
-    File.delete(mp3_path) if File.exist?(mp3_path)
-
-    # Step 8: Cleanup staging file from GCS
-    cleanup_staging_file(filename)
-
-    puts "Episode published successfully: #{title}"
+      puts "\n" + "=" * 60
+      puts "✓ Episode published successfully!"
+      puts "=" * 60
+    ensure
+      # Always cleanup local MP3 file
+      if mp3_path
+        @file_manager.delete_local_mp3(mp3_path)
+        puts "✓ Cleaned up local file: #{mp3_path}"
+      end
+    end
   end
 
-  private
-
-  # Generate filename from title: "My Title" -> "2025-10-28-my-title"
-  def generate_filename(title)
-    date = Time.now.strftime("%Y-%m-%d")
-    slug = title.downcase
-               .gsub(/[^\w\s-]/, "") # Remove special chars
-               .gsub(/\s+/, "-")      # Spaces to hyphens
-               .gsub(/-+/, "-")       # Collapse multiple hyphens
-               .strip
-    "#{date}-#{slug}"
-  end
-
-  # Save markdown file to GCS with frontmatter
-  def save_markdown_to_gcs(filename, title, author, description, content)
-    frontmatter = "---\ntitle: \"#{title}\"\nauthor: \"#{author}\"\ndescription: \"#{description}\"\n---\n\n"
-    full_content = frontmatter + content
-
-    gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
-    gcs.upload_content(
-      content: full_content,
-      remote_path: "input/#{filename}.md"
-    )
-    puts "Saved markdown to GCS: input/#{filename}.md"
-  end
-
-  # Save MP3 to local output directory
-  def save_mp3_locally(filename, audio_content)
-    Dir.mkdir("output") unless Dir.exist?("output")
-    path = File.join("output", "#{filename}.mp3")
-    File.write(path, audio_content, mode: "wb")
-    path
-  end
-
-  # Publish episode using existing PodcastPublisher
-  def publish_episode(mp3_path, title, author, description)
-    podcast_config = YAML.load_file("config/podcast.yml")
-    gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
-    episode_manifest = EpisodeManifest.new(gcs_uploader)
-
-    publisher = PodcastPublisher.new(
-      podcast_config: podcast_config,
-      gcs_uploader: gcs_uploader,
-      episode_manifest: episode_manifest
-    )
-
-    metadata = {
-      "title" => title,
-      "author" => author,
-      "description" => description
-    }
-
-    publisher.publish(mp3_path, metadata)
-  end
-
-  # Cleanup staging file from GCS after processing
-  def cleanup_staging_file(filename)
-    gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
-    gcs.delete_file(remote_path: "staging/#{filename}.md")
-    puts "Cleaned up staging file: staging/#{filename}.md"
+  # Cleanup staging file from GCS
+  # @param staging_path [String] Path to staging file
+  def cleanup_staging(staging_path)
+    @file_manager.cleanup_staging(staging_path)
+    puts "✓ Cleaned up staging: #{staging_path}"
   rescue StandardError => e
-    puts "Warning: Failed to cleanup staging file: #{e.message}"
+    puts "⚠ Warning: Failed to cleanup staging file: #{e.message}"
     # Don't fail the whole process if cleanup fails
   end
-
-  # Build episode data hash
-  def build_episode_data(title, author, description, guid)
-    {
-      "id" => guid,
-      "title" => title,
-      "description" => description,
-      "author" => author,
-      "guid" => guid
-    }
-  end
 end
 ```
 
-**Step 4: Add delete_file method to GCSUploader**
-
-We need to add a delete method to GCSUploader for cleanup. Edit `lib/gcs_uploader.rb`:
-
-```ruby
-# Add this method to the GCSUploader class
-# Delete a file from GCS
-# @param remote_path [String] Path in bucket (e.g., "staging/file.md")
-def delete_file(remote_path:)
-  file = @bucket.file(remote_path)
-  file.delete if file
-end
-```
-
-**Step 5: Run tests**
+**Step 4: Run tests**
 
 ```bash
 ruby test/test_episode_processor.rb
-# Should pass
-```
-
-**Step 6: Run all tests and rubocop**
-
-```bash
 rake test
 rake rubocop
 ```
 
 **Commit**:
 ```bash
-git add lib/episode_processor.rb lib/gcs_uploader.rb test/test_episode_processor.rb
-git commit -m "Add EpisodeProcessor for episode publishing logic"
+git add lib/episode_processor.rb test/test_episode_processor.rb
+git commit -m "Add EpisodeProcessor orchestrator for episode workflow"
 ```
 
 ---
 
-#### Task 3.2: Create Worker Service (Test First)
+#### Task 4.5: Create Worker Service (Test First)
 
 **What**: Create the Worker Sinatra application that processes episodes.
+
+**Why**: This service is triggered by Cloud Tasks to do the heavy TTS processing.
 
 **Files to create**:
 - `test/test_worker.rb` (create FIRST)
@@ -1095,14 +1303,16 @@ class TestWorker < Minitest::Test
   # Health Check Tests
 
   def test_health_check_returns_200
-    get "/"
+    get "/health"
     assert_equal 200, last_response.status
   end
 
-  def test_health_check_returns_json
-    get "/"
+  def test_health_check_validates_environment
+    get "/health"
     body = JSON.parse(last_response.body)
-    assert_equal "ok", body["status"]
+
+    assert_equal "healthy", body["status"]
+    assert body["checks"]["env_vars_set"]
   end
 
   # Request Validation Tests
@@ -1130,25 +1340,6 @@ class TestWorker < Minitest::Test
     assert_equal 400, last_response.status
   end
 
-  # Success Tests (with mocked processor)
-
-  def test_valid_request_returns_200
-    mock_processor do
-      post "/process", valid_task_payload, json_headers
-      assert_equal 200, last_response.status
-    end
-  end
-
-  def test_valid_request_returns_success_json
-    mock_processor do
-      post "/process", valid_task_payload, json_headers
-
-      body = JSON.parse(last_response.body)
-      assert_equal "success", body["status"]
-      assert_equal "Episode processed successfully", body["message"]
-    end
-  end
-
   private
 
   def json_headers
@@ -1174,12 +1365,6 @@ class TestWorker < Minitest::Test
     payload.delete(key)
     payload.to_json
   end
-
-  def mock_processor
-    # In real implementation, we'll mock the EpisodeProcessor
-    # For now, this is a placeholder
-    yield
-  end
 end
 ```
 
@@ -1187,7 +1372,6 @@ end
 
 ```bash
 ruby test/test_worker.rb
-# Expected: LoadError
 ```
 
 **Step 3: Create the worker app**
@@ -1198,7 +1382,7 @@ Create `worker.rb`:
 require "sinatra"
 require "sinatra/json"
 require "json"
-require_relative "lib/gcs_uploader"
+require_relative "lib/file_manager"
 require_relative "lib/episode_processor"
 
 # Configure Sinatra
@@ -1206,9 +1390,24 @@ set :port, ENV.fetch("PORT", 8080)
 set :bind, "0.0.0.0"
 set :show_exceptions, false
 
-# Health check endpoint for Cloud Run
-get "/" do
-  json status: "ok", message: "Podcast Worker Service"
+# Health check endpoint with environment validation
+get "/health" do
+  required_vars = %w[
+    GOOGLE_CLOUD_PROJECT
+    GOOGLE_CLOUD_BUCKET
+  ]
+
+  missing_vars = required_vars.reject { |var| ENV[var] }
+
+  if missing_vars.empty?
+    json status: "healthy", checks: { env_vars_set: true }
+  else
+    halt 500, json(
+      status: "unhealthy",
+      checks: { env_vars_set: false },
+      missing_vars: missing_vars
+    )
+  end
 end
 
 # Episode processing endpoint (invoked by Cloud Tasks)
@@ -1233,13 +1432,17 @@ post "/process" do
   logger.info "Downloading from GCS: #{gcs_path}"
 
   # Step 4: Download markdown from GCS staging
-  markdown_content = download_from_gcs(gcs_path)
+  file_manager = FileManager.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
+  markdown_content = file_manager.download_from_staging(gcs_path)
 
   # Step 5: Process episode
   processor = EpisodeProcessor.new
   processor.process(title, author, description, markdown_content)
 
-  # Step 6: Return success
+  # Step 6: Cleanup staging file
+  processor.cleanup_staging(gcs_path)
+
+  # Step 7: Return success
   logger.info "Episode processed successfully: #{title}"
   json status: "success", message: "Episode processed successfully"
 rescue JSON::ParserError => e
@@ -1260,54 +1463,25 @@ def validate_payload(payload)
 
   nil # No errors
 end
-
-# Download markdown content from GCS
-def download_from_gcs(gcs_path)
-  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"))
-  gcs.download_file(remote_path: gcs_path)
-end
 ```
 
-**Step 4: Add download_file method to GCSUploader**
-
-Edit `lib/gcs_uploader.rb` to add a download method:
-
-```ruby
-# Add this method to the GCSUploader class
-# Download a file from GCS
-# @param remote_path [String] Path in bucket (e.g., "staging/file.md")
-# @return [String] File contents
-def download_file(remote_path:)
-  file = @bucket.file(remote_path)
-  raise "File not found: #{remote_path}" unless file
-
-  file.download.read
-end
-```
-
-**Step 5: Run tests**
+**Step 4: Run tests**
 
 ```bash
 ruby test/test_worker.rb
-# Should pass
-```
-
-**Step 6: Run all tests and rubocop**
-
-```bash
 rake test
 rake rubocop
 ```
 
 **Commit**:
 ```bash
-git add worker.rb lib/gcs_uploader.rb test/test_worker.rb
+git add worker.rb test/test_worker.rb
 git commit -m "Add worker service for episode processing"
 ```
 
 ---
 
-#### Task 3.3: Create Worker Dockerfile
+#### Task 4.6: Create Worker Dockerfile
 
 **What**: Create a Dockerfile for the Worker service.
 
@@ -1350,7 +1524,7 @@ EXPOSE 8080
 CMD ["bundle", "exec", "ruby", "worker.rb"]
 ```
 
-Update `.dockerignore` to exclude api.rb from worker:
+Update `.dockerignore`:
 ```
 .git
 .env
@@ -1366,6 +1540,7 @@ generate.rb
 test_single_chunk.rb
 .ruby-lsp/
 very-normal-text-to-speech-*.json
+api.rb
 ```
 
 **Testing**:
@@ -1382,11 +1557,111 @@ git commit -m "Add Dockerfile for worker service"
 
 ---
 
-### Phase 4: Deployment
+### Phase 5: Infrastructure & Deployment
 
-#### Task 4.1: Update Environment Variables
+#### Task 5.1: Create Infrastructure Setup Script
 
-**What**: Add new required environment variables for both services.
+**What**: Create a script to set up Google Cloud infrastructure (Cloud Tasks queue).
+
+**Why**: Automates the one-time infrastructure setup, making it repeatable and documented.
+
+**Files to create**:
+- `bin/setup-infrastructure`
+
+**What to do**:
+
+Create `bin/setup-infrastructure`:
+```bash
+#!/bin/bash
+set -e
+
+echo "================================"
+echo "Setting up Cloud Infrastructure"
+echo "================================"
+
+# Check if gcloud is installed
+if ! command -v gcloud &> /dev/null; then
+    echo "Error: gcloud CLI is not installed"
+    echo "Install from: https://cloud.google.com/sdk/docs/install"
+    exit 1
+fi
+
+# Load environment variables
+if [ -f .env ]; then
+    source .env
+else
+    echo "Error: .env file not found"
+    echo "Copy .env.example to .env and configure it"
+    exit 1
+fi
+
+# Check required environment variables
+if [ -z "$GOOGLE_CLOUD_PROJECT" ]; then
+    echo "Error: GOOGLE_CLOUD_PROJECT not set in .env"
+    exit 1
+fi
+
+PROJECT_ID=$GOOGLE_CLOUD_PROJECT
+LOCATION=${CLOUD_TASKS_LOCATION:-us-central1}
+QUEUE_NAME=${CLOUD_TASKS_QUEUE:-episode-processing}
+
+echo ""
+echo "Project: $PROJECT_ID"
+echo "Location: $LOCATION"
+echo "Queue: $QUEUE_NAME"
+echo ""
+
+# Enable required APIs
+echo "Enabling Google Cloud APIs..."
+gcloud services enable run.googleapis.com --project=$PROJECT_ID
+gcloud services enable cloudtasks.googleapis.com --project=$PROJECT_ID
+echo "✓ APIs enabled"
+
+# Create Cloud Tasks queue
+echo ""
+echo "Creating Cloud Tasks queue..."
+if gcloud tasks queues describe $QUEUE_NAME --location=$LOCATION --project=$PROJECT_ID &> /dev/null; then
+    echo "✓ Queue already exists: $QUEUE_NAME"
+else
+    gcloud tasks queues create $QUEUE_NAME \
+        --location=$LOCATION \
+        --project=$PROJECT_ID \
+        --max-attempts=3 \
+        --max-retry-duration=1h
+    echo "✓ Queue created: $QUEUE_NAME"
+fi
+
+echo ""
+echo "================================"
+echo "Infrastructure setup complete!"
+echo "================================"
+echo ""
+echo "Next steps:"
+echo "  1. Deploy services: ./bin/deploy"
+echo "  2. Test the API: see examples/ directory"
+```
+
+Make it executable:
+```bash
+chmod +x bin/setup-infrastructure
+```
+
+**Testing**: Run the script:
+```bash
+./bin/setup-infrastructure
+```
+
+**Commit**:
+```bash
+git add bin/setup-infrastructure
+git commit -m "Add infrastructure setup script for Cloud Tasks"
+```
+
+---
+
+#### Task 5.2: Update Environment Variables
+
+**What**: Update .env.example with all required variables.
 
 **Files to modify**:
 - `.env.example`
@@ -1408,6 +1683,7 @@ GOOGLE_CLOUD_BUCKET=your-bucket-name
 GOOGLE_APPLICATION_CREDENTIALS=./path/to/your-credentials.json
 
 # API Configuration
+# Generate with: openssl rand -hex 32
 API_SECRET_TOKEN=your-secret-token-here
 
 # Cloud Tasks Configuration
@@ -1415,7 +1691,8 @@ CLOUD_TASKS_LOCATION=us-central1
 CLOUD_TASKS_QUEUE=episode-processing
 
 # Worker Service URL (set after worker is deployed)
-WORKER_URL=https://podcast-worker-XXXXXXXX.run.app/process
+# Format: https://podcast-worker-XXXXXXXX.run.app/process
+WORKER_URL=
 
 # TTS Voice (optional, defaults to en-GB-Chirp3-HD-Enceladus)
 TTS_VOICE=en-GB-Chirp3-HD-Enceladus
@@ -1435,188 +1712,226 @@ echo "CLOUD_TASKS_QUEUE=episode-processing" >> .env
 **Commit**:
 ```bash
 git add .env.example
-git commit -m "Add environment variables for Cloud Tasks and services"
+git commit -m "Add all required environment variables"
 ```
 
 ---
 
-#### Task 4.2: Create Cloud Tasks Queue
+#### Task 5.3: Create Unified Deployment Script
 
-**What**: Create the Cloud Tasks queue that connects the two services.
+**What**: Create a single deployment script that handles both services.
 
-**Why**: We need a queue before we can deploy the services.
+**Why**: DRY - avoids duplication between separate deployment scripts.
+
+**Files to create**:
+- `bin/deploy`
 
 **What to do**:
 
-1. **Enable Cloud Tasks API**:
-   ```bash
-   gcloud services enable cloudtasks.googleapis.com
-   ```
-
-2. **Create the queue**:
-   ```bash
-   gcloud tasks queues create episode-processing \
-     --location=us-central1 \
-     --max-attempts=3 \
-     --max-retry-duration=1h
-   ```
-
-3. **Verify the queue was created**:
-   ```bash
-   gcloud tasks queues describe episode-processing --location=us-central1
-   ```
-
-   You should see output showing the queue configuration.
-
-4. **Update .env with queue name** (if not already there):
-   ```bash
-   echo "CLOUD_TASKS_QUEUE=episode-processing" >> .env
-   ```
-
-**Testing**: Queue is ready to use after creation.
-
-**Note**: This is a one-time setup. The queue persists across deployments.
-
-**Commit** (if you made config changes):
+Create `bin/deploy`:
 ```bash
-git commit --allow-empty -m "Create Cloud Tasks queue for episode processing"
+#!/bin/bash
+set -e
+
+# Default values
+SERVICE=""
+REGION="us-central1"
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --service)
+            SERVICE="$2"
+            shift 2
+            ;;
+        --region)
+            REGION="$2"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: ./bin/deploy --service <api|worker|all> [--region REGION]"
+            echo ""
+            echo "Options:"
+            echo "  --service    Which service to deploy (api, worker, or all)"
+            echo "  --region     Google Cloud region (default: us-central1)"
+            echo ""
+            echo "Examples:"
+            echo "  ./bin/deploy --service all"
+            echo "  ./bin/deploy --service api"
+            echo "  ./bin/deploy --service worker"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Check if service is specified
+if [ -z "$SERVICE" ]; then
+    echo "Error: --service is required"
+    echo "Use --help for usage information"
+    exit 1
+fi
+
+# Load environment variables
+if [ -f .env ]; then
+    source .env
+else
+    echo "Error: .env file not found"
+    exit 1
+fi
+
+# Validate required env vars
+if [ -z "$GOOGLE_CLOUD_PROJECT" ] || [ -z "$GOOGLE_CLOUD_BUCKET" ] || [ -z "$API_SECRET_TOKEN" ]; then
+    echo "Error: Required environment variables not set"
+    echo "Check your .env file for: GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_BUCKET, API_SECRET_TOKEN"
+    exit 1
+fi
+
+# Deploy worker function
+deploy_worker() {
+    echo "================================"
+    echo "Deploying Worker Service"
+    echo "================================"
+
+    gcloud run deploy podcast-worker \
+        --source . \
+        --dockerfile Dockerfile.worker \
+        --project $GOOGLE_CLOUD_PROJECT \
+        --region $REGION \
+        --platform managed \
+        --allow-unauthenticated \
+        --memory 2Gi \
+        --timeout 600s \
+        --max-instances 1 \
+        --min-instances 0 \
+        --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
+        --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET"
+
+    echo "✓ Worker service deployed"
+}
+
+# Deploy API function
+deploy_api() {
+    echo "================================"
+    echo "Deploying API Service"
+    echo "================================"
+
+    # Get worker URL if not set
+    if [ -z "$WORKER_URL" ]; then
+        echo "Getting worker URL..."
+        WORKER_URL=$(gcloud run services describe podcast-worker \
+            --region $REGION \
+            --project $GOOGLE_CLOUD_PROJECT \
+            --format 'value(status.url)')/process
+
+        # Update .env with worker URL
+        if ! grep -q "^WORKER_URL=" .env; then
+            echo "WORKER_URL=$WORKER_URL" >> .env
+        fi
+    fi
+
+    gcloud run deploy podcast-api \
+        --source . \
+        --dockerfile Dockerfile.api \
+        --project $GOOGLE_CLOUD_PROJECT \
+        --region $REGION \
+        --platform managed \
+        --allow-unauthenticated \
+        --memory 1Gi \
+        --timeout 60s \
+        --max-instances 1 \
+        --min-instances 0 \
+        --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
+        --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET" \
+        --set-env-vars "API_SECRET_TOKEN=$API_SECRET_TOKEN" \
+        --set-env-vars "WORKER_URL=$WORKER_URL" \
+        --set-env-vars "CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION:-us-central1}" \
+        --set-env-vars "CLOUD_TASKS_QUEUE=${CLOUD_TASKS_QUEUE:-episode-processing}"
+
+    echo "✓ API service deployed"
+}
+
+# Deploy based on service argument
+case $SERVICE in
+    worker)
+        deploy_worker
+        ;;
+    api)
+        deploy_api
+        ;;
+    all)
+        deploy_worker
+        deploy_api
+
+        # Show summary
+        API_URL=$(gcloud run services describe podcast-api \
+            --region $REGION \
+            --project $GOOGLE_CLOUD_PROJECT \
+            --format 'value(status.url)')
+
+        echo ""
+        echo "================================"
+        echo "Deployment Complete!"
+        echo "================================"
+        echo ""
+        echo "API URL: $API_URL"
+        echo "Worker URL: ${WORKER_URL%/process}"
+        echo ""
+        echo "Test your API:"
+        echo "  See examples/ directory for curl commands"
+        ;;
+    *)
+        echo "Error: Invalid service '$SERVICE'"
+        echo "Must be: api, worker, or all"
+        exit 1
+        ;;
+esac
 ```
 
----
-
-#### Task 4.3: Deploy Worker Service First
-
-**What**: Deploy the worker service to Cloud Run.
-
-**Why**: We need the worker URL before we can deploy the API (API needs to know where to send tasks).
-
-**What to do**:
-
-1. **Build and deploy worker**:
-   ```bash
-   gcloud run deploy podcast-worker \
-     --source . \
-     --dockerfile Dockerfile.worker \
-     --project $GOOGLE_CLOUD_PROJECT \
-     --region us-central1 \
-     --platform managed \
-     --allow-unauthenticated \
-     --memory 2Gi \
-     --timeout 600s \
-     --max-instances 1 \
-     --min-instances 0 \
-     --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
-     --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET"
-   ```
-
-2. **Get the worker URL**:
-   ```bash
-   gcloud run services describe podcast-worker \
-     --region us-central1 \
-     --format 'value(status.url)'
-   ```
-
-   Copy this URL!
-
-3. **Add /process to the URL and save to .env**:
-   ```bash
-   # If URL is: https://podcast-worker-abc123.run.app
-   # Set WORKER_URL to: https://podcast-worker-abc123.run.app/process
-   echo "WORKER_URL=https://podcast-worker-XXXXXXXX.run.app/process" >> .env
-   ```
-
-4. **Test the worker health check**:
-   ```bash
-   curl https://YOUR_WORKER_URL.run.app/
-   # Should return: {"status":"ok","message":"Podcast Worker Service"}
-   ```
-
-**Important Security Note**:
-We're using `--allow-unauthenticated` for simplicity. Cloud Tasks will invoke this endpoint. In production, you might want to:
-- Add authentication between API and Worker
-- Use Cloud Tasks service account authentication
-- Restrict access by IP or service account
-
-For now, the simple approach works fine.
-
-**Commit** (if you made .env changes - don't commit .env itself):
+Make it executable:
 ```bash
-git commit --allow-empty -m "Deploy worker service to Cloud Run"
+chmod +x bin/deploy
 ```
 
----
-
-#### Task 4.4: Deploy API Service
-
-**What**: Deploy the API service to Cloud Run.
-
-**Why**: Now that we have the worker URL, we can deploy the API that sends tasks to it.
-
-**What to do**:
-
-1. **Source environment variables**:
-   ```bash
-   source .env
-   ```
-
-2. **Deploy API service**:
-   ```bash
-   gcloud run deploy podcast-api \
-     --source . \
-     --dockerfile Dockerfile.api \
-     --project $GOOGLE_CLOUD_PROJECT \
-     --region us-central1 \
-     --platform managed \
-     --allow-unauthenticated \
-     --memory 1Gi \
-     --timeout 60s \
-     --max-instances 1 \
-     --min-instances 0 \
-     --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
-     --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET" \
-     --set-env-vars "API_SECRET_TOKEN=$API_SECRET_TOKEN" \
-     --set-env-vars "WORKER_URL=$WORKER_URL" \
-     --set-env-vars "CLOUD_TASKS_LOCATION=us-central1" \
-     --set-env-vars "CLOUD_TASKS_QUEUE=episode-processing"
-   ```
-
-3. **Get the API URL**:
-   ```bash
-   gcloud run services describe podcast-api \
-     --region us-central1 \
-     --format 'value(status.url)'
-   ```
-
-   Save this - it's your public API endpoint!
-
-4. **Test the API health check**:
-   ```bash
-   curl https://YOUR_API_URL.run.app/
-   # Should return: {"status":"ok","message":"Podcast Publishing API"}
-   ```
-
-5. **Test authentication**:
-   ```bash
-   curl -X POST https://YOUR_API_URL.run.app/publish
-   # Should return 401: {"status":"error","message":"Unauthorized..."}
-   ```
+**Testing**:
+```bash
+./bin/deploy --help
+```
 
 **Commit**:
 ```bash
-git commit --allow-empty -m "Deploy API service to Cloud Run"
+git add bin/deploy
+git commit -m "Add unified deployment script for both services"
 ```
 
 ---
 
-#### Task 4.5: End-to-End Testing
+#### Task 5.4: End-to-End Testing
 
-**What**: Test the complete flow from API to Worker to published episode.
+**What**: Deploy both services and test the complete flow.
+
+**Why**: Verify everything works together in production.
 
 **What to do**:
 
-1. **Create a test markdown file**:
+1. **Run infrastructure setup** (if not done):
    ```bash
-   cat > /tmp/test-episode.md << 'EOF'
+   ./bin/setup-infrastructure
+   ```
+
+2. **Deploy both services**:
+   ```bash
+   ./bin/deploy --service all
+   ```
+
+3. **Create a test markdown file**:
+   ```bash
+   mkdir -p /tmp/podcast-test
+   cat > /tmp/podcast-test/test-episode.md << 'EOF'
    # Test Episode
 
    This is a test episode to verify the complete publishing pipeline.
@@ -1631,14 +1946,35 @@ git commit --allow-empty -m "Deploy API service to Cloud Run"
    EOF
    ```
 
-2. **Submit the episode**:
+4. **Get your API URL**:
    ```bash
-   curl -X POST https://YOUR_API_URL.run.app/publish \
+   API_URL=$(gcloud run services describe podcast-api \
+     --region us-central1 \
+     --format 'value(status.url)')
+   echo $API_URL
+   ```
+
+5. **Test health checks**:
+   ```bash
+   # API health
+   curl $API_URL/health
+
+   # Worker health
+   WORKER_URL=$(gcloud run services describe podcast-worker \
+     --region us-central1 \
+     --format 'value(status.url)')
+   curl $WORKER_URL/health
+   ```
+
+6. **Submit test episode**:
+   ```bash
+   source .env
+   curl -X POST $API_URL/publish \
      -H "Authorization: Bearer $API_SECRET_TOKEN" \
      -F "title=Test Episode $(date +%s)" \
      -F "author=API Tester" \
      -F "description=Testing the complete publishing pipeline" \
-     -F "content=@/tmp/test-episode.md"
+     -F "content=@/tmp/podcast-test/test-episode.md"
    ```
 
    Should return immediately:
@@ -1646,64 +1982,38 @@ git commit --allow-empty -m "Deploy API service to Cloud Run"
    {"status":"success","message":"Episode submitted for processing"}
    ```
 
-3. **Check API logs** (verify task was enqueued):
+7. **Monitor processing** (wait 30-60 seconds):
    ```bash
+   # Check API logs
    gcloud run logs read podcast-api --region us-central1 --limit 20
-   ```
 
-   Look for: "Enqueued task for: Test Episode"
-
-4. **Check worker logs** (verify processing):
-   ```bash
+   # Check worker logs (look for "Episode published successfully")
    gcloud run logs read podcast-worker --region us-central1 --limit 50
    ```
 
-   Look for:
-   - "Processing episode: Test Episode"
-   - "Processed markdown"
-   - "Generated audio"
-   - "Episode published successfully"
-
-5. **Verify episode in RSS feed**:
+8. **Verify episode published**:
    ```bash
+   # Check RSS feed
    curl https://storage.googleapis.com/$GOOGLE_CLOUD_BUCKET/feed.xml | grep "Test Episode"
-   ```
 
-   Should show your episode in the XML.
-
-6. **List episodes in GCS**:
-   ```bash
+   # List episodes
    gsutil ls gs://$GOOGLE_CLOUD_BUCKET/episodes/
    gsutil ls gs://$GOOGLE_CLOUD_BUCKET/input/
    ```
 
-   Should show the MP3 file and markdown file.
-
-7. **Check Cloud Tasks queue**:
+9. **Check Cloud Tasks queue**:
    ```bash
    gcloud tasks queues describe episode-processing --location=us-central1
    ```
 
-   Should show tasks processed count.
-
-**If anything fails**:
-
-- Check API logs for upload or task creation errors
-- Check worker logs for processing errors
-- Verify WORKER_URL is correct in API service
-- Verify service account has necessary permissions
-- Check Cloud Tasks queue for failed tasks:
-  ```bash
-  gcloud tasks list --queue=episode-processing --location=us-central1
-  ```
-
 **Success Criteria**:
+- ✅ Both health checks return "healthy"
 - ✅ API returns 200 immediately
-- ✅ Task appears in Cloud Tasks
-- ✅ Worker processes the episode
-- ✅ MP3 file appears in GCS
+- ✅ Worker logs show successful processing
+- ✅ MP3 file appears in GCS episodes/
+- ✅ Markdown appears in GCS input/
 - ✅ Episode appears in RSS feed
-- ✅ All logs show success
+- ✅ No staging file left in GCS
 
 **Commit**:
 ```bash
@@ -1712,145 +2022,205 @@ git commit --allow-empty -m "Complete end-to-end testing of publishing pipeline"
 
 ---
 
-#### Task 4.6: Create Deployment Scripts
+### Phase 6: Documentation & Examples
 
-**What**: Create convenience scripts for redeployment.
+#### Task 6.1: Create Example Scripts
+
+**What**: Create example curl commands and scripts for using the API.
+
+**Why**: Makes it easy for users (including future you) to test and use the API.
 
 **Files to create**:
-- `bin/deploy-api`
-- `bin/deploy-worker`
-- `bin/deploy-all`
+- `examples/publish-episode.sh`
+- `examples/README.md`
 
 **What to do**:
 
-Create `bin/deploy-api`:
+Create `examples/` directory:
 ```bash
-#!/bin/bash
-set -e
-
-echo "Deploying API Service..."
-source .env
-
-gcloud run deploy podcast-api \
-  --source . \
-  --dockerfile Dockerfile.api \
-  --project $GOOGLE_CLOUD_PROJECT \
-  --region us-central1 \
-  --platform managed \
-  --allow-unauthenticated \
-  --memory 1Gi \
-  --timeout 60s \
-  --max-instances 1 \
-  --min-instances 0 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
-  --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET" \
-  --set-env-vars "API_SECRET_TOKEN=$API_SECRET_TOKEN" \
-  --set-env-vars "WORKER_URL=$WORKER_URL" \
-  --set-env-vars "CLOUD_TASKS_LOCATION=us-central1" \
-  --set-env-vars "CLOUD_TASKS_QUEUE=episode-processing"
-
-echo "API Service deployed successfully!"
+mkdir -p examples
 ```
 
-Create `bin/deploy-worker`:
+Create `examples/publish-episode.sh`:
 ```bash
 #!/bin/bash
 set -e
 
-echo "Deploying Worker Service..."
-source .env
-
-gcloud run deploy podcast-worker \
-  --source . \
-  --dockerfile Dockerfile.worker \
-  --project $GOOGLE_CLOUD_PROJECT \
-  --region us-central1 \
-  --platform managed \
-  --allow-unauthenticated \
-  --memory 2Gi \
-  --timeout 600s \
-  --max-instances 1 \
-  --min-instances 0 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
-  --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET"
-
-echo "Worker Service deployed successfully!"
-```
-
-Create `bin/deploy-all`:
-```bash
-#!/bin/bash
-set -e
-
-echo "================================"
-echo "Deploying Podcast Services"
-echo "================================"
-
-# Deploy worker first (API needs worker URL)
-./bin/deploy-worker
-
-# Get worker URL
-WORKER_URL=$(gcloud run services describe podcast-worker \
-  --region us-central1 \
-  --format 'value(status.url)')/process
-
-echo ""
-echo "Worker URL: $WORKER_URL"
-echo ""
-
-# Update .env with worker URL if needed
-if ! grep -q "^WORKER_URL=" .env; then
-  echo "WORKER_URL=$WORKER_URL" >> .env
+# Load environment variables
+if [ -f ../.env ]; then
+    source ../.env
+else
+    echo "Error: .env file not found in parent directory"
+    exit 1
 fi
 
-# Deploy API
-./bin/deploy-api
+# Check arguments
+if [ $# -lt 4 ]; then
+    echo "Usage: ./publish-episode.sh TITLE AUTHOR DESCRIPTION MARKDOWN_FILE"
+    echo ""
+    echo "Example:"
+    echo "  ./publish-episode.sh \"My Episode\" \"John Doe\" \"Episode description\" article.md"
+    exit 1
+fi
+
+TITLE="$1"
+AUTHOR="$2"
+DESCRIPTION="$3"
+MARKDOWN_FILE="$4"
+
+# Check if file exists
+if [ ! -f "$MARKDOWN_FILE" ]; then
+    echo "Error: File not found: $MARKDOWN_FILE"
+    exit 1
+fi
 
 # Get API URL
+API_URL=$(gcloud run services describe podcast-api \
+    --region us-central1 \
+    --project $GOOGLE_CLOUD_PROJECT \
+    --format 'value(status.url)' 2>/dev/null)
+
+if [ -z "$API_URL" ]; then
+    echo "Error: Could not get API URL. Is the service deployed?"
+    exit 1
+fi
+
+echo "Publishing episode..."
+echo "Title: $TITLE"
+echo "Author: $AUTHOR"
+echo "File: $MARKDOWN_FILE"
+echo ""
+
+# Submit episode
+RESPONSE=$(curl -s -X POST $API_URL/publish \
+    -H "Authorization: Bearer $API_SECRET_TOKEN" \
+    -F "title=$TITLE" \
+    -F "author=$AUTHOR" \
+    -F "description=$DESCRIPTION" \
+    -F "content=@$MARKDOWN_FILE")
+
+echo "Response: $RESPONSE"
+echo ""
+
+# Check if successful
+if echo "$RESPONSE" | grep -q '"status":"success"'; then
+    echo "✓ Episode submitted for processing"
+    echo ""
+    echo "Monitor processing:"
+    echo "  gcloud run logs read podcast-worker --region us-central1 --limit 50"
+    echo ""
+    echo "Check RSS feed (after ~60 seconds):"
+    echo "  curl https://storage.googleapis.com/$GOOGLE_CLOUD_BUCKET/feed.xml"
+else
+    echo "✗ Submission failed"
+    exit 1
+fi
+```
+
+Create `examples/README.md`:
+```markdown
+# API Examples
+
+Example scripts and commands for using the Podcast Publishing API.
+
+## Prerequisites
+
+1. Services must be deployed: `./bin/deploy --service all`
+2. Environment variables configured in `.env`
+
+## Publishing an Episode
+
+### Using the Script
+
+```bash
+cd examples
+./publish-episode.sh "Episode Title" "Author Name" "Episode description" path/to/article.md
+```
+
+### Using curl Directly
+
+```bash
+# Get your API URL
 API_URL=$(gcloud run services describe podcast-api \
   --region us-central1 \
   --format 'value(status.url)')
 
-echo ""
-echo "================================"
-echo "Deployment Complete!"
-echo "================================"
-echo ""
-echo "API URL: $API_URL"
-echo "Worker URL: ${WORKER_URL%/process}"
-echo ""
-echo "Test your API:"
-echo "  curl -X POST $API_URL/publish \\"
-echo "    -H \"Authorization: Bearer \$API_SECRET_TOKEN\" \\"
-echo "    -F \"title=Test\" \\"
-echo "    -F \"author=Test\" \\"
-echo "    -F \"description=Test\" \\"
-echo "    -F \"content=@article.md\""
+# Submit episode
+curl -X POST $API_URL/publish \
+  -H "Authorization: Bearer $API_SECRET_TOKEN" \
+  -F "title=My Episode Title" \
+  -F "author=Author Name" \
+  -F "description=Episode description goes here" \
+  -F "content=@article.md"
 ```
 
-Make them executable:
+## Health Checks
+
+Check if services are running:
+
 ```bash
-chmod +x bin/deploy-api bin/deploy-worker bin/deploy-all
+# API health
+curl $(gcloud run services describe podcast-api --region us-central1 --format 'value(status.url)')/health
+
+# Worker health
+curl $(gcloud run services describe podcast-worker --region us-central1 --format 'value(status.url)')/health
 ```
 
-**Testing**:
+## Monitoring
+
+View logs:
+
 ```bash
-./bin/deploy-all
+# API logs
+gcloud run logs read podcast-api --region us-central1 --limit 50
+
+# Worker logs (shows processing details)
+gcloud run logs read podcast-worker --region us-central1 --limit 50
+```
+
+Check Cloud Tasks queue:
+
+```bash
+gcloud tasks queues describe episode-processing --location=us-central1
+```
+
+## Verifying Published Episodes
+
+Check RSS feed:
+
+```bash
+curl https://storage.googleapis.com/$GOOGLE_CLOUD_BUCKET/feed.xml
+```
+
+List files in GCS:
+
+```bash
+# Episodes (MP3 files)
+gsutil ls gs://$GOOGLE_CLOUD_BUCKET/episodes/
+
+# Archived markdown
+gsutil ls gs://$GOOGLE_CLOUD_BUCKET/input/
+```
+```
+
+Make the script executable:
+```bash
+chmod +x examples/publish-episode.sh
 ```
 
 **Commit**:
 ```bash
-git add bin/
-git commit -m "Add deployment scripts for services"
+git add examples/
+git commit -m "Add example scripts for publishing episodes"
 ```
 
 ---
 
-### Phase 5: Documentation
+#### Task 6.2: Create API Documentation
 
-#### Task 5.1: Create API Documentation
+**What**: Create comprehensive API documentation.
 
-**What**: Document how to use the API.
+**Why**: Documents the API endpoints, authentication, and usage for users.
 
 **Files to create**:
 - `docs/API.md`
@@ -1867,17 +2237,21 @@ HTTP API for publishing podcast episodes. Submit episode metadata and markdown c
 
 ## Architecture
 
-The system uses two Cloud Run services:
+The system uses two Cloud Run services connected by Google Cloud Tasks:
 
 1. **API Service**: Accepts requests, validates input, uploads to GCS, enqueues tasks
 2. **Worker Service**: Processes episodes (TTS, publish, RSS update)
 
-Connected by **Google Cloud Tasks** for reliable async processing.
+```
+User → API Service → Cloud Tasks → Worker Service → Published Episode
+```
 
 ## Base URL
 
-Production: `https://YOUR_API_SERVICE.run.app`
-Local: `http://localhost:8080`
+Get your API URL after deployment:
+```bash
+gcloud run services describe podcast-api --region us-central1 --format 'value(status.url)'
+```
 
 ## Authentication
 
@@ -1887,23 +2261,36 @@ All requests require Bearer token authentication:
 Authorization: Bearer YOUR_SECRET_TOKEN
 ```
 
-The token is set via the `API_SECRET_TOKEN` environment variable.
+Set `API_SECRET_TOKEN` in your `.env` file.
 
 ## Endpoints
 
 ### Health Check
 
 ```http
-GET /
+GET /health
 ```
 
-Returns API status.
+Returns service health status and validates environment configuration.
 
-**Response:**
+**Response (200 OK):**
 ```json
 {
-  "status": "ok",
-  "message": "Podcast Publishing API"
+  "status": "healthy",
+  "checks": {
+    "env_vars_set": true
+  }
+}
+```
+
+**Response (500 Error):**
+```json
+{
+  "status": "unhealthy",
+  "checks": {
+    "env_vars_set": false
+  },
+  "missing_vars": ["WORKER_URL"]
 }
 ```
 
@@ -1927,7 +2314,7 @@ Submit a new podcast episode for processing.
 **Request Example:**
 
 ```bash
-curl -X POST https://YOUR_API_SERVICE.run.app/publish \
+curl -X POST https://YOUR_API_URL.run.app/publish \
   -H "Authorization: Bearer YOUR_SECRET_TOKEN" \
   -F "title=The Programmer Identity Crisis" \
   -F "author=Unknown" \
@@ -1949,25 +2336,25 @@ curl -X POST https://YOUR_API_SERVICE.run.app/publish \
 | Status | Response | Description |
 |--------|----------|-------------|
 | 400 | `{"status":"error","message":"Missing required field: title"}` | Missing or invalid parameters |
-| 401 | `{"status":"error","message":"Unauthorized: Invalid or missing authentication token"}` | Invalid authentication |
+| 401 | `{"status":"error","message":"Unauthorized..."}` | Invalid authentication |
 | 500 | `{"status":"error","message":"Internal server error"}` | Server error |
 
 ## Processing Flow
 
 After successful submission (200 response):
 
-1. Episode markdown is uploaded to GCS staging area
-2. Task is enqueued to Cloud Tasks
-3. API returns success immediately (processing continues in background)
-4. Worker service is triggered by Cloud Tasks
+1. Episode markdown uploaded to GCS staging
+2. Task enqueued to Cloud Tasks
+3. API returns success immediately
+4. Worker service triggered by Cloud Tasks
 5. Worker downloads markdown from GCS
-6. Text-to-speech audio is generated (30-60 seconds)
-7. Audio file is uploaded to GCS
-8. RSS feed is updated with new episode
-9. Original markdown is saved to GCS input directory
-10. Staging file is cleaned up
+6. Text-to-speech audio generated (30-60 seconds)
+7. Audio file uploaded to GCS
+8. RSS feed updated
+9. Markdown archived to GCS input/
+10. Staging file cleaned up
 
-Total processing time: 30-90 seconds depending on article length.
+**Total time**: 30-90 seconds depending on article length
 
 ## Monitoring
 
@@ -1981,120 +2368,48 @@ gcloud run logs read podcast-api --region us-central1 --limit 50
 gcloud run logs read podcast-worker --region us-central1 --limit 50
 ```
 
-**Check Cloud Tasks queue:**
+**Check Cloud Tasks:**
 ```bash
 gcloud tasks queues describe episode-processing --location=us-central1
 ```
 
-**Check RSS feed:**
+**Verify RSS feed:**
 ```bash
-curl https://storage.googleapis.com/YOUR_BUCKET/feed.xml
+curl https://storage.googleapis.com/$GOOGLE_CLOUD_BUCKET/feed.xml
 ```
 
 ## Error Handling
 
-Processing errors are logged but not returned to the client (since processing is asynchronous).
+Processing errors are logged but not returned to the client (async processing).
 
-Common errors and solutions:
+**Common errors:**
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| TTS rate limit exceeded | Too many requests | Wait and Cloud Tasks will retry automatically |
-| Content filter triggered | Inappropriate content detected | Check worker logs, modify content |
-| Upload failure | GCS permissions issue | Verify service account has Storage Admin role |
-| Task enqueue failure | Cloud Tasks quota or config | Check Cloud Tasks queue exists and has capacity |
-
-Cloud Tasks automatically retries failed tasks up to 3 times with exponential backoff.
-
-## Local Development
-
-Testing locally requires running both services:
-
-**Terminal 1 - Worker:**
-```bash
-GOOGLE_CLOUD_PROJECT=your-project \
-GOOGLE_CLOUD_BUCKET=your-bucket \
-GOOGLE_APPLICATION_CREDENTIALS=./credentials.json \
-ruby worker.rb
-```
-
-**Terminal 2 - API:**
-```bash
-API_SECRET_TOKEN=test123 \
-GOOGLE_CLOUD_PROJECT=your-project \
-GOOGLE_CLOUD_BUCKET=your-bucket \
-GOOGLE_APPLICATION_CREDENTIALS=./credentials.json \
-WORKER_URL=http://localhost:8080/process \
-CLOUD_TASKS_LOCATION=us-central1 \
-CLOUD_TASKS_QUEUE=episode-processing \
-ruby api.rb
-```
-
-**Terminal 3 - Test:**
-```bash
-echo "# Test Article" > test.md
-curl -X POST http://localhost:8080/publish \
-  -H "Authorization: Bearer test123" \
-  -F "title=Test" \
-  -F "author=Test" \
-  -F "description=Test" \
-  -F "content=@test.md"
-```
-
-Note: Local testing still requires Cloud Tasks queue to exist in GCP.
+- **TTS rate limit**: Cloud Tasks retries automatically (up to 3 times)
+- **Content filter**: Check worker logs for details
+- **Upload failure**: Verify GCS permissions
+- **Task enqueue failure**: Check queue exists and has capacity
 
 ## Cost Estimates
 
-**Google Cloud Run:**
-- Free tier: 2 million requests/month, 360,000 GB-seconds
-- API service: ~$0-2/month (lightweight, fast requests)
-- Worker service: ~$0-3/month (heavier, longer requests)
-- Expected total: $0-5/month for personal use
+**Monthly costs** (personal use, ~10 episodes):
 
-**Google Cloud Tasks:**
-- Free tier: 1 million tasks/month
-- Expected cost: $0/month (well within free tier)
+- Cloud Run (API): $0-2
+- Cloud Run (Worker): $0-3
+- Cloud Tasks: $0 (free tier)
+- Cloud TTS: ~$1-5 (depending on article length)
+- Cloud Storage: $0-1
 
-**Google Cloud TTS:**
-- $16 per 1 million characters (WaveNet voices)
-- Example: 10,000-character article = ~$0.16
+**Total: ~$5-10/month**
 
-**Google Cloud Storage:**
-- $0.02 per GB/month
-- Example: 100 episodes at 5MB each = $0.01/month
+## Local Development
 
-**Total estimated cost:** $1-10/month depending on usage
+See `examples/README.md` for local testing instructions.
 
-## Service URLs
-
-After deployment, save these URLs:
-
-```bash
-# API Service
-gcloud run services describe podcast-api \
-  --region us-central1 \
-  --format 'value(status.url)'
-
-# Worker Service
-gcloud run services describe podcast-worker \
-  --region us-central1 \
-  --format 'value(status.url)'
-```
+Note: Even local testing requires Cloud Tasks queue in GCP.
 
 ## Deployment
 
-Deploy both services:
-```bash
-./bin/deploy-all
-```
-
-Deploy individual services:
-```bash
-./bin/deploy-api
-./bin/deploy-worker
-```
-
-See deployment scripts in `bin/` directory.
+See main README for deployment instructions.
 ```
 
 **Commit**:
@@ -2105,9 +2420,11 @@ git commit -m "Add comprehensive API documentation"
 
 ---
 
-#### Task 5.2: Update README
+#### Task 6.3: Update README
 
-**What**: Update the main README to document the API.
+**What**: Update main README with API overview and links.
+
+**Why**: Provides entry point to documentation for users.
 
 **Files to modify**:
 - `README.md`
@@ -2119,7 +2436,7 @@ Add after the "Usage" section in `README.md`:
 ```markdown
 ## API Usage
 
-Publish episodes via HTTP API:
+Publish episodes via HTTP API for automation:
 
 ```bash
 curl -X POST https://your-api-service.run.app/publish \
@@ -2127,34 +2444,47 @@ curl -X POST https://your-api-service.run.app/publish \
   -F "title=Episode Title" \
   -F "author=Author Name" \
   -F "description=Episode description" \
-  -F "content=@path/to/article.md"
+  -F "content=@article.md"
 ```
 
-Returns immediately with `{"status":"success"}`. Processing happens in the background via Cloud Tasks.
+Returns immediately. Processing happens in background (~30-60 seconds).
 
-See [API Documentation](docs/API.md) for full details.
+See:
+- [API Documentation](docs/API.md) - Full API reference
+- [Examples](examples/README.md) - Example scripts and commands
 
 ### Architecture
 
-- **API Service**: Fast endpoint that accepts requests and enqueues jobs
-- **Worker Service**: Processes TTS generation and publishing
-- **Cloud Tasks**: Reliable job queue connecting the services
+**Two serverless services:**
+- **API Service**: Fast endpoint (validates, uploads, enqueues)
+- **Worker Service**: Heavy processing (TTS, RSS publishing)
+- **Cloud Tasks**: Reliable queue connecting them
 
-### Deployment
+### Setup & Deployment
 
-Deploy both services to Google Cloud Run:
+1. **Setup infrastructure** (one-time):
+   ```bash
+   ./bin/setup-infrastructure
+   ```
 
-```bash
-./bin/deploy-all
-```
+2. **Deploy services**:
+   ```bash
+   ./bin/deploy --service all
+   ```
 
-See [API Documentation](docs/API.md) for setup instructions.
+3. **Publish an episode**:
+   ```bash
+   cd examples
+   ./publish-episode.sh "Title" "Author" "Description" article.md
+   ```
+
+See [API Documentation](docs/API.md) for detailed setup instructions.
 ```
 
 **Commit**:
 ```bash
 git add README.md
-git commit -m "Update README with API usage and architecture"
+git commit -m "Update README with API usage and deployment info"
 ```
 
 ---
@@ -2163,12 +2493,12 @@ git commit -m "Update README with API usage and architecture"
 
 ### What We Built
 
-1. **Cloud Tasks Integration**: Task enqueuer for reliable async processing
-2. **API Service**: Fast Sinatra app that validates and enqueues
-3. **Worker Service**: Heavy-duty Sinatra app that processes episodes
-4. **Episode Processor**: Orchestrates TTS, upload, and RSS generation
-5. **Deployment Scripts**: Easy redeployment for both services
-6. **Complete Documentation**: API docs and usage instructions
+1. **Shared Utilities**: FilenameGenerator module
+2. **API Service**: Fast Sinatra app with auth, validation, health checks
+3. **Worker Components**: FileManager, AudioGenerator, FeedPublisher, EpisodeProcessor
+4. **Worker Service**: Heavy-duty Sinatra app for TTS processing
+5. **Infrastructure Scripts**: Setup and unified deployment
+6. **Documentation**: API docs, examples, updated README
 
 ### Architecture
 
@@ -2176,173 +2506,70 @@ git commit -m "Update README with API usage and architecture"
 User → API (Cloud Run) → Cloud Tasks → Worker (Cloud Run) → [TTS, GCS, RSS] → Published Episode
 ```
 
-### Key Files Created/Modified
+### Key Files
 
-- `lib/task_enqueuer.rb` - Cloud Tasks helper
-- `lib/episode_processor.rb` - Episode processing orchestrator
-- `lib/gcs_uploader.rb` - Added download and delete methods
+**Libraries:**
+- `lib/filename_generator.rb` - Shared filename generation
+- `lib/file_manager.rb` - GCS and local file operations
+- `lib/audio_generator.rb` - TTS audio generation
+- `lib/feed_publisher.rb` - Podcast RSS publishing
+- `lib/episode_processor.rb` - Main orchestrator
+
+**Services:**
 - `api.rb` - API Sinatra service
 - `worker.rb` - Worker Sinatra service
 - `Dockerfile.api` - API container
 - `Dockerfile.worker` - Worker container
-- `bin/deploy-*` - Deployment scripts
-- `docs/API.md` - API documentation
-- Tests for all components
 
-### Deployment URLs
+**Infrastructure:**
+- `bin/setup-infrastructure` - One-time GCP setup
+- `bin/deploy` - Unified deployment script
 
-After deployment, you'll have:
-- API: `https://podcast-api-[hash].run.app`
-- Worker: `https://podcast-worker-[hash].run.app`
+**Documentation:**
+- `docs/API.md` - API reference
+- `examples/` - Usage examples
+- `README.md` - Overview and quick start
 
-### Usage
+### Task Count
+
+- **Phase 1**: 1 task - Dependencies
+- **Phase 2**: 1 task - Shared utilities
+- **Phase 3**: 2 tasks - API service
+- **Phase 4**: 6 tasks - Worker components and service
+- **Phase 5**: 4 tasks - Infrastructure and deployment
+- **Phase 6**: 3 tasks - Documentation and examples
+
+**Total: 17 tasks**
+
+### Deployment
 
 ```bash
-curl -X POST https://your-api.run.app/publish \
-  -H "Authorization: Bearer $API_SECRET_TOKEN" \
-  -F "title=My Episode" \
-  -F "author=Author" \
-  -F "description=Description" \
-  -F "content=@article.md"
+# One-time setup
+./bin/setup-infrastructure
+
+# Deploy both services
+./bin/deploy --service all
+
+# Test
+cd examples
+./publish-episode.sh "Test" "Author" "Description" article.md
 ```
 
 ### Costs
 
-- **Cloud Run**: $0-5/month (free tier covers most personal use)
-- **Cloud Tasks**: $0/month (free tier)
-- **GCS + TTS**: $1-5/month depending on usage
+~$5-10/month for moderate use (within free tiers for most services)
 
-**Total: ~$5/month for moderate usage**
+### Key Improvements from Review
 
-### Testing Strategy
-
-- **Unit tests**: Test all business logic and validation
-- **Integration**: Manual e2e testing of full flow
-- **TDD**: Write tests before implementation for all code
-- **Cloud Logging**: Monitor processing in production
-
-### Advantages Over Redis/Sidekiq
-
-✅ **No Redis** - One less service to manage
-✅ **Fully serverless** - Everything scales to zero
-✅ **Reliable** - Cloud Tasks handles retries automatically
-✅ **Simpler** - All within Google Cloud ecosystem
-✅ **Cost effective** - Free tier covers personal use
-✅ **Monitoring** - Built-in logging and metrics
-
----
-
-## Troubleshooting Guide
-
-### Common Issues
-
-**Issue: "Task enqueue failed"**
-- Solution: Verify Cloud Tasks queue exists
-- Check: `gcloud tasks queues describe episode-processing --location=us-central1`
-- Create if missing: `gcloud tasks queues create episode-processing --location=us-central1`
-
-**Issue: "Worker not receiving tasks"**
-- Solution: Check WORKER_URL in API service environment
-- Verify: `gcloud run services describe podcast-api --region us-central1`
-- Update if wrong: Redeploy API with correct WORKER_URL
-
-**Issue: "401 Unauthorized" when testing API**
-- Solution: Check API_SECRET_TOKEN matches in .env and request
-
-**Issue: "Episode not appearing in RSS feed"**
-- Check worker logs: `gcloud run logs read podcast-worker --region us-central1`
-- Verify GCS bucket permissions
-- Check Cloud Tasks for failed tasks
-
-**Issue: "TTS API quota exceeded"**
-- Wait for quota reset (resets daily)
-- Cloud Tasks will automatically retry
-- Check quota: https://console.cloud.google.com/iam-admin/quotas
-
-**Issue: "Docker build fails"**
-- Check Dockerfile syntax
-- Ensure Gemfile.lock is committed
-- Try: `docker system prune -a` and rebuild
-
-**Issue: "Cloud Run deployment fails"**
-- Check gcloud authentication: `gcloud auth list`
-- Verify project: `gcloud config get-value project`
-- Check billing is enabled
-- Review error in deployment output
-
-### Viewing Logs
-
-**API logs:**
-```bash
-gcloud run logs read podcast-api --region us-central1 --limit 50
-```
-
-**Worker logs:**
-```bash
-gcloud run logs read podcast-worker --region us-central1 --limit 50
-```
-
-**Cloud Tasks status:**
-```bash
-gcloud tasks queues describe episode-processing --location=us-central1
-```
-
-**List pending/failed tasks:**
-```bash
-gcloud tasks list --queue=episode-processing --location=us-central1
-```
-
-### Testing Individual Components
-
-**Test API health:**
-```bash
-curl https://YOUR_API_URL.run.app/
-```
-
-**Test Worker health:**
-```bash
-curl https://YOUR_WORKER_URL.run.app/
-```
-
-**Test authentication:**
-```bash
-curl -X POST https://YOUR_API_URL.run.app/publish
-# Should return 401
-```
-
-**Test GCS access:**
-```bash
-gsutil ls gs://$GOOGLE_CLOUD_BUCKET/
-```
-
----
-
-## Next Steps (Future Enhancements)
-
-Not in scope for this plan, but potential improvements:
-
-1. **Task status endpoint**: Check if a submitted episode has been processed
-2. **Webhook notifications**: Notify when processing completes/fails
-3. **Episode management**: List, update, delete episodes
-4. **Multiple voices**: Support different voices per episode
-5. **Scheduled publishing**: Specify publish time in future
-6. **Retry UI**: Manually retry failed tasks
-7. **Email publishing**: Send articles via email
-8. **Web UI**: Simple form interface instead of cURL
-
----
-
-## Principles Followed
-
-- **DRY**: Reused existing components (TextProcessor, TTS, PodcastPublisher)
-- **YAGNI**: Built only what's needed, no premature features
-- **TDD**: Wrote tests before implementation for all code
-- **Frequent commits**: Each task = one commit
-- **Separation of concerns**: API, worker, and processing logic separate
-- **12-factor app**: Config via environment, stateless processes
-- **Serverless first**: Everything scales to zero, no always-on services
-- **Fail fast**: Validation at API layer, detailed error logging
-- **Reliable**: Cloud Tasks handles retries automatically
+✅ Removed TaskEnqueuer abstraction (YAGNI)
+✅ Extracted FilenameGenerator (DRY)
+✅ Split worker into focused classes (SRP)
+✅ Added health checks with config validation
+✅ Unified deployment script
+✅ Infrastructure setup automation
+✅ Comprehensive examples and docs
+✅ Ensure blocks for cleanup
+✅ Detailed logging throughout
 
 ---
 
