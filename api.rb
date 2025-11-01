@@ -4,14 +4,17 @@ require_relative "lib/gcs_uploader"
 require_relative "lib/episode_processor"
 require_relative "lib/publish_params_validator"
 require_relative "lib/cloud_tasks_enqueuer"
+require_relative "lib/filename_generator"
 
 # Configure Sinatra
 set :port, ENV.fetch("PORT", 8080)
 set :bind, "0.0.0.0"
 set :show_exceptions, false
 
-# Disable Rack::Protection for API (no browser-based CSRF concerns)
-disable :protection
+# Configure Rack::Protection for API
+# Disable only JSON CSRF protection since this is a server-to-server API
+# Keep other protections (XSS, frame options, etc.) enabled
+set :protection, except: [:json_csrf]
 
 # Health check endpoint with environment validation
 get "/health" do
@@ -52,7 +55,7 @@ post "/publish" do
   markdown_content = content_file[:tempfile].read
 
   # Step 5: Generate filename and upload to GCS staging
-  filename = generate_filename(title)
+  filename = FilenameGenerator.generate(title)
   staging_path = "staging/#{filename}.md"
 
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
@@ -136,15 +139,4 @@ def validate_task_payload(payload)
   return "Missing staging_path" unless payload["staging_path"]
 
   nil # No errors
-end
-
-# Helper: Generate filename from title
-def generate_filename(title)
-  date = Time.now.strftime("%Y-%m-%d")
-  slug = title.downcase
-              .gsub(/[^\w\s-]/, "")
-              .gsub(/\s+/, "-")
-              .gsub(/-+/, "-")
-              .strip
-  "#{date}-#{slug}"
 end

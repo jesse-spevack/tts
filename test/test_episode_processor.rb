@@ -15,18 +15,4 @@ class TestEpisodeProcessor < Minitest::Test
     processor = EpisodeProcessor.new
     assert_equal "test-bucket", processor.bucket_name
   end
-
-  def test_generate_filename_includes_date_and_slug
-    processor = EpisodeProcessor.new
-    filename = processor.send(:generate_filename, "Test Episode Title")
-
-    assert_match(/^\d{4}-\d{2}-\d{2}-test-episode-title$/, filename)
-  end
-
-  def test_generate_filename_removes_special_chars
-    processor = EpisodeProcessor.new
-    filename = processor.send(:generate_filename, "Test (Special) Chars!")
-
-    assert_match(/test-special-chars$/, filename)
-  end
 end

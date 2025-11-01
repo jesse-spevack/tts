@@ -113,7 +113,7 @@ unless options[:local_only]
   puts "\n[5/5] Publishing to podcast feed..."
   begin
     # Load podcast config
-    podcast_config = YAML.load_file("config/podcast.yml")
+    podcast_config = YAML.safe_load_file("config/podcast.yml")
 
     # Initialize GCS and manifest
     gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))

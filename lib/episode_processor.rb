@@ -5,6 +5,7 @@ require_relative "tts"
 require_relative "podcast_publisher"
 require_relative "gcs_uploader"
 require_relative "episode_manifest"
+require_relative "filename_generator"
 
 # Orchestrates episode processing from markdown to published podcast
 # Reuses all existing infrastructure from generate.rb
@@ -22,7 +23,7 @@ class EpisodeProcessor
   # @param markdown_content [String] Article body in markdown
   def process(title, author, description, markdown_content)
     print_start(title)
-    filename = generate_filename(title)
+    filename = FilenameGenerator.generate(title)
     mp3_path = nil
 
     begin
@@ -48,16 +49,6 @@ class EpisodeProcessor
 
   private
 
-  def generate_filename(title)
-    date = Time.now.strftime("%Y-%m-%d")
-    slug = title.downcase
-                .gsub(/[^\w\s-]/, "")  # Remove special chars
-                .gsub(/\s+/, "-")      # Spaces to hyphens
-                .gsub(/-+/, "-")       # Collapse multiple hyphens
-                .strip
-    "#{date}-#{slug}"
-  end
-
   def save_temp_mp3(filename, audio_content)
     puts "\n[3/4] Saving temporary MP3..."
 
@@ -73,7 +64,7 @@ class EpisodeProcessor
   def publish_to_feed(mp3_path, title, author, description)
     puts "\n[4/4] Publishing to feed..."
 
-    podcast_config = YAML.load_file("config/podcast.yml")
+    podcast_config = YAML.safe_load_file("config/podcast.yml")
     gcs_uploader = GCSUploader.new(@bucket_name)
     episode_manifest = EpisodeManifest.new(gcs_uploader)
 

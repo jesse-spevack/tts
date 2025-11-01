@@ -25,7 +25,7 @@ class TestAPI < Minitest::Test
 
   # Health Check Tests
 
-  def test_health_check_returns_200
+  def test_health_check_returns_ok
     get "/health"
     assert_equal 200, last_response.status
   end
@@ -49,7 +49,7 @@ class TestAPI < Minitest::Test
 
   # Authentication Tests
 
-  def test_missing_auth_header_returns_401
+  def test_missing_auth_header_returns_unauthorized
     post "/publish"
     assert_equal 401, last_response.status
 
@@ -58,19 +58,19 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "Unauthorized"
   end
 
-  def test_invalid_auth_token_returns_401
+  def test_invalid_auth_token_returns_unauthorized
     post "/publish", {}, { "HTTP_AUTHORIZATION" => "Bearer wrong-token" }
     assert_equal 401, last_response.status
   end
 
-  def test_valid_auth_with_missing_data_returns_400_not_401
+  def test_valid_auth_with_missing_data_returns_bad_request_not_unauthorized
     post "/publish", {}, auth_header
     assert_equal 400, last_response.status # Not 401
   end
 
   # Validation Tests
 
-  def test_missing_title_returns_400
+  def test_missing_title_returns_bad_request
     params = valid_params.except(:title)
     post "/publish", params, auth_header
 
@@ -79,7 +79,7 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "title"
   end
 
-  def test_missing_author_returns_400
+  def test_missing_author_returns_bad_request
     params = valid_params.except(:author)
     post "/publish", params, auth_header
 
@@ -88,7 +88,7 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "author"
   end
 
-  def test_missing_description_returns_400
+  def test_missing_description_returns_bad_request
     params = valid_params.except(:description)
     post "/publish", params, auth_header
 
@@ -97,7 +97,7 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "description"
   end
 
-  def test_missing_content_returns_400
+  def test_missing_content_returns_bad_request
     params = valid_params.except(:content)
     post "/publish", params, auth_header
 
@@ -106,7 +106,7 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "content"
   end
 
-  def test_empty_content_returns_400
+  def test_empty_content_returns_bad_request
     params = valid_params.merge(content: empty_file)
     post "/publish", params, auth_header
 
