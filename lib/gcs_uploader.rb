@@ -42,9 +42,7 @@ class GCSUploader
     file.acl.public!
 
     # Set cache control for RSS feeds to prevent stale content
-    if remote_path == "feed.xml"
-      file.cache_control = "no-cache, max-age=0"
-    end
+    file.cache_control = "no-cache, max-age=0" if remote_path == "feed.xml"
 
     get_public_url(remote_path: remote_path)
   rescue Google::Cloud::Error => e
@@ -61,6 +59,19 @@ class GCSUploader
     file.download.read
   rescue Google::Cloud::Error => e
     raise UploadError, "Failed to download file: #{e.message}"
+  end
+
+  # Delete a file from GCS
+  # @param remote_path [String] Path to file in GCS bucket
+  # @return [Boolean] True if deleted, false if file didn't exist
+  def delete_file(remote_path:)
+    file = bucket.file(remote_path)
+    return false unless file
+
+    file.delete
+    true
+  rescue Google::Cloud::Error => e
+    raise UploadError, "Failed to delete file: #{e.message}"
   end
 
   # Get public URL for a file in the bucket
