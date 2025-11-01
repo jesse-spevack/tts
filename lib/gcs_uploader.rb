@@ -61,6 +61,19 @@ class GCSUploader
     raise UploadError, "Failed to download file: #{e.message}"
   end
 
+  # Delete a file from GCS
+  # @param remote_path [String] Path to file in GCS bucket
+  # @return [Boolean] True if deleted, false if file didn't exist
+  def delete_file(remote_path:)
+    file = bucket.file(remote_path)
+    return false unless file
+
+    file.delete
+    true
+  rescue Google::Cloud::Error => e
+    raise UploadError, "Failed to delete file: #{e.message}"
+  end
+
   # Get public URL for a file in the bucket
   # @param remote_path [String] Path to file in GCS bucket
   # @return [String] Public HTTPS URL
