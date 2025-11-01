@@ -1,0 +1,14 @@
+.git
+.env
+.DS_Store
+*.md
+docs/
+test/
+output/*.mp3
+input/*.md
+.rubocop.yml
+Rakefile
+generate.rb
+test_single_chunk.rb
+.ruby-lsp/
+very-normal-text-to-speech-*.json
