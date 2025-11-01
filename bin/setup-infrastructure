@@ -43,12 +43,6 @@ gcloud services enable run.googleapis.com --project=$PROJECT_ID 2>&1 | grep -v "
 gcloud services enable cloudtasks.googleapis.com --project=$PROJECT_ID 2>&1 | grep -v "^$" || true
 echo "✓ APIs enabled"
 
-# Wait for APIs to be ready
-echo ""
-echo "Waiting for Cloud Tasks API to be ready..."
-sleep 3
-echo "✓ API ready"
-
 # Create Cloud Tasks queue
 echo ""
 echo "Creating Cloud Tasks queue..."
