@@ -1,8 +1,9 @@
 require "sinatra"
 require "sinatra/json"
-require "google/cloud/tasks/v2"
 require_relative "lib/gcs_uploader"
 require_relative "lib/episode_processor"
+require_relative "lib/publish_params_validator"
+require_relative "lib/cloud_tasks_enqueuer"
 
 # Configure Sinatra
 set :port, ENV.fetch("PORT", 8080)
@@ -38,7 +39,7 @@ post "/publish" do
   halt 401, json(status: "error", message: "Unauthorized") unless authenticated?
 
   # Step 2: Validate required fields
-  errors = validate_params
+  errors = PublishParamsValidator.new(params).validate
   halt 400, json(status: "error", message: errors.join(", ")) if errors.any?
 
   # Step 3: Extract parameters
@@ -60,7 +61,7 @@ post "/publish" do
   logger.info "Uploaded to staging: #{staging_path}"
 
   # Step 6: Enqueue processing task
-  enqueue_task(title, author, description, staging_path)
+  CloudTasksEnqueuer.new.enqueue_episode_processing(title, author, description, staging_path)
   logger.info "Enqueued task for: #{title}"
 
   # Step 7: Return success immediately
@@ -127,33 +128,6 @@ def authenticated?
   token == expected_token
 end
 
-# Helper: Validate publish params
-# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-def validate_params
-  errors = []
-  errors << "Missing title" if params[:title].nil? || params[:title].empty?
-  errors << "Missing author" if params[:author].nil? || params[:author].empty?
-  errors << "Missing description" if params[:description].nil? || params[:description].empty?
-
-  # Check content file
-  if params[:content].nil?
-    errors << "Missing content"
-  else
-    content_file = params[:content]
-    if content_file.is_a?(Hash) && content_file[:tempfile]
-      # Check if file is empty
-      content = content_file[:tempfile].read
-      content_file[:tempfile].rewind # Reset for later reading
-      errors << "Content file is empty" if content.strip.empty?
-    else
-      errors << "Missing content"
-    end
-  end
-
-  errors
-end
-# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-
 # Helper: Validate task payload
 def validate_task_payload(payload)
   return "Missing title" unless payload["title"]
@@ -174,43 +148,3 @@ def generate_filename(title)
               .strip
   "#{date}-#{slug}"
 end
-
-# Helper: Enqueue task to Cloud Tasks
-# rubocop:disable Metrics/MethodLength
-def enqueue_task(title, author, description, staging_path)
-  client = Google::Cloud::Tasks::V2::CloudTasks::Client.new
-
-  project_id = ENV.fetch("GOOGLE_CLOUD_PROJECT")
-  location = ENV.fetch("CLOUD_TASKS_LOCATION", "us-central1")
-  queue_name = ENV.fetch("CLOUD_TASKS_QUEUE", "episode-processing")
-
-  queue_path = client.queue_path(
-    project: project_id,
-    location: location,
-    queue: queue_name
-  )
-
-  # Service URL (set during deployment or use localhost for testing)
-  service_url = ENV.fetch("SERVICE_URL", "http://localhost:8080")
-
-  payload = {
-    title: title,
-    author: author,
-    description: description,
-    staging_path: staging_path
-  }
-
-  task = {
-    http_request: {
-      http_method: "POST",
-      url: "#{service_url}/process",
-      headers: {
-        "Content-Type" => "application/json"
-      },
-      body: payload.to_json
-    }
-  }
-
-  client.create_task(parent: queue_path, task: task)
-end
-# rubocop:enable Metrics/MethodLength

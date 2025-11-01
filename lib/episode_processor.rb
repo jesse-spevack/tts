@@ -20,46 +20,31 @@ class EpisodeProcessor
   # @param author [String] Episode author
   # @param description [String] Episode description
   # @param markdown_content [String] Article body in markdown
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def process(title, author, description, markdown_content)
-    puts "=" * 60
-    puts "Processing: #{title}"
-    puts "=" * 60
-
+    print_start(title)
     filename = generate_filename(title)
     mp3_path = nil
 
     begin
       # Step 1: Convert markdown to plain text
-      puts "\n[1/4] Processing markdown..."
       text = TextProcessor.convert_to_plain_text(markdown_content)
-      puts "✓ Processed #{text.length} characters"
 
       # Step 2: Generate TTS audio
-      puts "\n[2/4] Generating audio..."
       tts = TTS.new
       audio_content = tts.synthesize(text)
-      puts "✓ Generated #{format_size(audio_content.bytesize)}"
 
       # Step 3: Save MP3 temporarily
-      puts "\n[3/4] Saving temporary MP3..."
       mp3_path = save_temp_mp3(filename, audio_content)
-      puts "✓ Saved: #{mp3_path}"
 
       # Step 4: Publish to podcast feed
-      puts "\n[4/4] Publishing to feed..."
       publish_to_feed(mp3_path, title, author, description)
-      puts "✓ Published"
 
-      puts "\n#{'=' * 60}"
-      puts "✓ Complete: #{title}"
-      puts "=" * 60
+      print_success(title)
     ensure
       # Always cleanup temporary file
       cleanup_temp_file(mp3_path) if mp3_path
     end
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   private
 
@@ -74,18 +59,19 @@ class EpisodeProcessor
   end
 
   def save_temp_mp3(filename, audio_content)
+    puts "\n[3/4] Saving temporary MP3..."
+
     FileUtils.mkdir_p("output")
     path = File.join("output", "#{filename}.mp3")
     File.write(path, audio_content, mode: "wb")
+
+    puts "✓ Saved: #{mp3_path}"
+
     path
   end
 
   def publish_to_feed(mp3_path, title, author, description)
-    metadata = {
-      "title" => title,
-      "author" => author,
-      "description" => description
-    }
+    puts "\n[4/4] Publishing to feed..."
 
     podcast_config = YAML.load_file("config/podcast.yml")
     gcs_uploader = GCSUploader.new(@bucket_name)
@@ -97,7 +83,17 @@ class EpisodeProcessor
       episode_manifest: episode_manifest
     )
 
-    publisher.publish(mp3_path, metadata)
+    publisher.publish(mp3_path, metadata(title: title, author: author, description: description))
+
+    puts "✓ Published"
+  end
+
+  def metadata(title:, author:, description:)
+    {
+      "title" => title,
+      "author" => author,
+      "description" => description
+    }
   end
 
   def cleanup_temp_file(path)
@@ -115,5 +111,17 @@ class EpisodeProcessor
     else
       "#{(bytes / 1_048_576.0).round(1)} MB"
     end
+  end
+
+  def print_start(title)
+    puts "=" * 60
+    puts "Processing: #{title}"
+    puts "=" * 60
+  end
+
+  def print_success(title)
+    puts "\n#{'=' * 60}"
+    puts "✓ Complete: #{title}"
+    puts "=" * 60
   end
 end
