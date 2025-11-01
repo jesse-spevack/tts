@@ -39,9 +39,15 @@ echo ""
 
 # Enable APIs
 echo "Enabling Google Cloud APIs..."
-gcloud services enable run.googleapis.com --project=$PROJECT_ID
-gcloud services enable cloudtasks.googleapis.com --project=$PROJECT_ID
+gcloud services enable run.googleapis.com --project=$PROJECT_ID 2>&1 | grep -v "^$" || true
+gcloud services enable cloudtasks.googleapis.com --project=$PROJECT_ID 2>&1 | grep -v "^$" || true
 echo "✓ APIs enabled"
+
+# Wait for APIs to be ready
+echo ""
+echo "Waiting for Cloud Tasks API to be ready..."
+sleep 3
+echo "✓ API ready"
 
 # Create Cloud Tasks queue
 echo ""
@@ -49,12 +55,20 @@ echo "Creating Cloud Tasks queue..."
 if gcloud tasks queues describe $QUEUE_NAME --location=$LOCATION --project=$PROJECT_ID &> /dev/null; then
     echo "✓ Queue already exists: $QUEUE_NAME"
 else
-    gcloud tasks queues create $QUEUE_NAME \
+    echo "Creating queue (this may take 30-60 seconds)..."
+    if timeout 120 gcloud tasks queues create $QUEUE_NAME \
         --location=$LOCATION \
         --project=$PROJECT_ID \
         --max-attempts=3 \
-        --max-retry-duration=1h
-    echo "✓ Queue created: $QUEUE_NAME"
+        --max-retry-duration=1h 2>&1; then
+        echo "✓ Queue created: $QUEUE_NAME"
+    else
+        echo "⚠ Queue creation timed out or failed"
+        echo "You can create it manually at:"
+        echo "https://console.cloud.google.com/cloudtasks/queue/create?project=$PROJECT_ID&location=$LOCATION"
+        echo "Queue name: $QUEUE_NAME"
+        exit 1
+    fi
 fi
 
 echo ""
