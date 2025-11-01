@@ -1,4 +1,5 @@
 require "yaml"
+require "fileutils"
 require_relative "text_processor"
 require_relative "tts"
 require_relative "podcast_publisher"
@@ -19,6 +20,7 @@ class EpisodeProcessor
   # @param author [String] Episode author
   # @param description [String] Episode description
   # @param markdown_content [String] Article body in markdown
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def process(title, author, description, markdown_content)
     puts "=" * 60
     puts "Processing: #{title}"
@@ -49,7 +51,7 @@ class EpisodeProcessor
       publish_to_feed(mp3_path, title, author, description)
       puts "✓ Published"
 
-      puts "\n" + "=" * 60
+      puts "\n#{'=' * 60}"
       puts "✓ Complete: #{title}"
       puts "=" * 60
     ensure
@@ -57,21 +59,22 @@ class EpisodeProcessor
       cleanup_temp_file(mp3_path) if mp3_path
     end
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   private
 
   def generate_filename(title)
     date = Time.now.strftime("%Y-%m-%d")
     slug = title.downcase
-               .gsub(/[^\w\s-]/, "")  # Remove special chars
-               .gsub(/\s+/, "-")      # Spaces to hyphens
-               .gsub(/-+/, "-")       # Collapse multiple hyphens
-               .strip
+                .gsub(/[^\w\s-]/, "")  # Remove special chars
+                .gsub(/\s+/, "-")      # Spaces to hyphens
+                .gsub(/-+/, "-")       # Collapse multiple hyphens
+                .strip
     "#{date}-#{slug}"
   end
 
   def save_temp_mp3(filename, audio_content)
-    Dir.mkdir("output") unless Dir.exist?("output")
+    FileUtils.mkdir_p("output")
     path = File.join("output", "#{filename}.mp3")
     File.write(path, audio_content, mode: "wb")
     path
@@ -98,9 +101,9 @@ class EpisodeProcessor
   end
 
   def cleanup_temp_file(path)
-    File.delete(path) if File.exist?(path)
+    FileUtils.rm_f(path)
     puts "✓ Cleaned up: #{path}"
-  rescue => e
+  rescue StandardError => e
     puts "⚠ Cleanup warning: #{e.message}"
   end
 

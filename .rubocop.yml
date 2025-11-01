@@ -41,3 +41,7 @@ Layout/LineLength:
 # Naming
 Naming/MethodParameterName:
   MinNameLength: 2  # Allow single-letter params like 'e' for exceptions
+
+Naming/VariableNumber:
+  Exclude:
+    - 'test/**/*'  # Allow numbers in test method names like test_returns_200

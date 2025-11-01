@@ -42,9 +42,7 @@ class GCSUploader
     file.acl.public!
 
     # Set cache control for RSS feeds to prevent stale content
-    if remote_path == "feed.xml"
-      file.cache_control = "no-cache, max-age=0"
-    end
+    file.cache_control = "no-cache, max-age=0" if remote_path == "feed.xml"
 
     get_public_url(remote_path: remote_path)
   rescue Google::Cloud::Error => e
