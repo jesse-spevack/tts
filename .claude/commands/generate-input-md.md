@@ -17,7 +17,7 @@ The user has pasted article text. You need to:
    - Remove editorial notes in parentheses if they're not part of the main narrative
    - Convert list items that are numbered with footnotes to proper markdown headings if they're section headers
    - Keep the natural flow and narrative structure
-   - Preserve all substantive content
+   - PRESERVE all substantive content
 
 3. **Format the markdown file**:
    - Add YAML frontmatter with title, description, and author
@@ -59,7 +59,7 @@ More content...
 ## Important Notes
 
 - The frontmatter is critical - it's used for podcast metadata
-- Remove clutter but preserve the author's voice and all substantive content
+- Remove clutter but preserve the author's content. Do not change any of the original wording.
 - Use proper markdown formatting for readability
 - TTS will read everything after the frontmatter, so keep it clean and conversational
 
