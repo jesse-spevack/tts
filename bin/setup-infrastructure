@@ -50,14 +50,38 @@ if gcloud tasks queues describe $QUEUE_NAME --location=$LOCATION --project=$PROJ
     echo "✓ Queue already exists: $QUEUE_NAME"
 else
     echo "Creating queue (this may take 30-60 seconds)..."
-    if timeout 120 gcloud tasks queues create $QUEUE_NAME \
+    # Run queue creation in background with timeout handling
+    gcloud tasks queues create $QUEUE_NAME \
         --location=$LOCATION \
         --project=$PROJECT_ID \
         --max-attempts=3 \
-        --max-retry-duration=1h 2>&1; then
+        --max-retry-duration=1h 2>&1 &
+
+    QUEUE_PID=$!
+    TIMEOUT=120
+    ELAPSED=0
+
+    # Wait for process to complete or timeout
+    while kill -0 $QUEUE_PID 2>/dev/null; do
+        if [ $ELAPSED -ge $TIMEOUT ]; then
+            kill $QUEUE_PID 2>/dev/null
+            wait $QUEUE_PID 2>/dev/null
+            echo "⚠ Queue creation timed out after ${TIMEOUT}s"
+            echo "You can create it manually at:"
+            echo "https://console.cloud.google.com/cloudtasks/queue/create?project=$PROJECT_ID&location=$LOCATION"
+            echo "Queue name: $QUEUE_NAME"
+            exit 1
+        fi
+        sleep 1
+        ELAPSED=$((ELAPSED + 1))
+    done
+
+    # Check if process succeeded
+    wait $QUEUE_PID
+    if [ $? -eq 0 ]; then
         echo "✓ Queue created: $QUEUE_NAME"
     else
-        echo "⚠ Queue creation timed out or failed"
+        echo "⚠ Queue creation failed"
         echo "You can create it manually at:"
         echo "https://console.cloud.google.com/cloudtasks/queue/create?project=$PROJECT_ID&location=$LOCATION"
         echo "Queue name: $QUEUE_NAME"
