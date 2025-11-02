@@ -39,4 +39,25 @@ class TestGCSUploader < Minitest::Test
 
     assert_equal "https://storage.googleapis.com/my-bucket/episodes/test.mp3", url
   end
+
+  def test_scoped_path_prepends_podcast_id
+    uploader = GCSUploader.new("my-bucket", podcast_id: "podcast_123")
+    scoped = uploader.scoped_path("episodes/test.mp3")
+
+    assert_equal "podcasts/podcast_123/episodes/test.mp3", scoped
+  end
+
+  def test_scoped_path_without_podcast_id_returns_original
+    uploader = GCSUploader.new("my-bucket")
+    scoped = uploader.scoped_path("episodes/test.mp3")
+
+    assert_equal "episodes/test.mp3", scoped
+  end
+
+  def test_get_public_url_uses_scoped_path
+    uploader = GCSUploader.new("my-bucket", podcast_id: "podcast_123")
+    url = uploader.get_public_url(remote_path: "feed.xml")
+
+    assert_equal "https://storage.googleapis.com/my-bucket/podcasts/podcast_123/feed.xml", url
+  end
 end
