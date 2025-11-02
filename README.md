@@ -16,13 +16,35 @@ bundle install
 
 ## Usage
 
-Generate and publish a podcast episode:
+### Local Generation
+
+Generate and publish a podcast episode locally:
 
 ```bash
 ruby generate.rb input/article.md
 ```
 
 This creates an MP3, uploads it to GCS, updates the episode manifest, and regenerates the RSS feed.
+
+### API Request
+
+Submit an episode for processing via the deployed API:
+
+```bash
+curl -X POST https://your-service-url.run.app/publish \
+  -H "Authorization: Bearer $API_SECRET_TOKEN" \
+  -F "title=Episode Title" \
+  -F "author=Author Name" \
+  -F "description=Episode description" \
+  -F "content=@input/article.md"
+```
+
+Response:
+```json
+{"status":"success","message":"Episode submitted for processing"}
+```
+
+The API processes episodes asynchronously via Cloud Tasks. Check Cloud Run logs to monitor processing status.
 
 ### Options
 
