@@ -26,7 +26,7 @@ Create a `.env` file in the project root:
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_BUCKET=your-bucket-name
 API_SECRET_TOKEN=your-secure-token
-CLOUD_TASKS_LOCATION=us-central1
+CLOUD_TASKS_LOCATION=us-west3
 CLOUD_TASKS_QUEUE=episode-processing
 ```
 
@@ -98,7 +98,7 @@ Cloud Run uses the service account for:
 
 ## Deployed Service
 
-**URL**: `https://podcast-api-{hash}.us-central1.run.app`
+**URL**: `https://podcast-api-{hash}.us-west3.run.app`
 
 ### Endpoints
 
@@ -168,7 +168,7 @@ View logs:
 ```bash
 gcloud run services logs read podcast-api \
   --project=your-project \
-  --region=us-central1 \
+  --region=us-west3 \
   --limit=50
 ```
 
@@ -176,7 +176,7 @@ Check service status:
 ```bash
 gcloud run services describe podcast-api \
   --project=your-project \
-  --region=us-central1
+  --region=us-west3
 ```
 
 ## Rollback
@@ -185,12 +185,12 @@ To rollback to a previous revision:
 ```bash
 gcloud run services update-traffic podcast-api \
   --to-revisions=podcast-api-00010-abc=100 \
-  --region=us-central1
+  --region=us-west3
 ```
 
 List revisions:
 ```bash
 gcloud run revisions list \
   --service=podcast-api \
-  --region=us-central1
+  --region=us-west3
 ```
