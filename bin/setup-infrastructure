@@ -28,7 +28,7 @@ if [ -z "$GOOGLE_CLOUD_PROJECT" ]; then
 fi
 
 PROJECT_ID=$GOOGLE_CLOUD_PROJECT
-LOCATION=${CLOUD_TASKS_LOCATION:-us-central1}
+LOCATION=${CLOUD_TASKS_LOCATION:-us-west3}  # Default to us-west3 for Denver proximity
 QUEUE_NAME=${CLOUD_TASKS_QUEUE:-episode-processing}
 
 echo ""
