@@ -60,6 +60,7 @@ class TTS
   # @return [String] Binary MP3 audio data
   # @raise [Google::Cloud::Error] if API call fails
   def synthesize(text, voice: nil)
+    puts "\n[2/4] Generating audio..."
     voice ||= @config.voice_name
 
     chunks = @text_chunker.chunk(text, @config.byte_limit)
@@ -69,5 +70,7 @@ class TTS
     else
       @chunked_synthesizer.synthesize(chunks, voice)
     end
+
+    puts "✓ Generated #{format_size(audio_content.bytesize)}"
   end
 end

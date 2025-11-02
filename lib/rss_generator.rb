@@ -35,7 +35,10 @@ class RSSGenerator
     xml.title @podcast_config["title"]
     xml.description @podcast_config["description"]
     xml.link @podcast_config["link"] if @podcast_config["link"]
-    xml.tag! "atom:link", href: @podcast_config["feed_url"], rel: "self", type: "application/rss+xml" if @podcast_config["feed_url"]
+    if @podcast_config["feed_url"]
+      xml.tag! "atom:link", href: @podcast_config["feed_url"], rel: "self",
+                            type: "application/rss+xml"
+    end
     xml.language @podcast_config["language"]
     xml.tag! "itunes:author", @podcast_config["author"]
     xml.tag! "itunes:email", @podcast_config["email"] if @podcast_config["email"]
