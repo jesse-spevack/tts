@@ -31,13 +31,15 @@ This creates an MP3, uploads it to GCS, updates the episode manifest, and regene
 Submit an episode for processing via the deployed API:
 
 ```bash
-curl -X POST https://your-service-url.run.app/publish \
+curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
   -H "Authorization: Bearer $API_SECRET_TOKEN" \
   -F "title=Episode Title" \
   -F "author=Author Name" \
   -F "description=Episode description" \
   -F "content=@input/article.md"
 ```
+
+**Current Service URL (us-west3):** `https://podcast-api-ns2hvyzzra-wm.a.run.app`
 
 Response:
 ```json
