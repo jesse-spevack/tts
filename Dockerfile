@@ -13,6 +13,7 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development' && \
+    bundle config set --local jobs 4 && \
     bundle install
 
 # Copy application code
