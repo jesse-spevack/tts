@@ -17,6 +17,8 @@ class EpisodeProcessor
     @podcast_id = podcast_id
 
     raise ArgumentError, "podcast_id is required" unless @podcast_id
+
+    validate_podcast_id_format!
   end
 
   # Process an episode from start to finish
@@ -120,5 +122,18 @@ class EpisodeProcessor
     puts "\n#{'=' * 60}"
     puts "✓ Complete: #{title}"
     puts "=" * 60
+  end
+
+  def validate_podcast_id_format!
+    # Format: podcast_{16 hex chars}
+    # Example: podcast_a1b2c3d4e5f6a7b8
+    format = /^podcast_[a-f0-9]{16}$/
+
+    return if @podcast_id.match?(format)
+
+    raise ArgumentError,
+          "Invalid podcast_id format: '#{@podcast_id}'. " \
+          "Expected format: podcast_{16 hex chars} (e.g., podcast_a1b2c3d4e5f6a7b8). " \
+          "Generate with: openssl rand -hex 8"
   end
 end

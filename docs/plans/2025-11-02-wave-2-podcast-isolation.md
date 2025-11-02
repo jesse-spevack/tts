@@ -1156,7 +1156,7 @@ gcloud firestore databases create --region=us-west3
 
 Generate a unique podcast ID:
 ```bash
-echo "PODCAST_ID=podcast_$(openssl rand -hex 6)" >> .env
+echo "PODCAST_ID=podcast_$(openssl rand -hex 8)" >> .env
 ```
 
 ### 3. Migrate existing episodes (optional)
@@ -1217,18 +1217,18 @@ git commit -m "docs: update for Wave 2 podcast isolation"
 
 Generate a unique podcast ID:
 ```bash
-echo "podcast_$(openssl rand -hex 6)"
+echo "podcast_$(openssl rand -hex 8)"
 ```
 
 Save this value - you'll use it in `.env` as `PODCAST_ID`.
 
-Example: `podcast_a1b2c3d4e5f6`
+Example: `podcast_a1b2c3d4e5f6a7b8`
 
 **Step 2: Set PODCAST_ID in .env**
 
 Add to `.env`:
 ```bash
-PODCAST_ID=podcast_a1b2c3d4e5f6  # Use your generated ID
+PODCAST_ID=podcast_a1b2c3d4e5f6a7b8  # Use your generated ID
 ```
 
 **Step 3: Check what exists in current bucket**
