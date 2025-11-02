@@ -2,16 +2,21 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Transform storage from flat structure to podcast-scoped isolation (`podcasts/{podcast_id}/`) with Firestore user mapping and service-to-service authentication.
+**Goal:** Transform storage from flat structure to podcast-scoped isolation (`podcasts/{podcast_id}/`) with Firestore user mapping for future multi-user support.
 
 **Architecture:**
 - Storage: `podcasts/{podcast_id}/episodes/`, `feed.xml`, `manifest.json`, `staging/`
 - Firestore: User → podcast_id mapping, podcast ownership tracking
-- Auth: IAM service-to-service (remove API_SECRET_TOKEN)
-- Cost tracking: Structured logs per episode generation
 - Local usage: `generate.rb` uses `PODCAST_ID` env var
+- API: Updated to accept `podcast_id` parameter
 
-**Tech Stack:** Ruby 3.4, Google Cloud Storage, Google Cloud Firestore, Sinatra 4.0, Cloud Run IAM auth
+**Tech Stack:** Ruby 3.4, Google Cloud Storage, Google Cloud Firestore, Sinatra 4.0
+
+**Fast Follows (Next Steps):**
+1. **Cost tracking**: Add structured logging for TTS costs, storage costs per episode
+2. **Episode cleanup tooling**: Script to delete unwanted test episodes from GCS
+3. **Episode rename tooling**: Script to rename episodes and update manifest
+4. **IAM authentication**: Remove API_SECRET_TOKEN, add service-to-service auth (when Web UI is ready)
 
 ---
 
@@ -565,241 +570,7 @@ git commit -m "feat: require podcast_id in EpisodeProcessor"
 
 ---
 
-## Task 5: Add cost tracking logging
-
-**Files:**
-- Create: `lib/cost_tracker.rb`
-- Create: `test/test_cost_tracker.rb`
-- Modify: `lib/episode_processor.rb`
-
-**Step 1: Write the failing test**
-
-Create `test/test_cost_tracker.rb`:
-
-```ruby
-require "minitest/autorun"
-require "json"
-require "stringio"
-require_relative "../lib/cost_tracker"
-
-class TestCostTracker < Minitest::Test
-  def test_calculate_tts_cost_with_default_rate
-    cost = CostTracker.calculate_tts_cost(1_000_000)
-    assert_in_delta 16.00, cost, 0.01  # $16 per million characters
-  end
-
-  def test_calculate_storage_cost
-    cost = CostTracker.calculate_storage_cost(100_000_000)  # 100MB
-    assert_in_delta 0.002, cost, 0.0001  # $0.020 per GB/month
-  end
-
-  def test_log_episode_cost_outputs_structured_json
-    output = StringIO.new
-    logger = Logger.new(output)
-
-    CostTracker.log_episode_cost(
-      logger: logger,
-      podcast_id: "podcast_123",
-      user_id: "user_456",
-      episode_id: "ep_789",
-      tts_characters: 15_420,
-      audio_duration_seconds: 312,
-      audio_size_bytes: 5_000_000
-    )
-
-    output.rewind
-    log_line = output.read
-    json = JSON.parse(log_line.split(" ", 4).last)  # Skip timestamp, severity, progname
-
-    assert_equal "episode_cost", json["event"]
-    assert_equal "podcast_123", json["podcast_id"]
-    assert_equal "user_456", json["user_id"]
-    assert_equal "ep_789", json["episode_id"]
-    assert_equal 15_420, json["tts_characters"]
-    assert_in_delta 0.00025, json["tts_cost_usd"], 0.0001
-    assert_equal 312, json["audio_duration_seconds"]
-    assert_in_delta 4.77, json["storage_mb"], 0.01
-    assert json["total_cost_usd"] > 0
-    assert json["timestamp"]
-  end
-end
-```
-
-**Step 2: Run test to verify it fails**
-
-Run: `ruby test/test_cost_tracker.rb`
-Expected: FAIL with "cannot load such file"
-
-**Step 3: Write minimal implementation**
-
-Create `lib/cost_tracker.rb`:
-
-```ruby
-require "json"
-require "time"
-require "logger"
-
-module CostTracker
-  # TTS cost: $16 per 1 million characters (Chirp3 HD pricing)
-  TTS_COST_PER_CHAR = 16.0 / 1_000_000
-
-  # Storage cost: $0.020 per GB/month (Standard Storage)
-  STORAGE_COST_PER_GB_MONTH = 0.020
-
-  # Calculate TTS API cost
-  # @param characters [Integer] Number of characters processed
-  # @return [Float] Cost in USD
-  def self.calculate_tts_cost(characters)
-    characters * TTS_COST_PER_CHAR
-  end
-
-  # Calculate storage cost (monthly)
-  # @param bytes [Integer] Storage size in bytes
-  # @return [Float] Cost in USD per month
-  def self.calculate_storage_cost(bytes)
-    gb = bytes / 1_073_741_824.0
-    gb * STORAGE_COST_PER_GB_MONTH
-  end
-
-  # Log structured cost data for episode generation
-  # @param logger [Logger] Logger instance
-  # @param podcast_id [String] Podcast identifier
-  # @param user_id [String, nil] User identifier (optional)
-  # @param episode_id [String] Episode identifier
-  # @param tts_characters [Integer] Characters processed by TTS
-  # @param audio_duration_seconds [Integer] Audio duration in seconds
-  # @param audio_size_bytes [Integer] Audio file size in bytes
-  def self.log_episode_cost(logger:, podcast_id:, user_id:, episode_id:, tts_characters:,
-                             audio_duration_seconds:, audio_size_bytes:)
-    tts_cost = calculate_tts_cost(tts_characters)
-    storage_cost = calculate_storage_cost(audio_size_bytes)
-    total_cost = tts_cost + storage_cost
-
-    log_data = {
-      event: "episode_cost",
-      podcast_id: podcast_id,
-      user_id: user_id,
-      episode_id: episode_id,
-      tts_characters: tts_characters,
-      tts_cost_usd: tts_cost.round(6),
-      audio_duration_seconds: audio_duration_seconds,
-      storage_mb: (audio_size_bytes / 1_048_576.0).round(2),
-      storage_cost_usd: storage_cost.round(6),
-      total_cost_usd: total_cost.round(6),
-      timestamp: Time.now.utc.iso8601
-    }
-
-    logger.info(log_data.to_json)
-  end
-end
-```
-
-**Step 4: Run test to verify it passes**
-
-Run: `ruby test/test_cost_tracker.rb`
-Expected: PASS
-
-**Step 5: Integrate into EpisodeProcessor**
-
-Modify `lib/episode_processor.rb` to add cost tracking after TTS generation:
-
-```ruby
-require "yaml"
-require "fileutils"
-require "logger"
-require_relative "text_processor"
-require_relative "tts"
-require_relative "podcast_publisher"
-require_relative "gcs_uploader"
-require_relative "episode_manifest"
-require_relative "filename_generator"
-require_relative "cost_tracker"
-
-class EpisodeProcessor
-  attr_reader :bucket_name, :podcast_id
-
-  def initialize(bucket_name = nil, podcast_id = nil, user_id = nil)
-    @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET")
-    @podcast_id = podcast_id
-    @user_id = user_id
-    @logger = Logger.new($stdout)
-
-    raise ArgumentError, "podcast_id is required" unless @podcast_id
-  end
-
-  def process(title, author, description, markdown_content)
-    print_start(title)
-    filename = FilenameGenerator.generate(title)
-    episode_id = EpisodeManifest.generate_guid(title)
-    mp3_path = nil
-
-    begin
-      # Step 1: Convert markdown to plain text
-      text = TextProcessor.convert_to_plain_text(markdown_content)
-      puts "✓ Converted to #{text.length} characters of plain text"
-
-      # Step 2: Generate TTS audio
-      puts "\n[2/4] Generating TTS audio..."
-      tts = TTS.new
-      audio_content = tts.synthesize(text)
-      audio_duration = estimate_duration(audio_content.bytesize)
-      puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
-
-      # Step 3: Log cost tracking
-      CostTracker.log_episode_cost(
-        logger: @logger,
-        podcast_id: @podcast_id,
-        user_id: @user_id,
-        episode_id: episode_id,
-        tts_characters: text.length,
-        audio_duration_seconds: audio_duration,
-        audio_size_bytes: audio_content.bytesize
-      )
-
-      # Step 4: Save MP3 temporarily
-      mp3_path = save_temp_mp3(filename, audio_content)
-
-      # Step 5: Publish to podcast feed
-      publish_to_feed(mp3_path, title, author, description)
-
-      print_success(title)
-    ensure
-      cleanup_temp_file(mp3_path) if mp3_path
-    end
-  end
-
-  private
-
-  # Estimate audio duration from file size (rough approximation)
-  # Assumes ~128kbps MP3 encoding = ~16KB per second
-  def estimate_duration(bytes)
-    (bytes / 16_000.0).round
-  end
-
-  # ... rest of methods unchanged ...
-end
-```
-
-**Step 6: Run all tests**
-
-Run: `rake test`
-Expected: All tests pass
-
-**Step 7: Run RuboCop**
-
-Run: `rake rubocop`
-Expected: PASS
-
-**Step 8: Commit**
-
-```bash
-git add lib/cost_tracker.rb test/test_cost_tracker.rb lib/episode_processor.rb
-git commit -m "feat: add cost tracking logging for episode generation"
-```
-
----
-
-## Task 6: Update API to accept podcast_id
+## Task 5: Update API to accept podcast_id
 
 **Files:**
 - Modify: `api.rb`
@@ -1048,123 +819,7 @@ git commit -m "feat: update API to require and use podcast_id"
 
 ---
 
-## Task 7: Add IAM authentication support
-
-**Files:**
-- Modify: `api.rb`
-- Create: `lib/iam_authenticator.rb`
-- Create: `test/test_iam_authenticator.rb`
-
-**Step 1: Write failing test**
-
-Create `test/test_iam_authenticator.rb`:
-
-```ruby
-require "minitest/autorun"
-require_relative "../lib/iam_authenticator"
-
-class TestIAMAuthenticator < Minitest::Test
-  def test_validates_oidc_token_structure
-    # This is integration test - skip for now
-    skip "Requires Google IAM validation library"
-  end
-end
-```
-
-**Step 2: Implement IAM authenticator**
-
-Create `lib/iam_authenticator.rb`:
-
-```ruby
-require "google/cloud/tasks"
-
-module IAMAuthenticator
-  # Validate IAM authentication from Cloud Tasks OIDC token
-  # @param request [Rack::Request] The request object
-  # @return [Boolean] True if authenticated
-  def self.authenticated?(request)
-    # Cloud Tasks includes OIDC token in Authorization header
-    auth_header = request.env["HTTP_AUTHORIZATION"]
-    return false unless auth_header
-
-    # In production, Cloud Run validates OIDC tokens automatically
-    # If request reaches our code, it's already validated by platform
-    # We just check the header exists
-    auth_header.start_with?("Bearer ")
-  end
-end
-```
-
-**Step 3: Update api.rb authentication**
-
-Modify `api.rb`:
-
-```ruby
-require "sinatra"
-require "sinatra/json"
-require_relative "lib/gcs_uploader"
-require_relative "lib/episode_processor"
-require_relative "lib/publish_params_validator"
-require_relative "lib/cloud_tasks_enqueuer"
-require_relative "lib/filename_generator"
-require_relative "lib/iam_authenticator"
-
-# ... existing config ...
-
-# Helper: Check authentication
-def authenticated?
-  # In production, Cloud Run with --no-allow-unauthenticated handles auth
-  # Request won't reach this code unless IAM validation passed
-  # For local dev, allow all requests
-  return true if ENV["RACK_ENV"] != "production"
-
-  # In production, validate IAM token
-  IAMAuthenticator.authenticated?(request)
-end
-```
-
-**Step 4: Update deployment script**
-
-Check if `bin/deploy` exists and add `--no-allow-unauthenticated` flag:
-
-```bash
-#!/bin/bash
-set -e
-
-echo "Deploying to Cloud Run..."
-
-gcloud run deploy podcast-api \
-  --source . \
-  --region us-west3 \
-  --platform managed \
-  --allow-unauthenticated=false \
-  --memory 1Gi \
-  --timeout 540 \
-  --set-env-vars RACK_ENV=production
-
-echo "✓ Deployment complete"
-```
-
-**Step 5: Run tests**
-
-Run: `rake test`
-Expected: All tests pass
-
-**Step 6: Run RuboCop**
-
-Run: `rake rubocop`
-Expected: PASS
-
-**Step 7: Commit**
-
-```bash
-git add api.rb lib/iam_authenticator.rb test/test_iam_authenticator.rb bin/deploy
-git commit -m "feat: add IAM authentication for service-to-service auth"
-```
-
----
-
-## Task 8: Eliminate temporary MP3 files
+## Task 6: Eliminate temporary MP3 files
 
 **Files:**
 - Modify: `lib/episode_processor.rb`
@@ -1381,7 +1036,7 @@ git commit -m "feat: eliminate temporary MP3 files, stream directly to GCS"
 
 ---
 
-## Task 9: Update documentation
+## Task 7: Update documentation
 
 **Files:**
 - Modify: `README.md`
@@ -1521,7 +1176,90 @@ git commit -m "docs: update for Wave 2 podcast isolation"
 
 ---
 
-## Task 10: Test end-to-end locally
+## Task 8: Migrate existing episodes to podcast-scoped structure
+
+**Files:**
+- None (GCS operations only)
+
+**Step 1: Choose your podcast ID**
+
+Generate a unique podcast ID:
+```bash
+echo "podcast_$(openssl rand -hex 6)"
+```
+
+Save this value - you'll use it in `.env` as `PODCAST_ID`.
+
+Example: `podcast_a1b2c3d4e5f6`
+
+**Step 2: Set PODCAST_ID in .env**
+
+Add to `.env`:
+```bash
+PODCAST_ID=podcast_a1b2c3d4e5f6  # Use your generated ID
+```
+
+**Step 3: Check what exists in current bucket**
+
+Run: `gsutil ls -r gs://YOUR_BUCKET/ | head -30`
+Expected: See existing `episodes/`, `feed.xml`, `manifest.json`
+
+**Step 4: Create podcast directory structure**
+
+Run: `gsutil ls gs://YOUR_BUCKET/podcasts/$PODCAST_ID/ || echo "Will be created during migration"`
+Expected: Directory doesn't exist yet (that's fine)
+
+**Step 5: Migrate episodes**
+
+Run:
+```bash
+PODCAST_ID="YOUR_PODCAST_ID"  # Replace with your actual ID
+BUCKET="YOUR_BUCKET"          # Replace with your bucket name
+
+# Move episodes (if any exist)
+gsutil -m mv "gs://$BUCKET/episodes/*" "gs://$BUCKET/podcasts/$PODCAST_ID/episodes/" 2>/dev/null || echo "No episodes to migrate"
+
+# Move feed.xml
+gsutil mv "gs://$BUCKET/feed.xml" "gs://$BUCKET/podcasts/$PODCAST_ID/feed.xml" 2>/dev/null || echo "No feed.xml to migrate"
+
+# Move manifest.json
+gsutil mv "gs://$BUCKET/manifest.json" "gs://$BUCKET/podcasts/$PODCAST_ID/manifest.json" 2>/dev/null || echo "No manifest.json to migrate"
+```
+
+**Step 6: Verify migration**
+
+Run: `gsutil ls -r gs://$BUCKET/podcasts/$PODCAST_ID/`
+Expected: See episodes/, feed.xml, manifest.json in new location
+
+**Step 7: Verify old location is empty**
+
+Run: `gsutil ls gs://$BUCKET/episodes/ 2>&1`
+Expected: "CommandException: One or more URLs matched no objects" (old location is empty)
+
+**Step 8: Test new feed URL**
+
+Run: `curl https://storage.googleapis.com/$BUCKET/podcasts/$PODCAST_ID/feed.xml | head -20`
+Expected: Valid RSS XML with your episodes
+
+**Step 9: Update podcast app subscription**
+
+1. Open your podcast app
+2. Remove old feed: `https://storage.googleapis.com/$BUCKET/feed.xml`
+3. Add new feed: `https://storage.googleapis.com/$BUCKET/podcasts/$PODCAST_ID/feed.xml`
+4. Verify episodes appear correctly
+
+**Step 10: Document your podcast URL**
+
+Save for reference:
+```bash
+echo "My podcast feed: https://storage.googleapis.com/$BUCKET/podcasts/$PODCAST_ID/feed.xml" >> .podcast-url
+git add .podcast-url
+git commit -m "docs: save podcast feed URL for reference"
+```
+
+---
+
+## Task 9: Test end-to-end locally
 
 **Step 1: Set environment variables**
 
