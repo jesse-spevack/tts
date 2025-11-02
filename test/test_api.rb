@@ -106,6 +106,15 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "content"
   end
 
+  def test_missing_podcast_id_returns_bad_request
+    params = valid_params.except(:podcast_id)
+    post "/publish", params, auth_header
+
+    assert_equal 400, last_response.status
+    body = JSON.parse(last_response.body)
+    assert_match(/podcast_id/i, body["message"])
+  end
+
   def test_empty_content_returns_bad_request
     params = valid_params.merge(content: empty_file)
     post "/publish", params, auth_header
@@ -126,13 +135,14 @@ class TestAPI < Minitest::Test
     payload = {
       title: "Test",
       author: "Test Author",
-      description: "Test description"
+      description: "Test description",
+      staging_path: "staging/test.md"
     }.to_json
     post "/process", payload, { "CONTENT_TYPE" => "application/json" }
 
     assert_equal 400, last_response.status
     body = JSON.parse(last_response.body)
-    assert_includes body["message"], "staging_path"
+    assert_includes body["message"], "podcast_id"
   end
 
   private
@@ -143,6 +153,7 @@ class TestAPI < Minitest::Test
 
   def valid_params
     {
+      podcast_id: "podcast_test_123",
       title: "Test Episode",
       author: "Test Author",
       description: "Test description",

@@ -47,30 +47,9 @@ post "/publish" do
   errors = PublishParamsValidator.new(params).validate
   halt 400, json(status: "error", message: errors.join(", ")) if errors.any?
 
-  # Step 3: Extract parameters
-  title = params[:title]
-  author = params[:author]
-  description = params[:description]
-  content_file = params[:content]
+  # Step 3: Handle episode submission
+  handle_episode_submission(params)
 
-  # Step 4: Read file content
-  markdown_content = content_file[:tempfile].read
-
-  # Step 5: Generate filename and upload to GCS staging
-  filename = FilenameGenerator.generate(title)
-  staging_path = "staging/#{filename}.md"
-
-  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
-  gcs.upload_content(content: markdown_content, remote_path: staging_path)
-
-  logger.info "event=file_uploaded title=\"#{title}\" staging_path=#{staging_path}"
-
-  # Step 6: Enqueue processing task
-  task_name = CloudTasksEnqueuer.new.enqueue_episode_processing(title, author, description, staging_path)
-  logger.info "event=task_enqueued title=\"#{title}\" task_name=#{task_name}"
-
-  # Step 7: Return success immediately
-  logger.info "event=episode_submitted title=\"#{title}\" staging_path=#{staging_path}"
   json status: "success", message: "Episode submitted for processing"
 rescue StandardError => e
   logger.error "Error: #{e.class} - #{e.message}"
@@ -111,8 +90,42 @@ def authenticated?
   token == expected_token
 end
 
+# Helper: Handle episode submission
+def handle_episode_submission(params)
+  podcast_id = params[:podcast_id]
+  title = params[:title]
+  markdown_content = params[:content][:tempfile].read
+
+  # Upload to staging
+  staging_path = upload_to_staging(podcast_id, title, markdown_content)
+
+  # Enqueue task
+  enqueue_processing_task(params, staging_path)
+end
+
+# Helper: Upload markdown content to GCS staging
+def upload_to_staging(podcast_id, title, markdown_content)
+  filename = FilenameGenerator.generate(title)
+  staging_path = "staging/#{filename}.md"
+
+  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
+  gcs.upload_content(content: markdown_content, remote_path: staging_path)
+
+  logger.info "event=file_uploaded podcast_id=#{podcast_id} title=\"#{title}\" staging_path=#{staging_path}"
+  staging_path
+end
+
+# Helper: Enqueue episode processing task
+def enqueue_processing_task(params, staging_path)
+  task_payload = params.slice(:podcast_id, :title, :author, :description).merge(staging_path: staging_path)
+  task_name = CloudTasksEnqueuer.new.enqueue_episode_processing(task_payload)
+  logger.info "event=task_enqueued podcast_id=#{params[:podcast_id]} title=\"#{params[:title]}\" task_name=#{task_name}"
+  logger.info "event=episode_submitted podcast_id=#{params[:podcast_id]} title=\"#{params[:title]}\""
+end
+
 # Helper: Validate task payload
 def validate_task_payload(payload)
+  return "Missing podcast_id" unless payload["podcast_id"]
   return "Missing title" unless payload["title"]
   return "Missing author" unless payload["author"]
   return "Missing description" unless payload["description"]
@@ -123,26 +136,27 @@ end
 
 # Helper: Process episode from Cloud Task payload
 def process_episode_task(payload)
+  podcast_id = payload["podcast_id"]
   title = payload["title"]
   author = payload["author"]
   description = payload["description"]
   staging_path = payload["staging_path"]
 
-  logger.info "event=processing_started title=\"#{title}\" staging_path=#{staging_path}"
+  logger.info "event=processing_started podcast_id=#{podcast_id} title=\"#{title}\""
 
   # Download markdown from GCS
-  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
+  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
   markdown_content = gcs.download_file(remote_path: staging_path)
-  logger.info "event=file_downloaded title=\"#{title}\" size_bytes=#{markdown_content.bytesize}"
+  logger.info "event=file_downloaded podcast_id=#{podcast_id} size_bytes=#{markdown_content.bytesize}"
 
   # Process episode
-  processor = EpisodeProcessor.new
+  processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
   processor.process(title, author, description, markdown_content)
-  logger.info "event=episode_processed title=\"#{title}\""
+  logger.info "event=episode_processed podcast_id=#{podcast_id}"
 
   # Cleanup staging file
   gcs.delete_file(remote_path: staging_path)
-  logger.info "event=staging_cleaned title=\"#{title}\" staging_path=#{staging_path}"
+  logger.info "event=staging_cleaned podcast_id=#{podcast_id} staging_path=#{staging_path}"
 
-  logger.info "event=processing_completed title=\"#{title}\""
+  logger.info "event=processing_completed podcast_id=#{podcast_id}"
 end

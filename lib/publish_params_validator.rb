@@ -14,6 +14,7 @@ class PublishParamsValidator
 
   def validate_text_fields
     errors = []
+    errors << "Missing podcast_id" unless @params[:podcast_id]
     errors << "Missing title" if missing_or_empty?(@params[:title])
     errors << "Missing author" if missing_or_empty?(@params[:author])
     errors << "Missing description" if missing_or_empty?(@params[:description])

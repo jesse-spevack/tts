@@ -5,8 +5,11 @@ class CloudTasksEnqueuer
     @client = Google::Cloud::Tasks::V2::CloudTasks::Client.new
   end
 
-  def enqueue_episode_processing(title, author, description, staging_path)
-    task = build_task(title, author, description, staging_path)
+  # Enqueue episode processing task
+  # @param task_payload [Hash] Task data including podcast_id, title, author, description, staging_path
+  # @return [String] Task name
+  def enqueue_episode_processing(task_payload)
+    task = build_task(task_payload)
     response = @client.create_task(parent: queue_path, task: task)
     response.name
   end
@@ -21,23 +24,17 @@ class CloudTasksEnqueuer
     )
   end
 
-  def build_task(title, author, description, staging_path)
+  def build_task(task_payload)
     {
       http_request: {
         http_method: "POST",
         url: "#{service_url}/process",
         headers: { "Content-Type" => "application/json" },
-        body: build_payload(title, author, description, staging_path).to_json
+        body: task_payload.to_json,
+        oidc_token: {
+          service_account_email: "#{ENV.fetch('GOOGLE_CLOUD_PROJECT')}@appspot.gserviceaccount.com"
+        }
       }
-    }
-  end
-
-  def build_payload(title, author, description, staging_path)
-    {
-      title: title,
-      author: author,
-      description: description,
-      staging_path: staging_path
     }
   end
 
