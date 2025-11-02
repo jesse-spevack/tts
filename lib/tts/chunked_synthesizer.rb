@@ -13,7 +13,7 @@ class TTS
     # @param api_client [TTS::APIClient] API client for making synthesis calls
     # @param config [TTS::Config] Configuration object
     # @param logger [Logger] Logger instance
-    def initialize(api_client, config, logger)
+    def initialize(api_client:, config:, logger:)
       @api_client = api_client
       @config = config
       @logger = logger
@@ -34,13 +34,13 @@ class TTS
 
       start_time = Time.now
       pool = Concurrent::FixedThreadPool.new(@config.thread_pool_size)
-      promises = launch_chunk_promises(chunks, voice, pool)
+      promises = launch_chunk_promises(chunks: chunks, voice: voice, pool: pool)
 
       results = wait_for_completion(promises)
       audio_parts = extract_audio_parts(results)
 
       cleanup_pool(pool)
-      log_synthesis_complete(chunks, audio_parts, start_time)
+      log_synthesis_complete(chunks: chunks, audio_parts: audio_parts, start_time: start_time)
 
       audio_parts.join
     end
@@ -54,14 +54,14 @@ class TTS
       @logger.info ""
     end
 
-    def launch_chunk_promises(chunks, voice, pool)
+    def launch_chunk_promises(chunks:, voice:, pool:)
       skipped_chunks = Concurrent::Array.new
       promises = []
       total = chunks.length
 
       chunks.each_with_index do |chunk, i|
         promise = Concurrent::Promise.execute(executor: pool) do
-          process_chunk(chunk, i, total, voice, skipped_chunks)
+          process_chunk(chunk: chunk, index: i, total: total, voice: voice, skipped_chunks: skipped_chunks)
         end
         promises << promise
       end
@@ -70,26 +70,27 @@ class TTS
       promises
     end
 
-    def process_chunk(chunk, index, total, voice, skipped_chunks)
+    def process_chunk(chunk:, index:, total:, voice:, skipped_chunks:)
       chunk_num = index + 1
       @logger.info "Chunk #{chunk_num}/#{total}: Starting (#{chunk.bytesize} bytes)"
 
       chunk_start = Time.now
-      audio = synthesize_chunk_with_error_handling(chunk, chunk_num, total, voice, skipped_chunks)
+      audio = synthesize_chunk_with_error_handling(chunk: chunk, chunk_num: chunk_num, total: total, voice: voice,
+                                                   skipped_chunks: skipped_chunks)
 
-      log_chunk_completion(chunk_num, total, chunk_start) if audio
+      log_chunk_completion(chunk_num: chunk_num, total: total, chunk_start: chunk_start) if audio
 
       [index, audio]
     end
 
-    def synthesize_chunk_with_error_handling(chunk, chunk_num, total, voice, skipped_chunks)
+    def synthesize_chunk_with_error_handling(chunk:, chunk_num:, total:, voice:, skipped_chunks:)
       @api_client.call_with_retry(text: chunk, voice: voice, max_retries: @config.max_retries)
     rescue StandardError => e
-      handle_chunk_error(e, chunk_num, total, skipped_chunks)
+      handle_chunk_error(error: e, chunk_num: chunk_num, total: total, skipped_chunks: skipped_chunks)
       nil
     end
 
-    def handle_chunk_error(error, chunk_num, total, skipped_chunks)
+    def handle_chunk_error(error:, chunk_num:, total:, skipped_chunks:)
       if error.message.include?(CONTENT_FILTER_ERROR)
         @logger.warn "Chunk #{chunk_num}/#{total}: ⚠ SKIPPED - Content filter"
         skipped_chunks << chunk_num
@@ -99,7 +100,7 @@ class TTS
       end
     end
 
-    def log_chunk_completion(chunk_num, total, chunk_start)
+    def log_chunk_completion(chunk_num:, total:, chunk_start:)
       chunk_duration = Time.now - chunk_start
       @logger.info "Chunk #{chunk_num}/#{total}: ✓ Done in #{chunk_duration.round(2)}s"
     end
@@ -123,7 +124,7 @@ class TTS
       pool.wait_for_termination
     end
 
-    def log_synthesis_complete(chunks, audio_parts, start_time)
+    def log_synthesis_complete(chunks:, audio_parts:, start_time:)
       total_duration = Time.now - start_time
 
       @logger.info ""

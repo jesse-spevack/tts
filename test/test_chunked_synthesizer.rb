@@ -11,7 +11,7 @@ class TestChunkedSynthesizer < Minitest::Test
     @config = TTS::Config.new(thread_pool_size: 2)
     @logger = Logger.new(File::NULL)
     @mock_api_client = Minitest::Mock.new
-    @synthesizer = TTS::ChunkedSynthesizer.new(@mock_api_client, @config, @logger)
+    @synthesizer = TTS::ChunkedSynthesizer.new(api_client: @mock_api_client, config: @config, logger: @logger)
   end
 
   def test_synthesize_single_chunk
@@ -34,7 +34,7 @@ class TestChunkedSynthesizer < Minitest::Test
   def test_synthesize_multiple_chunks_concatenates
     # Use single thread to ensure deterministic ordering in test
     config = TTS::Config.new(thread_pool_size: 1)
-    synthesizer = TTS::ChunkedSynthesizer.new(@mock_api_client, config, @logger)
+    synthesizer = TTS::ChunkedSynthesizer.new(api_client: @mock_api_client, config: config, logger: @logger)
 
     chunks = ["First chunk.", "Second chunk.", "Third chunk."]
     voice = "en-GB-Chirp3-HD-Enceladus"
@@ -101,7 +101,7 @@ class TestChunkedSynthesizer < Minitest::Test
   def test_synthesize_maintains_chunk_order
     # Use single thread to ensure deterministic ordering in test
     config = TTS::Config.new(thread_pool_size: 1)
-    synthesizer = TTS::ChunkedSynthesizer.new(@mock_api_client, config, @logger)
+    synthesizer = TTS::ChunkedSynthesizer.new(api_client: @mock_api_client, config: config, logger: @logger)
 
     chunks = ["Chunk 1.", "Chunk 2.", "Chunk 3.", "Chunk 4."]
     voice = "en-GB-Chirp3-HD-Enceladus"

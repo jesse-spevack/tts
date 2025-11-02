@@ -24,7 +24,7 @@ class EpisodeProcessor
   # @param author [String] Episode author
   # @param description [String] Episode description
   # @param markdown_content [String] Article body in markdown
-  def process(title, author, description, markdown_content)
+  def process(title:, author:, description:, markdown_content:)
     print_start(title)
     filename = FilenameGenerator.generate(title)
     mp3_path = nil
@@ -44,7 +44,7 @@ class EpisodeProcessor
       mp3_path = save_temp_mp3(filename, audio_content)
 
       # Step 4: Publish to podcast feed
-      publish_to_feed(mp3_path, title, author, description)
+      publish_to_feed(mp3_path: mp3_path, title: title, author: author, description: description)
 
       print_success(title)
     ensure
@@ -67,7 +67,7 @@ class EpisodeProcessor
     path
   end
 
-  def publish_to_feed(mp3_path, title, author, description)
+  def publish_to_feed(mp3_path:, title:, author:, description:)
     puts "\n[4/4] Publishing to feed..."
 
     podcast_config = YAML.safe_load_file("config/podcast.yml")

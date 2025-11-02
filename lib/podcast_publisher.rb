@@ -20,7 +20,7 @@ class PodcastPublisher
   def publish(mp3_file, metadata)
     guid = EpisodeManifest.generate_guid(metadata["title"])
     mp3_url = upload_mp3(mp3_file, guid)
-    episode_data = build_episode_data(metadata, guid, mp3_url, mp3_file)
+    episode_data = build_episode_data(metadata: metadata, guid: guid, mp3_url: mp3_url, mp3_file: mp3_file)
 
     update_manifest(episode_data)
     upload_rss_feed
@@ -35,7 +35,7 @@ class PodcastPublisher
     @gcs_uploader.upload_file(local_path: mp3_file, remote_path: remote_path)
   end
 
-  def build_episode_data(metadata, guid, mp3_url, mp3_file)
+  def build_episode_data(metadata:, guid:, mp3_url:, mp3_file:)
     {
       "id" => guid,
       "title" => metadata["title"],

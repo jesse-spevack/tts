@@ -14,7 +14,7 @@ class TTS
     # @param config [TTS::Config] Configuration object
     # @param logger [Logger] Logger instance
     # @param client [Google::Cloud::TextToSpeech::Client, nil] Optional client for testing
-    def initialize(config, logger, client: nil)
+    def initialize(config:, logger:, client: nil)
       @config = config
       @logger = logger
 

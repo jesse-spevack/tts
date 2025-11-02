@@ -97,14 +97,14 @@ def handle_episode_submission(params)
   markdown_content = params[:content][:tempfile].read
 
   # Upload to staging
-  staging_path = upload_to_staging(podcast_id, title, markdown_content)
+  staging_path = upload_to_staging(podcast_id: podcast_id, title: title, markdown_content: markdown_content)
 
   # Enqueue task
   enqueue_processing_task(params, staging_path)
 end
 
 # Helper: Upload markdown content to GCS staging
-def upload_to_staging(podcast_id, title, markdown_content)
+def upload_to_staging(podcast_id:, title:, markdown_content:)
   filename = FilenameGenerator.generate(title)
   staging_path = "staging/#{filename}.md"
 
@@ -151,7 +151,7 @@ def process_episode_task(payload)
 
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
-  processor.process(title, author, description, markdown_content)
+  processor.process(title: title, author: author, description: description, markdown_content: markdown_content)
   logger.info "event=episode_processed podcast_id=#{podcast_id}"
 
   # Cleanup staging file

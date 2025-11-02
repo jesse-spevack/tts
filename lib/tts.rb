@@ -47,9 +47,9 @@ class TTS
     @config = config
     @logger = logger
 
-    @api_client = TTS::APIClient.new(config, logger)
+    @api_client = TTS::APIClient.new(config: config, logger: logger)
     @text_chunker = TTS::TextChunker.new
-    @chunked_synthesizer = TTS::ChunkedSynthesizer.new(@api_client, config, logger)
+    @chunked_synthesizer = TTS::ChunkedSynthesizer.new(api_client: @api_client, config: config, logger: logger)
   end
 
   # Converts text to speech and returns audio content as binary data.

@@ -11,7 +11,7 @@ class TestAPIClient < Minitest::Test
     @config = TTS::Config.new
     @logger = Logger.new(File::NULL)
     @mock_google_client = Minitest::Mock.new
-    @client = TTS::APIClient.new(@config, @logger, client: @mock_google_client)
+    @client = TTS::APIClient.new(config: @config, logger: @logger, client: @mock_google_client)
   end
 
   def test_call_makes_successful_api_request
