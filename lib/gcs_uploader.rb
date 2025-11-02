@@ -88,7 +88,9 @@ class GCSUploader
   # Lazy-load storage client
   def storage
     @storage ||= begin
-      unless ENV["GOOGLE_APPLICATION_CREDENTIALS"]
+      # On Cloud Run, credentials are automatic via service account
+      # Only check for GOOGLE_APPLICATION_CREDENTIALS in local/test environments
+      if !ENV["GOOGLE_APPLICATION_CREDENTIALS"] && ENV["RACK_ENV"] != "production"
         raise MissingCredentialsError,
               "GOOGLE_APPLICATION_CREDENTIALS not set"
       end
