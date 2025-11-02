@@ -1,2 +1,9 @@
 Service deployed to us-west3: Sun Nov  2 08:18:44 MST 2025
 End-to-end test passed: Sun Nov  2 08:23:26 MST 2025
+
+Migration completed: Sun Nov  2 08:50:15 MST 2025
+- Old us-central1 infrastructure deleted
+- Running on us-west3:
+  - Cloud Run: podcast-api
+  - Cloud Tasks: episode-processing
+  - GCS Bucket: verynormal-tts-podcast
