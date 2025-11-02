@@ -65,12 +65,25 @@ class TTS
 
     chunks = @text_chunker.chunk(text, @config.byte_limit)
 
-    if chunks.length == 1
-      @api_client.call(text: chunks[0], voice: voice)
-    else
-      @chunked_synthesizer.synthesize(chunks, voice)
-    end
+    audio_content = if chunks.length == 1
+                      @api_client.call(text: chunks[0], voice: voice)
+                    else
+                      @chunked_synthesizer.synthesize(chunks, voice)
+                    end
 
     puts "✓ Generated #{format_size(audio_content.bytesize)}"
+    audio_content
+  end
+
+  private
+
+  def format_size(bytes)
+    if bytes < 1024
+      "#{bytes} bytes"
+    elsif bytes < 1_048_576
+      "#{(bytes / 1024.0).round(1)} KB"
+    else
+      "#{(bytes / 1_048_576.0).round(1)} MB"
+    end
   end
 end
