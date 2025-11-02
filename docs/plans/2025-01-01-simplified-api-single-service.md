@@ -1316,15 +1316,33 @@ git commit --allow-empty -m "Wave 1 complete: Basic API deployed and tested"
 
 **Wave 1 Complete When:**
 
-- [ ] Service deployed to Cloud Run
-- [ ] Health check returns 200
-- [ ] `/publish` accepts curl request with auth
-- [ ] Cloud Tasks enqueues successfully
-- [ ] `/process` generates TTS audio
-- [ ] Episode appears in RSS feed
-- [ ] MP3 uploaded to GCS
-- [ ] Staging file cleaned up
-- [ ] Can publish from any computer via curl
+- [x] Service deployed to Cloud Run
+- [x] Health check returns 200
+- [x] `/publish` accepts curl request with auth
+- [x] Cloud Tasks enqueues successfully
+- [x] `/process` generates TTS audio
+- [x] Episode appears in RSS feed
+- [x] MP3 uploaded to GCS
+- [x] Staging file cleaned up
+- [x] Can publish from any computer via curl
+
+**Status:** ✅ **Wave 1 COMPLETE** (2025-11-02)
+
+**Post-Deployment Fixes:**
+
+Three bugs discovered and fixed during initial deployment:
+
+1. **Missing require** (`lib/text_processor.rb`) - Added `require_relative "text_converter"`
+   - Commit: a6f88b5
+2. **Encoding error** (`lib/gcs_uploader.rb`) - Added `.force_encoding("UTF-8")` to downloads
+   - Commit: 28d6b5f
+3. **Undefined variable** (`lib/tts.rb`) - Captured `audio_content` return value
+   - Commit: a82e62d
+
+**Improvements Added:**
+- Structured event-based logging throughout API
+- Cloud Task ID tracking for better observability
+- Refactored code for better maintainability
 
 **Wave 2 Complete When:**
 
