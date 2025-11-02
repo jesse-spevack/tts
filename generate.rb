@@ -116,7 +116,18 @@ unless options[:local_only]
     podcast_config = YAML.safe_load_file("config/podcast.yml")
 
     # Initialize GCS and manifest
-    podcast_id = ENV.fetch("PODCAST_ID", nil)
+    podcast_id = ENV.fetch("PODCAST_ID") do
+      raise "PODCAST_ID environment variable is required. " \
+            "Generate with: echo \"PODCAST_ID=podcast_$(openssl rand -hex 8)\" >> .env"
+    end
+
+    # Validate podcast_id format
+    unless podcast_id.match?(/^podcast_[a-f0-9]{16}$/)
+      raise "Invalid PODCAST_ID format: '#{podcast_id}'. " \
+            "Expected format: podcast_{16 hex chars} (e.g., podcast_a1b2c3d4e5f6a7b8). " \
+            "Generate with: openssl rand -hex 8"
+    end
+
     gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
     episode_manifest = EpisodeManifest.new(gcs_uploader)
 
@@ -132,6 +143,7 @@ unless options[:local_only]
     feed_url = publisher.publish(output_file, metadata_with_string_keys)
 
     puts "✓ Episode published successfully"
+    puts "  Podcast ID: #{podcast_id}"
     puts "  Feed URL: #{feed_url}"
     puts "  Episodes in feed: #{episode_manifest.episodes.length}"
   rescue StandardError => e

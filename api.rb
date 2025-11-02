@@ -100,7 +100,7 @@ def handle_episode_submission(params)
   staging_path = upload_to_staging(podcast_id: podcast_id, title: title, markdown_content: markdown_content)
 
   # Enqueue task
-  enqueue_processing_task(params, staging_path)
+  enqueue_processing_task(params: params, staging_path: staging_path)
 end
 
 # Helper: Upload markdown content to GCS staging
@@ -116,7 +116,7 @@ def upload_to_staging(podcast_id:, title:, markdown_content:)
 end
 
 # Helper: Enqueue episode processing task
-def enqueue_processing_task(params, staging_path)
+def enqueue_processing_task(params:, staging_path:)
   task_payload = params.slice(:podcast_id, :title, :author, :description).merge(staging_path: staging_path)
   task_name = CloudTasksEnqueuer.new.enqueue_episode_processing(task_payload)
   logger.info "event=task_enqueued podcast_id=#{params[:podcast_id]} title=\"#{params[:title]}\" task_name=#{task_name}"

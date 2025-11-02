@@ -115,12 +115,14 @@ class EpisodeProcessor
   def print_start(title)
     puts "=" * 60
     puts "Processing: #{title}"
+    puts "Podcast ID: #{@podcast_id}"
     puts "=" * 60
   end
 
   def print_success(title)
     puts "\n#{'=' * 60}"
     puts "✓ Complete: #{title}"
+    puts "Podcast ID: #{@podcast_id}"
     puts "=" * 60
   end
 
