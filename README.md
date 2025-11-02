@@ -39,7 +39,35 @@ ruby generate.rb --help
 
 ### Creating Input Files
 
-Use the `/generate-input-md` slash command in Claude Code to create properly formatted input files with frontmatter.
+Input files should be markdown documents with YAML frontmatter at the top. Use the `/generate-input-md` slash command in Claude Code to create properly formatted input files.
+
+#### YAML Frontmatter Format
+
+All input markdown files must include YAML frontmatter with the following fields:
+
+```yaml
+---
+title: "Your Episode Title"
+description: "A brief description of the episode content"
+author: "Author Name"
+---
+```
+
+**Required fields:**
+- `title`: The episode title (enclosed in quotes if it contains special characters)
+- `description`: A short description of the episode (enclosed in quotes)
+- `author`: The author's name (enclosed in quotes)
+
+**Example:**
+```yaml
+---
+title: "The New Calculus of AI-based Coding"
+description: "An exploration of how AI-assisted development can achieve 10x productivity gains, and why succeeding at this scale requires fundamental changes to testing, deployment, and team coordination practices."
+author: "Joe Magerramov"
+---
+```
+
+After the frontmatter, include your markdown content. The system will strip markdown formatting (headers, bold, links, etc.) and convert it to plain text suitable for text-to-speech processing.
 
 ## Features
 
@@ -64,6 +92,17 @@ Run RuboCop linter:
 ```bash
 rake rubocop
 ```
+
+## Deploy
+
+The API is deployed to Google Cloud Run for asynchronous episode processing.
+
+```bash
+./bin/deploy
+```
+
+See [docs/deployment.md](docs/deployment.md) for detailed deployment instructions, architecture overview, and troubleshooting guide.
+
 
 ## License
 
