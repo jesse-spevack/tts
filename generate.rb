@@ -116,7 +116,8 @@ unless options[:local_only]
     podcast_config = YAML.safe_load_file("config/podcast.yml")
 
     # Initialize GCS and manifest
-    gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
+    podcast_id = ENV.fetch("PODCAST_ID", nil)
+    gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
     episode_manifest = EpisodeManifest.new(gcs_uploader)
 
     # Publish episode
