@@ -13,8 +13,9 @@ set :show_exceptions, false
 
 # Configure Rack::Protection for API
 # Disable JSON CSRF and Host Authorization for server-to-server API
-# Host authorization is unnecessary with Bearer token authentication
-# Keep other protections (XSS, frame options, etc.) enabled
+# - json_csrf: Not needed for Bearer token authenticated APIs
+# - host_authorization: Not needed with token auth, would block external requests
+# Keep other protections enabled (XSS, frame options, path traversal, etc.)
 set :protection, except: [:json_csrf, :host_authorization]
 
 # Health check endpoint with environment validation

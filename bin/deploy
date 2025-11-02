@@ -29,6 +29,8 @@ echo "Bucket: $GOOGLE_CLOUD_BUCKET"
 echo ""
 
 # Step 1: Build container image with extended timeout for grpc compilation
+# Note: 20-minute timeout allows grpc native extensions to compile
+# The Gemfile.lock includes x86_64-linux platform for precompiled binaries (speeds up build)
 IMAGE_NAME="gcr.io/$GOOGLE_CLOUD_PROJECT/podcast-api"
 echo "Building container image with 20 minute timeout..."
 
@@ -67,6 +69,9 @@ gcloud run deploy podcast-api \
     --set-env-vars "API_SECRET_TOKEN=$API_SECRET_TOKEN" \
     --set-env-vars "CLOUD_TASKS_LOCATION=$REGION" \
     --set-env-vars "CLOUD_TASKS_QUEUE=${CLOUD_TASKS_QUEUE:-episode-processing}"
+# Important: RACK_ENV=production is required to:
+# - Disable Sinatra's default host_authorization in production
+# - Allow GCS SDK to use service account credentials (no GOOGLE_APPLICATION_CREDENTIALS needed)
 
 # Get service URL
 SERVICE_URL=$(gcloud run services describe podcast-api \
@@ -80,6 +85,7 @@ echo "URL: $SERVICE_URL"
 echo ""
 
 # Update service with its own URL for Cloud Tasks
+# Important: Must include ALL env vars here because --set-env-vars replaces (not merges)
 echo "Updating service with SERVICE_URL for Cloud Tasks..."
 gcloud run services update podcast-api \
     --region $REGION \
