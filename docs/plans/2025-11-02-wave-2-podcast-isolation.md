@@ -2,6 +2,8 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
+**Status:** ✅ **CORE TASKS COMPLETE** (Tasks 1-5 completed, 6-9 remaining)
+
 **Goal:** Transform storage from flat structure to podcast-scoped isolation (`podcasts/{podcast_id}/`) with Firestore user mapping for future multi-user support.
 
 **Architecture:**
@@ -12,6 +14,20 @@
 
 **Tech Stack:** Ruby 3.4, Google Cloud Storage, Google Cloud Firestore, Sinatra 4.0
 
+**Completed:**
+- ✅ Task 1: Firestore Client Wrapper (commit e5e7da6)
+- ✅ Task 2: podcast_id scoping in GCSUploader (commit e9677b2)
+- ✅ Task 3: PODCAST_ID in generate.rb (commit 126e9c7)
+- ✅ Task 4: podcast_id required in EpisodeProcessor (commit 311e1ca)
+- ✅ Task 5: podcast_id in API endpoints (commit d68cf2c)
+- ✅ Refactored all methods to use keyword arguments (commit c4eaead)
+
+**Remaining:**
+- ⏳ Task 6: Eliminate temporary MP3 files
+- ⏳ Task 7: Update documentation
+- ⏳ Task 8: Migrate existing episodes to podcast-scoped structure
+- ⏳ Task 9: Test end-to-end locally
+
 **Fast Follows (Next Steps):**
 1. **Cost tracking**: Add structured logging for TTS costs, storage costs per episode
 2. **Episode cleanup tooling**: Script to delete unwanted test episodes from GCS
@@ -20,7 +36,9 @@
 
 ---
 
-## Task 1: Add Firestore Client Wrapper
+## Task 1: Add Firestore Client Wrapper ✅
+
+**Status:** COMPLETED (commit e5e7da6)
 
 **Files:**
 - Create: `lib/firestore_client.rb`
@@ -140,7 +158,9 @@ git commit -m "feat: add Firestore client for user/podcast mapping"
 
 ---
 
-## Task 2: Add podcast_id path scoping to GCSUploader
+## Task 2: Add podcast_id path scoping to GCSUploader ✅
+
+**Status:** COMPLETED (commit e9677b2)
 
 **Files:**
 - Modify: `lib/gcs_uploader.rb`
@@ -338,7 +358,9 @@ git commit -m "feat: add podcast_id scoping to GCS paths"
 
 ---
 
-## Task 3: Update generate.rb to use PODCAST_ID
+## Task 3: Update generate.rb to use PODCAST_ID ✅
+
+**Status:** COMPLETED (commit 126e9c7)
 
 **Files:**
 - Modify: `generate.rb`
@@ -390,7 +412,9 @@ git commit -m "feat: update generate.rb to use PODCAST_ID for scoped storage"
 
 ---
 
-## Task 4: Update EpisodeProcessor to use podcast_id
+## Task 4: Update EpisodeProcessor to use podcast_id ✅
+
+**Status:** COMPLETED (commit 311e1ca)
 
 **Files:**
 - Modify: `lib/episode_processor.rb`
@@ -570,7 +594,9 @@ git commit -m "feat: require podcast_id in EpisodeProcessor"
 
 ---
 
-## Task 5: Update API to accept podcast_id
+## Task 5: Update API to accept podcast_id ✅
+
+**Status:** COMPLETED (commit d68cf2c)
 
 **Files:**
 - Modify: `api.rb`
@@ -819,7 +845,9 @@ git commit -m "feat: update API to require and use podcast_id"
 
 ---
 
-## Task 6: Eliminate temporary MP3 files
+## Task 6: Eliminate temporary MP3 files ⏳
+
+**Status:** PENDING
 
 **Files:**
 - Modify: `lib/episode_processor.rb`
@@ -1036,7 +1064,9 @@ git commit -m "feat: eliminate temporary MP3 files, stream directly to GCS"
 
 ---
 
-## Task 7: Update documentation
+## Task 7: Update documentation ⏳
+
+**Status:** PENDING
 
 **Files:**
 - Modify: `README.md`
@@ -1176,7 +1206,9 @@ git commit -m "docs: update for Wave 2 podcast isolation"
 
 ---
 
-## Task 8: Migrate existing episodes to podcast-scoped structure
+## Task 8: Migrate existing episodes to podcast-scoped structure ⏳
+
+**Status:** PENDING
 
 **Files:**
 - None (GCS operations only)
@@ -1259,7 +1291,9 @@ git commit -m "docs: save podcast feed URL for reference"
 
 ---
 
-## Task 9: Test end-to-end locally
+## Task 9: Test end-to-end locally ⏳
+
+**Status:** PENDING
 
 **Step 1: Set environment variables**
 
