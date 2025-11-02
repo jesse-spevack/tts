@@ -11,6 +11,7 @@ gem "google-cloud-text_to_speech", "~> 2.0"
 
 # Podcast feed
 gem "builder"
+gem "google-cloud-firestore", "~> 2.0"
 gem "google-cloud-storage", "~> 1.52"
 gem "google-cloud-tasks", "~> 2.0"
 
