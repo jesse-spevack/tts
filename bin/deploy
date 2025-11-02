@@ -28,9 +28,30 @@ echo "Region: $REGION"
 echo "Bucket: $GOOGLE_CLOUD_BUCKET"
 echo ""
 
-# Deploy to Cloud Run with extended timeout for grpc compilation
+# Step 1: Build container image with extended timeout for grpc compilation
+IMAGE_NAME="gcr.io/$GOOGLE_CLOUD_PROJECT/podcast-api"
+echo "Building container image with 20 minute timeout..."
+
+# Note: gcloud builds submit may exit with non-zero code due to log streaming permissions
+# but the build can still succeed. We'll verify the image was created below.
+gcloud builds submit \
+    --tag $IMAGE_NAME \
+    --timeout=20m \
+    --project $GOOGLE_CLOUD_PROJECT 2>&1 || echo "Build command exited with error (may be log streaming issue)"
+
+echo ""
+echo "Verifying image was built..."
+if ! gcloud container images describe $IMAGE_NAME --project $GOOGLE_CLOUD_PROJECT > /dev/null 2>&1; then
+    echo "ERROR: Image was not created. Build failed."
+    exit 1
+fi
+echo "✓ Image verified: $IMAGE_NAME"
+
+# Step 2: Deploy to Cloud Run
+echo ""
+echo "Deploying to Cloud Run..."
 gcloud run deploy podcast-api \
-    --source . \
+    --image $IMAGE_NAME \
     --project $GOOGLE_CLOUD_PROJECT \
     --region $REGION \
     --platform managed \

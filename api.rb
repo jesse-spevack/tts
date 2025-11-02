@@ -12,9 +12,10 @@ set :bind, "0.0.0.0"
 set :show_exceptions, false
 
 # Configure Rack::Protection for API
-# Disable only JSON CSRF protection since this is a server-to-server API
+# Disable JSON CSRF and Host Authorization for server-to-server API
+# Host authorization is unnecessary with Bearer token authentication
 # Keep other protections (XSS, frame options, etc.) enabled
-set :protection, except: [:json_csrf]
+set :protection, except: [:json_csrf, :host_authorization]
 
 # Health check endpoint with environment validation
 get "/health" do
