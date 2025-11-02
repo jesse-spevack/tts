@@ -51,12 +51,13 @@ class GCSUploader
 
   # Download file content from GCS
   # @param remote_path [String] Path to file in GCS bucket
-  # @return [String] File content as string
+  # @return [String] File content as string with UTF-8 encoding
   def download_file(remote_path:)
     file = bucket.file(remote_path)
     raise UploadError, "File not found: #{remote_path}" unless file
 
-    file.download.read
+    # Force UTF-8 encoding to prevent ASCII-8BIT encoding issues
+    file.download.read.force_encoding("UTF-8")
   rescue Google::Cloud::Error => e
     raise UploadError, "Failed to download file: #{e.message}"
   end
