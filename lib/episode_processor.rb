@@ -29,10 +29,13 @@ class EpisodeProcessor
     begin
       # Step 1: Convert markdown to plain text
       text = TextProcessor.convert_to_plain_text(markdown_content)
+      puts "✓ Converted to #{text.length} characters of plain text"
 
       # Step 2: Generate TTS audio
+      puts "\n[2/4] Generating TTS audio..."
       tts = TTS.new
       audio_content = tts.synthesize(text)
+      puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
 
       # Step 3: Save MP3 temporarily
       mp3_path = save_temp_mp3(filename, audio_content)
@@ -56,7 +59,7 @@ class EpisodeProcessor
     path = File.join("output", "#{filename}.mp3")
     File.write(path, audio_content, mode: "wb")
 
-    puts "✓ Saved: #{mp3_path}"
+    puts "✓ Saved: #{path}"
 
     path
   end

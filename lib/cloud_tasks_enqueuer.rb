@@ -7,7 +7,8 @@ class CloudTasksEnqueuer
 
   def enqueue_episode_processing(title, author, description, staging_path)
     task = build_task(title, author, description, staging_path)
-    @client.create_task(parent: queue_path, task: task)
+    response = @client.create_task(parent: queue_path, task: task)
+    response.name
   end
 
   private

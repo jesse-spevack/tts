@@ -1,3 +1,5 @@
+require_relative "text_converter"
+
 class TextProcessor
   class InvalidFileError < StandardError; end
 

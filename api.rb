@@ -16,7 +16,7 @@ set :show_exceptions, false
 # - json_csrf: Not needed for Bearer token authenticated APIs
 # - host_authorization: Not needed with token auth, would block external requests
 # Keep other protections enabled (XSS, frame options, path traversal, etc.)
-set :protection, except: [:json_csrf, :host_authorization]
+set :protection, except: %i[json_csrf host_authorization]
 
 # Health check endpoint with environment validation
 get "/health" do
@@ -63,13 +63,14 @@ post "/publish" do
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
   gcs.upload_content(content: markdown_content, remote_path: staging_path)
 
-  logger.info "Uploaded to staging: #{staging_path}"
+  logger.info "event=file_uploaded title=\"#{title}\" staging_path=#{staging_path}"
 
   # Step 6: Enqueue processing task
-  CloudTasksEnqueuer.new.enqueue_episode_processing(title, author, description, staging_path)
-  logger.info "Enqueued task for: #{title}"
+  task_name = CloudTasksEnqueuer.new.enqueue_episode_processing(title, author, description, staging_path)
+  logger.info "event=task_enqueued title=\"#{title}\" task_name=#{task_name}"
 
   # Step 7: Return success immediately
+  logger.info "event=episode_submitted title=\"#{title}\" staging_path=#{staging_path}"
   json status: "success", message: "Episode submitted for processing"
 rescue StandardError => e
   logger.error "Error: #{e.class} - #{e.message}"
@@ -79,37 +80,14 @@ end
 
 # Internal endpoint: Process episode (triggered by Cloud Tasks)
 post "/process" do
-  # Step 1: Parse JSON payload
   request.body.rewind
   payload = JSON.parse(request.body.read)
 
-  # Step 2: Validate payload
   validation_error = validate_task_payload(payload)
   halt 400, json(status: "error", message: validation_error) if validation_error
 
-  # Step 3: Extract parameters
-  title = payload["title"]
-  author = payload["author"]
-  description = payload["description"]
-  staging_path = payload["staging_path"]
+  process_episode_task(payload)
 
-  logger.info "Processing: #{title}"
-  logger.info "Downloading from: #{staging_path}"
-
-  # Step 4: Download markdown from GCS
-  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
-  markdown_content = gcs.download_file(remote_path: staging_path)
-
-  # Step 5: Process episode
-  processor = EpisodeProcessor.new
-  processor.process(title, author, description, markdown_content)
-
-  # Step 6: Cleanup staging file
-  gcs.delete_file(remote_path: staging_path)
-  logger.info "Cleaned up staging: #{staging_path}"
-
-  # Step 7: Return success
-  logger.info "Completed: #{title}"
   json status: "success", message: "Episode processed successfully"
 rescue JSON::ParserError => e
   logger.error "Invalid JSON: #{e.message}"
@@ -141,4 +119,30 @@ def validate_task_payload(payload)
   return "Missing staging_path" unless payload["staging_path"]
 
   nil # No errors
+end
+
+# Helper: Process episode from Cloud Task payload
+def process_episode_task(payload)
+  title = payload["title"]
+  author = payload["author"]
+  description = payload["description"]
+  staging_path = payload["staging_path"]
+
+  logger.info "event=processing_started title=\"#{title}\" staging_path=#{staging_path}"
+
+  # Download markdown from GCS
+  gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil))
+  markdown_content = gcs.download_file(remote_path: staging_path)
+  logger.info "event=file_downloaded title=\"#{title}\" size_bytes=#{markdown_content.bytesize}"
+
+  # Process episode
+  processor = EpisodeProcessor.new
+  processor.process(title, author, description, markdown_content)
+  logger.info "event=episode_processed title=\"#{title}\""
+
+  # Cleanup staging file
+  gcs.delete_file(remote_path: staging_path)
+  logger.info "event=staging_cleaned title=\"#{title}\" staging_path=#{staging_path}"
+
+  logger.info "event=processing_completed title=\"#{title}\""
 end
