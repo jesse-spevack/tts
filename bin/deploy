@@ -61,6 +61,7 @@ gcloud run deploy podcast-api \
     --max-instances 1 \
     --min-instances 0 \
     --cpu 4 \
+    --set-env-vars "RACK_ENV=production" \
     --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT" \
     --set-env-vars "GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET" \
     --set-env-vars "API_SECRET_TOKEN=$API_SECRET_TOKEN" \
