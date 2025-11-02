@@ -10,10 +10,13 @@ require_relative "filename_generator"
 # Orchestrates episode processing from markdown to published podcast
 # Reuses all existing infrastructure from generate.rb
 class EpisodeProcessor
-  attr_reader :bucket_name
+  attr_reader :bucket_name, :podcast_id
 
-  def initialize(bucket_name = nil)
+  def initialize(bucket_name = nil, podcast_id = nil)
     @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET")
+    @podcast_id = podcast_id
+
+    raise ArgumentError, "podcast_id is required" unless @podcast_id
   end
 
   # Process an episode from start to finish
@@ -68,7 +71,7 @@ class EpisodeProcessor
     puts "\n[4/4] Publishing to feed..."
 
     podcast_config = YAML.safe_load_file("config/podcast.yml")
-    gcs_uploader = GCSUploader.new(@bucket_name)
+    gcs_uploader = GCSUploader.new(@bucket_name, podcast_id: @podcast_id)
     episode_manifest = EpisodeManifest.new(gcs_uploader)
 
     publisher = PodcastPublisher.new(
