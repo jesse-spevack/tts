@@ -13,6 +13,37 @@ bundle install
    - Google Cloud credentials path
    - GCS bucket name and base URL
    - Podcast metadata (title, description, author, etc.)
+   - `PODCAST_ID` (required) - see below
+
+### Setting Up Your Podcast ID
+
+All podcast data is isolated by `podcast_id`. Each podcast has its own storage directory and feed.
+
+Add to your `.env`:
+```bash
+# Generate a unique podcast ID (16 hex characters)
+PODCAST_ID=podcast_$(openssl rand -hex 8)
+```
+
+Example: `PODCAST_ID=podcast_a1b2c3d4e5f6a7b8`
+
+**Note:** This ID is permanent for your podcast. Keep it in `.env` and never change it after publishing episodes.
+
+### Storage Structure
+```
+podcasts/{podcast_id}/
+  ├── episodes/{episode_id}.mp3
+  ├── feed.xml
+  ├── manifest.json
+  └── staging/{filename}.md
+```
+
+### Feed URLs
+
+Each podcast has its own feed URL:
+```
+https://storage.googleapis.com/{bucket}/podcasts/{podcast_id}/feed.xml
+```
 
 ## Usage
 
@@ -24,15 +55,19 @@ Generate and publish a podcast episode locally:
 ruby generate.rb input/article.md
 ```
 
-This creates an MP3, uploads it to GCS, updates the episode manifest, and regenerates the RSS feed.
+This creates audio content, streams it to GCS, updates the episode manifest, and regenerates the RSS feed.
 
 ### API Request
 
 Submit an episode for processing via the deployed API:
 
 ```bash
+# Get identity token (from authorized service)
+TOKEN=$(gcloud auth print-identity-token)
+
 curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
-  -H "Authorization: Bearer $API_SECRET_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "podcast_id=podcast_abc123xyz" \
   -F "title=Episode Title" \
   -F "author=Author Name" \
   -F "description=Episode description" \
