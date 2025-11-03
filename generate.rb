@@ -140,7 +140,7 @@ unless options[:local_only]
 
     # Convert symbol keys to string keys for publisher
     metadata_with_string_keys = metadata.transform_keys(&:to_s)
-    feed_url = publisher.publish(output_file, metadata_with_string_keys)
+    feed_url = publisher.publish(audio_content: audio_content, metadata: metadata_with_string_keys)
 
     puts "✓ Episode published successfully"
     puts "  Podcast ID: #{podcast_id}"

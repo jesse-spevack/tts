@@ -14,13 +14,14 @@ class PodcastPublisher
   end
 
   # Publish episode to podcast feed
-  # @param mp3_file [String] Path to local MP3 file
+  # @param audio_content [String] MP3 audio content (binary string)
   # @param metadata [Hash] Episode metadata (title, description, author)
   # @return [String] Public URL of the RSS feed
-  def publish(mp3_file, metadata)
+  def publish(audio_content:, metadata:)
     guid = EpisodeManifest.generate_guid(metadata["title"])
-    mp3_url = upload_mp3(mp3_file, guid)
-    episode_data = build_episode_data(metadata: metadata, guid: guid, mp3_url: mp3_url, mp3_file: mp3_file)
+    mp3_url = upload_mp3(audio_content: audio_content, guid: guid)
+    episode_data = build_episode_data(metadata: metadata, guid: guid, mp3_url: mp3_url,
+                                      file_size: audio_content.bytesize)
 
     update_manifest(episode_data)
     upload_rss_feed
@@ -30,19 +31,19 @@ class PodcastPublisher
 
   private
 
-  def upload_mp3(mp3_file, guid)
+  def upload_mp3(audio_content:, guid:)
     remote_path = "episodes/#{guid}.mp3"
-    @gcs_uploader.upload_file(local_path: mp3_file, remote_path: remote_path)
+    @gcs_uploader.upload_content(content: audio_content, remote_path: remote_path)
   end
 
-  def build_episode_data(metadata:, guid:, mp3_url:, mp3_file:)
+  def build_episode_data(metadata:, guid:, mp3_url:, file_size:)
     {
       "id" => guid,
       "title" => metadata["title"],
       "description" => metadata["description"],
       "author" => metadata["author"],
       "mp3_url" => mp3_url,
-      "file_size_bytes" => File.size(mp3_file),
+      "file_size_bytes" => file_size,
       "published_at" => Time.now.utc.iso8601,
       "guid" => guid
     }
