@@ -6,6 +6,7 @@ require_relative "podcast_publisher"
 require_relative "gcs_uploader"
 require_relative "episode_manifest"
 require_relative "filename_generator"
+require_relative "podcast_id_validator"
 
 # Orchestrates episode processing from markdown to published podcast
 # Reuses all existing infrastructure from generate.rb
@@ -99,15 +100,6 @@ class EpisodeProcessor
   end
 
   def validate_podcast_id_format!
-    # Format: podcast_{16 hex chars}
-    # Example: podcast_a1b2c3d4e5f6a7b8
-    format = /^podcast_[a-f0-9]{16}$/
-
-    return if @podcast_id.match?(format)
-
-    raise ArgumentError,
-          "Invalid podcast_id format: '#{@podcast_id}'. " \
-          "Expected format: podcast_{16 hex chars} (e.g., podcast_a1b2c3d4e5f6a7b8). " \
-          "Generate with: openssl rand -hex 8"
+    PodcastIdValidator.validate!(@podcast_id)
   end
 end

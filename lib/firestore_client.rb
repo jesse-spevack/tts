@@ -1,5 +1,15 @@
 require "google/cloud/firestore"
 
+# Firestore client for user/podcast relationship management
+#
+# NOTE: This class is currently unused and reserved for future multi-user support.
+# When a Web UI is added, this will enable:
+# - Users to be mapped to their podcast_id
+# - Podcast ownership and collaboration features
+# - Service-to-service authentication via user context
+#
+# Current usage: Single-user mode with PODCAST_ID from environment
+# Future usage: Multi-user mode with user authentication and Firestore mapping
 class FirestoreClient
   class UserNotFoundError < StandardError; end
   class PodcastNotFoundError < StandardError; end

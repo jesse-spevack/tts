@@ -10,6 +10,7 @@ require_relative "lib/gcs_uploader"
 require_relative "lib/episode_manifest"
 require_relative "lib/rss_generator"
 require_relative "lib/podcast_publisher"
+require_relative "lib/podcast_id_validator"
 
 # Parse command-line arguments
 options = {}
@@ -122,11 +123,7 @@ unless options[:local_only]
     end
 
     # Validate podcast_id format
-    unless podcast_id.match?(/^podcast_[a-f0-9]{16}$/)
-      raise "Invalid PODCAST_ID format: '#{podcast_id}'. " \
-            "Expected format: podcast_{16 hex chars} (e.g., podcast_a1b2c3d4e5f6a7b8). " \
-            "Generate with: openssl rand -hex 8"
-    end
+    PodcastIdValidator.validate!(podcast_id)
 
     gcs_uploader = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
     episode_manifest = EpisodeManifest.new(gcs_uploader)
