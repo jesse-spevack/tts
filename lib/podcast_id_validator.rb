@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Podcast ID format validation utilities
 #
 # Podcast IDs must follow the format: podcast_{16 hex chars}
@@ -9,7 +11,7 @@ module PodcastIdValidator
   # Error message for invalid format
   ERROR_MESSAGE = "Invalid podcast_id format. " \
                   "Expected format: podcast_{16 hex chars} (e.g., podcast_a1b2c3d4e5f6a7b8). " \
-                  "Generate with: openssl rand -hex 8".freeze
+                  "Generate with: openssl rand -hex 8"
 
   # Validate podcast_id format
   # @param podcast_id [String] The podcast ID to validate
