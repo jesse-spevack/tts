@@ -32,7 +32,7 @@ class CloudTasksEnqueuer
         headers: { "Content-Type" => "application/json" },
         body: task_payload.to_json,
         oidc_token: {
-          service_account_email: "#{ENV.fetch('GOOGLE_CLOUD_PROJECT')}@appspot.gserviceaccount.com"
+          service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
         }
       }
     }
