@@ -30,7 +30,7 @@ class CloudTasksEnqueuer
         http_method: "POST",
         url: "#{service_url}/process",
         headers: { "Content-Type" => "application/json" },
-        body: task_payload.to_json,
+        body: task_payload.to_json.force_encoding("ASCII-8BIT"),
         oidc_token: {
           service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
         }
