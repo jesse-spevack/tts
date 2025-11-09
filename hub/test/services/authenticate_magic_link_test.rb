@@ -6,8 +6,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call with valid token returns success and user" do
-    GenerateAuthToken.call(user: @user)
-    token = @user.auth_token
+    token = GenerateAuthToken.call(user: @user)
 
     result = AuthenticateMagicLink.call(token: token)
 
@@ -16,8 +15,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call invalidates token after successful authentication" do
-    GenerateAuthToken.call(user: @user)
-    token = @user.auth_token
+    token = GenerateAuthToken.call(user: @user)
 
     AuthenticateMagicLink.call(token: token)
 
@@ -34,12 +32,15 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call with expired token returns failure" do
+    raw_token = "expired_token"
+    hashed_token = BCrypt::Password.create(raw_token)
+
     @user.update!(
-      auth_token: "expired_token",
+      auth_token: hashed_token,
       auth_token_expires_at: 1.hour.ago
     )
 
-    result = AuthenticateMagicLink.call(token: "expired_token")
+    result = AuthenticateMagicLink.call(token: raw_token)
 
     assert_not result.success?
     assert_nil result.user
@@ -53,8 +54,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "token cannot be reused after successful authentication" do
-    GenerateAuthToken.call(user: @user)
-    token = @user.auth_token
+    token = GenerateAuthToken.call(user: @user)
 
     # First authentication succeeds
     first_result = AuthenticateMagicLink.call(token: token)

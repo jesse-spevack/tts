@@ -6,11 +6,12 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
   end
 
   test "call generates new token" do
-    GenerateAuthToken.call(user: @user)
+    token = GenerateAuthToken.call(user: @user)
 
     @user.reload
     assert @user.auth_token.present?
-    assert_match(/^[A-Za-z0-9_-]+$/, @user.auth_token)
+    assert_match(/^\$2a\$/, @user.auth_token) # BCrypt hash format
+    assert_match(/^[A-Za-z0-9_-]+$/, token) # Raw token format
   end
 
   test "call sets expiration to 30 minutes from now" do

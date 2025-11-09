@@ -13,16 +13,10 @@ class AuthenticateMagicLink
     return Result.new(success?: false, user: nil) if @token.blank?
 
     # Find all users with valid tokens to prevent timing attacks
-    # Note: We still have timing leak in find_by, but this is acceptable for MVP
-    # For production, consider hashing tokens before storage
     users = User.with_valid_auth_token
 
-    # Use constant-time comparison to prevent timing attacks
     user = users.find do |u|
-      ActiveSupport::SecurityUtils.secure_compare(
-        u.auth_token.to_s,
-        @token.to_s
-      )
+      VerifyHashedToken.call(hashed_token: u.auth_token, raw_token: @token)
     end
 
     if user

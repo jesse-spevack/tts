@@ -10,9 +10,14 @@ class GenerateAuthToken
   end
 
   def call
+    raw_token = SecureRandom.urlsafe_base64
+    hashed_token = BCrypt::Password.create(raw_token)
+
     @user.update!(
-      auth_token: SecureRandom.urlsafe_base64,
+      auth_token: hashed_token,
       auth_token_expires_at: TOKEN_EXPIRATION.from_now
     )
+
+    raw_token
   end
 end

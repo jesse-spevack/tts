@@ -19,9 +19,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with token authenticates user" do
-    GenerateAuthToken.call(user: @user)
+    token = GenerateAuthToken.call(user: @user)
 
-    get new_session_url, params: { token: @user.auth_token }
+    get new_session_url, params: { token: token }
 
     assert_redirected_to root_url
     assert_equal "Welcome back!", flash[:notice]
@@ -36,11 +36,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy session" do
-    GenerateAuthToken.call(user: @user)
-    get new_session_url, params: { token: @user.auth_token }
+    token = GenerateAuthToken.call(user: @user)
+    get new_session_url, params: { token: token }
 
     delete session_url
     assert_redirected_to new_session_url
-    assert_empty cookies[:session_id]
+    assert_equal "", cookies[:session_id]
   end
 end
