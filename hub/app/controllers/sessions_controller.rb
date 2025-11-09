@@ -10,7 +10,13 @@ class SessionsController < ApplicationController
   end
 
   def create
-    send_magic_link
+    result = SendMagicLink.call(email_address: params[:email_address])
+
+    if result.success?
+      redirect_to new_session_path, notice: "Check your email for a login link!"
+    else
+      redirect_to new_session_path, alert: "Please enter a valid email address."
+    end
   end
 
   def destroy
@@ -31,14 +37,4 @@ class SessionsController < ApplicationController
     end
   end
 
-  def send_magic_link
-    user = User.find_or_create_by(email_address: params[:email_address])
-    if user.persisted?
-      user.generate_auth_token!
-      SessionsMailer.magic_link(user).deliver_later
-      redirect_to new_session_path, notice: "Check your email for a login link!"
-    else
-      redirect_to new_session_path, alert: "Please enter a valid email address."
-    end
-  end
 end
