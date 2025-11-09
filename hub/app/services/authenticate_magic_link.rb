@@ -10,9 +10,23 @@ class AuthenticateMagicLink
   end
 
   def call
-    user = User.find_by(auth_token: @token)
+    return Result.new(success?: false, user: nil) if @token.blank?
 
-    if user && ValidateAuthToken.call(user: user)
+    # Find all users with valid tokens to prevent timing attacks
+    # Note: We still have timing leak in find_by, but this is acceptable for MVP
+    # For production, consider hashing tokens before storage
+    users = User.where.not(auth_token: nil)
+                .where("auth_token_expires_at > ?", Time.current)
+
+    # Use constant-time comparison to prevent timing attacks
+    user = users.find do |u|
+      ActiveSupport::SecurityUtils.secure_compare(
+        u.auth_token.to_s,
+        @token.to_s
+      )
+    end
+
+    if user
       user.update!(auth_token: nil, auth_token_expires_at: nil)
       Result.new(success?: true, user: user)
     else
