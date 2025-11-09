@@ -61,7 +61,7 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates
   # Set MAILER_HOST environment variable to your production domain
   config.action_mailer.default_url_options = {
-    host: ENV.fetch("MAILER_HOST", "tts-hub.example.com"),
+    host: ENV.fetch("MAILER_HOST"),
     protocol: "https"
   }
 
