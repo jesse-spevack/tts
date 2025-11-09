@@ -1,0 +1,13 @@
+require "test_helper"
+
+class SessionsMailerTest < ActionMailer::TestCase
+  test "magic_link" do
+    user = users(:one)
+    user.generate_auth_token!
+
+    mail = SessionsMailer.magic_link(user)
+    assert_equal "Your Magic Login Link", mail.subject
+    assert_equal [user.email_address], mail.to
+    assert_match user.auth_token, mail.body.encoded
+  end
+end
