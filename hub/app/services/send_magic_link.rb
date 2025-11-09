@@ -13,7 +13,7 @@ class SendMagicLink
     user = User.find_or_create_by(email_address: @email_address)
 
     if user.persisted?
-      user.generate_auth_token!
+      GenerateAuthToken.call(user: user)
       SessionsMailer.magic_link(user).deliver_later
       Result.new(success?: true, user: user)
     else

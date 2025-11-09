@@ -3,7 +3,7 @@ require "test_helper"
 class SessionsMailerTest < ActionMailer::TestCase
   test "magic_link" do
     user = users(:one)
-    user.generate_auth_token!
+    GenerateAuthToken.call(user: user)
 
     mail = SessionsMailer.magic_link(user)
     assert_equal "🎙️ Your TTS Login Link", mail.subject

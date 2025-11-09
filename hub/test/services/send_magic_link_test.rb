@@ -33,13 +33,14 @@ class SendMagicLinkTest < ActiveSupport::TestCase
 
   test "call generates new token for existing user" do
     user = users(:one)
-    user.update!(auth_token: "old_token", auth_token_expires_at: 1.hour.from_now)
+    GenerateAuthToken.call(user: user)
+    old_token = user.reload.auth_token
 
     result = SendMagicLink.call(email_address: user.email_address)
 
     assert result.success?
     user.reload
-    assert_not_equal "old_token", user.auth_token
+    assert_not_equal old_token, user.auth_token
   end
 
   test "call normalizes email address" do

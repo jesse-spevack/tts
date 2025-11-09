@@ -12,7 +12,7 @@ class AuthenticateMagicLink
   def call
     user = User.find_by(auth_token: @token)
 
-    if user&.auth_token_valid?
+    if user && ValidateAuthToken.call(user: user)
       user.update!(auth_token: nil, auth_token_expires_at: nil)
       Result.new(success?: true, user: user)
     else

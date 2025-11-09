@@ -19,7 +19,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with token authenticates user" do
-    @user.generate_auth_token!
+    GenerateAuthToken.call(user: @user)
 
     get new_session_url, params: { token: @user.auth_token }
 
@@ -36,7 +36,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy session" do
-    @user.generate_auth_token!
+    GenerateAuthToken.call(user: @user)
     get new_session_url, params: { token: @user.auth_token }
 
     delete session_url
