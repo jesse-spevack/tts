@@ -2,12 +2,12 @@
 service: hub
 
 # Name of the container image (use your-user/app-name on external registries).
-image: hub
+image: very-normal/very-normal-repository-2/tts
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - 34.106.124.165 
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -20,26 +20,24 @@ servers:
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  hosts:
+    - tts.verynormal.dev
 
 # Where you keep your container images.
 registry:
   # Alternatives: hub.docker.com / registry.digitalocean.com / ghcr.io / ...
-  server: localhost:5555
-
-  # Needed for authenticated registries.
-  # username: your-user
-
-  # Always use an access token rather than real password when possible.
-  # password:
-  #   - KAMAL_REGISTRY_PASSWORD
+  server: us-docker.pkg.dev 
+  username: _json_key_base64
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
   secret:
     - RAILS_MASTER_KEY
+    - RESEND_API_KEY
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
@@ -80,6 +78,9 @@ asset_path: /rails/public/assets
 # Configure the image builder.
 builder:
   arch: amd64
+  remote: ssh://jesse@34.106.124.165 
+  cache:
+    type: registry
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
@@ -92,8 +93,8 @@ builder:
   #   - RAILS_MASTER_KEY
 
 # Use a different ssh user than root
-# ssh:
-#   user: app
+ssh:
+  user: jesse
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:
