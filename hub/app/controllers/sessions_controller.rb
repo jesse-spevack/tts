@@ -21,10 +21,10 @@ class SessionsController < ApplicationController
   private
 
   def authenticate_with_token
-    user = User.find_by(auth_token: params[:token])
-    if user&.auth_token_valid?
-      start_new_session_for user
-      user.update!(auth_token: nil, auth_token_expires_at: nil) # Invalidate token after use
+    result = AuthenticateMagicLink.new.authenticate(params[:token])
+
+    if result.success?
+      start_new_session_for result.user
       redirect_to after_authentication_url, notice: "Welcome back!"
     else
       redirect_to new_session_path, alert: "Invalid or expired login link. Please try again."
