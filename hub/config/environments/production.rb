@@ -61,7 +61,7 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates
   # Set MAILER_HOST environment variable to your production domain
   config.action_mailer.default_url_options = {
-    host: ENV.fetch("MAILER_HOST"),
+    host: ENV.fetch("MAILER_HOST", "localhost"),
     protocol: "https"
   }
 
@@ -72,7 +72,7 @@ Rails.application.configure do
     address: "smtp.resend.com",
     port: 587,
     user_name: "resend",
-    password: ENV.fetch("RESEND_API_KEY"),
+    password: ENV.fetch("RESEND_API_KEY", ""),
     authentication: :plain,
     enable_starttls_auto: true
   }
