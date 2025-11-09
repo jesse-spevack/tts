@@ -2,7 +2,7 @@
 service: hub
 
 # Name of the container image (use your-user/app-name on external registries).
-image: very-normal/very-normal-repository-2/tts
+image: very-normal/repository-2/tts
 
 # Deploy to these servers.
 servers:
