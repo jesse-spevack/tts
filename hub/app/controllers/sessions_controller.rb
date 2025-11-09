@@ -21,7 +21,7 @@ class SessionsController < ApplicationController
   private
 
   def authenticate_with_token
-    result = AuthenticateMagicLink.new.authenticate(params[:token])
+    result = AuthenticateMagicLink.call(token: params[:token])
 
     if result.success?
       start_new_session_for result.user

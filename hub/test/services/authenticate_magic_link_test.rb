@@ -3,51 +3,50 @@ require "test_helper"
 class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
-    @service = AuthenticateMagicLink.new
   end
 
-  test "authenticate with valid token returns success and user" do
+  test "call with valid token returns success and user" do
     @user.generate_auth_token!
     token = @user.auth_token
 
-    result = @service.authenticate(token)
+    result = AuthenticateMagicLink.call(token: token)
 
     assert result.success?
     assert_equal @user, result.user
   end
 
-  test "authenticate invalidates token after successful authentication" do
+  test "call invalidates token after successful authentication" do
     @user.generate_auth_token!
     token = @user.auth_token
 
-    @service.authenticate(token)
+    AuthenticateMagicLink.call(token: token)
 
     @user.reload
     assert_nil @user.auth_token
     assert_nil @user.auth_token_expires_at
   end
 
-  test "authenticate with invalid token returns failure" do
-    result = @service.authenticate("invalid_token")
+  test "call with invalid token returns failure" do
+    result = AuthenticateMagicLink.call(token: "invalid_token")
 
     assert_not result.success?
     assert_nil result.user
   end
 
-  test "authenticate with expired token returns failure" do
+  test "call with expired token returns failure" do
     @user.update!(
       auth_token: "expired_token",
       auth_token_expires_at: 1.hour.ago
     )
 
-    result = @service.authenticate("expired_token")
+    result = AuthenticateMagicLink.call(token: "expired_token")
 
     assert_not result.success?
     assert_nil result.user
   end
 
-  test "authenticate with nil token returns failure" do
-    result = @service.authenticate(nil)
+  test "call with nil token returns failure" do
+    result = AuthenticateMagicLink.call(token: nil)
 
     assert_not result.success?
     assert_nil result.user
@@ -58,11 +57,11 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
     token = @user.auth_token
 
     # First authentication succeeds
-    first_result = @service.authenticate(token)
+    first_result = AuthenticateMagicLink.call(token: token)
     assert first_result.success?
 
     # Second authentication with same token fails
-    second_result = @service.authenticate(token)
+    second_result = AuthenticateMagicLink.call(token: token)
     assert_not second_result.success?
     assert_nil second_result.user
   end
