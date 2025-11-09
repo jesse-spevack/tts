@@ -15,8 +15,7 @@ class AuthenticateMagicLink
     # Find all users with valid tokens to prevent timing attacks
     # Note: We still have timing leak in find_by, but this is acceptable for MVP
     # For production, consider hashing tokens before storage
-    users = User.where.not(auth_token: nil)
-                .where("auth_token_expires_at > ?", Time.current)
+    users = User.with_valid_auth_token
 
     # Use constant-time comparison to prevent timing attacks
     user = users.find do |u|
