@@ -20,7 +20,7 @@ class AuthenticateMagicLink
     end
 
     if user
-      user.update!(auth_token: nil, auth_token_expires_at: nil)
+      InvalidateAuthToken.call(user: user)
       Result.new(success?: true, user: user)
     else
       Result.new(success?: false, user: nil)
