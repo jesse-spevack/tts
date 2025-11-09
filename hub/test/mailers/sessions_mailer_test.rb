@@ -6,7 +6,7 @@ class SessionsMailerTest < ActionMailer::TestCase
     user.generate_auth_token!
 
     mail = SessionsMailer.magic_link(user)
-    assert_equal "Your Magic Login Link", mail.subject
+    assert_equal "🎙️ Your TTS Login Link", mail.subject
     assert_equal [user.email_address], mail.to
     assert_match user.auth_token, mail.body.encoded
   end

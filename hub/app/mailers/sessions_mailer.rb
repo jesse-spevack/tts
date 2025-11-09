@@ -5,7 +5,7 @@ class SessionsMailer < ApplicationMailer
 
     mail(
       to: @user.email_address,
-      subject: "Your Magic Login Link"
+      subject: "🎙️ Your TTS Login Link"
     )
   end
 end
