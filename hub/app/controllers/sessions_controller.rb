@@ -36,5 +36,4 @@ class SessionsController < ApplicationController
       redirect_to new_session_path, alert: "Invalid or expired login link. Please try again."
     end
   end
-
 end
