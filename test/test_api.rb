@@ -7,6 +7,14 @@ ENV["RACK_ENV"] = "test"
 
 require_relative "../api"
 
+# Test Constants
+TEST_API_TOKEN = "test-token-123"
+TEST_PROJECT = "test-project"
+TEST_BUCKET = "test-bucket"
+TEST_SERVICE_URL = "http://localhost:8080"
+TEST_CLOUD_TASKS_LOCATION = "us-central1"
+TEST_CLOUD_TASKS_QUEUE = "episode-processing"
+
 class TestAPI < Minitest::Test
   include Rack::Test::Methods
 
@@ -15,12 +23,12 @@ class TestAPI < Minitest::Test
   end
 
   def setup
-    ENV["API_SECRET_TOKEN"] = "test-token-123"
-    ENV["GOOGLE_CLOUD_PROJECT"] = "test-project"
-    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
-    ENV["SERVICE_URL"] = "http://localhost:8080"
-    ENV["CLOUD_TASKS_LOCATION"] = "us-central1"
-    ENV["CLOUD_TASKS_QUEUE"] = "episode-processing"
+    ENV["API_SECRET_TOKEN"] = TEST_API_TOKEN
+    ENV["GOOGLE_CLOUD_PROJECT"] = TEST_PROJECT
+    ENV["GOOGLE_CLOUD_BUCKET"] = TEST_BUCKET
+    ENV["SERVICE_URL"] = TEST_SERVICE_URL
+    ENV["CLOUD_TASKS_LOCATION"] = TEST_CLOUD_TASKS_LOCATION
+    ENV["CLOUD_TASKS_QUEUE"] = TEST_CLOUD_TASKS_QUEUE
   end
 
   # Health Check Tests
@@ -148,7 +156,7 @@ class TestAPI < Minitest::Test
   private
 
   def auth_header
-    { "HTTP_AUTHORIZATION" => "Bearer test-token-123" }
+    { "HTTP_AUTHORIZATION" => "Bearer #{TEST_API_TOKEN}" }
   end
 
   def valid_params
