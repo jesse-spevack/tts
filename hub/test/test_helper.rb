@@ -13,6 +13,15 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # Skip auto-creating podcast for fixture users
+    setup do
+      User.skip_callback(:create, :after, :create_default_podcast)
+    end
+
+    teardown do
+      User.set_callback(:create, :after, :create_default_podcast)
+    end
+
     # Add more helper methods to be used by all tests here...
   end
 end
