@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "episodes#index"
 
-  resources :episodes, only: [:index, :new, :create]
+  resources :episodes, only: [ :index, :new, :create ]
 
   resource :session
   get "pages/home"
