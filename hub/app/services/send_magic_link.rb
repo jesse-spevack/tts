@@ -10,14 +10,16 @@ class SendMagicLink
   end
 
   def call
-    user = User.find_or_create_by(email_address: @email_address)
+    user = User.find_by(email_address: @email_address)
 
-    if user.persisted?
-      token = GenerateAuthToken.call(user: user)
-      SessionsMailer.magic_link(user: user, token: token).deliver_later
-      Result.new(success?: true, user: user)
-    else
-      Result.new(success?: false, user: nil)
+    if user.nil?
+      result = CreateUser.call(email_address: @email_address)
+      return Result.new(success?: false, user: nil) unless result.success?
+      user = result.user
     end
+
+    token = GenerateAuthToken.call(user: user)
+    SessionsMailer.magic_link(user: user, token: token).deliver_later
+    Result.new(success?: true, user: user)
   end
 end

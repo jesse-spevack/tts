@@ -34,16 +34,15 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
   end
 
   test "call generates unique tokens" do
-    user1 = users(:one)
     user2 = users(:two)
 
-    GenerateAuthToken.call(user: user1)
+    GenerateAuthToken.call(user: @user)
     GenerateAuthToken.call(user: user2)
 
-    user1.reload
+    @user.reload
     user2.reload
 
-    assert_not_equal user1.auth_token, user2.auth_token
+    assert_not_equal @user.auth_token, user2.auth_token
   end
 
   test "call persists token to database" do

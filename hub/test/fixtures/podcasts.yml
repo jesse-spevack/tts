@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  podcast_id: podcast_fixture_one
+  title: Test Podcast One
+  description: Test description one
+
+two:
+  podcast_id: podcast_fixture_two
+  title: Test Podcast Two
+  description: Test description two
