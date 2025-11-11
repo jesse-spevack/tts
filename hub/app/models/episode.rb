@@ -13,7 +13,7 @@ class Episode < ApplicationRecord
   def audio_url
     return nil unless complete? && gcs_episode_id.present?
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "podcast-bucket")
+    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     podcast_id = podcast.podcast_id
     "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/episodes/#{gcs_episode_id}.mp3"
   end

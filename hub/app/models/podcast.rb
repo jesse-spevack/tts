@@ -10,7 +10,7 @@ class Podcast < ApplicationRecord
   def feed_url
     return nil unless podcast_id.present?
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "podcast-bucket")
+    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/feed.xml"
   end
 
