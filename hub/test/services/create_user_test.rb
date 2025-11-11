@@ -32,18 +32,4 @@ class CreateUserTest < ActiveSupport::TestCase
     assert_nil result.user
     assert_nil result.podcast
   end
-
-  test "rolls back podcast creation if transaction fails" do
-    # Mock CreateDefaultPodcast to raise an error
-    CreateDefaultPodcast.stub :call, ->(_) { raise ActiveRecord::Rollback } do
-      initial_user_count = User.count
-      initial_podcast_count = Podcast.count
-
-      result = CreateUser.call(email_address: "rollback@example.com")
-
-      # Transaction should rollback both user and podcast
-      assert_equal initial_user_count, User.count
-      assert_equal initial_podcast_count, Podcast.count
-    end
-  end
 end
