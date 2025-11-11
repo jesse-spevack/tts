@@ -1,0 +1,47 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Episodes</h1>
+      <p class="text-gray-600 mt-2">
+        RSS Feed: <%= link_to @podcast.feed_url, @podcast.feed_url, class: "text-blue-600 hover:underline", target: "_blank" %>
+      </p>
+    </div>
+    <%= link_to "New Episode", new_episode_path, class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" %>
+  </div>
+
+  <% if @episodes.any? %>
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Author</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @episodes.each do |episode| %>
+            <tr>
+              <td class="px-6 py-4"><%= episode.title %></td>
+              <td class="px-6 py-4"><%= episode.author %></td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full <%= status_class(episode.status) %>">
+                  <%= episode.status %>
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500">
+                <%= episode.created_at.strftime("%b %d, %Y") %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="text-center py-12 bg-gray-50 rounded-lg">
+      <p class="text-gray-600 mb-4">No episodes yet. Create your first episode!</p>
+      <%= link_to "Create Episode", new_episode_path, class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-block" %>
+    </div>
+  <% end %>
+</div>

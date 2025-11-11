@@ -8,6 +8,7 @@ class Episode < ApplicationRecord
   validates :description, presence: true, length: { maximum: 1000 }
 
   scope :newest_first, -> { order(created_at: :desc) }
+  scope :recent, -> { order(created_at: :desc) }
 
   def audio_url
     return nil unless complete? && gcs_episode_id.present?
