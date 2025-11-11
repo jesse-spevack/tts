@@ -68,7 +68,7 @@ class EpisodeTest < ActiveSupport::TestCase
   end
 
   test "newest_first scope orders by created_at descending" do
-    older_episode = episodes(:one)
+    episodes(:one)
     newer_episode = Episode.create!(
       title: "Newer Episode",
       author: "Author",

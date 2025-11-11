@@ -40,7 +40,7 @@ class PodcastTest < ActiveSupport::TestCase
 
   test "destroys associated episodes when destroyed" do
     podcast = podcasts(:one)
-    episode = podcast.episodes.create!(
+    podcast.episodes.create!(
       title: "Test Episode",
       author: "Test Author",
       description: "Test Description",

@@ -14,7 +14,6 @@ class PodcastMembershipTest < ActiveSupport::TestCase
 
   test "allows same user to belong to different podcasts" do
     user = users(:one)
-    podcast1 = podcasts(:one)
     podcast2 = podcasts(:two)
 
     # User :one already has membership to podcast :one from fixtures
@@ -24,7 +23,6 @@ class PodcastMembershipTest < ActiveSupport::TestCase
   end
 
   test "allows different users to belong to same podcast" do
-    user1 = users(:one)
     user2 = users(:two)
     podcast = podcasts(:one)
 

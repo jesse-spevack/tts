@@ -11,12 +11,4 @@ class User < ApplicationRecord
     where.not(auth_token: nil)
          .where("auth_token_expires_at > ?", Time.current)
   }
-
-  after_create :create_default_podcast
-
-  private
-
-  def create_default_podcast
-    CreateDefaultPodcast.call(user: self)
-  end
 end
