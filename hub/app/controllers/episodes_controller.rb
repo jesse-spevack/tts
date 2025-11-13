@@ -3,7 +3,7 @@ class EpisodesController < ApplicationController
   before_action :load_podcast
 
   def index
-    @episodes = @podcast.episodes.recent
+    @episodes = @podcast.episodes.newest_first
   end
 
   def new
