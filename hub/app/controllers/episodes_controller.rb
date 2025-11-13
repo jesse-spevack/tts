@@ -25,7 +25,7 @@ class EpisodesController < ApplicationController
 
   def load_podcast
     @podcast = Current.user.podcasts.first
-    redirect_to root_path, alert: "No podcast found" unless @podcast
+    @podcast ||= CreateDefaultPodcast.call(user: Current.user)
   end
 
   def episode_params
