@@ -9,7 +9,7 @@ class BackfillPodcastsForExistingUsers < ActiveRecord::Migration[8.1]
       )
       PodcastMembership.create!(user: user, podcast: podcast)
 
-      puts "Created podcast for user: #{user.email_address}"
+      say "Created podcast for user: #{user.email_address}"
     end
   end
 
