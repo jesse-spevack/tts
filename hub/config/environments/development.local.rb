@@ -1,6 +1,9 @@
 
 require "json"
 
+# Set development defaults for Google Cloud
+ENV["GOOGLE_CLOUD_BUCKET"] ||= "verynormal-tts-podcast"
+
 # Load secrets directly from Kamal
 begin
   secrets_output = `kamal secrets print`

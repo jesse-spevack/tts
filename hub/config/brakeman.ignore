@@ -1,0 +1,40 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "00c76b3b5cf83991d6b0476776399bb0d53c7ced8b441e936915f55519b744e9",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/episodes/index.html.erb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(Current.user.podcasts.first.feed_url, Current.user.podcasts.first.feed_url, :class => \"text-blue-600 hover:underline\", :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "EpisodesController",
+          "method": "index",
+          "line": 7,
+          "file": "app/controllers/episodes_controller.rb",
+          "rendered": {
+            "name": "episodes/index",
+            "file": "app/views/episodes/index.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "episodes/index"
+      },
+      "user_input": "Current.user.podcasts.first.feed_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "feed_url is constructed server-side from SecureRandom.hex podcast_id and ENV bucket name, not user input"
+    }
+  ],
+  "updated": "2025-11-10 23:55:00 -0700",
+  "brakeman_version": "7.1.1"
+}

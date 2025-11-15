@@ -9,7 +9,7 @@
 output/
 
 # Input directory (optional - uncomment if you don't want to track input files)
-# input/
+input/
 
 # Ruby
 *.gem

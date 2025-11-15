@@ -92,7 +92,7 @@ class EpisodeTest < ActiveSupport::TestCase
       gcs_episode_id: "episode_123"
     )
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "podcast-bucket")
+    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     expected_url = "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast.podcast_id}/episodes/episode_123.mp3"
 
     assert_equal expected_url, episode.audio_url

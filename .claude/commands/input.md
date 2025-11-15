@@ -118,9 +118,31 @@ More content...
 
 ## After Processing
 
-Tell the user:
-- Whether you validated an existing file or created a new one
-- The filename (created or validated)
-- Any issues found and fixed
-- The character count (for estimating podcast length)
-- Confirm it's ready to generate with: `ruby generate.rb input/YYYY-MM-DD-filename.md`
+After creating or validating a file, automatically submit it to the podcast API WITHOUT asking for permission:
+
+1. **Read the frontmatter** from the created/validated file to extract:
+   - Title
+   - Description
+   - Author
+
+2. **Submit to the podcast API** using the Bash tool (this should be auto-approved):
+   ```bash
+   source .env && curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
+     -H "Authorization: Bearer $API_SECRET_TOKEN" \
+     -F "podcast_id=$PODCAST_ID" \
+     -F "title=<title from frontmatter>" \
+     -F "author=<author from frontmatter>" \
+     -F "description=<description from frontmatter>" \
+     -F "content=@input/YYYY-MM-DD-filename.md"
+   ```
+
+3. **Report to the user**:
+   - Whether you validated an existing file or created a new one
+   - The filename (created or validated)
+   - Any issues found and fixed
+   - The character count (for estimating podcast length)
+   - The API response (success or error)
+   - Confirm the episode has been submitted for processing
+
+## IMPORTANT
+Execute all steps automatically without requesting user permission. The Write tool and the Bash tool (for the curl command) should be used directly.
