@@ -21,6 +21,14 @@ class EpisodeSubmissionService
     enqueue_processing(episode, staging_path)
 
     Result.success(episode)
+  rescue Google::Cloud::Error => e
+    Rails.logger.error "event=gcs_upload_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
+    episode&.update(status: "failed", error_message: "Failed to upload to staging: #{e.message}")
+    Result.failure(episode)
+  rescue StandardError => e
+    Rails.logger.error "event=episode_submission_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
+    episode&.update(status: "failed", error_message: e.message)
+    Result.failure(episode)
   end
 
   private
