@@ -16,13 +16,14 @@ class TestHubCallbackClient < Minitest::Test
       "file_size_bytes" => 5_242_880
     }
 
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/#{episode_id}/complete")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/#{episode_id}")
       .with(
         headers: {
           "Content-Type" => "application/json",
           "X-Generator-Secret" => @secret
         },
         body: {
+          status: "complete",
           gcs_episode_id: "episode_abc123",
           audio_size_bytes: 5_242_880
         }.to_json
@@ -35,25 +36,26 @@ class TestHubCallbackClient < Minitest::Test
   end
 
   def test_notify_complete_uses_https
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/complete")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/1")
       .to_return(status: 200)
 
     @client.notify_complete(episode_id: 1, episode_data: { "id" => "x", "file_size_bytes" => 1 })
 
-    assert_requested(:post, "https://hub.example.com/api/internal/episodes/1/complete")
+    assert_requested(:patch, "https://hub.example.com/api/internal/episodes/1")
   end
 
   def test_notify_failed_sends_correct_request
     episode_id = 456
     error_message = "TTS API rate limit exceeded"
 
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/#{episode_id}/failed")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/#{episode_id}")
       .with(
         headers: {
           "Content-Type" => "application/json",
           "X-Generator-Secret" => @secret
         },
         body: {
+          status: "failed",
           error_message: error_message
         }.to_json
       )
@@ -65,7 +67,7 @@ class TestHubCallbackClient < Minitest::Test
   end
 
   def test_notify_complete_raises_on_timeout
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/complete")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/1")
       .to_timeout
 
     assert_raises(Net::OpenTimeout) do
@@ -74,7 +76,7 @@ class TestHubCallbackClient < Minitest::Test
   end
 
   def test_notify_failed_raises_on_network_error
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/failed")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/1")
       .to_raise(Errno::ECONNREFUSED)
 
     assert_raises(Errno::ECONNREFUSED) do
@@ -83,7 +85,7 @@ class TestHubCallbackClient < Minitest::Test
   end
 
   def test_notify_complete_returns_error_response
-    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/complete")
+    stub_request(:patch, "#{@hub_url}/api/internal/episodes/1")
       .to_return(status: 404, body: '{"error":"Episode not found"}')
 
     response = @client.notify_complete(episode_id: 1, episode_data: { "id" => "x", "file_size_bytes" => 1 })

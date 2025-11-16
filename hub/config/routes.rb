@@ -3,6 +3,12 @@ Rails.application.routes.draw do
 
   resources :episodes, only: [ :index, :new, :create ]
 
+  namespace :api do
+    namespace :internal do
+      resources :episodes, only: [ :update ]
+    end
+  end
+
   resource :session
   get "pages/home"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
