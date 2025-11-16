@@ -8,9 +8,9 @@ class GcsUploader
   end
 
   def upload_staging_file(content:, filename:)
-    path = "podcasts/#{@podcast_id}/staging/#{filename}"
-    bucket.create_file(StringIO.new(content), path)
-    path
+    full_path = "podcasts/#{@podcast_id}/staging/#{filename}"
+    bucket.create_file(StringIO.new(content), full_path)
+    "staging/#{filename}"
   end
 
   private
