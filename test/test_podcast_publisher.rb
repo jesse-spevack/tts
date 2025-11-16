@@ -50,12 +50,15 @@ class TestPodcastPublisher < Minitest::Test
     assert_includes feed_upload[:content], "<?xml"
   end
 
-  def test_publish_returns_feed_url
+  def test_publish_returns_episode_data
     metadata = { "title" => "Test Episode", "description" => "Test" }
 
-    feed_url = @publisher.publish(audio_content: @audio_content, metadata: metadata)
+    episode_data = @publisher.publish(audio_content: @audio_content, metadata: metadata)
 
-    assert_equal "https://storage.googleapis.com/test-bucket/feed.xml", feed_url
+    assert_equal "Test Episode", episode_data["title"]
+    assert_equal "Test", episode_data["description"]
+    assert_equal @audio_content.bytesize, episode_data["file_size_bytes"]
+    assert_match(/^\d{8}-\d{6}-test-episode$/, episode_data["id"])
   end
 end
 
