@@ -35,6 +35,7 @@ class CloudTasksEnqueuer
   private
 
   def build_client
-    Google::Cloud::Tasks.cloud_tasks(credentials: GoogleCredentials.from_env)
+    ENV["GOOGLE_CLOUD_CREDENTIALS"] ||= GoogleCredentials.from_env.to_json
+    Google::Cloud::Tasks.cloud_tasks
   end
 end
