@@ -17,6 +17,14 @@ class HubCallbackClient
     post_to_hub(path: path, body: body)
   end
 
+  def notify_failed(episode_id:, error_message:)
+    path = "/api/internal/episodes/#{episode_id}/failed"
+    body = {
+      error_message: error_message
+    }
+    post_to_hub(path: path, body: body)
+  end
+
   private
 
   def post_to_hub(path:, body:)

@@ -42,4 +42,25 @@ class TestHubCallbackClient < Minitest::Test
 
     assert_requested(:post, "https://hub.example.com/api/internal/episodes/1/complete")
   end
+
+  def test_notify_failed_sends_correct_request
+    episode_id = 456
+    error_message = "TTS API rate limit exceeded"
+
+    stub_request(:post, "#{@hub_url}/api/internal/episodes/#{episode_id}/failed")
+      .with(
+        headers: {
+          "Content-Type" => "application/json",
+          "X-Generator-Secret" => @secret
+        },
+        body: {
+          error_message: error_message
+        }.to_json
+      )
+      .to_return(status: 200, body: '{"status":"success"}')
+
+    response = @client.notify_failed(episode_id: episode_id, error_message: error_message)
+
+    assert_equal "200", response.code
+  end
 end
