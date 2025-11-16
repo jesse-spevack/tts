@@ -7,6 +7,7 @@ require_relative "lib/episode_processor"
 require_relative "lib/publish_params_validator"
 require_relative "lib/cloud_tasks_enqueuer"
 require_relative "lib/filename_generator"
+require_relative "lib/hub_callback_client"
 
 # Configure Sinatra
 set :port, ENV.fetch("PORT", 8080)
@@ -178,21 +179,8 @@ def notify_hub_complete(episode_id:, episode_data:)
 
   return unless hub_url && callback_secret
 
-  uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/complete")
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = uri.scheme == "https"
-  http.open_timeout = 5
-  http.read_timeout = 10
-
-  request = Net::HTTP::Post.new(uri.path)
-  request["Content-Type"] = "application/json"
-  request["X-Generator-Secret"] = callback_secret
-  request.body = {
-    gcs_episode_id: episode_data["id"],
-    audio_size_bytes: episode_data["file_size_bytes"]
-  }.to_json
-
-  response = http.request(request)
+  client = HubCallbackClient.new(hub_url: hub_url, callback_secret: callback_secret)
+  response = client.notify_complete(episode_id: episode_id, episode_data: episode_data)
   logger.info "event=hub_callback_complete episode_id=#{episode_id} status=#{response.code}"
 rescue StandardError => e
   logger.error "event=hub_callback_failed episode_id=#{episode_id} error=#{e.message}"
@@ -205,20 +193,8 @@ def notify_hub_failed(episode_id:, error_message:)
 
   return unless hub_url && callback_secret
 
-  uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/failed")
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = uri.scheme == "https"
-  http.open_timeout = 5
-  http.read_timeout = 10
-
-  request = Net::HTTP::Post.new(uri.path)
-  request["Content-Type"] = "application/json"
-  request["X-Generator-Secret"] = callback_secret
-  request.body = {
-    error_message: error_message
-  }.to_json
-
-  response = http.request(request)
+  client = HubCallbackClient.new(hub_url: hub_url, callback_secret: callback_secret)
+  response = client.notify_failed(episode_id: episode_id, error_message: error_message)
   logger.info "event=hub_failure_notified episode_id=#{episode_id} status=#{response.code}"
 rescue StandardError => e
   logger.error "event=hub_callback_error episode_id=#{episode_id} error=#{e.message}"
