@@ -181,6 +181,8 @@ def notify_hub_complete(episode_id:, episode_data:)
   uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/complete")
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 5
+  http.read_timeout = 10
 
   request = Net::HTTP::Post.new(uri.path)
   request["Content-Type"] = "application/json"
@@ -206,6 +208,8 @@ def notify_hub_failed(episode_id:, error_message:)
   uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/failed")
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 5
+  http.read_timeout = 10
 
   request = Net::HTTP::Post.new(uri.path)
   request["Content-Type"] = "application/json"
@@ -215,7 +219,7 @@ def notify_hub_failed(episode_id:, error_message:)
   }.to_json
 
   response = http.request(request)
-  logger.info "event=hub_callback_failed episode_id=#{episode_id} status=#{response.code}"
+  logger.info "event=hub_failure_notified episode_id=#{episode_id} status=#{response.code}"
 rescue StandardError => e
   logger.error "event=hub_callback_error episode_id=#{episode_id} error=#{e.message}"
 end
