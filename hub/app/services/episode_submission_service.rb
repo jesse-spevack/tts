@@ -39,7 +39,11 @@ class EpisodeSubmissionService
     content = uploaded_file.read
     filename = "#{episode.id}-#{Time.now.to_i}.md"
 
-    gcs_uploader.upload_staging_file(content: content, filename: filename)
+    staging_path = gcs_uploader.upload_staging_file(content: content, filename: filename)
+
+    Rails.logger.info "event=staging_uploaded episode_id=#{episode.id} staging_path=#{staging_path} size_bytes=#{content.bytesize}"
+
+    staging_path
   end
 
   def enqueue_processing(episode, staging_path)
