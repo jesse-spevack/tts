@@ -47,7 +47,7 @@ class EpisodeSubmissionService
   end
 
   def enqueue_processing(episode, staging_path)
-    enqueuer.enqueue_episode_processing(
+    task_name = enqueuer.enqueue_episode_processing(
       episode_id: episode.id,
       podcast_id: podcast.podcast_id,
       staging_path: staging_path,
@@ -57,6 +57,8 @@ class EpisodeSubmissionService
         description: episode.description
       }
     )
+
+    Rails.logger.info "event=task_enqueued episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} task_name=#{task_name}"
   end
 
   def gcs_uploader

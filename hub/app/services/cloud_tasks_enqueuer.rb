@@ -29,7 +29,8 @@ class CloudTasksEnqueuer
       }
     }
 
-    client.create_task(parent: parent, task: task)
+    response = client.create_task(parent: parent, task: task)
+    response.name
   end
 
   private
