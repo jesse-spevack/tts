@@ -163,7 +163,12 @@ def process_episode_task(payload)
   logger.info "event=staging_cleaned podcast_id=#{podcast_id} staging_path=#{staging_path}"
 
   # Notify Hub of completion (if episode_id provided)
-  notify_hub_complete(episode_id: episode_id, episode_data: episode_data) if episode_id
+  if episode_id
+    logger.info "event=hub_callback_attempting episode_id=#{episode_id}"
+    notify_hub_complete(episode_id: episode_id, episode_data: episode_data)
+  else
+    logger.info "event=hub_callback_skipped reason=no_episode_id"
+  end
 
   logger.info "event=processing_completed podcast_id=#{podcast_id}"
 rescue StandardError => e
@@ -177,7 +182,10 @@ def notify_hub_complete(episode_id:, episode_data:)
   hub_url = ENV.fetch("HUB_CALLBACK_URL", nil)
   callback_secret = ENV.fetch("HUB_CALLBACK_SECRET", nil)
 
-  return unless hub_url && callback_secret
+  unless hub_url && callback_secret
+    logger.warn "event=hub_callback_skipped reason=missing_env_vars hub_url=#{hub_url ? 'SET' : 'MISSING'} callback_secret=#{callback_secret ? 'SET' : 'MISSING'}"
+    return
+  end
 
   client = HubCallbackClient.new(hub_url: hub_url, callback_secret: callback_secret)
   response = client.notify_complete(episode_id: episode_id, episode_data: episode_data)
