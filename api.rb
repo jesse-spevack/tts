@@ -146,31 +146,31 @@ def process_episode_task(payload)
   staging_path = payload["staging_path"]
   episode_id = payload["episode_id"] # Optional: Hub's episode ID for callback
 
-  logger.info "event=processing_started podcast_id=#{podcast_id} title=\"#{title}\""
+  logger.info "event=processing_started podcast_id=#{podcast_id} episode_id=#{episode_id} title=\"#{title}\""
 
   # Download markdown from GCS
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
   markdown_content = gcs.download_file(remote_path: staging_path)
-  logger.info "event=file_downloaded podcast_id=#{podcast_id} size_bytes=#{markdown_content.bytesize}"
+  logger.info "event=file_downloaded podcast_id=#{podcast_id} episode_id=#{episode_id} size_bytes=#{markdown_content.bytesize}"
 
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
   episode_data = processor.process(title: title, author: author, description: description, markdown_content: markdown_content)
-  logger.info "event=episode_processed podcast_id=#{podcast_id}"
+  logger.info "event=episode_processed podcast_id=#{podcast_id} episode_id=#{episode_id} gcs_episode_id=#{episode_data['id']}"
 
   # Cleanup staging file
   gcs.delete_file(remote_path: staging_path)
-  logger.info "event=staging_cleaned podcast_id=#{podcast_id} staging_path=#{staging_path}"
+  logger.info "event=staging_cleaned podcast_id=#{podcast_id} episode_id=#{episode_id} staging_path=#{staging_path}"
 
   # Notify Hub of completion (if episode_id provided)
   if episode_id
-    logger.info "event=hub_callback_attempting episode_id=#{episode_id}"
+    logger.info "event=hub_callback_attempting podcast_id=#{podcast_id} episode_id=#{episode_id}"
     notify_hub_complete(episode_id: episode_id, episode_data: episode_data)
   else
-    logger.info "event=hub_callback_skipped reason=no_episode_id"
+    logger.info "event=hub_callback_skipped podcast_id=#{podcast_id} reason=no_episode_id"
   end
 
-  logger.info "event=processing_completed podcast_id=#{podcast_id}"
+  logger.info "event=processing_completed podcast_id=#{podcast_id} episode_id=#{episode_id}"
 rescue StandardError => e
   # Notify Hub of failure (if episode_id provided)
   notify_hub_failed(episode_id: episode_id, error_message: e.message) if episode_id
