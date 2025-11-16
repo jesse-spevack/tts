@@ -1,61 +1,16 @@
 # Input File Manager
 
-You are helping to create and validate markdown input files for a text-to-speech podcast generator.
+You are helping to create markdown input files for a text-to-speech podcast generator.
 
 ## Your Task
 
-The user will provide either:
-1. **A file path** to an existing markdown file in the `input/` directory (to validate/fix)
-2. **Raw article text** that needs to be converted to a properly formatted input file (to create)
-
-## Required YAML Frontmatter Format
-
-```yaml
----
-title: "Your Episode Title"
-description: "A brief description of the episode content"
-author: "Author Name"
----
-```
-
-All three fields are required and should be enclosed in quotes.
+The user will provide raw article text that needs to be converted to a properly formatted input file.
 
 ---
 
-## If User Provides a File Path
+## Processing Raw Text
 
-1. **Read the file** from the provided path
-
-2. **Validate the YAML frontmatter**:
-   - Must have three required fields: `title`, `description`, and `author`
-   - All values should be enclosed in quotes
-   - Frontmatter must be enclosed in `---` delimiters
-
-3. **Check the filename format**:
-   - Should match: `YYYY-MM-DD-title-slug.md`
-   - Date should be valid
-   - Slug should be lowercase with hyphens
-
-4. **Validate the content**:
-   - Remove any newsletter/subscription footers
-   - Remove inline footnote references
-   - Ensure proper markdown formatting
-
-5. **Fix any issues found**:
-   - If frontmatter is missing or malformed, add/fix it
-   - If filename is incorrect, suggest the correct name (but don't rename without asking)
-   - Clean up any problematic content using the Edit tool
-
-6. **Report to the user**:
-   - List any issues found and fixed
-   - Confirm the file is properly formatted
-   - Show character count
-
----
-
-## If User Provides Raw Text
-
-1. **Extract metadata** from the article:
+1. **Extract metadata** from the article (for output display only):
    - Title (from the first heading or prominent title)
    - Author name (look for bylines like "By Author Name" or "Author Name • Date")
    - Generate a concise 1-2 sentence description summarizing the article's main points
@@ -67,9 +22,15 @@ All three fields are required and should be enclosed in quotes.
    - Convert list items that are numbered with footnotes to proper markdown headings if they're section headers
    - Keep the natural flow and narrative structure
    - PRESERVE all substantive content and original wording
+   - **Convert to ASCII 8-bit encoding**:
+     - Replace smart quotes (" " ' ') with straight quotes (" ')
+     - Replace em dashes (—) with double hyphens (--)
+     - Replace en dashes (–) with single hyphens (-)
+     - Replace ellipsis (…) with three periods (...)
+     - Replace other Unicode characters with ASCII equivalents
 
 3. **Format the markdown file**:
-   - Add YAML frontmatter with title, description, and author
+   - NO frontmatter - start directly with content
    - Convert sections to proper markdown headings (## for main sections, ### for subsections)
    - Ensure proper spacing and readability
 
@@ -80,20 +41,20 @@ All three fields are required and should be enclosed in quotes.
 
 5. **Write the file**:
    - Save to `input/YYYY-MM-DD-title-slug.md` using the Write tool
-   - Show the user the filename and character count
-   - Confirm the file is ready for podcast generation
+
+6. **Output the results**:
+   After creating the file, display:
+   - **Title**: The extracted title
+   - **Author**: The extracted author name
+   - **Description**: The generated description
+   - **File**: The filename that was created
+   - **Character count**: For estimating podcast length
 
 ---
 
-## Example Output Format
+## Example Output Format (file content)
 
 ```markdown
----
-title: "The New Calculus of AI-based Coding"
-description: "An exploration of how AI-assisted development can achieve 10x productivity gains, and why succeeding at this scale requires fundamental changes to testing, deployment, and team coordination practices."
-author: "Joe Magerramov"
----
-
 # The New Calculus of AI-based Coding
 
 Introduction paragraph...
@@ -107,42 +68,22 @@ Content here...
 More content...
 ```
 
+## Example Command Output
+
+```
+Title: The New Calculus of AI-based Coding
+Author: Joe Magerramov
+Description: An exploration of how AI-assisted development can achieve 10x productivity gains, and why succeeding at this scale requires fundamental changes to testing, deployment, and team coordination practices.
+File: input/2025-11-16-the-new-calculus-of-ai-based-coding.md
+Character count: 12,345
+```
+
 ## Important Notes
 
-- The frontmatter is critical - it's used for podcast metadata
+- NO frontmatter in the file - just clean markdown content
 - Remove clutter but preserve the author's content and voice
 - Use proper markdown formatting for readability
-- TTS will read everything after the frontmatter, so keep it clean and conversational
-- When fixing existing files, use the Edit tool to make targeted changes
-- When creating new files, use the Write tool
-
-## After Processing
-
-After creating or validating a file, automatically submit it to the podcast API WITHOUT asking for permission:
-
-1. **Read the frontmatter** from the created/validated file to extract:
-   - Title
-   - Description
-   - Author
-
-2. **Submit to the podcast API** using the Bash tool (this should be auto-approved):
-   ```bash
-   source .env && curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
-     -H "Authorization: Bearer $API_SECRET_TOKEN" \
-     -F "podcast_id=$PODCAST_ID" \
-     -F "title=<title from frontmatter>" \
-     -F "author=<author from frontmatter>" \
-     -F "description=<description from frontmatter>" \
-     -F "content=@input/YYYY-MM-DD-filename.md"
-   ```
-
-3. **Report to the user**:
-   - Whether you validated an existing file or created a new one
-   - The filename (created or validated)
-   - Any issues found and fixed
-   - The character count (for estimating podcast length)
-   - The API response (success or error)
-   - Confirm the episode has been submitted for processing
+- TTS will read the entire file, so keep it clean and conversational
 
 ## IMPORTANT
-Execute all steps automatically without requesting user permission. The Write tool and the Bash tool (for the curl command) should be used directly.
+Execute all steps automatically without requesting user permission. Use the Write tool directly to create the file.
