@@ -13,7 +13,7 @@ class TestHubCallbackClient < Minitest::Test
     episode_id = 123
     episode_data = {
       "id" => "episode_abc123",
-      "file_size_bytes" => 5242880
+      "file_size_bytes" => 5_242_880
     }
 
     stub_request(:post, "#{@hub_url}/api/internal/episodes/#{episode_id}/complete")
@@ -24,7 +24,7 @@ class TestHubCallbackClient < Minitest::Test
         },
         body: {
           gcs_episode_id: "episode_abc123",
-          audio_size_bytes: 5242880
+          audio_size_bytes: 5_242_880
         }.to_json
       )
       .to_return(status: 200, body: '{"status":"success"}')
