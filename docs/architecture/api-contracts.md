@@ -44,7 +44,7 @@ Content-Type: application/json
 **Request Fields:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `episode_id` | integer | Yes | Hub's database ID for the episode |
+| `episode_id` | integer | No | Hub's database ID for the episode. If provided, Generator will callback to Hub on completion/failure. If omitted, no callback is made (backward compatible with direct API usage). |
 | `podcast_id` | string | Yes | GCS podcast identifier (e.g., `podcast_abc123`) |
 | `title` | string | Yes | Episode title |
 | `author` | string | Yes | Episode author |
@@ -123,22 +123,17 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "episode_id": 123,
-  "status": "complete",
   "gcs_episode_id": "episode-abc123",
-  "audio_size_bytes": 5242880,
-  "duration_seconds": 600
+  "audio_size_bytes": 5242880
 }
 ```
 
 **Request Fields:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `episode_id` | integer | Yes | Hub's database ID for the episode |
-| `status` | string | Yes | Always "complete" for successful processing |
 | `gcs_episode_id` | string | Yes | Episode identifier in GCS (used in filename) |
 | `audio_size_bytes` | integer | Yes | Size of generated MP3 file |
-| `duration_seconds` | integer | Yes | Estimated audio duration |
+| `duration_seconds` | integer | No | **Not currently implemented.** Reserved for future MP3 duration parsing. |
 
 **Success Response (200 OK):**
 ```json
@@ -177,13 +172,11 @@ Content-Type: application/json
 **Processing Flow:**
 1. Validate `X-Generator-Secret` header
 2. Find episode by `episode_id`
-3. Verify episode is in `processing` state
-4. Update episode:
+3. Update episode:
    - `status` = `complete`
    - `gcs_episode_id` = from request
    - `audio_size_bytes` = from request
-   - `duration_seconds` = from request
-5. Return success
+4. Return success
 
 **Retry Behavior:**
 - Generator does NOT retry on failure

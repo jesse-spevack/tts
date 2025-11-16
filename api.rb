@@ -1,5 +1,7 @@
 require "sinatra"
 require "sinatra/json"
+require "net/http"
+require "uri"
 require_relative "lib/gcs_uploader"
 require_relative "lib/episode_processor"
 require_relative "lib/publish_params_validator"
@@ -141,6 +143,7 @@ def process_episode_task(payload)
   author = payload["author"]
   description = payload["description"]
   staging_path = payload["staging_path"]
+  episode_id = payload["episode_id"] # Optional: Hub's episode ID for callback
 
   logger.info "event=processing_started podcast_id=#{podcast_id} title=\"#{title}\""
 
@@ -151,12 +154,72 @@ def process_episode_task(payload)
 
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
-  processor.process(title: title, author: author, description: description, markdown_content: markdown_content)
+  episode_data = processor.process(title: title, author: author, description: description, markdown_content: markdown_content)
   logger.info "event=episode_processed podcast_id=#{podcast_id}"
 
   # Cleanup staging file
   gcs.delete_file(remote_path: staging_path)
   logger.info "event=staging_cleaned podcast_id=#{podcast_id} staging_path=#{staging_path}"
 
+  # Notify Hub of completion (if episode_id provided)
+  notify_hub_complete(episode_id: episode_id, episode_data: episode_data) if episode_id
+
   logger.info "event=processing_completed podcast_id=#{podcast_id}"
+rescue StandardError => e
+  # Notify Hub of failure (if episode_id provided)
+  notify_hub_failed(episode_id: episode_id, error_message: e.message) if episode_id
+  raise
+end
+
+# Helper: Notify Hub that episode processing completed
+def notify_hub_complete(episode_id:, episode_data:)
+  hub_url = ENV.fetch("HUB_CALLBACK_URL", nil)
+  callback_secret = ENV.fetch("HUB_CALLBACK_SECRET", nil)
+
+  return unless hub_url && callback_secret
+
+  uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/complete")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 5
+  http.read_timeout = 10
+
+  request = Net::HTTP::Post.new(uri.path)
+  request["Content-Type"] = "application/json"
+  request["X-Generator-Secret"] = callback_secret
+  request.body = {
+    gcs_episode_id: episode_data["id"],
+    audio_size_bytes: episode_data["file_size_bytes"]
+  }.to_json
+
+  response = http.request(request)
+  logger.info "event=hub_callback_complete episode_id=#{episode_id} status=#{response.code}"
+rescue StandardError => e
+  logger.error "event=hub_callback_failed episode_id=#{episode_id} error=#{e.message}"
+end
+
+# Helper: Notify Hub that episode processing failed
+def notify_hub_failed(episode_id:, error_message:)
+  hub_url = ENV.fetch("HUB_CALLBACK_URL", nil)
+  callback_secret = ENV.fetch("HUB_CALLBACK_SECRET", nil)
+
+  return unless hub_url && callback_secret
+
+  uri = URI.parse("#{hub_url}/api/internal/episodes/#{episode_id}/failed")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = uri.scheme == "https"
+  http.open_timeout = 5
+  http.read_timeout = 10
+
+  request = Net::HTTP::Post.new(uri.path)
+  request["Content-Type"] = "application/json"
+  request["X-Generator-Secret"] = callback_secret
+  request.body = {
+    error_message: error_message
+  }.to_json
+
+  response = http.request(request)
+  logger.info "event=hub_failure_notified episode_id=#{episode_id} status=#{response.code}"
+rescue StandardError => e
+  logger.error "event=hub_callback_error episode_id=#{episode_id} error=#{e.message}"
 end

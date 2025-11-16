@@ -16,7 +16,7 @@ class PodcastPublisher
   # Publish episode to podcast feed
   # @param audio_content [String] MP3 audio content (binary string)
   # @param metadata [Hash] Episode metadata (title, description, author)
-  # @return [String] Public URL of the RSS feed
+  # @return [Hash] Episode data including gcs_episode_id and audio_size_bytes
   def publish(audio_content:, metadata:)
     guid = EpisodeManifest.generate_guid(metadata["title"])
     mp3_url = upload_mp3(audio_content: audio_content, guid: guid)
@@ -26,7 +26,7 @@ class PodcastPublisher
     update_manifest(episode_data)
     upload_rss_feed
 
-    @gcs_uploader.get_public_url(remote_path: "feed.xml")
+    episode_data
   end
 
   private

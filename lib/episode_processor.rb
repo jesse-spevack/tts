@@ -41,9 +41,11 @@ class EpisodeProcessor
     puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
 
     # Step 3: Publish to podcast feed (no temp file!)
-    publish_to_feed(audio_content: audio_content, title: title, author: author, description: description)
+    episode_data = publish_to_feed(audio_content: audio_content, title: title, author: author, description: description)
 
     print_success(title)
+
+    episode_data
   end
 
   private
@@ -61,10 +63,11 @@ class EpisodeProcessor
       episode_manifest: episode_manifest
     )
 
-    publisher.publish(audio_content: audio_content, metadata: metadata(title: title, author: author,
+    episode_data = publisher.publish(audio_content: audio_content, metadata: metadata(title: title, author: author,
                                                                        description: description))
 
     puts "✓ Published"
+    episode_data
   end
 
   def metadata(title:, author:, description:)

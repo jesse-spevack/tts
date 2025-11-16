@@ -40,6 +40,13 @@ env:
     - RESEND_API_KEY
     - MAILER_HOST
     - MAILER_FROM_ADDRESS
+    - CLOUD_TASKS_LOCATION
+    - CLOUD_TASKS_QUEUE
+    - GENERATOR_CALLBACK_SECRET
+    - GENERATOR_SERVICE_URL
+    - GOOGLE_CLOUD_BUCKET
+    - GOOGLE_CLOUD_PROJECT
+    - SERVICE_ACCOUNT_EMAIL
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.

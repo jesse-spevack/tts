@@ -11,12 +11,16 @@ class EpisodesController < ApplicationController
   end
 
   def create
-    @episode = @podcast.episodes.build(episode_params)
+    result = EpisodeSubmissionService.call(
+      podcast: @podcast,
+      params: episode_params,
+      uploaded_file: params[:episode][:content]
+    )
 
-    if @episode.save
-      # TODO: Enqueue processing job
+    if result.success?
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
+      @episode = result.episode
       render :new, status: :unprocessable_entity
     end
   end
