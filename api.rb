@@ -55,8 +55,8 @@ post "/publish" do
 
   json status: "success", message: "Episode submitted for processing"
 rescue StandardError => e
-  logger.error "Error: #{e.class} - #{e.message}"
-  logger.error e.backtrace.join("\n")
+  logger.error "event=publish_error error_class=#{e.class} error_message=\"#{e.message}\""
+  logger.error "event=publish_error_backtrace backtrace=\"#{e.backtrace.first(5).join(' | ')}\""
   halt 500, json(status: "error", message: "Internal server error")
 end
 
@@ -72,11 +72,11 @@ post "/process" do
 
   json status: "success", message: "Episode processed successfully"
 rescue JSON::ParserError => e
-  logger.error "Invalid JSON: #{e.message}"
+  logger.error "event=process_json_error error_message=\"#{e.message}\""
   halt 400, json(status: "error", message: "Invalid JSON payload")
 rescue StandardError => e
-  logger.error "Processing error: #{e.class} - #{e.message}"
-  logger.error e.backtrace.join("\n")
+  logger.error "event=process_error error_class=#{e.class} error_message=\"#{e.message}\""
+  logger.error "event=process_error_backtrace backtrace=\"#{e.backtrace.first(5).join(' | ')}\""
   halt 500, json(status: "error", message: "Internal server error")
 end
 
