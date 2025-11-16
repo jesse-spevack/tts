@@ -15,6 +15,9 @@ class CloudTasksEnqueuer
         http_method: "POST",
         url: "#{ENV.fetch('GENERATOR_SERVICE_URL')}/process",
         headers: { "Content-Type" => "application/json" },
+        # force_encoding required for Google Cloud Tasks client.
+        # The client expects binary encoding for HTTP body, and UTF-8 strings
+        # with Unicode characters (e.g., smart quotes in titles) cause encoding errors.
         body: {
           episode_id: episode_id,
           podcast_id: podcast_id,
@@ -22,14 +25,15 @@ class CloudTasksEnqueuer
           title: metadata[:title],
           author: metadata[:author],
           description: metadata[:description]
-        }.to_json,
+        }.to_json.force_encoding("ASCII-8BIT"),
         oidc_token: {
           service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
         }
       }
     }
 
-    client.create_task(parent: parent, task: task)
+    response = client.create_task(parent: parent, task: task)
+    response.name
   end
 
   private

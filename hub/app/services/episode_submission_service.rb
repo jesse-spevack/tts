@@ -15,10 +15,20 @@ class EpisodeSubmissionService
     episode = build_episode
     return Result.failure(episode) unless episode.save
 
+    Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{podcast.users.first.id} title=\"#{episode.title}\""
+
     staging_path = upload_to_staging(episode)
     enqueue_processing(episode, staging_path)
 
     Result.success(episode)
+  rescue Google::Cloud::Error => e
+    Rails.logger.error "event=gcs_upload_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
+    episode&.update(status: "failed", error_message: "Failed to upload to staging: #{e.message}")
+    Result.failure(episode)
+  rescue StandardError => e
+    Rails.logger.error "event=episode_submission_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
+    episode&.update(status: "failed", error_message: e.message)
+    Result.failure(episode)
   end
 
   private
@@ -37,11 +47,15 @@ class EpisodeSubmissionService
     content = uploaded_file.read
     filename = "#{episode.id}-#{Time.now.to_i}.md"
 
-    gcs_uploader.upload_staging_file(content: content, filename: filename)
+    staging_path = gcs_uploader.upload_staging_file(content: content, filename: filename)
+
+    Rails.logger.info "event=staging_uploaded episode_id=#{episode.id} staging_path=#{staging_path} size_bytes=#{content.bytesize}"
+
+    staging_path
   end
 
   def enqueue_processing(episode, staging_path)
-    enqueuer.enqueue_episode_processing(
+    task_name = enqueuer.enqueue_episode_processing(
       episode_id: episode.id,
       podcast_id: podcast.podcast_id,
       staging_path: staging_path,
@@ -51,6 +65,8 @@ class EpisodeSubmissionService
         description: episode.description
       }
     )
+
+    Rails.logger.info "event=task_enqueued episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} task_name=#{task_name}"
   end
 
   def gcs_uploader

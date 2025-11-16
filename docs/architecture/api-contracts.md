@@ -106,13 +106,13 @@ Content-Type: application/json
 
 ## Generator → Hub (Callback)
 
-### Mark Episode Complete
+### Update Episode Status (RESTful PATCH)
 
-**Endpoint:** `POST /api/internal/episodes/:episode_id/complete`
+**Endpoint:** `PATCH /api/internal/episodes/:episode_id`
 
 **Authentication:** Shared secret
 
-**Description:** Notifies Hub that episode processing is complete
+**Description:** Updates episode status after processing (complete or failed)
 
 **Request Headers:**
 ```
@@ -120,26 +120,35 @@ X-Generator-Secret: {GENERATOR_CALLBACK_SECRET}
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (Success):**
 ```json
 {
-  "gcs_episode_id": "episode-abc123",
+  "status": "complete",
+  "gcs_episode_id": "episode_abc123",
   "audio_size_bytes": 5242880
+}
+```
+
+**Request Body (Failure):**
+```json
+{
+  "status": "failed",
+  "error_message": "TTS API rate limit exceeded"
 }
 ```
 
 **Request Fields:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `gcs_episode_id` | string | Yes | Episode identifier in GCS (used in filename) |
-| `audio_size_bytes` | integer | Yes | Size of generated MP3 file |
-| `duration_seconds` | integer | No | **Not currently implemented.** Reserved for future MP3 duration parsing. |
+| `status` | string | Yes | Episode status: `complete` or `failed` |
+| `gcs_episode_id` | string | For complete | Episode identifier in GCS (used in filename) |
+| `audio_size_bytes` | integer | For complete | Size of generated MP3 file |
+| `error_message` | string | For failed | Human-readable error description |
 
 **Success Response (200 OK):**
 ```json
 {
-  "status": "success",
-  "message": "Episode marked as complete"
+  "status": "success"
 }
 ```
 
@@ -149,7 +158,7 @@ Content-Type: application/json
 ```json
 {
   "status": "error",
-  "message": "Invalid or missing generator secret"
+  "message": "Unauthorized"
 }
 ```
 
@@ -165,60 +174,23 @@ Content-Type: application/json
 ```json
 {
   "status": "error",
-  "message": "Episode is not in processing state"
+  "errors": ["Status is not included in the list"]
 }
 ```
 
 **Processing Flow:**
-1. Validate `X-Generator-Secret` header
+1. Validate `X-Generator-Secret` header against `GENERATOR_CALLBACK_SECRET`
 2. Find episode by `episode_id`
-3. Update episode:
-   - `status` = `complete`
-   - `gcs_episode_id` = from request
-   - `audio_size_bytes` = from request
+3. Update episode attributes based on status
 4. Return success
 
 **Retry Behavior:**
 - Generator does NOT retry on failure
 - Hub can detect stale "processing" episodes via timeout
 
-### Mark Episode Failed
-
-**Endpoint:** `POST /api/internal/episodes/:episode_id/failed`
-
-**Authentication:** Shared secret
-
-**Description:** Notifies Hub that episode processing failed
-
-**Request Headers:**
-```
-X-Generator-Secret: {GENERATOR_CALLBACK_SECRET}
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "episode_id": 123,
-  "status": "failed",
-  "error_message": "TTS API rate limit exceeded"
-}
-```
-
-**Request Fields:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `episode_id` | integer | Yes | Hub's database ID for the episode |
-| `status` | string | Yes | Always "failed" |
-| `error_message` | string | Yes | Human-readable error description |
-
-**Success Response (200 OK):**
-```json
-{
-  "status": "success",
-  "message": "Episode marked as failed"
-}
-```
+**Idempotency:**
+- Multiple PATCH requests with same data return 200 OK
+- Safe to retry if network issues occur
 
 ---
 
