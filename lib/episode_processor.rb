@@ -13,9 +13,10 @@ require_relative "podcast_id_validator"
 class EpisodeProcessor
   attr_reader :bucket_name, :podcast_id
 
-  def initialize(bucket_name = nil, podcast_id = nil)
+  def initialize(bucket_name = nil, podcast_id = nil, logger: nil)
     @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET")
     @podcast_id = podcast_id
+    @logger = logger
 
     raise ArgumentError, "podcast_id is required" unless @podcast_id
 
@@ -32,13 +33,13 @@ class EpisodeProcessor
 
     # Step 1: Convert markdown to plain text
     text = TextProcessor.convert_to_plain_text(markdown_content)
-    puts "✓ Converted to #{text.length} characters of plain text"
+    log_or_puts "✓ Processed #{text.length} characters"
 
     # Step 2: Generate TTS audio
-    puts "\n[2/3] Generating TTS audio..."
+    log_or_puts "\n[2/3] Generating TTS audio..."
     tts = TTS.new
     audio_content = tts.synthesize(text)
-    puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
+    log_or_puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
 
     # Step 3: Publish to podcast feed (no temp file!)
     episode_data = publish_to_feed(audio_content: audio_content, title: title, author: author, description: description)
@@ -51,7 +52,7 @@ class EpisodeProcessor
   private
 
   def publish_to_feed(audio_content:, title:, author:, description:)
-    puts "\n[3/3] Publishing to feed..."
+    log_or_puts "\n[3/3] Publishing to feed..."
 
     podcast_config = YAML.safe_load_file("config/podcast.yml")
     gcs_uploader = GCSUploader.new(@bucket_name, podcast_id: @podcast_id)
@@ -66,7 +67,7 @@ class EpisodeProcessor
     episode_data = publisher.publish(audio_content: audio_content, metadata: metadata(title: title, author: author,
                                                                        description: description))
 
-    puts "✓ Published"
+    log_or_puts "✓ Published"
     episode_data
   end
 
@@ -88,7 +89,17 @@ class EpisodeProcessor
     end
   end
 
+  def log_or_puts(message)
+    if ENV["RACK_ENV"] == "production" || @logger
+      @logger&.info(message.gsub(/[✓✗⚠\n]/, "").strip) if @logger
+    else
+      puts message
+    end
+  end
+
   def print_start(title)
+    return if ENV["RACK_ENV"] == "production"
+
     puts "=" * 60
     puts "Processing: #{title}"
     puts "Podcast ID: #{@podcast_id}"
@@ -96,6 +107,8 @@ class EpisodeProcessor
   end
 
   def print_success(title)
+    return if ENV["RACK_ENV"] == "production"
+
     puts "\n#{'=' * 60}"
     puts "✓ Complete: #{title}"
     puts "Podcast ID: #{@podcast_id}"
