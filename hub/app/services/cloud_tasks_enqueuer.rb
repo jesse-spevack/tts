@@ -22,7 +22,7 @@ class CloudTasksEnqueuer
           title: metadata[:title],
           author: metadata[:author],
           description: metadata[:description]
-        }.to_json,
+        }.to_json.force_encoding("ASCII-8BIT"),
         oidc_token: {
           service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
         }
