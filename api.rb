@@ -93,6 +93,16 @@ def authenticated?
   token == expected_token
 end
 
+# Helper: Format event log message
+def log_event(event, **fields)
+  parts = ["event=#{event}"]
+  fields.each do |key, value|
+    formatted_value = value.to_s.include?(" ") ? "\"#{value}\"" : value
+    parts << "#{key}=#{formatted_value}"
+  end
+  parts.join(" ")
+end
+
 # Helper: Handle episode submission
 def handle_episode_submission(params)
   podcast_id = params[:podcast_id]
@@ -146,31 +156,35 @@ def process_episode_task(payload)
   staging_path = payload["staging_path"]
   episode_id = payload["episode_id"] # Optional: Hub's episode ID for callback
 
-  logger.info "event=processing_started podcast_id=#{podcast_id} episode_id=#{episode_id} title=\"#{title}\""
+  logger.info log_event(:processing_started, podcast_id: podcast_id, episode_id: episode_id, title: title)
 
   # Download markdown from GCS
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
   markdown_content = gcs.download_file(remote_path: staging_path)
-  logger.info "event=file_downloaded podcast_id=#{podcast_id} episode_id=#{episode_id} size_bytes=#{markdown_content.bytesize}"
+  logger.info log_event(:file_downloaded, podcast_id: podcast_id, episode_id: episode_id,
+                                          size_bytes: markdown_content.bytesize)
 
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
-  episode_data = processor.process(title: title, author: author, description: description, markdown_content: markdown_content)
-  logger.info "event=episode_processed podcast_id=#{podcast_id} episode_id=#{episode_id} gcs_episode_id=#{episode_data['id']}"
+  episode_data = processor.process(title: title, author: author, description: description,
+                                   markdown_content: markdown_content)
+  logger.info log_event(:episode_processed, podcast_id: podcast_id, episode_id: episode_id,
+                                            gcs_episode_id: episode_data["id"])
 
   # Cleanup staging file
   gcs.delete_file(remote_path: staging_path)
-  logger.info "event=staging_cleaned podcast_id=#{podcast_id} episode_id=#{episode_id} staging_path=#{staging_path}"
+  logger.info log_event(:staging_cleaned, podcast_id: podcast_id, episode_id: episode_id,
+                                          staging_path: staging_path)
 
   # Notify Hub of completion (if episode_id provided)
   if episode_id
-    logger.info "event=hub_callback_attempting podcast_id=#{podcast_id} episode_id=#{episode_id}"
+    logger.info log_event(:hub_callback_attempting, podcast_id: podcast_id, episode_id: episode_id)
     notify_hub_complete(episode_id: episode_id, episode_data: episode_data)
   else
-    logger.info "event=hub_callback_skipped podcast_id=#{podcast_id} reason=no_episode_id"
+    logger.info log_event(:hub_callback_skipped, podcast_id: podcast_id, reason: :no_episode_id)
   end
 
-  logger.info "event=processing_completed podcast_id=#{podcast_id} episode_id=#{episode_id}"
+  logger.info log_event(:processing_completed, podcast_id: podcast_id, episode_id: episode_id)
 rescue StandardError => e
   # Notify Hub of failure (if episode_id provided)
   notify_hub_failed(episode_id: episode_id, error_message: e.message) if episode_id
@@ -183,15 +197,17 @@ def notify_hub_complete(episode_id:, episode_data:)
   callback_secret = ENV.fetch("HUB_CALLBACK_SECRET", nil)
 
   unless hub_url && callback_secret
-    logger.warn "event=hub_callback_skipped reason=missing_env_vars hub_url=#{hub_url ? 'SET' : 'MISSING'} callback_secret=#{callback_secret ? 'SET' : 'MISSING'}"
+    logger.warn log_event(:hub_callback_skipped, reason: :missing_env_vars,
+                                                 hub_url: hub_url ? "SET" : "MISSING",
+                                                 callback_secret: callback_secret ? "SET" : "MISSING")
     return
   end
 
   client = HubCallbackClient.new(hub_url: hub_url, callback_secret: callback_secret)
   response = client.notify_complete(episode_id: episode_id, episode_data: episode_data)
-  logger.info "event=hub_callback_complete episode_id=#{episode_id} status=#{response.code}"
+  logger.info log_event(:hub_callback_complete, episode_id: episode_id, status: response.code)
 rescue StandardError => e
-  logger.error "event=hub_callback_failed episode_id=#{episode_id} error=#{e.message}"
+  logger.error log_event(:hub_callback_failed, episode_id: episode_id, error: e.message)
 end
 
 # Helper: Notify Hub that episode processing failed
@@ -203,7 +219,7 @@ def notify_hub_failed(episode_id:, error_message:)
 
   client = HubCallbackClient.new(hub_url: hub_url, callback_secret: callback_secret)
   response = client.notify_failed(episode_id: episode_id, error_message: error_message)
-  logger.info "event=hub_failure_notified episode_id=#{episode_id} status=#{response.code}"
+  logger.info log_event(:hub_failure_notified, episode_id: episode_id, status: response.code)
 rescue StandardError => e
-  logger.error "event=hub_callback_error episode_id=#{episode_id} error=#{e.message}"
+  logger.error log_event(:hub_callback_error, episode_id: episode_id, error: e.message)
 end

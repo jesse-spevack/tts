@@ -64,8 +64,8 @@ class EpisodeProcessor
       episode_manifest: episode_manifest
     )
 
-    episode_data = publisher.publish(audio_content: audio_content, metadata: metadata(title: title, author: author,
-                                                                       description: description))
+    episode_data = publisher.publish(audio_content: audio_content,
+                                     metadata: metadata(title: title, author: author, description: description))
 
     log_or_puts "✓ Published"
     episode_data
@@ -91,7 +91,7 @@ class EpisodeProcessor
 
   def log_or_puts(message)
     if ENV["RACK_ENV"] == "production" || @logger
-      @logger&.info(message.gsub(/[✓✗⚠\n]/, "").strip) if @logger
+      @logger&.info(message.gsub(/[✓✗⚠\n]/, "").strip)
     else
       puts message
     end
