@@ -18,6 +18,7 @@ gem "google-cloud-tasks", "~> 2.0"
 # Web framework
 gem "puma", "~> 6.0"
 gem "rack-test", "~> 2.1", group: :test
+gem "webmock", group: :test
 gem "rackup" # Required by Sinatra 4.x (not included by default)
 gem "sinatra", "~> 4.0"
 gem "sinatra-contrib", "~> 4.0"
