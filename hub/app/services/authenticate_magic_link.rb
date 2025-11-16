@@ -21,6 +21,9 @@ class AuthenticateMagicLink
 
     if user
       InvalidateAuthToken.call(user: user)
+
+      Rails.logger.info "event=user_authenticated user_id=#{user.id} email=#{LoggingHelper.mask_email(user.email_address)}"
+
       Result.new(success?: true, user: user)
     else
       Result.new(success?: false, user: nil)
