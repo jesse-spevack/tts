@@ -11,33 +11,16 @@ class EpisodesController < ApplicationController
   end
 
   def create
-    @episode = @podcast.episodes.build(episode_params.except(:content))
+    result = EpisodeSubmissionService.call(
+      podcast: @podcast,
+      params: episode_params,
+      uploaded_file: params[:episode][:content]
+    )
 
-    if @episode.save
-      # Upload to GCS staging
-      content = params[:episode][:content].read
-      filename = "#{@episode.id}-#{Time.now.to_i}.md"
-
-      uploader = GcsUploader.new(
-        ENV.fetch("GOOGLE_CLOUD_BUCKET"),
-        podcast_id: @podcast.podcast_id
-      )
-      staging_path = uploader.upload_staging_file(content: content, filename: filename)
-
-      # Enqueue processing
-      CloudTasksEnqueuer.new.enqueue_episode_processing(
-        episode_id: @episode.id,
-        podcast_id: @podcast.podcast_id,
-        staging_path: staging_path,
-        metadata: {
-          title: @episode.title,
-          author: @episode.author,
-          description: @episode.description
-        }
-      )
-
+    if result.success?
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
+      @episode = result.episode
       render :new, status: :unprocessable_entity
     end
   end

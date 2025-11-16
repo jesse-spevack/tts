@@ -24,7 +24,7 @@ class CloudTasksEnqueuer
           description: metadata[:description]
         }.to_json,
         oidc_token: {
-          service_account_email: "#{ENV.fetch('GOOGLE_CLOUD_PROJECT')}@appspot.gserviceaccount.com"
+          service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
         }
       }
     }
