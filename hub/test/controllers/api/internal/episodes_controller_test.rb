@@ -14,7 +14,7 @@ module Api
           status: "processing"
         )
         @secret = "test-callback-secret"
-        ENV["HUB_CALLBACK_SECRET"] = @secret
+        ENV["GENERATOR_CALLBACK_SECRET"] = @secret
       end
 
       test "update marks episode complete with valid secret" do

@@ -9,7 +9,7 @@ module Api
 
       def verify_generator_secret
         secret = request.headers["X-Generator-Secret"]
-        expected = ENV.fetch("HUB_CALLBACK_SECRET", nil)
+        expected = ENV.fetch("GENERATOR_CALLBACK_SECRET", nil)
 
         unless expected && ActiveSupport::SecurityUtils.secure_compare(secret.to_s, expected)
           Rails.logger.warn "event=unauthorized_callback_attempt ip=#{request.remote_ip}"
