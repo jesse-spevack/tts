@@ -18,6 +18,8 @@ class CreateUser
       podcast = CreateDefaultPodcast.call(user: user)
     end
 
+    Rails.logger.info "event=user_created user_id=#{user.id} email=#{LoggingHelper.mask_email(user.email_address)} podcast_id=#{podcast&.podcast_id}"
+
     Result.new(success?: true, user: user, podcast: podcast)
   rescue ActiveRecord::RecordInvalid => e
     Result.new(success?: false, user: nil, podcast: nil)
