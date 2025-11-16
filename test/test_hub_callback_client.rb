@@ -63,4 +63,31 @@ class TestHubCallbackClient < Minitest::Test
 
     assert_equal "200", response.code
   end
+
+  def test_notify_complete_raises_on_timeout
+    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/complete")
+      .to_timeout
+
+    assert_raises(Net::OpenTimeout) do
+      @client.notify_complete(episode_id: 1, episode_data: { "id" => "x", "file_size_bytes" => 1 })
+    end
+  end
+
+  def test_notify_failed_raises_on_network_error
+    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/failed")
+      .to_raise(Errno::ECONNREFUSED)
+
+    assert_raises(Errno::ECONNREFUSED) do
+      @client.notify_failed(episode_id: 1, error_message: "error")
+    end
+  end
+
+  def test_notify_complete_returns_error_response
+    stub_request(:post, "#{@hub_url}/api/internal/episodes/1/complete")
+      .to_return(status: 404, body: '{"error":"Episode not found"}')
+
+    response = @client.notify_complete(episode_id: 1, episode_data: { "id" => "x", "file_size_bytes" => 1 })
+
+    assert_equal "404", response.code
+  end
 end
