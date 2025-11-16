@@ -162,6 +162,12 @@ The API is deployed to Google Cloud Run for asynchronous episode processing.
 
 See [docs/deployment.md](docs/deployment.md) for detailed deployment instructions, architecture overview, and troubleshooting guide.
 
+## Known Limitations
+
+- **Episode duration not tracked**: The `duration_seconds` field in the Episode model is not populated. Would require MP3 parsing (e.g., `mp3info` gem) to extract duration from generated audio files.
+- **No retry on callback failure**: If Generator fails to notify Hub of completion/failure, the episode stays in "processing" state. No automatic retry mechanism.
+- **No processing timeout**: Episodes stuck in "processing" state are not automatically marked as failed.
+- **Single podcast per user**: Hub currently assumes one podcast per user. Multi-podcast support would require UI changes.
 
 ## License
 
