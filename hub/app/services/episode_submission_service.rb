@@ -15,6 +15,8 @@ class EpisodeSubmissionService
     episode = build_episode
     return Result.failure(episode) unless episode.save
 
+    Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{podcast.users.first.id} title=\"#{episode.title}\""
+
     staging_path = upload_to_staging(episode)
     enqueue_processing(episode, staging_path)
 
