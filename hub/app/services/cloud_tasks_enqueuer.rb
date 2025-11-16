@@ -2,7 +2,7 @@ require "google/cloud/tasks"
 
 class CloudTasksEnqueuer
   def enqueue_episode_processing(episode_id:, podcast_id:, staging_path:, metadata:)
-    client = Google::Cloud::Tasks.cloud_tasks
+    client = build_client
 
     parent = client.queue_path(
       project: ENV.fetch("GOOGLE_CLOUD_PROJECT"),
@@ -30,5 +30,11 @@ class CloudTasksEnqueuer
     }
 
     client.create_task(parent: parent, task: task)
+  end
+
+  private
+
+  def build_client
+    Google::Cloud::Tasks.cloud_tasks(credentials: GoogleCredentials.from_env)
   end
 end
