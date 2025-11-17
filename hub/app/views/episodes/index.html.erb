@@ -1,3 +1,5 @@
+<%= turbo_stream_from "podcast_#{@podcast.id}_episodes" %>
+
 <div>
   <div class="flex justify-between items-start mb-8">
     <div>
@@ -14,16 +16,7 @@
   <% if @episodes.any? %>
     <div class="space-y-4">
       <% @episodes.each do |episode| %>
-        <%= render "shared/card" do %>
-          <div class="mb-2">
-            <%= status_badge(episode.status) %>
-          </div>
-          <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
-          <div class="flex justify-between items-center text-sm text-[var(--color-subtext)]">
-            <span>by <%= episode.author %></span>
-            <span><%= episode.created_at.strftime("%b %d, %Y") %></span>
-          </div>
-        <% end %>
+        <%= render "episode_card", episode: episode %>
       <% end %>
     </div>
   <% else %>

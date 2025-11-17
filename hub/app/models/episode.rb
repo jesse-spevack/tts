@@ -9,11 +9,25 @@ class Episode < ApplicationRecord
 
   scope :newest_first, -> { order(created_at: :desc) }
 
+  # Broadcast updates when status changes
+  after_update_commit :broadcast_status_change, if: :saved_change_to_status?
+
   def audio_url
     return nil unless complete? && gcs_episode_id.present?
 
     bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     podcast_id = podcast.podcast_id
     "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/episodes/#{gcs_episode_id}.mp3"
+  end
+
+  private
+
+  def broadcast_status_change
+    broadcast_replace_to(
+      "podcast_#{podcast_id}_episodes",
+      target: self,
+      partial: "episodes/episode_card",
+      locals: { episode: self }
+    )
   end
 end
