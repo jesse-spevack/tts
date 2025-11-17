@@ -1,11 +1,11 @@
 <% if notice.present? %>
-  <div class="bg-[var(--color-green)]/10 border border-[var(--color-green)] text-[var(--color-green)] px-4 py-3 rounded-lg mb-6">
+  <div data-controller="auto-dismiss" class="bg-[var(--color-green)]/10 border border-[var(--color-green)] text-[var(--color-green)] px-4 py-3 rounded-lg mb-6 transition-opacity duration-300">
     <%= notice %>
   </div>
 <% end %>
 
 <% if alert.present? %>
-  <div class="bg-[var(--color-red)]/10 border border-[var(--color-red)] text-[var(--color-red)] px-4 py-3 rounded-lg mb-6">
+  <div data-controller="auto-dismiss" class="bg-[var(--color-red)]/10 border border-[var(--color-red)] text-[var(--color-red)] px-4 py-3 rounded-lg mb-6 transition-opacity duration-300">
     <%= alert %>
   </div>
 <% end %>
