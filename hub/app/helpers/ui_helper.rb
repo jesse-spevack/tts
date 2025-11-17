@@ -9,6 +9,8 @@ module UiHelper
       "#{width_class}border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer"
     when :text
       "text-[var(--color-subtext)] hover:text-[var(--color-text)]"
+    when :link
+      "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer"
     else
       ""
     end.strip

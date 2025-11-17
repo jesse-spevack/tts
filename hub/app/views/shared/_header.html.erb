@@ -6,7 +6,7 @@
     <% if authenticated? %>
       <div class="flex items-center gap-4">
         <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
-        <%= button_to "Logout", session_path, method: :delete, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer" %>
+        <%= button_to "Logout", session_path, method: :delete, class: button_classes(type: :link) %>
       </div>
     <% end %>
   </div>
