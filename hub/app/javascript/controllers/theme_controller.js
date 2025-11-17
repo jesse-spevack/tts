@@ -15,11 +15,13 @@ export default class extends Controller {
 
   loadTheme() {
     const savedTheme = localStorage.getItem("theme")
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-    const isDark = savedTheme === "dark" || (!savedTheme && prefersDark)
+    // Default to dark mode if no preference saved
+    const isDark = savedTheme === "light" ? false : true
 
     if (isDark) {
       document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
     }
     this.updateIcon(isDark)
   }
