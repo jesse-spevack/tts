@@ -1,13 +1,25 @@
-<header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50">
+<header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50" data-controller="theme">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <div class="text-lg font-semibold">
       Very Normal TTS
     </div>
-    <% if authenticated? %>
-      <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4">
+      <button
+        data-action="click->theme#toggle"
+        class="cursor-pointer hover:opacity-70"
+        title="Toggle dark mode"
+      >
+        <span data-theme-target="sunIcon" class="hidden">
+          <%= render "shared/icons/sun" %>
+        </span>
+        <span data-theme-target="moonIcon">
+          <%= render "shared/icons/moon" %>
+        </span>
+      </button>
+      <% if authenticated? %>
         <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
         <%= button_to "Logout", session_path, method: :delete, class: button_classes(type: :link) %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </div>
 </header>
