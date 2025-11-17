@@ -32,15 +32,12 @@
     <%= render "shared/card", padding: "p-12" do %>
       <div class="text-center">
         <div class="max-w-sm mx-auto">
-          <p class="text-lg mb-4">Get started:</p>
-          <ol class="text-left text-[var(--color-subtext)] mb-6 space-y-2">
-            <li>1. Create an episode</li>
-            <li>2. Upload your markdown</li>
-            <li>3. We generate the audio</li>
+          <p class="text-lg mb-4">No episodes yet</p>
+          <ol class="text-left text-[var(--color-subtext)] space-y-2">
+            <li>1. Click <strong>+ New Episode</strong> above</li>
+            <li>2. Upload a text file with your content</li>
+            <li>3. We'll generate the audio for you</li>
           </ol>
-          <%= link_to new_episode_path, class: "inline-block #{button_classes(type: :primary)}" do %>
-            + Create Episode
-          <% end %>
         </div>
       </div>
     <% end %>
