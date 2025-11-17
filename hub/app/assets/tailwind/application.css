@@ -54,5 +54,6 @@
   body {
     background-color: var(--color-base);
     color: var(--color-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
   }
 }
