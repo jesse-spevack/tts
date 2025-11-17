@@ -6,7 +6,7 @@
         RSS Feed: <%= link_to @podcast.feed_url, @podcast.feed_url, class: "text-[var(--color-primary)] hover:underline", target: "_blank" %>
       </p>
     </div>
-    <%= link_to new_episode_path, class: "bg-[var(--color-primary)] text-[var(--color-primary-text)] px-4 py-2 rounded-lg hover:bg-[var(--color-primary-hover)] font-medium" do %>
+    <%= link_to new_episode_path, class: button_classes(type: :primary) do %>
       + New Episode
     <% end %>
   </div>
@@ -14,7 +14,7 @@
   <% if @episodes.any? %>
     <div class="space-y-4">
       <% @episodes.each do |episode| %>
-        <div class="border border-[var(--color-overlay0)] rounded-lg p-4">
+        <%= render "shared/card" do %>
           <div class="mb-2">
             <%= status_badge(episode.status) %>
           </div>
@@ -23,22 +23,24 @@
             <span>by <%= episode.author %></span>
             <span><%= episode.created_at.strftime("%b %d, %Y") %></span>
           </div>
-        </div>
+        <% end %>
       <% end %>
     </div>
   <% else %>
-    <div class="border border-[var(--color-overlay0)] rounded-lg p-12 text-center">
-      <div class="max-w-sm mx-auto">
-        <p class="text-lg mb-4">Get started:</p>
-        <ol class="text-left text-[var(--color-subtext)] mb-6 space-y-2">
-          <li>1. Create an episode</li>
-          <li>2. Upload your markdown</li>
-          <li>3. We generate the audio</li>
-        </ol>
-        <%= link_to new_episode_path, class: "inline-block bg-[var(--color-primary)] text-[var(--color-primary-text)] px-6 py-2 rounded-lg hover:bg-[var(--color-primary-hover)] font-medium" do %>
-          + Create Episode
-        <% end %>
+    <%= render "shared/card", padding: "p-12" do %>
+      <div class="text-center">
+        <div class="max-w-sm mx-auto">
+          <p class="text-lg mb-4">Get started:</p>
+          <ol class="text-left text-[var(--color-subtext)] mb-6 space-y-2">
+            <li>1. Create an episode</li>
+            <li>2. Upload your markdown</li>
+            <li>3. We generate the audio</li>
+          </ol>
+          <%= link_to new_episode_path, class: "inline-block #{button_classes(type: :primary)}" do %>
+            + Create Episode
+          <% end %>
+        </div>
       </div>
-    </div>
+    <% end %>
   <% end %>
 </div>

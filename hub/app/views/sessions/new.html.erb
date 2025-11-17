@@ -1,26 +1,27 @@
 <div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-  <div class="w-full max-w-md border border-[var(--color-overlay0)] rounded-lg p-8">
-    <h1 class="text-2xl font-semibold mb-6">Sign in</h1>
+  <%= render "shared/card", padding: "p-8" do %>
+    <div class="w-full max-w-md">
+      <h1 class="text-2xl font-semibold mb-6">Sign in</h1>
 
-    <%= form_with url: session_path, class: "space-y-6" do |form| %>
-      <div>
-        <label for="email_address" class="block text-sm font-medium mb-2">Email</label>
-        <%= form.email_field :email_address,
-            required: true,
-            autofocus: true,
-            autocomplete: "username",
-            placeholder: "you@example.com",
-            class: "w-full bg-[var(--color-base)] border border-[var(--color-overlay0)] rounded-md px-3 py-2 focus:outline-none focus:border-[var(--color-primary)]" %>
-      </div>
+      <%= form_with url: session_path, class: "space-y-6" do |form| %>
+        <div>
+          <%= form.label :email_address, "Email", class: label_classes %>
+          <%= form.email_field :email_address,
+              required: true,
+              autofocus: true,
+              autocomplete: "username",
+              placeholder: "you@example.com",
+              class: input_classes %>
+        </div>
 
-      <p class="text-sm text-[var(--color-subtext)]">
-        We'll find your account or create a new one
-      </p>
+        <p class="text-sm text-[var(--color-subtext)]">
+          We'll find your account or create a new one
+        </p>
 
-      <div>
-        <%= form.submit "Send Magic Link",
-            class: "w-full bg-[var(--color-primary)] text-[var(--color-primary-text)] font-medium py-2 px-4 rounded-lg hover:bg-[var(--color-primary-hover)] cursor-pointer" %>
-      </div>
-    <% end %>
-  </div>
+        <div>
+          <%= form.submit "Send Magic Link", class: button_classes(type: :primary, full_width: true) %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
