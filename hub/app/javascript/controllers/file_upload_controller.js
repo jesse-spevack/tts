@@ -26,9 +26,23 @@ export default class extends Controller {
     this.dropzoneTarget.classList.remove("border-[var(--color-primary)]")
 
     const files = event.dataTransfer.files
+    const acceptedExtensions = [".md", ".markdown", ".txt"]
+
     if (files.length > 0) {
-      this.inputTarget.files = files
-      this.updateFilename()
+      const file = files[0]
+      const fileName = file.name.toLowerCase()
+      const isAccepted = acceptedExtensions.some(ext => fileName.endsWith(ext))
+
+      if (isAccepted) {
+        this.inputTarget.files = files
+        this.updateFilename()
+      } else {
+        // Show error feedback
+        this.dropzoneTarget.classList.add("border-[var(--color-red)]")
+        setTimeout(() => {
+          this.dropzoneTarget.classList.remove("border-[var(--color-red)]")
+        }, 2000)
+      }
     }
   }
 
