@@ -1,0 +1,13 @@
+<header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="text-lg font-semibold">
+      Very Normal TTS
+    </div>
+    <% if authenticated? %>
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
+        <%= button_to "Logout", session_path, method: :delete, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+</header>
