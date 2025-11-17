@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Catppuccin Latte (Light Mode) */
+    --color-base: #eff1f5;
+    --color-mantle: #e6e9ef;
+    --color-crust: #dce0e8;
+    --color-text: #4c4f69;
+    --color-subtext: #6c6f85;
+    --color-surface0: #ccd0da;
+    --color-surface1: #bcc0cc;
+    --color-surface2: #acb0be;
+    --color-overlay0: #9ca0b0;
+    --color-overlay1: #8c8fa1;
+    --color-overlay2: #7c7f93;
+
+    /* Status Colors */
+    --color-yellow: #df8e1d;
+    --color-green: #40a02b;
+    --color-red: #d20f39;
+
+    /* Primary Action (Teal) */
+    --color-primary: #179299;
+    --color-primary-hover: #147f85;
+    --color-primary-text: #ffffff;
+  }
+
+  .dark {
+    /* Catppuccin Mocha (Dark Mode) */
+    --color-base: #1e1e2e;
+    --color-mantle: #181825;
+    --color-crust: #11111b;
+    --color-text: #cdd6f4;
+    --color-subtext: #a6adc8;
+    --color-surface0: #313244;
+    --color-surface1: #45475a;
+    --color-surface2: #585b70;
+    --color-overlay0: #6c7086;
+    --color-overlay1: #7f849c;
+    --color-overlay2: #9399b2;
+
+    /* Status Colors (same hues, adjusted for dark mode) */
+    --color-yellow: #f9e2af;
+    --color-green: #a6e3a1;
+    --color-red: #f38ba8;
+
+    /* Primary Action (Teal) */
+    --color-primary: #94e2d5;
+    --color-primary-hover: #7fd4c6;
+    --color-primary-text: #1e1e2e;
+  }
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  }
+}

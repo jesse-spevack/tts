@@ -1,0 +1,12 @@
+<%= turbo_frame_tag dom_id(episode) do %>
+  <%= render "shared/card" do %>
+    <div class="mb-2">
+      <%= status_badge(episode.status) %>
+    </div>
+    <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
+    <div class="flex justify-between items-center text-sm text-[var(--color-subtext)]">
+      <span>by <%= episode.author %></span>
+      <span><%= episode.created_at.strftime("%b %d, %Y") %></span>
+    </div>
+  <% end %>
+<% end %>
