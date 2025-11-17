@@ -4,8 +4,17 @@
   <div class="flex justify-between items-start mb-8">
     <div>
       <h1 class="text-2xl font-semibold mb-2">Episodes</h1>
-      <p class="text-sm text-[var(--color-subtext)]">
+      <p class="text-sm text-[var(--color-subtext)] flex items-center gap-2">
         RSS Feed: <%= link_to @podcast.feed_url, @podcast.feed_url, class: "text-[var(--color-primary)] hover:underline", target: "_blank" %>
+        <button type="button"
+                data-controller="clipboard"
+                data-clipboard-content-value="<%= @podcast.feed_url %>"
+                data-action="click->clipboard#copy"
+                class="text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
+                title="Copy RSS feed URL">
+          <span data-clipboard-target="copyIcon"><%= render "shared/icons/copy" %></span>
+          <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/document_check" %></span>
+        </button>
       </p>
     </div>
     <%= link_to new_episode_path, class: button_classes(type: :primary) do %>
@@ -14,7 +23,7 @@
   </div>
 
   <% if @episodes.any? %>
-    <div class="space-y-4">
+    <div class="flex flex-col gap-3">
       <% @episodes.each do |episode| %>
         <%= render "episode_card", episode: episode %>
       <% end %>
