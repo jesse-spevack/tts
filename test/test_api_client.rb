@@ -55,4 +55,28 @@ class TestAPIClient < Minitest::Test
     assert_equal "fake_audio_data", result
     @mock_google_client.verify
   end
+
+  def test_handles_binary_error_messages_without_encoding_errors
+    # Test that binary error messages don't cause encoding errors when logged
+    # Use a real logger that writes to a StringIO to catch encoding issues
+    log_output = StringIO.new
+    logger = Logger.new(log_output)
+    client = TTS::APIClient.new(config: @config, logger: logger, client: @mock_google_client)
+
+    binary_message = +"API error: \xFF\xFE binary data"
+    binary_message.force_encoding("ASCII-8BIT")
+    error = StandardError.new(binary_message)
+
+    @mock_google_client.expect :synthesize_speech, nil do |**_kwargs|
+      raise error
+    end
+
+    # This should raise the original error, NOT an Encoding::CompatibilityError
+    raised_error = assert_raises(StandardError) do
+      client.call(text: "Hello!", voice: "en-GB-Chirp3-HD-Enceladus")
+    end
+
+    # Verify we got the original error, not an encoding error
+    refute_instance_of Encoding::CompatibilityError, raised_error
+  end
 end

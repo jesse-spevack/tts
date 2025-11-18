@@ -41,7 +41,9 @@ class TTS
       @logger.info "API call successful (#{response.audio_content.bytesize} bytes audio)"
       response.audio_content
     rescue StandardError => e
-      @logger.error "API call failed: #{e.message}"
+      # Convert error message to UTF-8 safely to prevent encoding errors when logging
+      safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      @logger.error "API call failed: #{safe_message}"
       raise
     end
 
@@ -70,7 +72,9 @@ class TTS
         sleep(wait_time)
         retry
       rescue Google::Cloud::Error => e
-        raise unless retries < max_retries && e.message.include?(DEADLINE_EXCEEDED_ERROR)
+        # Convert error message to UTF-8 safely before checking content
+        safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+        raise unless retries < max_retries && safe_message.include?(DEADLINE_EXCEEDED_ERROR)
 
         retries += 1
         @logger.warn "Timeout, retrying (#{retries}/#{max_retries})"
