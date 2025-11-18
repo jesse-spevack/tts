@@ -21,6 +21,7 @@ class EpisodesController < ApplicationController
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
       @episode = result.episode
+      flash.now[:alert] = @episode.error_message if @episode.error_message
       render :new, status: :unprocessable_entity
     end
   end

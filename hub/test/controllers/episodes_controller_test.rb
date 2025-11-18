@@ -69,4 +69,30 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
   end
+
+  test "should show error when no file uploaded" do
+    # Mock the service to return failure with file error
+    mock_episode = Episode.new(
+      title: "Test Episode",
+      author: "Test Author",
+      description: "Test Description",
+      status: "failed",
+      error_message: "No file uploaded"
+    )
+    mock_result = EpisodeSubmissionService::Result.failure(mock_episode)
+
+    EpisodeSubmissionService.stub :call, mock_result do
+      post episodes_url, params: {
+        episode: {
+          title: "Test Episode",
+          author: "Test Author",
+          description: "Test Description",
+          content: nil
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "No file uploaded"
+  end
 end
