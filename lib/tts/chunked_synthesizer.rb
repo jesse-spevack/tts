@@ -51,6 +51,17 @@ class TTS
       @logger.info "Text too long, splitting into #{chunks.length} chunks..."
       @logger.info "Processing with #{@config.thread_pool_size} concurrent threads (Chirp3 quota: 200/min)..."
       @logger.info "Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
+
+      # Add sentence analysis
+      sentence_lengths = chunks.flat_map { |chunk| chunk.split(/(?<=[.!?])\s+/).map(&:bytesize) }
+      max_sentence = sentence_lengths.max
+      avg_sentence = sentence_lengths.sum / sentence_lengths.length
+      @logger.info "Sentence stats: max=#{max_sentence} bytes, avg=#{avg_sentence} bytes, count=#{sentence_lengths.length}"
+
+      if max_sentence > 300
+        @logger.warn "⚠ Warning: Found sentence > 300 bytes (#{max_sentence} bytes) - may trigger API error"
+      end
+
       @logger.info ""
     end
 
