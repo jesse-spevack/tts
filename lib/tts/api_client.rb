@@ -8,6 +8,7 @@ class TTS
   class APIClient
     CONTENT_FILTER_ERROR = "sensitive or harmful content"
     DEADLINE_EXCEEDED_ERROR = "Deadline Exceeded"
+    MAX_SAFE_SENTENCE_BYTES = 300
 
     # Initialize a new API client.
     #
@@ -28,8 +29,12 @@ class TTS
     # @param text [String] The text to convert to speech
     # @param voice [String] Voice name to use
     # @return [String] Binary MP3 audio data
+    # @raise [ArgumentError] if text contains sentences that are too long
     # @raise [Google::Cloud::Error] if API call fails
     def call(text:, voice:)
+      # Validate sentence length before API call
+      validate_sentence_length!(text)
+
       @logger.info "Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
 
       response = @client.synthesize_speech(
@@ -84,6 +89,16 @@ class TTS
     end
 
     private
+
+    def validate_sentence_length!(text)
+      sentences = text.split(/(?<=[.!?])\s+/)
+
+      sentences.each do |sentence|
+        if sentence.bytesize > MAX_SAFE_SENTENCE_BYTES
+          raise ArgumentError, "Sentence too long (#{sentence.bytesize} bytes, max #{MAX_SAFE_SENTENCE_BYTES}): #{sentence[0..50]}..."
+        end
+      end
+    end
 
     def build_voice_params(voice)
       {
