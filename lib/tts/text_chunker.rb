@@ -45,20 +45,46 @@ class TTS
     # @param max_bytes [Integer] Maximum byte size for each chunk
     # @return [Array<String>] Array of text chunks, each <= max_bytes
     def chunk(text, max_bytes)
-      return [text] if text.bytesize <= max_bytes
+      # First check if any sentences are too long, even if text fits in one chunk
+      sentences = text.split(/(?<=[.!?])\s+/)
+      has_long_sentences = sentences.any? { |s| sentence_too_long?(s, max_bytes: @max_sentence_bytes) }
+
+      # If text fits in one chunk AND has no long sentences, return as-is
+      return [text] if text.bytesize <= max_bytes && !has_long_sentences
 
       chunks = []
       current_chunk = ""
 
-      sentences = text.split(/(?<=[.!?])\s+/)
-
       sentences.each do |sentence|
-        if sentence.bytesize > max_bytes
-          process_long_sentence(sentence: sentence, max_bytes: max_bytes, chunks: chunks, current_chunk: current_chunk)
+        # Check if sentence itself is too long
+        if sentence_too_long?(sentence, max_bytes: @max_sentence_bytes)
+          # Split the long sentence first
+          sentence_parts = split_long_sentence(sentence, max_bytes: @max_sentence_bytes)
+
+          sentence_parts.each do |part|
+            current_chunk = add_sentence_to_chunk(
+              sentence: part,
+              current_chunk: current_chunk,
+              max_bytes: max_bytes,
+              chunks: chunks
+            )
+          end
+        elsif sentence.bytesize > max_bytes
+          # Sentence fits API limits but not in chunk
+          process_long_sentence(
+            sentence: sentence,
+            max_bytes: max_bytes,
+            chunks: chunks,
+            current_chunk: current_chunk
+          )
           current_chunk = chunks.pop || ""
         else
-          current_chunk = add_sentence_to_chunk(sentence: sentence, current_chunk: current_chunk, max_bytes: max_bytes,
-                                                chunks: chunks)
+          current_chunk = add_sentence_to_chunk(
+            sentence: sentence,
+            current_chunk: current_chunk,
+            max_bytes: max_bytes,
+            chunks: chunks
+          )
         end
       end
 
@@ -69,8 +95,15 @@ class TTS
     private
 
     # Split text at word boundaries
+    # Adds period to split points to maintain sentence boundaries
     def split_at_words(text, max_bytes)
-      words = text.split(/\s+/)
+      # Check if the text ends with sentence-ending punctuation
+      has_ending_punctuation = text =~ /[.!?]\s*$/
+
+      # Remove trailing punctuation for processing, we'll add it back at the end
+      text_to_split = text.sub(/[.!?]\s*$/, "")
+
+      words = text_to_split.split(/\s+/)
       chunks = []
       current_chunk = ""
 
@@ -78,6 +111,7 @@ class TTS
         test_chunk = current_chunk.empty? ? word : "#{current_chunk} #{word}"
 
         if test_chunk.bytesize > max_bytes
+          # Add period to create sentence boundary, but only if we're not adding to the last chunk
           chunks << current_chunk unless current_chunk.empty?
           current_chunk = word
         else
@@ -86,7 +120,18 @@ class TTS
       end
 
       chunks << current_chunk unless current_chunk.empty?
-      chunks
+
+      # Add periods to all parts except the last to maintain sentence boundaries
+      # The last part gets the original ending punctuation
+      chunks.map.with_index do |chunk, i|
+        if i == chunks.length - 1 && has_ending_punctuation
+          "#{chunk}."
+        elsif i < chunks.length - 1
+          "#{chunk}."
+        else
+          chunk
+        end
+      end
     end
 
     def process_long_sentence(sentence:, max_bytes:, chunks:, current_chunk:)

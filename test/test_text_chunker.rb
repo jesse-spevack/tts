@@ -77,4 +77,37 @@ class TestTextChunker < Minitest::Test
       assert chunk.bytesize <= 50 || chunk.split(/[.!?]/).length == 1
     end
   end
+
+  def test_splits_long_sentences_within_chunks
+    chunker = TTS::TextChunker.new(max_sentence_bytes: 50)
+
+    # Create text with one very long sentence
+    long_sentence = "word " * 30 + "."
+    text = "Short sentence. #{long_sentence} Another short sentence."
+
+    chunks = chunker.chunk(text, 200)
+
+    # Verify no chunk contains a sentence > 50 bytes
+    chunks.each do |chunk|
+      sentences = chunk.split(/(?<=[.!?])\s+/)
+      sentences.each do |sentence|
+        assert sentence.bytesize <= 50, "Sentence too long: #{sentence.bytesize} bytes"
+      end
+    end
+  end
+
+  def test_handles_parenthetical_long_content
+    chunker = TTS::TextChunker.new(max_sentence_bytes: 100)
+
+    # Simulate "Five(" pattern from logs
+    text = "Five(a very long parenthetical expression that goes on and on and on and on and on and on and on and on) is a number."
+
+    chunks = chunker.chunk(text, 200)
+
+    # Should not raise error, should split appropriately
+    assert chunks.length > 0
+    chunks.each do |chunk|
+      assert chunk.bytesize <= 200
+    end
+  end
 end
