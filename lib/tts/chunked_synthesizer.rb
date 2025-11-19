@@ -91,11 +91,14 @@ class TTS
     end
 
     def handle_chunk_error(error:, chunk_num:, total:, skipped_chunks:)
-      if error.message.include?(CONTENT_FILTER_ERROR)
+      # Convert error message to UTF-8 safely to prevent encoding errors when logging
+      safe_message = error.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+
+      if safe_message.include?(CONTENT_FILTER_ERROR)
         @logger.warn "Chunk #{chunk_num}/#{total}: ⚠ SKIPPED - Content filter"
         skipped_chunks << chunk_num
       else
-        @logger.error "Chunk #{chunk_num}/#{total}: ✗ Failed - #{error.message}"
+        @logger.error "Chunk #{chunk_num}/#{total}: ✗ Failed - #{safe_message}"
         raise
       end
     end
