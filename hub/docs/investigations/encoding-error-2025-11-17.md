@@ -119,12 +119,12 @@ The encoding error is a **secondary error** that occurs when trying to log a **p
 ## Related Files
 
 ### `/lib/tts/chunked_synthesizer.rb`
-**Contains encoding bugs:**
+**Contained encoding bugs (fixed in this PR):**
 - Line 94: `if error.message.include?(CONTENT_FILTER_ERROR)` - String search on potentially binary error message
 - Line 98: `@logger.error "Chunk #{chunk_num}/#{total}: ✗ Failed - #{error.message}"` - String interpolation with binary error message
 
 ### `/lib/tts/api_client.rb`
-**Contains encoding bugs:**
+**Contained encoding bugs (fixed in this PR):**
 - Line 44: `@logger.error "API call failed: #{e.message}"` - String interpolation with binary error message
 - Line 73: `raise unless retries < max_retries && e.message.include?(DEADLINE_EXCEEDED_ERROR)` - String search on potentially binary error message
 
