@@ -532,7 +532,10 @@ Prevents publishing partial/incomplete audio with missing sections."
 **Files:**
 - Create: `app/services/error_message_mapper.rb`
 - Create: `test/services/error_message_mapper_test.rb`
+- Create: `app/models/episode_error.rb`
+- Create: `test/models/episode_error_test.rb`
 - Modify: `app/models/episode.rb`
+- Modify: `app/views/episodes/show.html.erb`
 
 **Step 1: Create ErrorMessageMapper service**
 
@@ -643,55 +646,33 @@ class ErrorMessageMapperTest < ActiveSupport::TestCase
 end
 ```
 
-**Step 3: Update Episode model to store structured error**
+**Step 3: Create EpisodeError model and migration**
 
-In `app/models/episode.rb`, modify the callback handler:
-
-```ruby
-def handle_generator_callback(params)
-  if params[:status] == "complete"
-    update!(
-      status: "complete",
-      gcs_episode_id: params[:gcs_episode_id],
-      audio_url: params[:audio_url],
-      error_message: nil,
-      error_code: nil,
-      error_category: nil
-    )
-  elsif params[:status] == "failed"
-    error_mapping = ErrorMessageMapper.map(params[:error_code], params[:error_details])
-
-    update!(
-      status: "failed",
-      error_code: params[:error_code],
-      error_category: params[:error_category],
-      error_message: error_mapping[:message],
-      error_title: error_mapping[:title],
-      user_action_required: error_mapping[:user_action_required]
-    )
-  end
-end
-```
-
-**Step 4: Add database migration**
+Generate the episode_errors table:
 
 ```bash
 cd hub
-rails generate migration AddStructuredErrorsToEpisodes error_code:string error_category:string error_title:string user_action_required:boolean
+rails generate model EpisodeError episode:references error_code:string error_category:string error_message:text error_details:text
 ```
 
-Edit the migration:
+Edit the migration to add indexes:
 
 ```ruby
-class AddStructuredErrorsToEpisodes < ActiveRecord::Migration[8.0]
+class CreateEpisodeErrors < ActiveRecord::Migration[8.0]
   def change
-    add_column :episodes, :error_code, :string
-    add_column :episodes, :error_category, :string
-    add_column :episodes, :error_title, :string
-    add_column :episodes, :user_action_required, :boolean, default: false
+    create_table :episode_errors do |t|
+      t.references :episode, null: false, foreign_key: true
+      t.string :error_code, null: false
+      t.string :error_category, null: false
+      t.text :error_message, null: false
+      t.text :error_details
 
-    add_index :episodes, :error_code
-    add_index :episodes, :error_category
+      t.timestamps
+    end
+
+    add_index :episode_errors, :error_code
+    add_index :episode_errors, :error_category
+    add_index :episode_errors, [:episode_id, :created_at]
   end
 end
 ```
@@ -702,15 +683,90 @@ Run migration:
 rails db:migrate
 ```
 
-**Step 5: Update episode show view to display structured errors**
+**Step 4: Update Episode and EpisodeError models**
 
-In `app/views/episodes/show.html.erb`, replace error display:
+In `app/models/episode.rb`:
+
+```ruby
+class Episode < ApplicationRecord
+  # ... existing associations ...
+
+  has_many :episode_errors, dependent: :destroy
+  has_one :latest_error, -> { order(created_at: :desc) },
+          class_name: "EpisodeError",
+          inverse_of: :episode
+
+  # Callback handler
+  def handle_generator_callback(params)
+    if params[:status] == "complete"
+      update!(
+        status: "complete",
+        gcs_episode_id: params[:gcs_episode_id],
+        audio_url: params[:audio_url]
+      )
+    elsif params[:status] == "failed"
+      # Map error code to user-friendly message
+      error_mapping = ErrorMessageMapper.map(params[:error_code], params[:error_details])
+
+      # Create error record
+      episode_errors.create!(
+        error_code: params[:error_code],
+        error_category: params[:error_category],
+        error_message: error_mapping[:message],
+        error_details: params[:error_details]
+      )
+
+      # Update episode status
+      update!(status: "failed")
+    end
+  end
+
+  # Helper methods for views
+  def current_error_message
+    latest_error&.error_message
+  end
+
+  def current_error_code
+    latest_error&.error_code
+  end
+
+  def user_action_required?
+    return false unless latest_error
+
+    error_mapping = ErrorMessageMapper.map(latest_error.error_code)
+    error_mapping[:user_action_required]
+  end
+
+  def error_title
+    return nil unless latest_error
+
+    error_mapping = ErrorMessageMapper.map(latest_error.error_code)
+    error_mapping[:title]
+  end
+end
+```
+
+In `app/models/episode_error.rb`:
+
+```ruby
+class EpisodeError < ApplicationRecord
+  belongs_to :episode
+
+  validates :error_code, :error_category, :error_message, presence: true
+
+  scope :recent, -> { order(created_at: :desc) }
+end
+```
+
+**Step 5: Update episode show view to display errors**
+
+In `app/views/episodes/show.html.erb`:
 
 ```erb
 <% if @episode.failed? %>
   <div class="error-box">
     <h3><%= @episode.error_title || "Processing Failed" %></h3>
-    <p><%= simple_format(@episode.error_message) %></p>
+    <p><%= simple_format(@episode.current_error_message) %></p>
 
     <% if @episode.user_action_required? %>
       <div class="error-actions">
@@ -718,6 +774,21 @@ In `app/views/episodes/show.html.erb`, replace error display:
       </div>
     <% else %>
       <p class="error-hint">This is a temporary issue. Please try again later.</p>
+    <% end %>
+
+    <%# Show error history if multiple attempts %>
+    <% if @episode.episode_errors.count > 1 %>
+      <details class="error-history">
+        <summary>Error History (<%= @episode.episode_errors.count %> attempts)</summary>
+        <ul>
+          <% @episode.episode_errors.recent.each do |error| %>
+            <li>
+              <strong><%= error.created_at.strftime("%Y-%m-%d %H:%M") %></strong>:
+              <%= error.error_code %> - <%= truncate(error.error_message, length: 100) %>
+            </li>
+          <% end %>
+        </ul>
+      </details>
     <% end %>
   </div>
 <% end %>
@@ -735,12 +806,19 @@ Expected: All pass
 **Step 7: Commit**
 
 ```bash
-git add app/services/error_message_mapper.rb test/services/error_message_mapper_test.rb app/models/episode.rb app/views/episodes/show.html.erb db/migrate/*
-git commit -m "feat: add user-friendly error message mapping in Hub
+git add app/services/error_message_mapper.rb test/services/error_message_mapper_test.rb \
+        app/models/episode_error.rb test/models/episode_error_test.rb \
+        app/models/episode.rb app/views/episodes/show.html.erb db/migrate/*
+git commit -m "feat: add error tracking with episode_errors table
 
+Creates episode_errors table to track error history across retries.
 Maps Generator error codes to user-friendly messages.
-Stores structured error info (code, category, title) in database.
-Shows actionable messages to users based on error type."
+Shows current error and error history to users.
+
+Benefits:
+- Tracks multiple retry attempts per episode
+- Preserves error history for debugging
+- Normalized database design"
 ```
 
 ---
