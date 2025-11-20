@@ -9,8 +9,9 @@ class TTS
     # Google TTS API rejects sentences that are too long
     DEFAULT_MAX_SENTENCE_BYTES = 300
 
-    def initialize(max_sentence_bytes: DEFAULT_MAX_SENTENCE_BYTES)
+    def initialize(max_sentence_bytes: DEFAULT_MAX_SENTENCE_BYTES, logger: nil)
       @max_sentence_bytes = max_sentence_bytes
+      @logger = logger
     end
 
     # Check if a sentence exceeds the safe length
@@ -19,7 +20,7 @@ class TTS
     end
 
     # Split a long sentence into smaller parts at natural boundaries
-    # Tries: periods, commas/semicolons/colons, then word boundaries
+    # Tries: commas/semicolons/colons, then word boundaries
     def split_long_sentence(sentence, max_bytes: @max_sentence_bytes)
       return [sentence] unless sentence_too_long?(sentence, max_bytes: max_bytes)
 
@@ -113,7 +114,14 @@ class TTS
         if test_chunk.bytesize > max_bytes
           # Add period to create sentence boundary, but only if we're not adding to the last chunk
           chunks << current_chunk unless current_chunk.empty?
-          current_chunk = word
+          # Handle case where single word exceeds max_bytes
+          if word.bytesize > max_bytes
+            @logger&.warn "Single word exceeds max_bytes: #{word[0..20]}... (#{word.bytesize} bytes)"
+            chunks << word
+            current_chunk = ""
+          else
+            current_chunk = word
+          end
         else
           current_chunk = test_chunk
         end

@@ -160,4 +160,22 @@ class TestChunkedSynthesizer < Minitest::Test
     result = @synthesizer.synthesize(chunks, voice)
     assert_equal "", result
   end
+
+  def test_synthesize_handles_chunks_with_no_sentences
+    # Test that we don't crash with division by zero when chunks have no sentence-ending punctuation
+    chunks = ["just words no punctuation", "more words"]
+    voice = "en-GB-Chirp3-HD-Enceladus"
+
+    @mock_api_client.expect :call_with_retry, "audio1" do |**_kwargs|
+      true
+    end
+    @mock_api_client.expect :call_with_retry, "audio2" do |**_kwargs|
+      true
+    end
+
+    result = @synthesizer.synthesize(chunks, voice)
+
+    assert_equal "audio1audio2", result
+    @mock_api_client.verify
+  end
 end
