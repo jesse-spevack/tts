@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "api_client"
+
 class TTS
   # Splits text into chunks that fit within a byte limit.
   # Attempts to split at sentence boundaries first, then at punctuation marks if needed.
@@ -7,7 +9,7 @@ class TTS
   class TextChunker
     # Maximum bytes for a single sentence before splitting
     # Google TTS API rejects sentences that are too long
-    DEFAULT_MAX_SENTENCE_BYTES = 300
+    DEFAULT_MAX_SENTENCE_BYTES = TTS::APIClient::MAX_SAFE_SENTENCE_BYTES
 
     def initialize(max_sentence_bytes: DEFAULT_MAX_SENTENCE_BYTES, logger: nil)
       @max_sentence_bytes = max_sentence_bytes

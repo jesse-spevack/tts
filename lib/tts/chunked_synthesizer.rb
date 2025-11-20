@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "concurrent"
+require_relative "api_client"
 
 class TTS
   # Handles concurrent synthesis of multiple text chunks.
@@ -61,8 +62,8 @@ class TTS
         avg_sentence = sentence_lengths.sum / sentence_lengths.length
         @logger.info "Sentence stats: max=#{max_sentence} bytes, avg=#{avg_sentence} bytes, count=#{sentence_lengths.length}"
 
-        if max_sentence > 300
-          @logger.warn "⚠ Warning: Found sentence > 300 bytes (#{max_sentence} bytes) - may trigger API error"
+        if max_sentence > TTS::APIClient::MAX_SAFE_SENTENCE_BYTES
+          @logger.warn "⚠ Warning: Found sentence > #{TTS::APIClient::MAX_SAFE_SENTENCE_BYTES} bytes (#{max_sentence} bytes) - may trigger API error"
         end
       end
 
