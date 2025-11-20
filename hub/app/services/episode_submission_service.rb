@@ -35,10 +35,6 @@ class EpisodeSubmissionService
     Rails.logger.error "event=gcs_upload_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
     episode&.update(status: "failed", error_message: "Failed to upload to staging: #{e.message}")
     Result.failure(episode)
-  rescue ArgumentError => e
-    Rails.logger.error "event=episode_submission_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
-    episode&.update(status: "failed", error_message: e.message)
-    Result.failure(episode)
   rescue StandardError => e
     Rails.logger.error "event=episode_submission_failed episode_id=#{episode&.id} error_class=#{e.class} error_message=\"#{e.message}\""
     episode&.update(status: "failed", error_message: e.message)
@@ -58,11 +54,6 @@ class EpisodeSubmissionService
   end
 
   def upload_to_staging(episode)
-    # Validate uploaded file exists and is readable
-    unless uploaded_file.respond_to?(:read)
-      raise ArgumentError, "Invalid file upload - file must be readable"
-    end
-
     content = uploaded_file.read
     filename = "#{episode.id}-#{Time.now.to_i}.md"
 
