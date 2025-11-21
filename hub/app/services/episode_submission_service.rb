@@ -12,7 +12,6 @@ class EpisodeSubmissionService
   end
 
   def call
-    # Validate uploaded file before building episode
     unless uploaded_file&.respond_to?(:read)
       episode = build_episode
       episode.status = "failed"
