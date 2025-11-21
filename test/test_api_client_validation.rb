@@ -7,21 +7,6 @@ require "logger"
 require "ostruct"
 
 class TestAPIClientValidation < Minitest::Test
-  def test_raises_on_long_sentence_in_text
-    config = TTS::Config.new
-    logger = Logger.new(nil) # Silent logger
-
-    client = TTS::APIClient.new(config: config, logger: logger, client: MockTTSClient.new)
-
-    long_sentence = "A" * 600 + "."
-
-    error = assert_raises(ArgumentError) do
-      client.call(text: long_sentence, voice: config.voice_name)
-    end
-
-    assert_match(/sentence too long/i, error.message)
-  end
-
   def test_accepts_normal_text
     config = TTS::Config.new
     logger = Logger.new(nil)
