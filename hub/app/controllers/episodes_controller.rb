@@ -12,10 +12,15 @@ class EpisodesController < ApplicationController
   end
 
   def create
+    # Get user's character limit based on tier
+    validation = EpisodeSubmissionValidator.call(user: Current.user)
+
+    # Submit episode with tier-appropriate limits
     result = EpisodeSubmissionService.call(
       podcast: @podcast,
       params: episode_params,
-      uploaded_file: params[:episode][:content]
+      uploaded_file: params[:episode][:content],
+      max_characters: validation.max_characters
     )
 
     if result.success?
@@ -23,6 +28,12 @@ class EpisodesController < ApplicationController
     else
       @episode = result.episode
       flash.now[:alert] = @episode.error_message if @episode.error_message
+
+      # Show validation errors from service
+      if @episode.errors[:content].any?
+        flash.now[:alert] = @episode.errors[:content].first
+      end
+
       render :new, status: :unprocessable_entity
     end
   end
