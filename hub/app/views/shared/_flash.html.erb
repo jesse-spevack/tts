@@ -1,11 +1,41 @@
 <% if notice.present? %>
-  <div data-controller="auto-dismiss" class="bg-[var(--color-green)]/10 border border-[var(--color-green)] text-[var(--color-green)] px-4 py-3 rounded-lg mb-6 transition-opacity duration-300">
-    <%= notice %>
+  <div data-controller="auto-dismiss dismissable" class="rounded-md bg-[var(--color-green)]/10 p-4 outline outline-[var(--color-green)]/20 mb-6 transition-opacity duration-300">
+    <div class="flex">
+      <div class="shrink-0 text-[var(--color-green)]">
+        <%= render "shared/icons/check_circle" %>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-[var(--color-green)]"><%= notice %></p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" data-action="click->dismissable#dismiss" class="inline-flex rounded-md p-1.5 text-[var(--color-green)] hover:bg-[var(--color-green)]/10 focus-visible:ring-2 focus-visible:ring-[var(--color-green)] focus-visible:ring-offset-1 focus-visible:outline-hidden">
+            <span class="sr-only">Dismiss</span>
+            <%= render "shared/icons/x_mark" %>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 <% end %>
 
 <% if alert.present? %>
-  <div data-controller="auto-dismiss" class="bg-[var(--color-red)]/10 border border-[var(--color-red)] text-[var(--color-red)] px-4 py-3 rounded-lg mb-6 transition-opacity duration-300">
-    <%= alert %>
+  <div data-controller="auto-dismiss dismissable" class="rounded-md bg-[var(--color-red)]/10 p-4 outline outline-[var(--color-red)]/20 mb-6 transition-opacity duration-300">
+    <div class="flex">
+      <div class="shrink-0 text-[var(--color-red)]">
+        <%= render "shared/icons/x_circle" %>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-[var(--color-red)]"><%= alert %></p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" data-action="click->dismissable#dismiss" class="inline-flex rounded-md p-1.5 text-[var(--color-red)] hover:bg-[var(--color-red)]/10 focus-visible:ring-2 focus-visible:ring-[var(--color-red)] focus-visible:ring-offset-1 focus-visible:outline-hidden">
+            <span class="sr-only">Dismiss</span>
+            <%= render "shared/icons/x_mark" %>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 <% end %>
