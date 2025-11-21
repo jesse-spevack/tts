@@ -88,7 +88,7 @@ asset_path: /rails/public/assets
 # Configure the image builder.
 builder:
   arch: amd64
-  remote: ssh://jesse@34.106.124.165 
+  remote: ssh://jesse@34.106.199.33
   cache:
     type: registry
 
