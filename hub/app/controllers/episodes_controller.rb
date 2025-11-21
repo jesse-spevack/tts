@@ -1,6 +1,6 @@
 class EpisodesController < ApplicationController
   before_action :require_authentication
-  before_action :require_submission_access, only: [:new, :create]
+  before_action :require_submission_access, only: [ :new, :create ]
   before_action :load_podcast
 
   def index
