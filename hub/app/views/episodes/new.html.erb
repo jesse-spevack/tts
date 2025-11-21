@@ -45,6 +45,7 @@
         >
           <%= f.file_field :content,
               accept: ".md,.markdown,.txt",
+              required: true,
               data: { file_upload_target: "input", action: "change->file-upload#updateFilename" },
               class: "hidden" %>
           <p class="text-[var(--color-subtext)] mb-2">Click to upload or drag and drop<br>(.md or .txt)</p>

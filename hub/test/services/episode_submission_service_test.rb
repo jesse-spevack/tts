@@ -154,4 +154,31 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   ensure
     ENV.delete("GOOGLE_CLOUD_BUCKET")
   end
+
+  test "returns failure when uploaded file is nil" do
+    result = EpisodeSubmissionService.call(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: nil
+    )
+
+    assert result.failure?
+    assert_equal "No file uploaded", result.episode.error_message
+    assert_equal "failed", result.episode.status
+  end
+
+  test "returns failure when uploaded file is missing read method" do
+    # Simulate an object without read method
+    fake_file = Object.new
+
+    result = EpisodeSubmissionService.call(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: fake_file
+    )
+
+    assert result.failure?
+    assert_match(/file upload/i, result.episode.error_message)
+    assert_equal "failed", result.episode.status
+  end
 end

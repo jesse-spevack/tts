@@ -12,6 +12,15 @@ class EpisodeSubmissionService
   end
 
   def call
+    unless uploaded_file&.respond_to?(:read)
+      episode = build_episode
+      episode.status = "failed"
+      episode.error_message = "No file uploaded"
+      episode.save
+      Rails.logger.error "event=episode_submission_failed episode_id=#{episode.id} error_class=ValidationError error_message=\"No file uploaded\""
+      return Result.failure(episode)
+    end
+
     episode = build_episode
     return Result.failure(episode) unless episode.save
 
