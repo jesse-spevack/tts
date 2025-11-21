@@ -114,6 +114,70 @@ module Api
 
         assert_response :success
       end
+
+      test "releases free episode claim when status is failed" do
+        free_user = users(:free_user)
+        @podcast.users << free_user
+        claim = FreeEpisodeClaim.create!(
+          user: free_user,
+          episode: @episode,
+          claimed_at: Time.current
+        )
+
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "failed",
+            error_message: "Processing failed"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        claim.reload
+        assert_not_nil claim.released_at
+      end
+
+      test "does not release claim when status is complete" do
+        free_user = users(:free_user)
+        @podcast.users << free_user
+        claim = FreeEpisodeClaim.create!(
+          user: free_user,
+          episode: @episode,
+          claimed_at: Time.current
+        )
+
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "complete",
+            gcs_episode_id: "abc123"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        claim.reload
+        assert_nil claim.released_at
+      end
+
+      test "handles failure update when no claim exists" do
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "failed",
+            error_message: "Processing failed"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        @episode.reload
+        assert_equal "failed", @episode.status
+      end
     end
   end
 end

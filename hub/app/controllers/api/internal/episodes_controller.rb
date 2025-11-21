@@ -5,6 +5,7 @@ module Api
 
       def update
         if @episode.update(episode_params)
+          ReleaseFreeEpisodeClaim.call(episode: @episode) if @episode.failed?
           Rails.logger.info "event=episode_callback_received episode_id=#{@episode.id} status=#{@episode.status}"
           render json: { status: "success" }
         else

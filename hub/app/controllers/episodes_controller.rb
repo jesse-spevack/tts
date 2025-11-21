@@ -1,6 +1,6 @@
 class EpisodesController < ApplicationController
   before_action :require_authentication
-  before_action :require_submission_access, only: [ :new, :create ]
+  before_action :require_free_episode_available, only: [ :new, :create ]
   before_action :load_podcast
 
   def index
@@ -23,6 +23,7 @@ class EpisodesController < ApplicationController
     )
 
     if result.success?
+      ClaimFreeEpisode.call(user: Current.user, episode: result.episode)
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
       @episode = result.episode
@@ -38,11 +39,12 @@ class EpisodesController < ApplicationController
 
   private
 
-  def require_submission_access
-    unless Current.user.submissions_enabled?
-      flash[:alert] = "Episode submission is only available for unlimited tier members. Please upgrade to submit episodes."
-      redirect_to episodes_path
-    end
+  def require_free_episode_available
+    return unless Current.user.free?
+    return if CanClaimFreeEpisode.call(user: Current.user)
+
+    flash[:alert] = "Upgrade to create more episodes."
+    redirect_to episodes_path
   end
 
   def load_podcast
