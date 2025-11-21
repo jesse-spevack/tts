@@ -1,6 +1,6 @@
 class EpisodeSubmissionService
-  def self.call(podcast:, params:, uploaded_file:)
-    new(podcast: podcast, params: params, uploaded_file: uploaded_file).call
+  def self.call(podcast:, params:, uploaded_file:, max_characters: nil)
+    new(podcast: podcast, params: params, uploaded_file: uploaded_file, max_characters: max_characters).call
   end
 
   def initialize(podcast:, params:, uploaded_file:, max_characters: nil, gcs_uploader: nil, enqueuer: nil)

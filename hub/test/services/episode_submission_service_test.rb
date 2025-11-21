@@ -260,4 +260,31 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     assert result.success?
     assert result.episode.persisted?
   end
+
+  test "class method forwards max_characters parameter" do
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+
+    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
+
+    large_content = "a" * 10_001
+    large_file = StringIO.new(large_content)
+
+    GcsUploader.stub :new, @mock_uploader do
+      CloudTasksEnqueuer.stub :new, @mock_enqueuer do
+        result = EpisodeSubmissionService.call(
+          podcast: @podcast,
+          params: @params,
+          uploaded_file: large_file,
+          max_characters: 10_000
+        )
+
+        assert result.failure?
+        assert_not result.episode.persisted?
+        assert_includes result.episode.errors[:content].first, "too large"
+      end
+    end
+  ensure
+    ENV.delete("GOOGLE_CLOUD_BUCKET")
+  end
 end
