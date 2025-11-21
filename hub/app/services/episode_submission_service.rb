@@ -22,10 +22,9 @@ class EpisodeSubmissionService
       return Result.failure(episode)
     end
 
-    # Character limit validation
     if max_characters
       content = uploaded_file.read
-      uploaded_file.rewind # Important: allow subsequent reads
+      uploaded_file.rewind
 
       if content.length > max_characters
         episode = build_episode
