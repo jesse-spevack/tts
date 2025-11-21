@@ -35,4 +35,57 @@ class TestEpisodeProcessor < Minitest::Test
       assert_match(/openssl rand -hex 8/, error.message)
     end
   end
+
+  def test_process_accepts_voice_name_parameter
+    processor = EpisodeProcessor.new("test-bucket", "podcast_a1b2c3d4e5f6a7b8")
+
+    with_process_stubs(tts_stub: mock_tts) do
+      # Should not raise - voice_name is accepted
+      processor.process(title: "Test", author: "Author", description: "Desc",
+                        markdown_content: "# Test", voice_name: "en-GB-Standard-D")
+    end
+  end
+
+  def test_process_configures_tts_with_voice_name
+    processor = EpisodeProcessor.new("test-bucket", "podcast_a1b2c3d4e5f6a7b8")
+    tts_config_received = nil
+
+    tts_stub = lambda do |config:|
+      tts_config_received = config
+      mock_tts
+    end
+
+    with_process_stubs(tts_stub: tts_stub) do
+      processor.process(title: "Test", author: "Author", description: "Desc",
+                        markdown_content: "# Test", voice_name: "en-GB-Standard-D")
+    end
+
+    assert_equal "en-GB-Standard-D", tts_config_received.voice_name
+  end
+
+  private
+
+  def mock_tts
+    mock = Object.new
+    mock.define_singleton_method(:synthesize) { |_text| "audio" }
+    mock
+  end
+
+  def mock_publisher
+    mock = Object.new
+    mock.define_singleton_method(:publish) { |**_args| { "id" => "ep1" } }
+    mock
+  end
+
+  def with_process_stubs(tts_stub:, &)
+    TTS.stub :new, tts_stub do
+      TextProcessor.stub :convert_to_plain_text, "text" do
+        PodcastPublisher.stub :new, mock_publisher do
+          YAML.stub :safe_load_file, {} do
+            GCSUploader.stub(:new, Object.new) { EpisodeManifest.stub(:new, Object.new, &) }
+          end
+        end
+      end
+    end
+  end
 end

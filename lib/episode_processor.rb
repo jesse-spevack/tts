@@ -28,7 +28,7 @@ class EpisodeProcessor
   # @param author [String] Episode author
   # @param description [String] Episode description
   # @param markdown_content [String] Article body in markdown
-  def process(title:, author:, description:, markdown_content:)
+  def process(title:, author:, description:, markdown_content:, voice_name: nil)
     print_start(title)
 
     # Step 1: Convert markdown to plain text
@@ -37,7 +37,8 @@ class EpisodeProcessor
 
     # Step 2: Generate TTS audio
     log_or_puts "\n[2/3] Generating TTS audio..."
-    tts = TTS.new
+    config = voice_name ? TTS::Config.new(voice_name: voice_name) : TTS::Config.new
+    tts = TTS.new(config: config)
     audio_content = tts.synthesize(text)
     log_or_puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
 
