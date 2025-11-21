@@ -1,5 +1,6 @@
 class EpisodesController < ApplicationController
   before_action :require_authentication
+  before_action :require_submission_access, only: [:new, :create]
   before_action :load_podcast
 
   def index
@@ -27,6 +28,13 @@ class EpisodesController < ApplicationController
   end
 
   private
+
+  def require_submission_access
+    unless Current.user.submissions_enabled?
+      flash[:error] = "Upgrade required"
+      redirect_to episodes_path
+    end
+  end
 
   def load_podcast
     @podcast = Current.user.podcasts.first
