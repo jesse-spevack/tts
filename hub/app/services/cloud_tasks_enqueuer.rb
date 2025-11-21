@@ -1,7 +1,7 @@
 require "google/cloud/tasks"
 
 class CloudTasksEnqueuer
-  def enqueue_episode_processing(episode_id:, podcast_id:, staging_path:, metadata:)
+  def enqueue_episode_processing(episode_id:, podcast_id:, staging_path:, metadata:, voice_name:)
     client = build_client
 
     parent = client.queue_path(
@@ -24,7 +24,8 @@ class CloudTasksEnqueuer
           staging_path: staging_path,
           title: metadata[:title],
           author: metadata[:author],
-          description: metadata[:description]
+          description: metadata[:description],
+          voice_name: voice_name
         }.to_json.force_encoding("ASCII-8BIT"),
         oidc_token: {
           service_account_email: ENV.fetch("SERVICE_ACCOUNT_EMAIL")
