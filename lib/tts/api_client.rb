@@ -8,7 +8,7 @@ class TTS
   class APIClient
     CONTENT_FILTER_ERROR = "sensitive or harmful content"
     DEADLINE_EXCEEDED_ERROR = "Deadline Exceeded"
-    MAX_SAFE_SENTENCE_BYTES = 300
+    MAX_SAFE_SENTENCE_BYTES = 500
 
     # Initialize a new API client.
     #

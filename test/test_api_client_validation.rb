@@ -13,7 +13,7 @@ class TestAPIClientValidation < Minitest::Test
 
     client = TTS::APIClient.new(config: config, logger: logger, client: MockTTSClient.new)
 
-    long_sentence = "A" * 400 + "."
+    long_sentence = "A" * 600 + "."
 
     error = assert_raises(ArgumentError) do
       client.call(text: long_sentence, voice: config.voice_name)
