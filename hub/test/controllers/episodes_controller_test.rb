@@ -4,6 +4,7 @@ require "minitest/mock"
 class EpisodesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
+    @user.update!(tier: :unlimited)
     sign_in_as(@user)
   end
 

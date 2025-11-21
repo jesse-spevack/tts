@@ -42,4 +42,68 @@ class UserTest < ActiveSupport::TestCase
 
     assert_not_includes valid_users, user_without_expiration
   end
+
+  test "defaults to free tier" do
+    user = User.new(email_address: "test@example.com")
+    assert user.free?
+  end
+
+  test "can set tier to basic" do
+    user = users(:one)
+    user.update!(tier: :basic)
+    assert user.basic?
+  end
+
+  test "can set tier to plus" do
+    user = users(:one)
+    user.update!(tier: :plus)
+    assert user.plus?
+  end
+
+  test "can set tier to premium" do
+    user = users(:one)
+    user.update!(tier: :premium)
+    assert user.premium?
+  end
+
+  test "can set tier to unlimited" do
+    user = users(:one)
+    user.update!(tier: :unlimited)
+    assert user.unlimited?
+  end
+
+  test "submissions_enabled? returns true for unlimited tier" do
+    user = users(:one)
+    user.update!(tier: :unlimited)
+    assert user.submissions_enabled?
+  end
+
+  test "submissions_enabled? returns false for free tier" do
+    user = users(:one)
+    user.update!(tier: :free)
+    assert_not user.submissions_enabled?
+  end
+
+  test "submissions_enabled? returns false for basic tier" do
+    user = users(:one)
+    user.update!(tier: :basic)
+    assert_not user.submissions_enabled?
+  end
+
+  test "submissions_enabled? returns false for plus tier" do
+    user = users(:one)
+    user.update!(tier: :plus)
+    assert_not user.submissions_enabled?
+  end
+
+  test "submissions_enabled? returns false for premium tier" do
+    user = users(:one)
+    user.update!(tier: :premium)
+    assert_not user.submissions_enabled?
+  end
+
+  test "email returns email_address" do
+    user = users(:one)
+    assert_equal user.email_address, user.email
+  end
 end
