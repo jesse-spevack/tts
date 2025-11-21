@@ -14,5 +14,13 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+    def fixture_file_upload(io, mime_type, original_filename:)
+      uploaded_file = ActionDispatch::Http::UploadedFile.new(
+        tempfile: io,
+        type: mime_type,
+        filename: original_filename
+      )
+      uploaded_file
+    end
   end
 end

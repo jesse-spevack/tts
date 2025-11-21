@@ -181,4 +181,110 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     assert_match(/file upload/i, result.episode.error_message)
     assert_equal "failed", result.episode.status
   end
+
+  test "rejects file larger than max_characters when limit provided" do
+    large_content = "a" * 10_001
+    large_file = StringIO.new(large_content)
+
+    result = EpisodeSubmissionService.new(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: large_file,
+      max_characters: 10_000,
+      gcs_uploader: @mock_uploader,
+      enqueuer: @mock_enqueuer
+    ).call
+
+    assert result.failure?
+    assert_not result.episode.persisted?
+    assert_includes result.episode.errors[:content].first, "too large"
+    assert_includes result.episode.errors[:content].first, "10,001 characters"
+    assert_includes result.episode.errors[:content].first, "10,000 characters"
+  end
+
+  test "accepts file with exactly max_characters" do
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+
+    content = "a" * 10_000
+    file = StringIO.new(content)
+
+    result = EpisodeSubmissionService.new(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: file,
+      max_characters: 10_000,
+      gcs_uploader: @mock_uploader,
+      enqueuer: @mock_enqueuer
+    ).call
+
+    assert result.success?
+    assert result.episode.persisted?
+  end
+
+  test "accepts file larger than 10k when max_characters is nil (unlimited)" do
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+
+    large_content = "a" * 50_000
+    large_file = StringIO.new(large_content)
+
+    result = EpisodeSubmissionService.new(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: large_file,
+      max_characters: nil, # unlimited
+      gcs_uploader: @mock_uploader,
+      enqueuer: @mock_enqueuer
+    ).call
+
+    assert result.success?
+    assert result.episode.persisted?
+  end
+
+  test "skips character limit check when max_characters not provided" do
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+
+    large_content = "a" * 50_000
+    large_file = StringIO.new(large_content)
+
+    result = EpisodeSubmissionService.new(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: large_file,
+      gcs_uploader: @mock_uploader,
+      enqueuer: @mock_enqueuer
+    ).call
+
+    assert result.success?
+    assert result.episode.persisted?
+  end
+
+  test "class method forwards max_characters parameter" do
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+
+    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
+
+    large_content = "a" * 10_001
+    large_file = StringIO.new(large_content)
+
+    GcsUploader.stub :new, @mock_uploader do
+      CloudTasksEnqueuer.stub :new, @mock_enqueuer do
+        result = EpisodeSubmissionService.call(
+          podcast: @podcast,
+          params: @params,
+          uploaded_file: large_file,
+          max_characters: 10_000
+        )
+
+        assert result.failure?
+        assert_not result.episode.persisted?
+        assert_includes result.episode.errors[:content].first, "too large"
+      end
+    end
+  ensure
+    ENV.delete("GOOGLE_CLOUD_BUCKET")
+  end
 end

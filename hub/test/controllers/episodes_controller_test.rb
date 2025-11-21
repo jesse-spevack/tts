@@ -96,4 +96,33 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_includes response.body, "No file uploaded"
   end
+
+  test "passes nil max_characters to service for unlimited tier users" do
+    sign_in_as users(:unlimited_user)
+
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("# Test content"),
+      "text/markdown",
+      original_filename: "test.md"
+    )
+
+    # Verify that the service is called with max_characters: nil for unlimited users
+    mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
+
+    EpisodeSubmissionService.stub :call, ->(podcast:, params:, uploaded_file:, max_characters:) {
+      assert_nil max_characters, "Expected max_characters to be nil for unlimited tier users"
+      mock_result
+    } do
+      post episodes_url, params: {
+        episode: {
+          title: "Test Episode",
+          author: "Test Author",
+          description: "Test Description",
+          content: file
+        }
+      }
+    end
+
+    assert_redirected_to episodes_path
+  end
 end
