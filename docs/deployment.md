@@ -1,24 +1,111 @@
 # Deployment Guide
 
-This document describes how to deploy the TTS API to Google Cloud Run.
+This document describes how to deploy the TTS platform, which consists of two services:
 
-## Overview
+- **Hub**: Rails web application for user accounts, episode management, and API
+- **Generator**: Ruby/Sinatra service for TTS audio generation
 
-The TTS API is deployed as a containerized service on Google Cloud Run. The deployment includes:
+## Architecture Overview
 
-- **API Server**: Sinatra-based REST API for episode publishing
-- **Background Processing**: Cloud Tasks integration for async episode processing
-- **Storage**: Google Cloud Storage for markdown files, MP3s, and RSS feeds
-- **Authentication**: Bearer token authentication for API requests
+```
+Users (Web/API)
+      │
+      ▼
+┌─────────────────────────────────────┐
+│              HUB                     │
+│         (Rails + SQLite)             │
+│     https://tts.verynormal.dev       │
+│                                      │
+│  • Magic link authentication         │
+│  • Episode CRUD (Web + API)          │
+│  • Enqueues processing via Cloud Tasks│
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│           GENERATOR                  │
+│      (Ruby/Sinatra on Cloud Run)     │
+│                                      │
+│  • Receives tasks from Hub           │
+│  • Generates TTS audio               │
+│  • Updates RSS feed                  │
+│  • Callbacks to Hub on completion    │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│      Google Cloud Storage            │
+│  podcasts/{podcast_id}/              │
+│    ├── episodes/*.mp3                │
+│    ├── feed.xml                      │
+│    └── staging/*.md                  │
+└─────────────────────────────────────┘
+```
 
-## Prerequisites
+---
 
-1. **Google Cloud Project**: Set up with billing enabled
-2. **Required APIs**: Enable Cloud Run, Cloud Build, Cloud Storage, Cloud Tasks
-3. **Service Account**: `tts-service-account` with permissions for GCS and Cloud Tasks
-4. **Environment File**: Create `.env` with required variables (see below)
+## Hub Deployment (Kamal)
 
-## Environment Variables
+The Hub is deployed to a GCP VM using [Kamal](https://kamal-deploy.org/).
+
+### Prerequisites
+
+1. GCP VM with Docker installed
+2. Google Artifact Registry for container images
+3. Kamal secrets configured in `hub/.kamal/secrets`
+
+### Environment Variables
+
+Secrets are stored in `hub/.kamal/secrets`:
+
+```bash
+RAILS_MASTER_KEY=...
+RESEND_API_KEY=...              # For magic link emails
+MAILER_HOST=tts.verynormal.dev
+MAILER_FROM_ADDRESS=...
+CLOUD_TASKS_LOCATION=us-central1
+CLOUD_TASKS_QUEUE=episode-processing
+GENERATOR_CALLBACK_SECRET=...   # Shared secret with Generator
+GENERATOR_SERVICE_URL=...       # Generator's Cloud Run URL
+GOOGLE_CLOUD_BUCKET=...
+GOOGLE_CLOUD_PROJECT=...
+SERVICE_ACCOUNT_EMAIL=...
+KAMAL_REGISTRY_PASSWORD=...     # Base64-encoded GCP service account key
+```
+
+### Deployment Command
+
+```bash
+cd hub
+bin/kamal deploy
+```
+
+### Useful Kamal Commands
+
+```bash
+bin/kamal logs          # Tail application logs
+bin/kamal console       # Rails console
+bin/kamal shell         # Bash shell in container
+bin/kamal app restart   # Restart the application
+```
+
+### Hub URL
+
+**Production**: https://tts.verynormal.dev
+
+---
+
+## Generator Deployment (Cloud Run)
+
+The Generator is deployed to Google Cloud Run.
+
+### Prerequisites
+
+1. Google Cloud Project with billing enabled
+2. APIs enabled: Cloud Run, Cloud Build, Cloud Storage, Cloud Tasks
+3. Service account with GCS and Cloud Tasks permissions
+
+### Environment Variables
 
 Create a `.env` file in the project root:
 
@@ -26,171 +113,142 @@ Create a `.env` file in the project root:
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_BUCKET=your-bucket-name
 API_SECRET_TOKEN=your-secure-token
-CLOUD_TASKS_LOCATION=us-west3
+CLOUD_TASKS_LOCATION=us-central1
 CLOUD_TASKS_QUEUE=episode-processing
+SERVICE_ACCOUNT_EMAIL=...
+HUB_CALLBACK_URL=https://tts.verynormal.dev
+HUB_CALLBACK_SECRET=...         # Must match Hub's GENERATOR_CALLBACK_SECRET
 ```
 
-## Deployment Command
+### Deployment Command
 
 ```bash
 ./bin/deploy
 ```
 
-This script performs:
-1. **Build**: Creates Docker image with 20-minute timeout (for grpc compilation)
-2. **Deploy**: Deploys to Cloud Run with production configuration
-3. **Update**: Adds SERVICE_URL for Cloud Tasks callbacks
+This script:
+1. Builds Docker image via Cloud Build (20-minute timeout for grpc)
+2. Deploys to Cloud Run with production configuration
+3. Updates with SERVICE_URL for Cloud Tasks callbacks
 
-## Build Optimizations
+### Build Optimizations
 
-### Precompiled Binaries
-The `Gemfile.lock` includes the `x86_64-linux` platform to use precompiled binaries for:
-- `grpc` (19.8 MB precompiled vs 18+ minutes compilation)
-- `google-protobuf` (precompiled)
+The `Gemfile.lock` includes `x86_64-linux` platform for precompiled binaries:
 
-To add platform support:
 ```bash
 bundle lock --add-platform x86_64-linux
 ```
 
-### Build Timeout
-The deploy script uses a 20-minute timeout to handle cases where grpc needs compilation. With precompiled binaries, builds typically complete in 2-3 minutes.
+This speeds up builds from 18+ minutes to 2-3 minutes by using precompiled `grpc`.
 
-## Production Configuration
+### Cloud Run Configuration
 
-### RACK_ENV=production
-Setting `RACK_ENV=production` is critical for:
-- **Sinatra**: Disables default host authorization that would block external requests
-- **GCS SDK**: Allows automatic service account authentication (no `GOOGLE_APPLICATION_CREDENTIALS` needed)
+- **Memory**: 2Gi
+- **CPU**: 4
+- **Timeout**: 600s (10 minutes for long TTS jobs)
+- **Instances**: 0-1 (scales to zero)
+- **RACK_ENV**: production (required for GCS auth and Sinatra config)
 
-### Rack Protection
-The API disables specific Rack::Protection middleware:
-- `json_csrf`: Not needed with Bearer token authentication
-- `host_authorization`: Not needed with token auth, would block Cloud Run requests
+---
 
-Other protections (XSS, frame options, path traversal) remain enabled.
+## Service Communication
 
-### Service Account
-Cloud Run uses the service account for:
-- Reading/writing to Google Cloud Storage
-- Creating Cloud Tasks for background processing
-- No credential files needed in production
+### Hub → Generator
 
-## Deployment Architecture
+- **Method**: Google Cloud Tasks with OIDC authentication
+- **Endpoint**: `POST /process` on Generator
+- **Payload**: Episode metadata and staging file path
 
-```
-./bin/deploy
-    ↓
-1. Build Docker Image (Cloud Build)
-    - Uses Dockerfile with Ruby 3.4-slim
-    - Installs gems (including precompiled grpc)
-    - Copies application code
-    ↓
-2. Deploy to Cloud Run
-    - Sets environment variables (including RACK_ENV=production)
-    - Configures 2Gi memory, 4 CPU, 600s timeout
-    - Max 1 instance, min 0 instances
-    ↓
-3. Update with SERVICE_URL
-    - Adds service URL for Cloud Tasks callbacks
-    - Preserves all other environment variables
-```
+### Generator → Hub
 
-## Deployed Service
+- **Method**: HTTP callback with shared secret
+- **Endpoint**: `PATCH /api/internal/episodes/:id` on Hub
+- **Header**: `X-Generator-Secret: {HUB_CALLBACK_SECRET}`
+- **Payload**: Completion status, audio metadata
 
-**URL**: `https://podcast-api-{hash}.us-west3.run.app`
-
-### Endpoints
-
-#### Health Check
-```bash
-curl https://your-service-url/health
-```
-
-Returns service health and validates environment variables.
-
-#### Publish Episode
-```bash
-curl -X POST https://your-service-url/publish \
-  -H "Authorization: Bearer $API_SECRET_TOKEN" \
-  -F "title=Episode Title" \
-  -F "author=Author Name" \
-  -F "description=Episode description" \
-  -F "content=@article.md"
-```
-
-This endpoint:
-1. Validates authentication
-2. Uploads markdown to GCS staging
-3. Enqueues background processing task
-4. Returns immediately with success response
-
-#### Process Episode (Internal)
-```bash
-POST /process
-```
-
-This endpoint is called by Cloud Tasks to:
-1. Download markdown from staging
-2. Convert to plain text
-3. Synthesize speech with Google TTS
-4. Upload MP3 and update RSS feed
-5. Clean up staging files
+---
 
 ## Troubleshooting
 
-### Build Timeout
-If builds timeout (10 minutes default):
+### Hub Issues
+
+**Kamal deploy fails with "no space left on device"**
+
+Orphaned buildkit volumes from IP changes. See `hub/README.md` for cleanup steps.
+
+**Magic link emails not sending**
+
+Check `RESEND_API_KEY` and `MAILER_FROM_ADDRESS` in Kamal secrets.
+
+### Generator Issues
+
+**Build timeout**
+
 - Verify `x86_64-linux` platform is in `Gemfile.lock`
-- Check that precompiled grpc binaries are being used
-- Build logs should show `Installing grpc 1.76.0 (x86_64-linux-gnu)`
+- Build logs should show `Installing grpc x.x.x (x86_64-linux-gnu)`
 
-### Host Not Permitted Error
-If you get "Host not permitted" errors:
-- Verify `RACK_ENV=production` is set in Cloud Run
-- Check that `:host_authorization` is in the `except:` list in `api.rb`
+**Host not permitted error**
 
-### GCS Authentication Error
-If you get "GOOGLE_APPLICATION_CREDENTIALS not set":
 - Verify `RACK_ENV=production` is set
-- Check that service account has Storage permissions
-- The GCS uploader skips credential checks in production
+- Check `:host_authorization` is in the `except:` list in `api.rb`
 
-### Environment Variables Missing
-If env vars aren't set after deployment:
-- Check that the final update includes ALL variables
-- `--set-env-vars` replaces (doesn't merge) all variables
-- Review the deploy script's update command
+**GCS authentication error**
+
+- Verify `RACK_ENV=production` is set
+- Check service account has Storage permissions
+
+**Callback to Hub failing**
+
+- Verify `HUB_CALLBACK_URL` and `HUB_CALLBACK_SECRET` match Hub's config
+- Check Hub logs for authentication errors
+
+---
 
 ## Monitoring
 
-View logs:
+### Hub Logs
+
+```bash
+cd hub
+bin/kamal logs
+```
+
+### Generator Logs
+
 ```bash
 gcloud run services logs read podcast-api \
-  --project=your-project \
-  --region=us-west3 \
+  --project=$GOOGLE_CLOUD_PROJECT \
+  --region=us-central1 \
   --limit=50
 ```
 
-Check service status:
+### Cloud Tasks
+
 ```bash
-gcloud run services describe podcast-api \
-  --project=your-project \
-  --region=us-west3
+gcloud tasks queues describe episode-processing \
+  --location=us-central1
 ```
+
+---
 
 ## Rollback
 
-To rollback to a previous revision:
+### Hub
+
+```bash
+cd hub
+bin/kamal rollback
+```
+
+### Generator
+
 ```bash
 gcloud run services update-traffic podcast-api \
   --to-revisions=podcast-api-00010-abc=100 \
-  --region=us-west3
+  --region=us-central1
 ```
 
 List revisions:
 ```bash
-gcloud run revisions list \
-  --service=podcast-api \
-  --region=us-west3
+gcloud run revisions list --service=podcast-api --region=us-central1
 ```
