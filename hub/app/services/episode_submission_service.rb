@@ -111,7 +111,7 @@ class EpisodeSubmissionService
   end
 
   def format_number(number)
-    number.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
+    ActiveSupport::NumberHelper.number_to_delimited(number)
   end
 
   class Result
