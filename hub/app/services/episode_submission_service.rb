@@ -1,10 +1,11 @@
 class EpisodeSubmissionService
-  def self.call(podcast:, params:, uploaded_file:, max_characters: nil)
-    new(podcast: podcast, params: params, uploaded_file: uploaded_file, max_characters: max_characters).call
+  def self.call(podcast:, params:, uploaded_file:, max_characters: nil, voice_name: nil)
+    new(podcast: podcast, params: params, uploaded_file: uploaded_file, max_characters: max_characters, voice_name: voice_name).call
   end
 
-  def initialize(podcast:, params:, uploaded_file:, max_characters: nil, gcs_uploader: nil, enqueuer: nil)
+  def initialize(podcast:, params:, uploaded_file:, max_characters: nil, voice_name: nil, gcs_uploader: nil, enqueuer: nil)
     @podcast = podcast
+    @voice_name = voice_name
     @params = params
     @uploaded_file = uploaded_file
     @max_characters = max_characters
@@ -48,7 +49,7 @@ class EpisodeSubmissionService
 
   private
 
-  attr_reader :podcast, :params, :uploaded_file, :max_characters
+  attr_reader :podcast, :params, :uploaded_file, :max_characters, :voice_name
 
   def build_episode
     podcast.episodes.build(
@@ -78,7 +79,8 @@ class EpisodeSubmissionService
         title: episode.title,
         author: episode.author,
         description: episode.description
-      }
+      },
+      voice_name: voice_name
     )
 
     Rails.logger.info "event=task_enqueued episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} task_name=#{task_name}"
