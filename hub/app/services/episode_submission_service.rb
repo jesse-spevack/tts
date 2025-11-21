@@ -104,14 +104,10 @@ class EpisodeSubmissionService
     episode = build_episode
     episode.errors.add(
       :content,
-      "is too large (#{format_number(content.length)} characters). Maximum: #{format_number(limit)} characters."
+      "is too large (#{ActiveSupport::NumberHelper.number_to_delimited(content.length)} characters). Maximum: #{ActiveSupport::NumberHelper.number_to_delimited(limit)} characters."
     )
     Rails.logger.info "event=file_size_rejected episode_title=\"#{params[:title]}\" size=#{content.length} limit=#{limit}"
     Result.failure(episode)
-  end
-
-  def format_number(number)
-    ActiveSupport::NumberHelper.number_to_delimited(number)
   end
 
   class Result
