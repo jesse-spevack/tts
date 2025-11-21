@@ -3,10 +3,11 @@ class EpisodeSubmissionService
     new(podcast: podcast, params: params, uploaded_file: uploaded_file).call
   end
 
-  def initialize(podcast:, params:, uploaded_file:, gcs_uploader: nil, enqueuer: nil)
+  def initialize(podcast:, params:, uploaded_file:, max_characters: nil, gcs_uploader: nil, enqueuer: nil)
     @podcast = podcast
     @params = params
     @uploaded_file = uploaded_file
+    @max_characters = max_characters
     @gcs_uploader = gcs_uploader
     @enqueuer = enqueuer
   end
@@ -19,6 +20,22 @@ class EpisodeSubmissionService
       episode.save
       Rails.logger.error "event=episode_submission_failed episode_id=#{episode.id} error_class=ValidationError error_message=\"No file uploaded\""
       return Result.failure(episode)
+    end
+
+    # Character limit validation
+    if max_characters
+      content = uploaded_file.read
+      uploaded_file.rewind # Important: allow subsequent reads
+
+      if content.length > max_characters
+        episode = build_episode
+        episode.errors.add(
+          :content,
+          "is too large (#{content.length.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} characters). Maximum: #{max_characters.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} characters."
+        )
+        Rails.logger.info "event=file_size_rejected episode_title=\"#{params[:title]}\" size=#{content.length} limit=#{max_characters}"
+        return Result.failure(episode)
+      end
     end
 
     episode = build_episode
@@ -42,7 +59,7 @@ class EpisodeSubmissionService
 
   private
 
-  attr_reader :podcast, :params, :uploaded_file
+  attr_reader :podcast, :params, :uploaded_file, :max_characters
 
   def build_episode
     podcast.episodes.build(
