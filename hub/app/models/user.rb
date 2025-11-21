@@ -14,10 +14,6 @@ class User < ApplicationRecord
          .where("auth_token_expires_at > ?", Time.current)
   }
 
-  def submissions_enabled?
-    unlimited?
-  end
-
   def voice_name
     if premium? || unlimited?
       "en-GB-Chirp3-HD-Enceladus"
