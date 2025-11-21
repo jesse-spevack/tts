@@ -155,6 +155,7 @@ def process_episode_task(payload)
   description = payload["description"]
   staging_path = payload["staging_path"]
   episode_id = payload["episode_id"] # Optional: Hub's episode ID for callback
+  voice_name = payload["voice_name"] # Optional: Voice for TTS (defaults to Chirp3-HD in processor)
 
   logger.info log_event(:processing_started, podcast_id: podcast_id, episode_id: episode_id, title: title)
 
@@ -167,7 +168,7 @@ def process_episode_task(payload)
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
   episode_data = processor.process(title: title, author: author, description: description,
-                                   markdown_content: markdown_content)
+                                   markdown_content: markdown_content, voice_name: voice_name)
   logger.info log_event(:episode_processed, podcast_id: podcast_id, episode_id: episode_id,
                                             gcs_episode_id: episode_data["id"])
 

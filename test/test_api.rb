@@ -153,6 +153,36 @@ class TestAPI < Minitest::Test
     assert_includes body["message"], "podcast_id"
   end
 
+  def test_process_passes_voice_name_to_episode_processor
+    voice_name_received = nil
+
+    mock_gcs = Object.new
+    mock_gcs.define_singleton_method(:download_file) { |**_args| "# Test content" }
+    mock_gcs.define_singleton_method(:delete_file) { |**_args| nil }
+
+    mock_processor = Object.new
+    mock_processor.define_singleton_method(:process) do |**args|
+      voice_name_received = args[:voice_name]
+      { "id" => "ep123" }
+    end
+
+    GCSUploader.stub :new, mock_gcs do
+      EpisodeProcessor.stub :new, mock_processor do
+        post "/process", {
+          podcast_id: "podcast_abc123def456abc1",
+          title: "Test",
+          author: "Author",
+          description: "Desc",
+          staging_path: "staging/test.md",
+          voice_name: "en-GB-Standard-D"
+        }.to_json, { "CONTENT_TYPE" => "application/json" }
+      end
+    end
+
+    assert_equal 200, last_response.status
+    assert_equal "en-GB-Standard-D", voice_name_received
+  end
+
   private
 
   def auth_header

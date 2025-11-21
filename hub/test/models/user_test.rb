@@ -106,4 +106,34 @@ class UserTest < ActiveSupport::TestCase
     user = users(:one)
     assert_equal user.email_address, user.email
   end
+
+  test "voice_name returns Standard voice for free tier" do
+    user = users(:one)
+    user.update!(tier: :free)
+    assert_equal "en-GB-Standard-D", user.voice_name
+  end
+
+  test "voice_name returns Standard voice for basic tier" do
+    user = users(:one)
+    user.update!(tier: :basic)
+    assert_equal "en-GB-Standard-D", user.voice_name
+  end
+
+  test "voice_name returns Standard voice for plus tier" do
+    user = users(:one)
+    user.update!(tier: :plus)
+    assert_equal "en-GB-Standard-D", user.voice_name
+  end
+
+  test "voice_name returns Chirp3-HD voice for premium tier" do
+    user = users(:one)
+    user.update!(tier: :premium)
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice_name
+  end
+
+  test "voice_name returns Chirp3-HD voice for unlimited tier" do
+    user = users(:one)
+    user.update!(tier: :unlimited)
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice_name
+  end
 end

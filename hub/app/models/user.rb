@@ -18,6 +18,14 @@ class User < ApplicationRecord
     unlimited?
   end
 
+  def voice_name
+    if premium? || unlimited?
+      "en-GB-Chirp3-HD-Enceladus"
+    else
+      "en-GB-Standard-D"
+    end
+  end
+
   def email
     email_address
   end

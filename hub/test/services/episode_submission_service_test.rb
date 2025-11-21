@@ -287,4 +287,26 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   ensure
     ENV.delete("GOOGLE_CLOUD_BUCKET")
   end
+
+  test "enqueues processing with voice_name parameter" do
+    enqueued_args = nil
+
+    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
+    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) do |**args|
+      enqueued_args = args
+      nil
+    end
+
+    result = EpisodeSubmissionService.new(
+      podcast: @podcast,
+      params: @params,
+      uploaded_file: @uploaded_file,
+      voice_name: "en-GB-Standard-D",
+      gcs_uploader: @mock_uploader,
+      enqueuer: @mock_enqueuer
+    ).call
+
+    assert result.success?
+    assert_equal "en-GB-Standard-D", enqueued_args[:voice_name]
+  end
 end
