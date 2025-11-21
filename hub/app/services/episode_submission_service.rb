@@ -23,18 +23,8 @@ class EpisodeSubmissionService
     end
 
     if max_characters
-      content = uploaded_file.read
-      uploaded_file.rewind
-
-      if content.length > max_characters
-        episode = build_episode
-        episode.errors.add(
-          :content,
-          "is too large (#{content.length.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} characters). Maximum: #{max_characters.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse} characters."
-        )
-        Rails.logger.info "event=file_size_rejected episode_title=\"#{params[:title]}\" size=#{content.length} limit=#{max_characters}"
-        return Result.failure(episode)
-      end
+      validation_result = validate_file_size(max_characters)
+      return validation_result if validation_result
     end
 
     episode = build_episode
@@ -103,6 +93,25 @@ class EpisodeSubmissionService
 
   def enqueuer
     @enqueuer ||= CloudTasksEnqueuer.new
+  end
+
+  def validate_file_size(limit)
+    content = uploaded_file.read
+    uploaded_file.rewind
+
+    return unless content.length > limit
+
+    episode = build_episode
+    episode.errors.add(
+      :content,
+      "is too large (#{format_number(content.length)} characters). Maximum: #{format_number(limit)} characters."
+    )
+    Rails.logger.info "event=file_size_rejected episode_title=\"#{params[:title]}\" size=#{content.length} limit=#{limit}"
+    Result.failure(episode)
+  end
+
+  def format_number(number)
+    number.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
   end
 
   class Result
