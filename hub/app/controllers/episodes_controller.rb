@@ -31,7 +31,7 @@ class EpisodesController < ApplicationController
 
   def require_submission_access
     unless Current.user.submissions_enabled?
-      flash[:error] = "Upgrade required"
+      flash[:alert] = "Episode submission is only available for unlimited tier members. Please upgrade to submit episodes."
       redirect_to episodes_path
     end
   end
