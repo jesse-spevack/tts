@@ -155,4 +155,125 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "en-GB-Chirp3-HD-Enceladus", voice_name_passed
   end
+
+  test "allows free tier user to access new when no claim exists" do
+    sign_in_as users(:free_user)
+
+    get new_episode_url
+
+    assert_response :success
+  end
+
+  test "redirects free tier user from new when claim exists" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
+    podcast.users << free_user
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    FreeEpisodeClaim.create!(user: free_user, episode: episode, claimed_at: Time.current)
+
+    get new_episode_url
+
+    assert_redirected_to episodes_path
+    assert_equal "Upgrade to create more episodes.", flash[:alert]
+  end
+
+  test "allows free tier user to create when no claim exists" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("# Test Content"),
+      "text/markdown",
+      original_filename: "test.md"
+    )
+
+    # Use a real persisted episode so ClaimFreeEpisode can create a valid FK
+    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
+    podcast.users << free_user
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    mock_result = EpisodeSubmissionService::Result.success(episode)
+
+    EpisodeSubmissionService.stub :call, mock_result do
+      post episodes_url, params: {
+        episode: { title: "Test", author: "A", description: "D", content: file }
+      }
+    end
+
+    assert_redirected_to episodes_path
+  end
+
+  test "redirects free tier user from create when claim exists" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
+    podcast.users << free_user
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    FreeEpisodeClaim.create!(user: free_user, episode: episode, claimed_at: Time.current)
+
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("# Test Content"),
+      "text/markdown",
+      original_filename: "test.md"
+    )
+
+    post episodes_url, params: {
+      episode: { title: "Test", author: "A", description: "D", content: file }
+    }
+
+    assert_redirected_to episodes_path
+    assert_equal "Upgrade to create more episodes.", flash[:alert]
+  end
+
+  test "creates claim after successful submission for free tier user" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("# Test Content"),
+      "text/markdown",
+      original_filename: "test.md"
+    )
+
+    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
+    podcast.users << free_user
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    mock_result = EpisodeSubmissionService::Result.success(episode)
+
+    assert_difference "FreeEpisodeClaim.count", 1 do
+      EpisodeSubmissionService.stub :call, mock_result do
+        post episodes_url, params: {
+          episode: { title: "Test", author: "A", description: "D", content: file }
+        }
+      end
+    end
+
+    claim = FreeEpisodeClaim.last
+    assert_equal free_user, claim.user
+    assert_equal episode, claim.episode
+  end
+
+  test "does not create claim for non-free tier user" do
+    sign_in_as users(:unlimited_user)
+
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("# Test Content"),
+      "text/markdown",
+      original_filename: "test.md"
+    )
+
+    mock_episode = Episode.new(title: "Test", author: "A", description: "D")
+    mock_episode.id = 999
+    mock_result = EpisodeSubmissionService::Result.success(mock_episode)
+
+    assert_no_difference "FreeEpisodeClaim.count" do
+      EpisodeSubmissionService.stub :call, mock_result do
+        post episodes_url, params: {
+          episode: { title: "Test", author: "A", description: "D", content: file }
+        }
+      end
+    end
+  end
 end
