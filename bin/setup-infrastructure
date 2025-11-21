@@ -54,8 +54,7 @@ else
     gcloud tasks queues create $QUEUE_NAME \
         --location=$LOCATION \
         --project=$PROJECT_ID \
-        --max-attempts=3 \
-        --max-retry-duration=3600s 2>&1 &
+        --max-attempts=3 2>&1 &
 
     QUEUE_PID=$!
     TIMEOUT=120

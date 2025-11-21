@@ -162,6 +162,54 @@ The API is deployed to Google Cloud Run for asynchronous episode processing.
 
 See [docs/deployment.md](docs/deployment.md) for detailed deployment instructions, architecture overview, and troubleshooting guide.
 
+## Troubleshooting
+
+### Cloud Tasks Retrying Endlessly
+
+**Symptom:** A failed episode keeps retrying for up to an hour instead of stopping after 3 attempts.
+
+**Root Cause:** Cloud Tasks `maxAttempts` and `maxRetryDuration` interact unexpectedly. When both are set, retries continue until **BOTH** conditions are satisfied:
+- 3 attempts have been made **AND**
+- The retry duration (e.g., 1 hour) has elapsed
+
+Since failed tasks complete quickly, 3 attempts happen in seconds, but the duration hasn't elapsed - so retries continue with exponential backoff.
+
+**Fix:** Remove `maxRetryDuration` so only `maxAttempts` limits retries:
+
+```bash
+gcloud tasks queues update episode-processing \
+    --location=us-west3 \
+    --max-attempts=3 \
+    --max-retry-duration=0s
+```
+
+**Verify the fix:**
+```bash
+gcloud tasks queues describe episode-processing --location=us-west3
+```
+
+The output should show `maxAttempts: 3` without `maxRetryDuration`.
+
+### Checking Cloud Run Logs
+
+View recent processing logs:
+```bash
+gcloud logging read 'resource.type="cloud_run_revision"' --limit=50 \
+    --format="table(timestamp,textPayload)"
+```
+
+Filter by episode:
+```bash
+gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"episode_id=123"' \
+    --limit=100 --format="table(timestamp,textPayload)"
+```
+
+Count processing attempts for an episode:
+```bash
+gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"processing_started.*episode_id=123"' \
+    --limit=50 --format="value(timestamp)" | wc -l
+```
+
 ## Known Limitations
 
 - **Episode duration not tracked**: The `duration_seconds` field in the Episode model is not populated. Would require MP3 parsing (e.g., `mp3info` gem) to extract duration from generated audio files.
