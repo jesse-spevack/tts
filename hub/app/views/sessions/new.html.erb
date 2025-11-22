@@ -41,6 +41,10 @@
         <div>
           <%= form.submit "Send Magic Link", class: button_classes(type: :primary, full_width: true) %>
         </div>
+
+        <p class="text-xs text-[var(--color-subtext)] text-center">
+          By signing up, you agree to our <%= link_to "Terms of Service", terms_path, class: "underline hover:text-[var(--color-text)]" %>.
+        </p>
       <% end %>
     </div>
   <% end %>

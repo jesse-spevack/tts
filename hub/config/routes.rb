@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   get "session/new", to: redirect("/")
   get "sign_in", to: redirect("/")
 
+  # Static pages
+  get "terms", to: "pages#terms"
+
   namespace :api do
     namespace :internal do
       resources :episodes, only: [ :update ]
