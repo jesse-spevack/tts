@@ -1,7 +1,7 @@
 class SessionsMailer < ApplicationMailer
   def magic_link(user:, token:)
     @user = user
-    @magic_link_url = new_session_url(token: token)
+    @magic_link_url = root_url(token: token)
 
     mail(
       to: @user.email_address,
