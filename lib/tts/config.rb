@@ -26,7 +26,7 @@ class TTS
   # Configuration Options:
   # - voice_name: Voice identifier (default: "en-GB-Chirp3-HD-Enceladus")
   # - language_code: Language code (default: "en-GB")
-  # - speaking_rate: Speech rate, 0.25-4.0 (default: 1.25)
+  # - speaking_rate: Speech rate, 0.25-4.0 (default: 1.0)
   # - pitch: Voice pitch, -20.0 to 20.0 (default: 0.0)
   # - audio_encoding: Output format (default: "MP3")
   # - timeout: API timeout in seconds (default: 300)
@@ -41,7 +41,7 @@ class TTS
     def initialize(
       voice_name: "en-GB-Chirp3-HD-Enceladus",
       language_code: "en-GB",
-      speaking_rate: 1.25,
+      speaking_rate: 1.0,
       pitch: 0.0,
       audio_encoding: "MP3",
       timeout: 300,

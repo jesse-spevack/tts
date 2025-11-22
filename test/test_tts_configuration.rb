@@ -9,7 +9,7 @@ class TestTTSConfiguration < Minitest::Test
     config = TTS::Config.new
 
     assert_equal "en-GB-Chirp3-HD-Enceladus", config.voice_name
-    assert_equal 1.25, config.speaking_rate
+    assert_equal 1.0, config.speaking_rate
     assert_equal 10, config.thread_pool_size
     assert_equal 850, config.byte_limit
     assert_equal 3, config.max_retries
