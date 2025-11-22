@@ -23,7 +23,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     get auth_url, params: { token: token }
 
-    assert_redirected_to episodes_url
+    assert_redirected_to new_episode_url
     assert_equal "Welcome back!", flash[:notice]
     assert cookies[:session_id].present?
   end

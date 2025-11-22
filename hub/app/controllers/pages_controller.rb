@@ -2,6 +2,7 @@ class PagesController < ApplicationController
   allow_unauthenticated_access
 
   def home
+    redirect_to new_episode_path if authenticated?
   end
 
   def how_it_sounds
