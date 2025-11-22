@@ -1,26 +1,50 @@
 <div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
   <%= render "shared/card", padding: "p-8" do %>
     <div class="w-full max-w-md">
-      <h1 class="text-2xl font-semibold mb-6">Sign in</h1>
+      <h1 class="text-3xl font-bold mb-2">Turn your reading list into a podcast</h1>
+      <p class="text-[var(--color-subtext)] mb-6">
+        For everyone with 47 tabs they'll never read
+      </p>
+
+      <div class="mb-10 space-y-4">
+        <p class="text-sm text-[var(--color-subtext)]">Hear what it sounds like:</p>
+        <div class="space-y-3">
+          <div>
+            <p class="text-xs text-[var(--color-subtext)] mb-1">Premium voice</p>
+            <audio controls class="w-full">
+              <source src="/sample-chirp3-hd-enceladus.mp3" type="audio/mpeg">
+            </audio>
+          </div>
+          <div>
+            <p class="text-xs text-[var(--color-subtext)] mb-1">Standard voice</p>
+            <audio controls class="w-full">
+              <source src="/sample-standard-d.mp3" type="audio/mpeg">
+            </audio>
+          </div>
+        </div>
+      </div>
 
       <%= form_with url: session_path, class: "space-y-6" do |form| %>
         <div>
-          <%= form.label :email_address, "Email", class: label_classes %>
           <%= form.email_field :email_address,
               required: true,
               autofocus: true,
               autocomplete: "username",
-              placeholder: "you@example.com",
+              placeholder: "Drop your email here",
               class: input_classes %>
         </div>
 
         <p class="text-sm text-[var(--color-subtext)]">
-          We'll find your account or create a new one
+          We'll send you a magic link. Free tier, no credit card.
         </p>
 
         <div>
           <%= form.submit "Send Magic Link", class: button_classes(type: :primary, full_width: true) %>
         </div>
+
+        <p class="text-xs text-[var(--color-subtext)] text-center">
+          By signing up, you agree to our <%= link_to "Terms of Service", terms_path, class: "underline hover:text-[var(--color-text)]" %>.
+        </p>
       <% end %>
     </div>
   <% end %>

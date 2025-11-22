@@ -7,9 +7,10 @@
 - [ ] Harden magic link system, we should require re-login once a month. 
 - [ ] Lint JS controllers
 - [ ] env for development in hub
-- [ ] terms of service
+- [x] terms of service
 - [ ] Auto-retry failed episodes when quota resets (wait 24hrs, retry automatically)
 - [ ] File length validation before processing (prevent timeout on very long files)
-- [ ] Unique error IDs for support tickets (e.g., ERR-2024-ABC123 for easier debugging) 
+- [ ] Unique error IDs for support tickets (e.g., ERR-2024-ABC123 for easier debugging)
+- [ ] Add TTL to MP3s in GCS (retention policy for cost management)
 
 

@@ -1,7 +1,14 @@
 Rails.application.routes.draw do
-  root "episodes#index"
+  root "sessions#new"
 
   resources :episodes, only: [ :index, :new, :create ]
+
+  # Redirect old sign-in path to root
+  get "session/new", to: redirect("/")
+  get "sign_in", to: redirect("/")
+
+  # Static pages
+  get "terms", to: "pages#terms"
 
   namespace :api do
     namespace :internal do
