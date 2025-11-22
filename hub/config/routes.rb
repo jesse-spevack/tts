@@ -1,7 +1,10 @@
 Rails.application.routes.draw do
-  root "sessions#new"
+  root "pages#home"
 
   resources :episodes, only: [ :index, :new, :create ]
+
+  # Magic link authentication
+  get "auth", to: "sessions#new", as: :auth
 
   # Redirect old sign-in path to root
   get "session/new", to: redirect("/")
@@ -9,6 +12,7 @@ Rails.application.routes.draw do
 
   # Static pages
   get "terms", to: "pages#terms"
+  get "how-it-sounds", to: "pages#how_it_sounds"
 
   namespace :api do
     namespace :internal do
