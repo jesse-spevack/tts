@@ -1,8 +1,11 @@
 class SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ new create ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_path, alert: "Try again later." }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to root_path, alert: "Try again later." }
 
   def new
+    # Redirect authenticated users to episodes
+    return redirect_to episodes_path if authenticated?
+
     # If accessed with a token (from magic link), authenticate
     if params[:token].present?
       authenticate_with_token
@@ -13,15 +16,15 @@ class SessionsController < ApplicationController
     result = SendMagicLink.call(email_address: params[:email_address])
 
     if result.success?
-      redirect_to new_session_path, notice: "Check your email for a login link!"
+      redirect_to root_path, notice: "Check your email for a login link!"
     else
-      redirect_to new_session_path, alert: "Please enter a valid email address."
+      redirect_to root_path, alert: "Please enter a valid email address."
     end
   end
 
   def destroy
     terminate_session
-    redirect_to new_session_path, status: :see_other, notice: "You've been logged out."
+    redirect_to root_path, status: :see_other, notice: "You've been logged out."
   end
 
   private
@@ -33,7 +36,7 @@ class SessionsController < ApplicationController
       start_new_session_for result.user
       redirect_to after_authentication_url, notice: "Welcome back!"
     else
-      redirect_to new_session_path, alert: "Invalid or expired login link. Please try again."
+      redirect_to root_path, alert: "Invalid or expired login link. Please try again."
     end
   end
 end

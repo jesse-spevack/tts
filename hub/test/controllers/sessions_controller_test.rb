@@ -6,7 +6,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get new" do
-    get new_session_url
+    get root_url
     assert_response :success
   end
 
@@ -14,33 +14,33 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_emails 1 do
       post session_url, params: { email_address: "test@example.com" }
     end
-    assert_redirected_to new_session_url
+    assert_redirected_to root_url
     assert_equal "Check your email for a login link!", flash[:notice]
   end
 
   test "create with token authenticates user" do
     token = GenerateAuthToken.call(user: @user)
 
-    get new_session_url, params: { token: token }
+    get root_url, params: { token: token }
 
-    assert_redirected_to root_url
+    assert_redirected_to episodes_url
     assert_equal "Welcome back!", flash[:notice]
     assert cookies[:session_id].present?
   end
 
   test "create with invalid token redirects to login" do
-    get new_session_url, params: { token: "invalid" }
+    get root_url, params: { token: "invalid" }
 
-    assert_redirected_to new_session_url
+    assert_redirected_to root_url
     assert_equal "Invalid or expired login link. Please try again.", flash[:alert]
   end
 
   test "should destroy session" do
     token = GenerateAuthToken.call(user: @user)
-    get new_session_url, params: { token: token }
+    get root_url, params: { token: token }
 
     delete session_url
-    assert_redirected_to new_session_url
+    assert_redirected_to root_url
     assert_equal "", cookies[:session_id]
   end
 end
