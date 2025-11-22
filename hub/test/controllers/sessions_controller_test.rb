@@ -21,7 +21,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "create with token authenticates user" do
     token = GenerateAuthToken.call(user: @user)
 
-    get root_url, params: { token: token }
+    get auth_url, params: { token: token }
 
     assert_redirected_to episodes_url
     assert_equal "Welcome back!", flash[:notice]
@@ -29,7 +29,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with invalid token redirects to login" do
-    get root_url, params: { token: "invalid" }
+    get auth_url, params: { token: "invalid" }
 
     assert_redirected_to root_url
     assert_equal "Invalid or expired login link. Please try again.", flash[:alert]
@@ -37,10 +37,10 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy session" do
     token = GenerateAuthToken.call(user: @user)
-    get root_url, params: { token: token }
+    get auth_url, params: { token: token }
 
     delete session_url
     assert_redirected_to root_url
-    assert_equal "", cookies[:session_id]
+    assert_empty cookies[:session_id].to_s
   end
 end

@@ -1,0 +1,51 @@
+<% content_for :raw_body do %>
+  <!-- Hero Section -->
+  <div class="bg-[var(--color-base)]">
+    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+      <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+        Turn your reading list into a podcast
+      </h1>
+      <p class="mt-4 text-lg text-[var(--color-subtext)]">
+        For everyone with 47 tabs they'll never read
+      </p>
+      <div class="mt-10 flex items-center gap-x-6">
+        <a href="#signup" class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
+          Get started
+        </a>
+        <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
+          Learn more <span aria-hidden="true">&rarr;</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Section -->
+  <div id="signup" class="bg-[var(--color-base)] py-16 sm:py-24 lg:py-32">
+    <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
+      <div class="lg:col-span-7">
+        <h2 class="max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          Sign in or sign up instantly
+        </h2>
+        <p class="mt-2 text-[var(--color-subtext)]">
+          Enter your email and we'll send a login link
+        </p>
+      </div>
+      <%= form_with url: session_path, class: "w-full max-w-md lg:col-span-5 lg:pt-2" do |form| %>
+        <div class="flex flex-col sm:flex-row gap-4 sm:gap-x-4">
+          <%= form.label :email_address, "Email address", class: "sr-only" %>
+          <%= form.email_field :email_address,
+              required: true,
+              autofocus: true,
+              autocomplete: "username",
+              placeholder: "Enter your email",
+              class: "min-w-0 flex-auto rounded-lg bg-[var(--color-surface0)] px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--color-primary)]" %>
+          <%= form.submit "Send login link", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer" %>
+        </div>
+        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+          Free tier, no credit card required. By signing up, you agree to our
+          <%= link_to "Terms of Service", terms_path, class: "font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]" %>.
+        </p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

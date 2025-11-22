@@ -1,0 +1,42 @@
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-3xl font-semibold mb-8">How it sounds</h1>
+
+  <div class="space-y-6 mb-12">
+    <%= render "shared/card", padding: "p-4 sm:p-6" do %>
+      <p class="text-sm font-medium mb-3">Premium voice</p>
+      <audio controls class="w-full">
+        <source src="/sample-chirp3-hd-enceladus.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    <% end %>
+
+    <%= render "shared/card", padding: "p-4 sm:p-6" do %>
+      <p class="text-sm font-medium mb-3">Standard voice</p>
+      <audio controls class="w-full">
+        <source src="/sample-standard-d.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    <% end %>
+  </div>
+
+  <h2 class="text-2xl font-semibold mb-6">How it works</h2>
+
+  <ol class="space-y-4 mb-10 text-[var(--color-text)]">
+    <li class="flex gap-4">
+      <span class="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary)] text-[var(--color-primary-text)] flex items-center justify-center font-semibold text-sm">1</span>
+      <span class="pt-1">Upload a txt or markdown file</span>
+    </li>
+    <li class="flex gap-4">
+      <span class="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary)] text-[var(--color-primary-text)] flex items-center justify-center font-semibold text-sm">2</span>
+      <span class="pt-1">We convert it to natural-sounding audio</span>
+    </li>
+    <li class="flex gap-4">
+      <span class="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary)] text-[var(--color-primary-text)] flex items-center justify-center font-semibold text-sm">3</span>
+      <span class="pt-1">Listen in your favorite podcast app via your own RSS feed link</span>
+    </li>
+  </ol>
+
+  <div class="text-center">
+    <%= link_to "Get started", root_path(anchor: "signup"), class: button_classes(type: :primary) %>
+  </div>
+</div>

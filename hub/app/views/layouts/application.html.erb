@@ -29,9 +29,16 @@
 
   <body class="bg-[var(--color-base)] text-[var(--color-text)]">
     <%= render "shared/header" %>
-    <main class="max-w-6xl mx-auto mt-20 px-4 py-8">
-      <%= render "shared/flash" %>
-      <%= yield %>
-    </main>
+    <% if content_for?(:raw_body) %>
+      <main class="mt-16">
+        <%= render "shared/flash" %>
+        <%= yield :raw_body %>
+      </main>
+    <% else %>
+      <main class="max-w-6xl mx-auto mt-20 px-4 py-8">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+    <% end %>
   </body>
 </html>
