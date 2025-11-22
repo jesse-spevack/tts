@@ -17,7 +17,7 @@ module UiHelper
   end
 
   def input_classes
-    "w-full bg-[var(--color-base)] border border-[var(--color-overlay0)] rounded-md px-3 py-2 focus:outline-none focus:border-[var(--color-primary)]"
+    "w-full bg-[var(--color-surface)] border border-[var(--color-overlay0)] rounded-md px-3 py-2 focus:outline-none focus:border-[var(--color-primary)] placeholder:text-[var(--color-subtext)]"
   end
 
   def label_classes
