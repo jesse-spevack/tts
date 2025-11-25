@@ -13,8 +13,7 @@
 
 | Voice | Quality | Cost | Free Tier | Best For |
 |-------|---------|------|-----------|----------|
-| **Standard** | Professional | $4/1M | 4M/month | All tiers (same as Neural2) |
-| **Chirp3-HD** | Premium | $30/1M | 1M/month | Audio purists only |
+| **Standard** | Professional | $4/1M | 4M/month | All users (same as Neural2) |
 
 **Conversion guide:**
 - 5,000 chars = ~1,000 words = ~7 min podcast
@@ -23,173 +22,190 @@
 
 ---
 
-## Recommended Pricing: Three Tiers
+## Recommended Pricing: Two Tiers
 
-| Plan | Price | Episodes | Chars/mo | ≈ Blog Posts | Voice | Your Cost | Profit | Margin |
-|------|-------|----------|----------|--------------|-------|-----------|--------|--------|
-| **BASIC** | $3 | 10 | 50K | ~10 | Standard | $0.35 | $2.65 | 88% |
-| **PLUS** ⭐ | $9 | 40 | 200K | ~40 | Standard | $0.60 | $8.40 | 93% |
-| **PREMIUM** | $15 | 40 | 200K | ~40 | Chirp3-HD | $2.00 | $13.00 | 87% |
+| Plan | Price | Episodes/mo | Chars/episode | Voice |
+|------|-------|-------------|---------------|-------|
+| **FREE** | $0 | 2 | 15,000 | Standard |
+| **PRO** | $9/mo | Unlimited | 50,000 | Standard |
 
-**Per-episode safety limits:**
-- BASIC: 25,000 chars max (5,000 words)
-- PLUS/PREMIUM: 50,000 chars max (10,000 words)
-
-**Differentiation:**
-- BASIC → PLUS: 4x more episodes (volume upgrade)
-- PLUS → PREMIUM: Chirp3-HD studio quality (audio upgrade)
+**Annual option:** $89/year (17% discount)
 
 ---
 
-## Real-World Usage Scenarios
+## Why Two Tiers?
 
-### Weekly Blogger
-**Content:** 1,000 word blog post per week (4/month)
+### Simplicity Wins
 
-**Usage:** 4 episodes × 5,000 chars = 20,000 chars/month
+1. **No decision fatigue** — Users either try free or upgrade to PRO
+2. **No counting anxiety** — Unlimited episodes removes friction
+3. **Generous limits** — 50K chars/episode covers 96% of real-world content
+4. **One upgrade path** — FREE → PRO, done
 
-**Recommended:** BASIC ($3/mo)
-- Fits easily in 50K limit
-- 6 episodes left for other content
-- Professional quality
+### Why No $5 Tier?
 
----
+| Price | Stripe Fee | % Lost | Problem |
+|-------|------------|--------|---------|
+| $5 | $0.45 | 9% | High churn, price-sensitive users |
+| $9 | $0.56 | 6% | Sweet spot — impulse buy, sustainable |
 
-### Bi-Weekly Newsletter
-**Content:** 2,000 word newsletter, twice per month
+- $5 users churn faster and generate more support tickets
+- Support cost per user is the same regardless of tier
+- $4 difference doesn't justify the complexity
 
-**Usage:** 2 episodes × 10,000 chars = 20,000 chars/month
+### Why $9?
 
-**Recommended:** PLUS ($9/mo)
-- Only 10% of limit used
-- 38 episodes left for archives
-- Same voice quality as BASIC (Standard)
-
----
-
-### Daily Short Posts
-**Content:** 500 words, 5 days/week (20/month)
-
-**Usage:** 20 episodes × 2,500 chars = 50,000 chars/month
-
-**Recommended:** PLUS ($9/mo)
-- 25% of limit used
-- Room to grow
-- Professional voice quality
+- Low enough to be an impulse purchase
+- High enough to cover costs and be worth your time
+- Matches successful competitors (ElevenLabs entry tier)
+- Stripe fee becomes reasonable (6%)
 
 ---
 
-### Premium Podcast Publisher
-**Content:** High-quality weekly podcast (3,000 words each)
+## Margin Analysis (with Stripe Fees)
 
-**Usage:** 4 episodes × 15,000 chars = 60,000 chars/month
+Previous analysis ignored Stripe fees (2.9% + $0.30). Here's the corrected math:
 
-**Recommended:** PREMIUM ($15/mo)
-- Fits in 200K limit
-- Chirp3-HD studio quality worth it for podcast audience
-- API access for automation
+### FREE Tier
+
+```
+Episodes: 2/month × 15K chars = 30K chars max
+TTS cost: 30,000 × $0.000004 = $0.12/user/month
+```
+
+Loss leader — converts users to paid.
+
+### PRO Tier ($9/month)
+
+**At typical usage (10 episodes × 15K chars = 150K):**
+```
+TTS cost:    150,000 × $0.000004 = $0.60
+Stripe fee:  $9 × 2.9% + $0.30 = $0.56
+Total cost:  $1.16
+Profit:      $7.84
+Margin:      87%
+```
+
+**At heavy usage (30 episodes × 50K chars = 1.5M):**
+```
+TTS cost:    1,500,000 × $0.000004 = $6.00
+Stripe fee:  $0.56
+Total cost:  $6.56
+Profit:      $2.44
+Margin:      27%
+```
+
+**At realistic heavy usage (20 episodes × 25K chars = 500K):**
+```
+TTS cost:    500,000 × $0.000004 = $2.00
+Stripe fee:  $0.56
+Total cost:  $2.56
+Profit:      $6.44
+Margin:      72%
+```
+
+### Annual PRO ($89/year)
+
+```
+Stripe fee:  $89 × 2.9% + $0.30 = $2.88 (vs $6.72 monthly)
+Savings:     $3.84/year on Stripe alone
+```
+
+Annual billing is better for both parties.
+
+---
+
+## Real-World Episode Analysis
+
+Analysis of 22 actual episodes in the input directory:
+
+| Metric | Characters | Words | Podcast Time |
+|--------|------------|-------|--------------|
+| **Min** | 5,681 | 913 | 6 min |
+| **Max** | 54,195 | 8,402 | 59 min |
+| **Average** | 16,696 | 2,731 | 18 min |
+| **Median** | 13,701 | 2,179 | 15 min |
+
+### Distribution
+
+| Size Bucket | Episodes | % | Cumulative |
+|-------------|----------|---|------------|
+| < 10K chars | 6 | 27% | 27% |
+| 10K - 15K | 8 | 36% | 64% |
+| 15K - 25K | 4 | 18% | 82% |
+| 25K - 50K | 3 | 14% | 96% |
+| > 50K | 1 | 4% | 100% |
+
+### Limit Coverage
+
+| Per-Episode Limit | Episodes That Fit | Coverage |
+|-------------------|-------------------|----------|
+| 15,000 chars (FREE) | 14 | 64% |
+| 50,000 chars (PRO) | 21 | 96% |
+
+**Key insight:** The 50K limit handles virtually all real content. The single outlier (54K) costs $0.22 — just let it through.
 
 ---
 
 ## Cost Protection
 
-### Character Limits (Prevent $373 Incident)
+### Per-Episode Hard Limit: 50K chars
 
-**Per episode hard limits:**
-- BASIC: 25K chars (5,000 words max)
-- PLUS/PREMIUM: 50K chars (10,000 words max)
-
-**Max cost with retry limit (3 attempts):**
-- BASIC: $0.30 total (vs $200+ in incident)
-- PLUS: $0.60 total
-- PREMIUM: $4.50 total
-
-**API Quotas (Google Cloud):**
-- All requests: 10/min
-- Chirp3-HD: 5/min
-- **Daily max spend:** ~$7-10/day (vs $373/day incident)
+- Prevents abuse (someone uploading a book)
+- Max TTS cost per episode: $0.20
+- Users rarely notice (96% of content fits)
 
 ### Retry Limits
+
 - Max 3 retries per episode
+- Max cost with retries: $0.60 per episode
 - Track retry count in database
-- Alert user after 3 failures
+
+### API Quotas (Google Cloud)
+
+- All requests: 10/min
+- Daily max spend: ~$10/day worst case
+
+### Budget Alerts
+
+- Set Google Cloud alert at $50/month
+- Monitor actual vs projected costs
 
 ---
 
-## Actual Costs at Scale
+## Projected Economics
 
-### Small Scale (130 users, 50% avg usage)
+### Small Scale (100 paying users)
+
 ```
-Users:
-- 50 FREE (15K avg) = 750K chars
-- 30 BASIC (25K avg) = 750K chars
-- 40 PLUS (100K avg) = 4M chars
-- 10 PREMIUM (100K avg) = 1M chars Chirp3-HD
+Users: 100 PRO @ $9/month
 
-Standard voice total: 5.5M chars
-- Free tier: 4M chars = $0
-- Paid: 1.5M × $4/1M = $6
+Revenue:     $900/month
+TTS cost:    ~$25 (assuming 250K chars avg per user)
+Stripe:      $56
+Infra:       $30
+Total cost:  $111
 
-Chirp3-HD total: 1M chars
-- Free tier: 1M chars = $0
-- Paid: $0
-
-TTS Cost: $6/month
-Infrastructure: $30/month
-Total Cost: $36/month
-
-Revenue: $600/month
-Profit: $564/month
-Margin: 94%
+Profit:      $789/month
+Margin:      88%
+Annual:      $9,468
 ```
 
-### Growth Scale (500 users, 50% avg usage)
+### Growth Scale (500 paying users)
+
 ```
-Users:
-- 150 FREE (15K avg) = 2.25M chars
-- 150 BASIC (25K avg) = 3.75M chars
-- 150 PLUS (100K avg) = 15M chars
-- 50 PREMIUM (100K avg) = 5M chars Chirp3-HD
+Users: 500 PRO @ $9/month
 
-Standard voice total: 21M chars
-- Free tier: 4M = $0
-- Paid: 17M × $4/1M = $68
+Revenue:     $4,500/month
+TTS cost:    ~$100 (assuming 200K chars avg per user)
+Stripe:      $280
+Infra:       $50
+Total cost:  $430
 
-Chirp3-HD total: 5M chars
-- Free tier: 1M = $0
-- Paid: 4M × $30/1M = $120
-
-TTS Cost: $188/month
-Infrastructure: $50/month
-Total Cost: $238/month
-
-Revenue: $3,000/month
-Profit: $2,762/month
-Margin: 92%
+Profit:      $4,070/month
+Margin:      90%
+Annual:      $48,840
 ```
-
-**Key insight:** TTS costs stay incredibly low thanks to 4M free Standard tier!
-
----
-
-## Why This Works
-
-### Standard Voice Strategy
-1. **Same quality as Neural2** (literally identical audio)
-2. **4M free tier** (vs 1M for Neural2)
-3. **$4/1M** (vs $16/1M for Neural2)
-4. **Professional quality** good enough for 90% of users
-
-### Chirp3-HD Premium Tier
-1. **Noticeably better** than Standard (you heard the difference)
-2. **Captures 10-20%** of users who care about audio quality
-3. **High margins** even at $30/1M cost
-4. **Differentiator** from competitors
-
-### Volume-Based Tiers
-1. **BASIC gets people in** at $3/mo (matches ListenLater.fm reference)
-2. **PLUS is the sweet spot** at $9/mo with 4x episodes
-3. **PREMIUM adds quality** not quantity (same 200K chars as PLUS)
 
 ---
 
@@ -197,56 +213,61 @@ Margin: 92%
 
 | Service | Price | Your Advantage |
 |---------|-------|----------------|
-| Play.ht | $39/mo | You: $15/mo = 62% cheaper |
-| Descript | $24/mo | You: $15/mo = 38% cheaper |
+| Play.ht | $39/mo | You: $9/mo = 77% cheaper |
+| Descript | $24/mo | You: $9/mo = 63% cheaper |
 | ElevenLabs | $22/mo | You: $9/mo = 59% cheaper |
-| Speechify | $29/mo | You: $15/mo = 48% cheaper |
-| ListenLater.fm | $3/mo | You: Match price + better quality |
+| Speechify | $29/mo | You: $9/mo = 69% cheaper |
 
-**Your angle:** "Professional podcast creation from $3/month. No surprises."
+**Your angle:** "Unlimited podcast episodes for $9/month. No complexity."
 
 ---
 
 ## Implementation Checklist
 
 ### Before Launch
-- [ ] Implement character limits (25K/50K per episode)
+- [ ] Implement 50K character limit per episode
 - [ ] Add retry tracking (max 3 attempts)
-- [ ] Set Google Cloud API quotas
-- [ ] Set budget alerts ($50/month)
+- [ ] Set Google Cloud budget alerts ($50/month)
 - [ ] Build usage dashboard
 - [ ] Add character counter to UI
+- [ ] Implement Stripe subscription ($9/mo, $89/yr)
 
-### Pricing Page Must-Haves
-- [ ] Clear character → word → podcast time conversions
-- [ ] Real-world examples (blogger, newsletter, etc.)
-- [ ] Voice quality audio samples
-- [ ] FAQ about characters
-- [ ] Annual pricing (17% off)
+### Pricing Page
+- [ ] Simple two-tier comparison (FREE vs PRO)
+- [ ] Character → word → time conversion guide
+- [ ] "Unlimited episodes" prominently featured
+- [ ] Annual discount callout (save 17%)
+- [ ] FAQ about character limits
 
-### Post-Launch Monitoring
+### Post-Launch
 - [ ] Track actual TTS costs vs projections
-- [ ] Monitor conversion rates between tiers
-- [ ] Watch for users hitting limits
-- [ ] Adjust pricing if needed
+- [ ] Monitor conversion rate (FREE → PRO)
+- [ ] Watch for users hitting 50K limit
+- [ ] Consider Business tier ($19?) at 500+ users
 
 ---
 
 ## Summary
 
-**Recommended: BASIC/PLUS/PREMIUM at $3/$9/$15**
+**Pricing: FREE + PRO at $9/month**
 
-**Key insights:**
-- Standard voice = Neural2 quality (4x cheaper + 4x free tier)
-- Only offer Chirp3-HD for PREMIUM tier
-- Differentiate on volume (BASIC→PLUS) and quality (PLUS→PREMIUM)
-- 90%+ margins thanks to generous Standard free tier
+| Tier | Price | Episodes | Chars/episode |
+|------|-------|----------|---------------|
+| FREE | $0 | 2/month | 15,000 |
+| PRO | $9/mo | Unlimited | 50,000 |
+
+**Why this works:**
+- TTS is so cheap that margins are healthy regardless
+- Simplicity converts better than complex tier structures
+- $9 is the sweet spot (impulse buy, sustainable revenue)
+- Generous limits create happy users who spread word of mouth
+- Stripe's fixed fee hurts low price points — skip the $5 tier
 
 **Expected outcome (500 users):**
-- Revenue: $3,000/month
-- Costs: $238/month
-- Profit: $2,762/month
-- Margin: 92%
-- Annual: **$33,144 profit**
+- Revenue: $4,500/month
+- Costs: $430/month
+- Profit: $4,070/month
+- Margin: 90%
+- Annual: **$48,840 profit**
 
-**Next step:** Implement safeguards, then build pricing page.
+**Philosophy:** Don't optimize for 95% margin on TTS costs. Optimize for happy users who tell their friends. The goodwill from generous limits is worth more than squeezing every penny.
