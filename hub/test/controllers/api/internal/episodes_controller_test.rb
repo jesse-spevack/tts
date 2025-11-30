@@ -11,6 +11,7 @@ module Api
           title: "Test Episode",
           author: "Test Author",
           description: "Test description",
+          user: @user,
           status: "processing"
         )
         @secret = "test-callback-secret"

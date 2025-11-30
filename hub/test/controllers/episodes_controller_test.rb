@@ -192,7 +192,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
     podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
     mock_result = EpisodeSubmissionService::Result.success(episode)
 
     EpisodeSubmissionService.stub :call, mock_result do
@@ -240,7 +240,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
     podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
     mock_result = EpisodeSubmissionService::Result.success(episode)
 
     assert_difference "EpisodeUsage.count", 1 do

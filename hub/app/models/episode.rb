@@ -1,6 +1,6 @@
 class Episode < ApplicationRecord
   belongs_to :podcast
-  belongs_to :user, optional: true
+  belongs_to :user
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
 
