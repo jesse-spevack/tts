@@ -10,6 +10,9 @@ class RefundEpisodeUsage
   def call
     return unless user&.free?
 
+    # current_for scopes to the current month. If the episode was created in a
+    # previous month and fails now, no usage record exists for this month.
+    # In that case, we skip the refund - the user loses that slot from the old month.
     usage = EpisodeUsage.current_for(user)
     return unless usage.persisted?
 
