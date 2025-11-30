@@ -45,7 +45,7 @@ class EpisodesController < ApplicationController
     return if result.allowed?
 
     flash[:alert] = "You've used your 2 free episodes this month! " \
-                    "Upgrade to PRO for unlimited episodes."
+                    "Upgrade to Premium for unlimited episodes."
     redirect_to episodes_path
   end
 
