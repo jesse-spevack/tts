@@ -1,6 +1,6 @@
 class EpisodesController < ApplicationController
   before_action :require_authentication
-  before_action :require_free_episode_available, only: [ :new, :create ]
+  before_action :require_can_create_episode, only: [ :new, :create ]
   before_action :load_podcast
 
   def index
@@ -23,7 +23,7 @@ class EpisodesController < ApplicationController
     )
 
     if result.success?
-      ClaimFreeEpisode.call(user: Current.user, episode: result.episode)
+      RecordEpisodeUsage.call(user: Current.user)
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
       @episode = result.episode
@@ -39,11 +39,12 @@ class EpisodesController < ApplicationController
 
   private
 
-  def require_free_episode_available
-    return unless Current.user.free?
-    return if CanClaimFreeEpisode.call(user: Current.user)
+  def require_can_create_episode
+    result = CanCreateEpisode.call(user: Current.user)
+    return if result.allowed?
 
-    flash[:alert] = "Upgrade to create more episodes."
+    flash[:alert] = "You've used your 2 free episodes this month! " \
+                    "Upgrade to PRO for unlimited episodes."
     redirect_to episodes_path
   end
 

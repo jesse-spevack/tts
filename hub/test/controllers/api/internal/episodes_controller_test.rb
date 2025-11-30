@@ -115,13 +115,15 @@ module Api
         assert_response :success
       end
 
-      test "releases free episode claim when status is failed" do
+      test "refunds episode usage when status is failed for free user" do
         free_user = users(:free_user)
+        @podcast.users.clear
         @podcast.users << free_user
-        claim = FreeEpisodeClaim.create!(
+
+        EpisodeUsage.create!(
           user: free_user,
-          episode: @episode,
-          claimed_at: Time.current
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: 1
         )
 
         patch api_internal_episode_url(@episode),
@@ -135,17 +137,19 @@ module Api
           }
 
         assert_response :success
-        claim.reload
-        assert_not_nil claim.released_at
+        usage = EpisodeUsage.current_for(free_user)
+        assert_equal 0, usage.episode_count
       end
 
-      test "does not release claim when status is complete" do
+      test "does not refund usage when status is complete" do
         free_user = users(:free_user)
+        @podcast.users.clear
         @podcast.users << free_user
-        claim = FreeEpisodeClaim.create!(
+
+        EpisodeUsage.create!(
           user: free_user,
-          episode: @episode,
-          claimed_at: Time.current
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: 1
         )
 
         patch api_internal_episode_url(@episode),
@@ -159,11 +163,11 @@ module Api
           }
 
         assert_response :success
-        claim.reload
-        assert_nil claim.released_at
+        usage = EpisodeUsage.current_for(free_user)
+        assert_equal 1, usage.episode_count
       end
 
-      test "handles failure update when no claim exists" do
+      test "handles failure update when no usage record exists" do
         patch api_internal_episode_url(@episode),
           params: {
             status: "failed",
