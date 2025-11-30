@@ -59,4 +59,28 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
       RefundEpisodeUsage.call(user: unlimited_user)
     end
   end
+
+  test "does not refund usage from previous month" do
+    # User created an episode last month (usage recorded for last month)
+    last_month = 1.month.ago.beginning_of_month.to_date
+    EpisodeUsage.create!(
+      user: @free_user,
+      period_start: last_month,
+      episode_count: 1
+    )
+
+    # Episode fails this month - no current month usage record exists
+    RefundEpisodeUsage.call(user: @free_user)
+
+    # Last month's usage should be unchanged (user loses that slot)
+    last_month_usage = EpisodeUsage.find_by(user: @free_user, period_start: last_month)
+    assert_equal 1, last_month_usage.episode_count
+
+    # No new record should be created for current month
+    current_usage = EpisodeUsage.find_by(
+      user: @free_user,
+      period_start: Time.current.beginning_of_month.to_date
+    )
+    assert_nil current_usage
+  end
 end
