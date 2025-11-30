@@ -3,7 +3,7 @@ require "test_helper"
 class ClaimFreeEpisodeTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
-    @basic_user = users(:basic_user)
+    @premium_user = users(:premium_user)
     @podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
     @podcast.users << @free_user
     @episode = @podcast.episodes.create!(
@@ -24,7 +24,7 @@ class ClaimFreeEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns nil for non-free tier user" do
-    result = ClaimFreeEpisode.call(user: @basic_user, episode: @episode)
+    result = ClaimFreeEpisode.call(user: @premium_user, episode: @episode)
 
     assert_nil result
     assert_equal 0, FreeEpisodeClaim.count

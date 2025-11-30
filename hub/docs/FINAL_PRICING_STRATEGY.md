@@ -1,19 +1,10 @@
 # TTS Podcast Service - Pricing Strategy
 
-## Key Discovery: Standard = Neural2 Quality
-
-**Testing revealed:** British Standard (en-GB-Standard-B) and Neural2 (en-GB-Neural2-B) produce **identical audio** (same MD5 hash). This means:
-- Use Standard voice: $4/1M chars + **4M free/month**
-- Skip Neural2: $16/1M chars + only 1M free/month
-- **4x cheaper with 4x larger free tier**
-
----
-
 ## Voice Comparison
 
 | Voice | Quality | Cost | Free Tier | Best For |
 |-------|---------|------|-----------|----------|
-| **Standard** | Professional | $4/1M | 4M/month | All users (same as Neural2) |
+| **Standard** | Professional | $4/1M | 4M/month | All users |
 
 **Conversion guide:**
 - 5,000 chars = ~1,000 words = ~7 min podcast

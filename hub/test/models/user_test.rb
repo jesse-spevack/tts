@@ -48,18 +48,6 @@ class UserTest < ActiveSupport::TestCase
     assert user.free?
   end
 
-  test "can set tier to basic" do
-    user = users(:one)
-    user.update!(tier: :basic)
-    assert user.basic?
-  end
-
-  test "can set tier to plus" do
-    user = users(:one)
-    user.update!(tier: :plus)
-    assert user.plus?
-  end
-
   test "can set tier to premium" do
     user = users(:one)
     user.update!(tier: :premium)
@@ -83,22 +71,10 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "en-GB-Standard-D", user.voice_name
   end
 
-  test "voice_name returns Standard voice for basic tier" do
-    user = users(:one)
-    user.update!(tier: :basic)
-    assert_equal "en-GB-Standard-D", user.voice_name
-  end
-
-  test "voice_name returns Standard voice for plus tier" do
-    user = users(:one)
-    user.update!(tier: :plus)
-    assert_equal "en-GB-Standard-D", user.voice_name
-  end
-
-  test "voice_name returns Chirp3-HD voice for premium tier" do
+  test "voice_name returns Standard voice for premium tier" do
     user = users(:one)
     user.update!(tier: :premium)
-    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice_name
+    assert_equal "en-GB-Standard-D", user.voice_name
   end
 
   test "voice_name returns Chirp3-HD voice for unlimited tier" do

@@ -39,7 +39,7 @@ class FreeEpisodeClaimTest < ActiveSupport::TestCase
       claimed_at: Time.current
     )
 
-    other_user = users(:basic_user)
+    other_user = users(:premium_user)
     other_episode = @podcast.episodes.create!(
       title: "Other Episode",
       author: "Author",

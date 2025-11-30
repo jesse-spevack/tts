@@ -1,7 +1,6 @@
 class EpisodeSubmissionValidator
-  MAX_CHARACTERS_FREE = 10_000
-  MAX_CHARACTERS_BASIC = 25_000
-  MAX_CHARACTERS_PLUS_PREMIUM = 50_000
+  MAX_CHARACTERS_FREE = 15_000
+  MAX_CHARACTERS_PREMIUM = 50_000
 
   def self.call(user:)
     new(user: user).call
@@ -22,11 +21,10 @@ class EpisodeSubmissionValidator
   attr_reader :user
 
   def max_characters_for_user
-    case
-    when user.unlimited? then nil
-    when user.premium? || user.plus? then MAX_CHARACTERS_PLUS_PREMIUM
-    when user.basic? then MAX_CHARACTERS_BASIC
-    else MAX_CHARACTERS_FREE
+    case user.tier
+    when "free" then MAX_CHARACTERS_FREE
+    when "premium" then MAX_CHARACTERS_PREMIUM
+    when "unlimited" then nil
     end
   end
 

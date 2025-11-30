@@ -3,7 +3,7 @@ class User < ApplicationRecord
   has_many :podcast_memberships, dependent: :destroy
   has_many :podcasts, through: :podcast_memberships
 
-  enum :tier, { free: 0, basic: 1, plus: 2, premium: 3, unlimited: 4 }
+  enum :tier, { free: 0, premium: 1, unlimited: 2 }
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
@@ -15,7 +15,7 @@ class User < ApplicationRecord
   }
 
   def voice_name
-    if premium? || unlimited?
+    if unlimited?
       "en-GB-Chirp3-HD-Enceladus"
     else
       "en-GB-Standard-D"
