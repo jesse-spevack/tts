@@ -3,12 +3,12 @@ require "test_helper"
 class CanClaimFreeEpisodeTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
-    @basic_user = users(:basic_user)
+    @pro_user = users(:pro_user)
     @unlimited_user = users(:unlimited_user)
   end
 
   test "returns true for non-free tier user" do
-    assert CanClaimFreeEpisode.call(user: @basic_user)
+    assert CanClaimFreeEpisode.call(user: @pro_user)
     assert CanClaimFreeEpisode.call(user: @unlimited_user)
   end
 
