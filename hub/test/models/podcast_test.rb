@@ -44,6 +44,7 @@ class PodcastTest < ActiveSupport::TestCase
       title: "Test Episode",
       author: "Test Author",
       description: "Test Description",
+      user: users(:one),
       status: "pending"
     )
 

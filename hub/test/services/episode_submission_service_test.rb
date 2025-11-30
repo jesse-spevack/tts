@@ -4,6 +4,7 @@ require "minitest/mock"
 class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   setup do
     @podcast = podcasts(:one)
+    @user = users(:one)
     @params = {
       title: "Test Episode",
       author: "Test Author",
@@ -21,6 +22,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: @uploaded_file,
       gcs_uploader: @mock_uploader,
@@ -40,6 +42,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: invalid_params,
       uploaded_file: @uploaded_file,
       gcs_uploader: @mock_uploader,
@@ -64,6 +67,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: @uploaded_file,
       gcs_uploader: @mock_uploader,
@@ -90,6 +94,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: @uploaded_file,
       gcs_uploader: @mock_uploader,
@@ -122,6 +127,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: invalid_params,
       uploaded_file: @uploaded_file,
       gcs_uploader: @mock_uploader,
@@ -143,6 +149,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
       CloudTasksEnqueuer.stub :new, @mock_enqueuer do
         result = EpisodeSubmissionService.call(
           podcast: @podcast,
+          user: @user,
           params: @params,
           uploaded_file: @uploaded_file
         )
@@ -158,6 +165,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   test "returns failure when uploaded file is nil" do
     result = EpisodeSubmissionService.call(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: nil
     )
@@ -173,6 +181,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.call(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: fake_file
     )
@@ -188,6 +197,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: large_file,
       max_characters: 10_000,
@@ -211,6 +221,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: file,
       max_characters: 10_000,
@@ -231,6 +242,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: large_file,
       max_characters: nil, # unlimited
@@ -251,6 +263,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: large_file,
       gcs_uploader: @mock_uploader,
@@ -274,6 +287,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
       CloudTasksEnqueuer.stub :new, @mock_enqueuer do
         result = EpisodeSubmissionService.call(
           podcast: @podcast,
+          user: @user,
           params: @params,
           uploaded_file: large_file,
           max_characters: 10_000
@@ -299,6 +313,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     result = EpisodeSubmissionService.new(
       podcast: @podcast,
+      user: @user,
       params: @params,
       uploaded_file: @uploaded_file,
       voice_name: "en-GB-Standard-D",

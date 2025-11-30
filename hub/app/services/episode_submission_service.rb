@@ -1,10 +1,11 @@
 class EpisodeSubmissionService
-  def self.call(podcast:, params:, uploaded_file:, max_characters: nil, voice_name: nil)
-    new(podcast: podcast, params: params, uploaded_file: uploaded_file, max_characters: max_characters, voice_name: voice_name).call
+  def self.call(podcast:, user:, params:, uploaded_file:, max_characters: nil, voice_name: nil)
+    new(podcast: podcast, user: user, params: params, uploaded_file: uploaded_file, max_characters: max_characters, voice_name: voice_name).call
   end
 
-  def initialize(podcast:, params:, uploaded_file:, max_characters: nil, voice_name: nil, gcs_uploader: nil, enqueuer: nil)
+  def initialize(podcast:, user:, params:, uploaded_file:, max_characters: nil, voice_name: nil, gcs_uploader: nil, enqueuer: nil)
     @podcast = podcast
+    @user = user
     @voice_name = voice_name
     @params = params
     @uploaded_file = uploaded_file
@@ -31,7 +32,7 @@ class EpisodeSubmissionService
     episode = build_episode
     return Result.failure(episode) unless episode.save
 
-    Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{podcast.users.first.id} title=\"#{episode.title}\""
+    Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{user.id} title=\"#{episode.title}\""
 
     staging_path = upload_to_staging(episode)
     enqueue_processing(episode, staging_path)
@@ -49,10 +50,11 @@ class EpisodeSubmissionService
 
   private
 
-  attr_reader :podcast, :params, :uploaded_file, :max_characters, :voice_name
+  attr_reader :podcast, :user, :params, :uploaded_file, :max_characters, :voice_name
 
   def build_episode
     podcast.episodes.build(
+      user: user,
       title: params[:title],
       author: params[:author],
       description: params[:description]

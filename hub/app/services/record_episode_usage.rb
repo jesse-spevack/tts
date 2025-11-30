@@ -1,4 +1,4 @@
-class CanClaimFreeEpisode
+class RecordEpisodeUsage
   def self.call(user:)
     new(user: user).call
   end
@@ -8,9 +8,10 @@ class CanClaimFreeEpisode
   end
 
   def call
-    return true unless user.free?
+    return unless user.free?
 
-    !FreeEpisodeClaim.active.exists?(user: user)
+    usage = EpisodeUsage.current_for(user)
+    usage.increment!
   end
 
   private

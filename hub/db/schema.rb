@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_152722) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_164257) do
+  create_table "episode_usages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "episode_count", default: 0, null: false
+    t.date "period_start", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "period_start"], name: "index_episode_usages_on_user_id_and_period_start", unique: true
+    t.index ["user_id"], name: "index_episode_usages_on_user_id"
+  end
+
   create_table "episodes", force: :cascade do |t|
     t.integer "audio_size_bytes"
     t.string "author", null: false
@@ -23,20 +33,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_152722) do
     t.string "status", default: "pending", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["podcast_id"], name: "index_episodes_on_podcast_id"
     t.index ["status"], name: "index_episodes_on_status"
-  end
-
-  create_table "free_episode_claims", force: :cascade do |t|
-    t.datetime "claimed_at", null: false
-    t.datetime "created_at", null: false
-    t.integer "episode_id", null: false
-    t.datetime "released_at"
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["episode_id"], name: "index_free_episode_claims_on_episode_id"
-    t.index ["user_id"], name: "index_free_episode_claims_on_user_id"
+    t.index ["user_id"], name: "index_episodes_on_user_id"
   end
 
   create_table "podcast_memberships", force: :cascade do |t|
@@ -79,9 +80,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_152722) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "podcasts"
-  add_foreign_key "free_episode_claims", "episodes"
-  add_foreign_key "free_episode_claims", "users"
+  add_foreign_key "episodes", "users"
   add_foreign_key "podcast_memberships", "podcasts"
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sessions", "users"

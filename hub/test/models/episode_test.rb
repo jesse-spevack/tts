@@ -74,6 +74,7 @@ class EpisodeTest < ActiveSupport::TestCase
       author: "Author",
       description: "Description",
       podcast: podcasts(:one),
+      user: users(:one),
       status: "pending"
     )
 
@@ -88,6 +89,7 @@ class EpisodeTest < ActiveSupport::TestCase
       author: "Author",
       description: "Description",
       podcast: podcast,
+      user: users(:one),
       status: "complete",
       gcs_episode_id: "episode_123"
     )

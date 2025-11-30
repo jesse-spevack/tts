@@ -109,7 +109,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # Verify that the service is called with max_characters: nil for unlimited users
     mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
 
-    EpisodeSubmissionService.stub :call, ->(podcast:, params:, uploaded_file:, max_characters:, voice_name:) {
+    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
       assert_nil max_characters, "Expected max_characters to be nil for unlimited tier users"
       mock_result
     } do
@@ -139,7 +139,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     voice_name_passed = nil
     mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
 
-    EpisodeSubmissionService.stub :call, ->(podcast:, params:, uploaded_file:, max_characters:, voice_name:) {
+    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
       voice_name_passed = voice_name
       mock_result
     } do
@@ -156,7 +156,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "en-GB-Chirp3-HD-Enceladus", voice_name_passed
   end
 
-  test "allows free tier user to access new when no claim exists" do
+  test "allows free tier user to access new when under limit" do
     sign_in_as users(:free_user)
 
     get new_episode_url
@@ -164,22 +164,23 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "redirects free tier user from new when claim exists" do
+  test "redirects free tier user from new when at monthly limit" do
     free_user = users(:free_user)
     sign_in_as free_user
 
-    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
-    podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
-    FreeEpisodeClaim.create!(user: free_user, episode: episode, claimed_at: Time.current)
+    EpisodeUsage.create!(
+      user: free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
 
     get new_episode_url
 
     assert_redirected_to episodes_path
-    assert_equal "Upgrade to create more episodes.", flash[:alert]
+    assert_includes flash[:alert], "You've used your 2 free episodes this month"
   end
 
-  test "allows free tier user to create when no claim exists" do
+  test "allows free tier user to create when under limit" do
     free_user = users(:free_user)
     sign_in_as free_user
 
@@ -189,10 +190,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    # Use a real persisted episode so ClaimFreeEpisode can create a valid FK
     podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
     podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
     mock_result = EpisodeSubmissionService::Result.success(episode)
 
     EpisodeSubmissionService.stub :call, mock_result do
@@ -204,14 +204,15 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to episodes_path
   end
 
-  test "redirects free tier user from create when claim exists" do
+  test "redirects free tier user from create when at monthly limit" do
     free_user = users(:free_user)
     sign_in_as free_user
 
-    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
-    podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
-    FreeEpisodeClaim.create!(user: free_user, episode: episode, claimed_at: Time.current)
+    EpisodeUsage.create!(
+      user: free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
 
     file = Rack::Test::UploadedFile.new(
       StringIO.new("# Test Content"),
@@ -224,10 +225,10 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     }
 
     assert_redirected_to episodes_path
-    assert_equal "Upgrade to create more episodes.", flash[:alert]
+    assert_includes flash[:alert], "You've used your 2 free episodes this month"
   end
 
-  test "creates claim after successful submission for free tier user" do
+  test "records usage after successful submission for free tier user" do
     free_user = users(:free_user)
     sign_in_as free_user
 
@@ -239,10 +240,10 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
     podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D")
+    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
     mock_result = EpisodeSubmissionService::Result.success(episode)
 
-    assert_difference "FreeEpisodeClaim.count", 1 do
+    assert_difference "EpisodeUsage.count", 1 do
       EpisodeSubmissionService.stub :call, mock_result do
         post episodes_url, params: {
           episode: { title: "Test", author: "A", description: "D", content: file }
@@ -250,12 +251,11 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    claim = FreeEpisodeClaim.last
-    assert_equal free_user, claim.user
-    assert_equal episode, claim.episode
+    usage = EpisodeUsage.current_for(free_user)
+    assert_equal 1, usage.episode_count
   end
 
-  test "does not create claim for non-free tier user" do
+  test "does not record usage for non-free tier user" do
     sign_in_as users(:unlimited_user)
 
     file = Rack::Test::UploadedFile.new(
@@ -268,7 +268,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     mock_episode.id = 999
     mock_result = EpisodeSubmissionService::Result.success(mock_episode)
 
-    assert_no_difference "FreeEpisodeClaim.count" do
+    assert_no_difference "EpisodeUsage.count" do
       EpisodeSubmissionService.stub :call, mock_result do
         post episodes_url, params: {
           episode: { title: "Test", author: "A", description: "D", content: file }
