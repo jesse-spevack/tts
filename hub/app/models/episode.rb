@@ -1,6 +1,7 @@
 class Episode < ApplicationRecord
   belongs_to :podcast
   belongs_to :user
+  has_one :llm_usage, dependent: :destroy
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
 
