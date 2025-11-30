@@ -48,10 +48,10 @@ class UserTest < ActiveSupport::TestCase
     assert user.free?
   end
 
-  test "can set tier to pro" do
+  test "can set tier to premium" do
     user = users(:one)
-    user.update!(tier: :pro)
-    assert user.pro?
+    user.update!(tier: :premium)
+    assert user.premium?
   end
 
   test "can set tier to unlimited" do
@@ -71,9 +71,9 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "en-GB-Standard-D", user.voice_name
   end
 
-  test "voice_name returns Standard voice for pro tier" do
+  test "voice_name returns Standard voice for premium tier" do
     user = users(:one)
-    user.update!(tier: :pro)
+    user.update!(tier: :premium)
     assert_equal "en-GB-Standard-D", user.voice_name
   end
 

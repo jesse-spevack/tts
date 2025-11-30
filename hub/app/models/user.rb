@@ -3,7 +3,7 @@ class User < ApplicationRecord
   has_many :podcast_memberships, dependent: :destroy
   has_many :podcasts, through: :podcast_memberships
 
-  enum :tier, { free: 0, pro: 1, unlimited: 2 }
+  enum :tier, { free: 0, premium: 1, unlimited: 2 }
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 

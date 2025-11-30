@@ -19,8 +19,8 @@ class EpisodeSubmissionValidatorTest < ActiveSupport::TestCase
     assert_not result.unlimited?
   end
 
-  test "returns 50_000 max_characters for pro tier users" do
-    user = users(:pro_user)
+  test "returns 50_000 max_characters for premium tier users" do
+    user = users(:premium_user)
 
     result = EpisodeSubmissionValidator.call(user: user)
 

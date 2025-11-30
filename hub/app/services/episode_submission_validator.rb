@@ -1,6 +1,6 @@
 class EpisodeSubmissionValidator
   MAX_CHARACTERS_FREE = 15_000
-  MAX_CHARACTERS_PRO = 50_000
+  MAX_CHARACTERS_PREMIUM = 50_000
 
   def self.call(user:)
     new(user: user).call
@@ -23,7 +23,7 @@ class EpisodeSubmissionValidator
   def max_characters_for_user
     case user.tier
     when "free" then MAX_CHARACTERS_FREE
-    when "pro" then MAX_CHARACTERS_PRO
+    when "premium" then MAX_CHARACTERS_PREMIUM
     when "unlimited" then nil
     end
   end

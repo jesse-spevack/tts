@@ -8,9 +8,9 @@ free_user:
   email_address: free@example.com
   tier: 0  # free
 
-pro_user:
-  email_address: pro@example.com
-  tier: 1  # pro
+premium_user:
+  email_address: premium@example.com
+  tier: 1  # premium
 
 unlimited_user:
   email_address: unlimited@example.com
