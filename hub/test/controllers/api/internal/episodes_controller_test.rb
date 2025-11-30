@@ -117,8 +117,7 @@ module Api
 
       test "refunds episode usage when status is failed for free user" do
         free_user = users(:free_user)
-        @podcast.users.clear
-        @podcast.users << free_user
+        @episode.update!(user: free_user)
 
         EpisodeUsage.create!(
           user: free_user,
@@ -143,8 +142,7 @@ module Api
 
       test "does not refund usage when status is complete" do
         free_user = users(:free_user)
-        @podcast.users.clear
-        @podcast.users << free_user
+        @episode.update!(user: free_user)
 
         EpisodeUsage.create!(
           user: free_user,

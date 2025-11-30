@@ -109,7 +109,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # Verify that the service is called with max_characters: nil for unlimited users
     mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
 
-    EpisodeSubmissionService.stub :call, ->(podcast:, params:, uploaded_file:, max_characters:, voice_name:) {
+    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
       assert_nil max_characters, "Expected max_characters to be nil for unlimited tier users"
       mock_result
     } do
@@ -139,7 +139,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     voice_name_passed = nil
     mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
 
-    EpisodeSubmissionService.stub :call, ->(podcast:, params:, uploaded_file:, max_characters:, voice_name:) {
+    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
       voice_name_passed = voice_name
       mock_result
     } do

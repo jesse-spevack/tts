@@ -5,7 +5,7 @@ module Api
 
       def update
         if @episode.update(episode_params)
-          RefundEpisodeUsage.call(user: podcast_owner) if @episode.failed?
+          RefundEpisodeUsage.call(user: @episode.user) if @episode.failed?
           Rails.logger.info "event=episode_callback_received episode_id=#{@episode.id} status=#{@episode.status}"
           render json: { status: "success" }
         else
@@ -25,10 +25,6 @@ module Api
 
       def episode_params
         params.permit(:status, :gcs_episode_id, :audio_size_bytes, :error_message)
-      end
-
-      def podcast_owner
-        @episode.podcast.users.first
       end
     end
   end

@@ -16,6 +16,7 @@ class EpisodesController < ApplicationController
 
     result = EpisodeSubmissionService.call(
       podcast: @podcast,
+      user: Current.user,
       params: episode_params,
       uploaded_file: params[:episode][:content],
       max_characters: validation.max_characters,

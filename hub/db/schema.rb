@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_155158) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_164257) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -33,9 +33,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_155158) do
     t.string "status", default: "pending", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["podcast_id"], name: "index_episodes_on_podcast_id"
     t.index ["status"], name: "index_episodes_on_status"
+    t.index ["user_id"], name: "index_episodes_on_user_id"
   end
 
   create_table "podcast_memberships", force: :cascade do |t|
@@ -80,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_155158) do
 
   add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "podcasts"
+  add_foreign_key "episodes", "users"
   add_foreign_key "podcast_memberships", "podcasts"
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sessions", "users"
