@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_215116) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_215224) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -30,6 +30,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_215116) do
     t.text "error_message"
     t.string "gcs_episode_id"
     t.integer "podcast_id", null: false
+    t.integer "source_type", default: 0, null: false
+    t.string "source_url"
     t.string "status", default: "pending", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
