@@ -276,4 +276,47 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  # URL-based episode creation tests
+
+  test "create with url param creates URL episode and redirects" do
+    assert_enqueued_with(job: ProcessUrlEpisodeJob) do
+      post episodes_url, params: { url: "https://example.com/article" }
+    end
+
+    assert_redirected_to episodes_path
+    follow_redirect!
+    assert_match(/Processing/, response.body)
+  end
+
+  test "create with url param fails with invalid URL" do
+    post episodes_url, params: { url: "not-a-url" }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "create with url param records episode usage for free tier" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    assert_difference -> { EpisodeUsage.count }, 1 do
+      post episodes_url, params: { url: "https://example.com/article" }
+    end
+  end
+
+  test "redirects free tier user from URL create when at monthly limit" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    EpisodeUsage.create!(
+      user: free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
+
+    post episodes_url, params: { url: "https://example.com/article" }
+
+    assert_redirected_to episodes_path
+    assert_includes flash[:alert], "You've used your 2 free episodes this month"
+  end
 end
