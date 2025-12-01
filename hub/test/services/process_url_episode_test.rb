@@ -81,6 +81,41 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "Could not extract article content", @episode.error_message
   end
 
+  test "prefers HTML metadata over LLM results" do
+    html = <<~HTML
+      <html>
+        <head>
+          <title>HTML Title</title>
+          <meta name="author" content="HTML Author">
+        </head>
+        <body>
+          <article>
+            <p>Article content here that is long enough to pass the minimum character requirement for extraction. This paragraph contains substantial content to be processed.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.success(html) }
+
+    mock_llm_result = LlmProcessor::Result.success(
+      title: "LLM Title",
+      author: "LLM Author",
+      description: "LLM description.",
+      content: "Article content here."
+    )
+
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stub_gcs_and_tasks
+
+    ProcessUrlEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "HTML Title", @episode.title
+    assert_equal "HTML Author", @episode.author
+    assert_equal "LLM description.", @episode.description
+  end
+
   teardown do
     Mocktail.reset
   end

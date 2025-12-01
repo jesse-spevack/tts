@@ -85,8 +85,8 @@ class ProcessUrlEpisode
   def update_and_enqueue
     Episode.transaction do
       episode.update!(
-        title: @llm_result.title,
-        author: @llm_result.author,
+        title: @extract_result.title || @llm_result.title,
+        author: @extract_result.author || @llm_result.author,
         description: @llm_result.description
       )
 

@@ -140,4 +140,61 @@ class ArticleExtractorTest < ActiveSupport::TestCase
 
     assert result.success?
   end
+
+  test "extracts title from title tag" do
+    html = <<~HTML
+      <html>
+        <head><title>My Article Title</title></head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ArticleExtractor.call(html: html)
+
+    assert result.success?
+    assert_equal "My Article Title", result.title
+  end
+
+  test "extracts author from meta tag" do
+    html = <<~HTML
+      <html>
+        <head>
+          <title>Article</title>
+          <meta name="author" content="Jane Smith">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ArticleExtractor.call(html: html)
+
+    assert result.success?
+    assert_equal "Jane Smith", result.author
+  end
+
+  test "returns nil for missing metadata" do
+    html = <<~HTML
+      <html>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ArticleExtractor.call(html: html)
+
+    assert result.success?
+    assert_nil result.title
+    assert_nil result.author
+  end
 end

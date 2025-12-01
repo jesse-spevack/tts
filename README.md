@@ -1,8 +1,63 @@
-# Text-to-Speech Podcast Generator
+# TTS - Text-to-Speech Podcast Platform
 
-Convert markdown articles to podcast episodes with automated publishing to RSS feed.
+A platform for converting web articles and markdown into podcast episodes. Users submit URLs through a web interface, and the system extracts content, generates audio, and publishes to a personal podcast RSS feed.
 
-## Setup
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User Browser                            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        Hub (Rails App)                          │
+│  • Web interface for URL/markdown submission                    │
+│  • Magic link authentication                                    │
+│  • Article extraction + LLM processing                          │
+│  • Episode management                                           │
+│  • Deployed via Kamal to GCP VM                                 │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                    Cloud Tasks (async)
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Generator (Cloud Run)                         │
+│  • Text-to-speech conversion (Google Cloud TTS)                 │
+│  • Audio chunking + parallel processing                         │
+│  • RSS feed generation                                          │
+│  • Callbacks to Hub on completion                               │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Google Cloud Storage                          │
+│  • Audio files (.mp3)                                           │
+│  • RSS feeds (feed.xml)                                         │
+│  • Episode manifests                                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Components
+
+| Component | Directory | Description | Deployment |
+|-----------|-----------|-------------|------------|
+| **Hub** | `hub/` | Rails web app for users | Kamal → GCP VM |
+| **Generator** | Root | TTS processing service | Cloud Run |
+
+## Quick Links
+
+- **Hub Documentation**: See [`hub/README.md`](hub/README.md)
+- **Deployment Guide**: See [`docs/deployment.md`](docs/deployment.md)
+
+---
+
+## Generator Service
+
+The Generator handles text-to-speech conversion and RSS feed management.
+
+### Setup
 
 1. Install dependencies:
 ```bash
@@ -10,59 +65,30 @@ bundle install
 ```
 
 2. Configure environment variables (copy `.env.example` to `.env`):
-   - Google Cloud credentials path
-   - GCS bucket name and base URL
-   - Podcast metadata (title, description, author, etc.)
-   - `PODCAST_ID` (required) - see below
+   - Google Cloud credentials
+   - GCS bucket configuration
+   - Podcast metadata
 
-### Setting Up Your Podcast ID
+### Local Usage
 
-All podcast data is isolated by `podcast_id`. Each podcast has its own storage directory and feed.
-
-Add to your `.env`:
-```bash
-# Generate a unique podcast ID (16 hex characters)
-PODCAST_ID=podcast_$(openssl rand -hex 8)
-```
-
-Example: `PODCAST_ID=podcast_a1b2c3d4e5f6a7b8`
-
-**Note:** This ID is permanent for your podcast. Keep it in `.env` and never change it after publishing episodes.
-
-### Storage Structure
-```
-podcasts/{podcast_id}/
-  ├── episodes/{episode_id}.mp3
-  ├── feed.xml
-  ├── manifest.json
-  └── staging/{filename}.md
-```
-
-### Feed URLs
-
-Each podcast has its own feed URL:
-```
-https://storage.googleapis.com/{bucket}/podcasts/{podcast_id}/feed.xml
-```
-
-## Usage
-
-### Local Generation
-
-Generate and publish a podcast episode locally:
+Generate a podcast episode locally:
 
 ```bash
 ruby generate.rb input/article.md
 ```
 
-This creates audio content, streams it to GCS, updates the episode manifest, and regenerates the RSS feed.
+Options:
+```bash
+ruby generate.rb --local-only input/article.md  # Don't publish to GCS
+ruby generate.rb -v en-US-Chirp3-HD-Galahad input/article.md  # Different voice
+ruby generate.rb --help  # All options
+```
 
-### API Request
+### API Usage
 
-Submit an episode for processing via the deployed API:
+Submit an episode for processing:
 
 ```bash
-# Get identity token (from authorized service)
 TOKEN=$(gcloud auth print-identity-token)
 
 curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
@@ -74,105 +100,54 @@ curl -X POST https://podcast-api-ns2hvyzzra-wm.a.run.app/publish \
   -F "content=@input/article.md"
 ```
 
-**Current Service URL (us-west3):** `https://podcast-api-ns2hvyzzra-wm.a.run.app`
+### Input File Format
 
-Response:
-```json
-{"status":"success","message":"Episode submitted for processing"}
-```
-
-The API processes episodes asynchronously via Cloud Tasks. Check Cloud Run logs to monitor processing status.
-
-### Options
-
-```bash
-# Generate locally without publishing
-ruby generate.rb --local-only input/article.md
-
-# Use a different voice
-ruby generate.rb -v en-US-Chirp3-HD-Galahad input/article.md
-
-# See all options
-ruby generate.rb --help
-```
-
-### Creating Input Files
-
-Input files should be markdown documents with YAML frontmatter at the top. Use the `/generate-input-md` slash command in Claude Code to create properly formatted input files.
-
-#### YAML Frontmatter Format
-
-All input markdown files must include YAML frontmatter with the following fields:
+Markdown files with YAML frontmatter:
 
 ```yaml
 ---
-title: "Your Episode Title"
-description: "A brief description of the episode content"
+title: "Episode Title"
+description: "Brief description"
 author: "Author Name"
 ---
+
+Your markdown content here...
 ```
 
-**Required fields:**
-- `title`: The episode title (enclosed in quotes if it contains special characters)
-- `description`: A short description of the episode (enclosed in quotes)
-- `author`: The author's name (enclosed in quotes)
-
-**Example:**
-```yaml
----
-title: "The New Calculus of AI-based Coding"
-description: "An exploration of how AI-assisted development can achieve 10x productivity gains, and why succeeding at this scale requires fundamental changes to testing, deployment, and team coordination practices."
-author: "Joe Magerramov"
----
-```
-
-After the frontmatter, include your markdown content. The system will strip markdown formatting (headers, bold, links, etc.) and convert it to plain text suitable for text-to-speech processing.
-
-## Features
-
-- **Text-to-Speech**: Converts markdown to natural-sounding audio using Google Cloud TTS
-- **Podcast Publishing**: Automatically publishes to RSS feed with iTunes tags
-- **Episode Management**: Tracks all episodes in a manifest with metadata
-- **Cloud Storage**: Uploads audio files to Google Cloud Storage
-- **Frontmatter Support**: Extracts title, description, and author from YAML frontmatter
-- **Chunking & Concurrency**: Handles long documents with parallel processing
-- **Error Handling**: Automatic retry for rate limits, timeouts, and content filters
-
-## Testing
-
-Run all tests:
-
-```bash
-rake test
-```
-
-Run RuboCop linter:
-
-```bash
-rake rubocop
-```
-
-## Deploy
-
-The API is deployed to Google Cloud Run for asynchronous episode processing.
+### Deploy Generator
 
 ```bash
 ./bin/deploy
 ```
 
-See [docs/deployment.md](docs/deployment.md) for detailed deployment instructions, architecture overview, and troubleshooting guide.
+## Storage Structure
+
+```
+podcasts/{podcast_id}/
+  ├── episodes/{episode_id}.mp3
+  ├── feed.xml
+  ├── manifest.json
+  └── staging/{filename}.md
+```
+
+## Testing
+
+```bash
+# Generator tests
+rake test
+
+# Hub tests
+cd hub && bin/rails test
+
+# Linting
+rake rubocop
+```
 
 ## Troubleshooting
 
 ### Cloud Tasks Retrying Endlessly
 
-**Symptom:** A failed episode keeps retrying for up to an hour instead of stopping after 3 attempts.
-
-**Root Cause:** Cloud Tasks `maxAttempts` and `maxRetryDuration` interact unexpectedly. When both are set, retries continue until **BOTH** conditions are satisfied:
-- 3 attempts have been made **AND**
-- The retry duration (e.g., 1 hour) has elapsed
-
-Since failed tasks complete quickly, 3 attempts happen in seconds, but the duration hasn't elapsed - so retries continue with exponential backoff.
+**Symptom:** Failed episodes retry for an hour instead of stopping after 3 attempts.
 
 **Fix:** Remove `maxRetryDuration` so only `maxAttempts` limits retries:
 
@@ -183,39 +158,24 @@ gcloud tasks queues update episode-processing \
     --max-retry-duration=0s
 ```
 
-**Verify the fix:**
-```bash
-gcloud tasks queues describe episode-processing --location=us-west3
-```
-
-The output should show `maxAttempts: 3` without `maxRetryDuration`.
-
 ### Checking Cloud Run Logs
 
-View recent processing logs:
 ```bash
+# Recent logs
 gcloud logging read 'resource.type="cloud_run_revision"' --limit=50 \
     --format="table(timestamp,textPayload)"
-```
 
-Filter by episode:
-```bash
+# Filter by episode
 gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"episode_id=123"' \
-    --limit=100 --format="table(timestamp,textPayload)"
-```
-
-Count processing attempts for an episode:
-```bash
-gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"processing_started.*episode_id=123"' \
-    --limit=50 --format="value(timestamp)" | wc -l
+    --limit=100
 ```
 
 ## Known Limitations
 
-- **Episode duration not tracked**: The `duration_seconds` field in the Episode model is not populated. Would require MP3 parsing (e.g., `mp3info` gem) to extract duration from generated audio files.
-- **No retry on callback failure**: If Generator fails to notify Hub of completion/failure, the episode stays in "processing" state. No automatic retry mechanism.
-- **No processing timeout**: Episodes stuck in "processing" state are not automatically marked as failed.
-- **Single podcast per user**: Hub currently assumes one podcast per user. Multi-podcast support would require UI changes.
+- Episode duration not tracked in metadata
+- No automatic retry if Generator callback to Hub fails
+- No processing timeout for stuck episodes
+- Single podcast per user
 
 ## License
 
