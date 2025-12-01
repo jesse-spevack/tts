@@ -1,33 +1,112 @@
-# README
+# TTS Hub
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A Rails application that converts web articles into podcast episodes using text-to-speech. Submit a URL, and the app extracts the article content, processes it with an LLM, and generates an audio episode you can listen to in any podcast player.
 
-Things you may want to cover:
+## Features
 
-* Ruby version
+- **URL to Podcast**: Paste any article URL and get an audio episode
+- **Markdown Upload**: Alternatively, upload markdown files directly
+- **Personal RSS Feed**: Each user gets a private podcast feed
+- **Magic Link Auth**: Passwordless authentication via email
+- **User Tiers**: Free (2 episodes/month), Premium, and Unlimited tiers
 
-* System dependencies
+## Tech Stack
 
-* Configuration
+- **Framework**: Rails 8.1
+- **Ruby**: 3.4.5
+- **Database**: SQLite
+- **Frontend**: Hotwire (Turbo + Stimulus), Tailwind CSS
+- **Asset Pipeline**: Propshaft with Import Maps
 
-* Database creation
+### External Services
 
-* Database initialization
+- **Google Cloud Storage**: Audio file and RSS feed hosting
+- **Google Cloud Tasks**: Async job processing
+- **Vertex AI (Gemini)**: LLM for content extraction and metadata
+- **External TTS Service**: Audio generation
 
-* How to run the test suite
+## Development Setup
 
-* Services (job queues, cache servers, search engines, etc.)
+### Prerequisites
 
-* Deployment instructions
+- Ruby 3.4.5
+- SQLite 3
+- Node.js (for Tailwind CSS)
 
-* ...
+### Installation
+
+```bash
+# Install dependencies
+bundle install
+
+# Setup database
+bin/rails db:setup
+
+# Start the server
+bin/dev
+```
+
+### Running Tests
+
+```bash
+bin/rails test
+```
+
+## Environment Variables
+
+Required environment variables for production:
+
+| Variable | Description |
+|----------|-------------|
+| `RAILS_MASTER_KEY` | Rails credentials key |
+| `RESEND_API_KEY` | Email delivery (magic links) |
+| `GOOGLE_CLOUD_PROJECT` | GCP project ID |
+| `GOOGLE_CLOUD_BUCKET` | GCS bucket for audio/feeds |
+| `SERVICE_ACCOUNT_EMAIL` | GCP service account |
+| `VERTEX_AI_LOCATION` | Vertex AI region |
+| `CLOUD_TASKS_LOCATION` | Cloud Tasks region |
+| `CLOUD_TASKS_QUEUE` | Cloud Tasks queue name |
+| `GENERATOR_SERVICE_URL` | TTS generator endpoint |
+| `GENERATOR_CALLBACK_SECRET` | Auth for generator callbacks |
+
+## Deployment
+
+Deployed via [Kamal](https://kamal-deploy.org/) to Google Cloud Platform.
+
+```bash
+# Deploy
+bin/kamal deploy
+
+# Console access
+bin/kamal console
+
+# View logs
+bin/kamal logs
+```
+
+## Architecture
+
+```
+URL submitted
+    ↓
+UrlFetcher (fetch HTML)
+    ↓
+ArticleExtractor (extract text + metadata)
+    ↓
+LlmProcessor (clean content, generate description)
+    ↓
+Cloud Tasks (async)
+    ↓
+External TTS Generator → GCS (audio file)
+    ↓
+RSS Feed updated
+```
 
 ## Troubleshooting
 
 ### Kamal deploy fails with "no space left on device"
 
-If `kamal deploy` fails with an error like:
+If `kamal deploy` fails with:
 
 ```
 ERROR: failed to copy files: copy file range failed: no space left on device
@@ -38,22 +117,16 @@ The remote server is out of disk space. Common cause: orphaned buildkit volumes 
 **Diagnose:**
 
 ```bash
-# Check disk space
 ssh jesse@<SERVER_IP> 'df -h /'
-
-# Check Docker volume sizes
 ssh jesse@<SERVER_IP> 'sudo bash -c "du -sh /var/lib/docker/volumes/*"'
 ```
 
-**Fix:** Remove orphaned buildkit volumes (keep `hub_storage` and the current IP's buildkit volume):
+**Fix:** Remove orphaned buildkit volumes:
 
 ```bash
-# Find and remove old buildkit containers/volumes
 ssh jesse@<SERVER_IP> 'docker ps -a'  # find old buildkit container IDs
 ssh jesse@<SERVER_IP> 'docker rm -f <container_id>'
 ssh jesse@<SERVER_IP> 'docker volume rm <old_buildkit_volume_name>'
 ```
 
-**Why this happens:** When the VM's IP address changes (e.g., after a GCP restart), Kamal creates a new buildkit builder with a volume named after the new IP. The old volume remains orphaned. `kamal prune all` doesn't clean these up.
-
-**Prevention:** Reserve a static IP in GCP Console → VPC Network → IP addresses to prevent IP changes on VM restart.
+**Prevention:** Reserve a static IP in GCP Console to prevent IP changes on VM restart.
