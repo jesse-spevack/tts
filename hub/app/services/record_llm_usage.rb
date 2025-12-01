@@ -13,8 +13,6 @@ class RecordLlmUsage
   def call
     info = llm_client.find_model(response.model_id)
 
-    # Use BigDecimal for precision in cost calculation
-    # Work in cents from the start: (tokens * price_per_million * 100) / 1_000_000
     input_cost_cents = BigDecimal(response.input_tokens) * BigDecimal(info.input_price_per_million.to_s) / 10_000
     output_cost_cents = BigDecimal(response.output_tokens) * BigDecimal(info.output_price_per_million.to_s) / 10_000
     total_cost_cents = input_cost_cents + output_cost_cents
