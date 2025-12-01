@@ -11,13 +11,15 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
       input_tokens: 1000,
       output_tokens: 500
     )
+
+    Mocktail.replace(LlmClient)
   end
 
   test "creates LlmUsage record with correct attributes" do
-    mock_client = mock_llm_client
+    stub_llm_client
 
     assert_difference -> { LlmUsage.count }, 1 do
-      RecordLlmUsage.call(episode: @episode, response: @response, llm_client: mock_client)
+      RecordLlmUsage.call(episode: @episode, response: @response)
     end
 
     usage = LlmUsage.last
@@ -29,9 +31,9 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
   end
 
   test "calculates cost correctly" do
-    mock_client = mock_llm_client(input_price: 0.25, output_price: 1.25)
+    stub_llm_client(input_price: 0.25, output_price: 1.25)
 
-    RecordLlmUsage.call(episode: @episode, response: @response, llm_client: mock_client)
+    RecordLlmUsage.call(episode: @episode, response: @response)
 
     usage = LlmUsage.last
     # Input: 1000 tokens * 0.25 / 1_000_000 = 0.00025
@@ -41,9 +43,9 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
   end
 
   test "returns the created usage record" do
-    mock_client = mock_llm_client
+    stub_llm_client
 
-    result = RecordLlmUsage.call(episode: @episode, response: @response, llm_client: mock_client)
+    result = RecordLlmUsage.call(episode: @episode, response: @response)
 
     assert_instance_of LlmUsage, result
     assert_equal @episode, result.episode
@@ -51,14 +53,14 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
 
   private
 
-  def mock_llm_client(input_price: 0.25, output_price: 1.25)
+  def stub_llm_client(input_price: 0.25, output_price: 1.25)
     mock_model_info = OpenStruct.new(
       input_price_per_million: input_price,
       output_price_per_million: output_price
     )
 
-    client = Object.new
-    client.define_singleton_method(:find_model) { |_model_id| mock_model_info }
-    client
+    mock_client = Mocktail.of(LlmClient)
+    stubs { |m| mock_client.find_model(m.any) }.with { mock_model_info }
+    stubs { LlmClient.new }.with { mock_client }
   end
 end

@@ -1,17 +1,13 @@
+# frozen_string_literal: true
+
 class ProcessUrlEpisode
-  def self.call(episode:, gcs_uploader: nil, tasks_enqueuer: nil)
-    new(
-      episode: episode,
-      gcs_uploader: gcs_uploader,
-      tasks_enqueuer: tasks_enqueuer
-    ).call
+  def self.call(episode:)
+    new(episode: episode).call
   end
 
-  def initialize(episode:, gcs_uploader: nil, tasks_enqueuer: nil)
+  def initialize(episode:)
     @episode = episode
     @user = episode.user
-    @gcs_uploader = gcs_uploader
-    @tasks_enqueuer = tasks_enqueuer
   end
 
   def call
@@ -98,7 +94,7 @@ class ProcessUrlEpisode
   def max_characters_for(user)
     case user.tier
     when "free" then EpisodeSubmissionValidator::MAX_CHARACTERS_FREE
-    when "premium" then EpisodeSubmissionValidator::MAX_CHARACTERS_PREMIUM
+    when "pro" then EpisodeSubmissionValidator::MAX_CHARACTERS_PRO
     when "unlimited" then nil
     end
   end

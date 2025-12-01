@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "ostruct"
 
@@ -17,6 +19,8 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     )
 
     Mocktail.replace(LlmProcessor)
+    Mocktail.replace(GcsUploader)
+    Mocktail.replace(CloudTasksEnqueuer)
   end
 
   test "processes URL and updates episode" do
@@ -33,15 +37,9 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     )
 
     stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stub_gcs_and_tasks
 
-    mock_gcs = MockGcsUploader.new
-    mock_tasks = MockCloudTasksEnqueuer.new
-
-    ProcessUrlEpisode.call(
-      episode: @episode,
-      gcs_uploader: mock_gcs,
-      tasks_enqueuer: mock_tasks
-    )
+    ProcessUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "Real Title", @episode.title
@@ -87,15 +85,15 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "Could not extract article content", @episode.error_message
   end
 
-  class MockGcsUploader
-    def upload_staging_file(content:, filename:)
-      "staging/#{filename}"
-    end
-  end
+  private
 
-  class MockCloudTasksEnqueuer
-    def enqueue_episode_processing(**args)
-      "task-123"
-    end
+  def stub_gcs_and_tasks
+    mock_gcs = Mocktail.of(GcsUploader)
+    stubs { |m| mock_gcs.upload_staging_file(content: m.any, filename: m.any) }.with { "staging/test.md" }
+    stubs { |m| GcsUploader.new(m.any, podcast_id: m.any) }.with { mock_gcs }
+
+    mock_tasks = Mocktail.of(CloudTasksEnqueuer)
+    stubs { |m| mock_tasks.enqueue_episode_processing(episode_id: m.any, podcast_id: m.any, staging_path: m.any, metadata: m.any, voice_name: m.any) }.with { "task-123" }
+    stubs { CloudTasksEnqueuer.new }.with { mock_tasks }
   end
 end

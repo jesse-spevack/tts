@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 class LlmProcessor
-  def self.call(text:, episode:, user:, llm_client: LlmClient.new)
-    new(text: text, episode: episode, user: user, llm_client: llm_client).call
+  def self.call(text:, episode:, user:)
+    new(text: text, episode: episode, user: user).call
   end
 
-  def initialize(text:, episode:, user:, llm_client:)
+  def initialize(text:, episode:, user:)
     @text = text
     @episode = episode
     @user = user
-    @llm_client = llm_client
   end
 
   def call
@@ -21,7 +20,7 @@ class LlmProcessor
     Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
 
     parsed = parse_response(response.content)
-    RecordLlmUsage.call(episode: episode, response: response, llm_client: llm_client)
+    RecordLlmUsage.call(episode: episode, response: response)
 
     Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{parsed['title']}"
 
@@ -41,7 +40,11 @@ class LlmProcessor
 
   private
 
-  attr_reader :text, :episode, :user, :llm_client
+  attr_reader :text, :episode, :user
+
+  def llm_client
+    @llm_client ||= LlmClient.new
+  end
 
   def parse_response(content)
     # Strip markdown code blocks if present

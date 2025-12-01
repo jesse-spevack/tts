@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
 class RecordLlmUsage
-  def self.call(episode:, response:, llm_client: LlmClient.new)
-    new(episode: episode, response: response, llm_client: llm_client).call
+  def self.call(episode:, response:)
+    new(episode: episode, response: response).call
   end
 
-  def initialize(episode:, response:, llm_client:)
+  def initialize(episode:, response:)
     @episode = episode
     @response = response
-    @llm_client = llm_client
   end
 
   def call
@@ -34,5 +33,9 @@ class RecordLlmUsage
 
   private
 
-  attr_reader :episode, :response, :llm_client
+  attr_reader :episode, :response
+
+  def llm_client
+    @llm_client ||= LlmClient.new
+  end
 end
