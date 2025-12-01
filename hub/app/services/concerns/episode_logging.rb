@@ -16,7 +16,7 @@ module EpisodeLogging
   end
 
   def build_log_message(event, attrs)
-    parts = ["event=#{event}", "episode_id=#{episode.id}"]
+    parts = [ "event=#{event}", "episode_id=#{episode.id}" ]
     attrs.each { |k, v| parts << "#{k}=#{v}" }
     parts.join(" ")
   end
