@@ -7,7 +7,7 @@ image: very-normal/repository-2/tts
 # Deploy to these servers.
 servers:
   web:
-    - 34.106.199.33
+    - 34.106.61.4
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -89,7 +89,7 @@ asset_path: /rails/public/assets
 # Configure the image builder.
 builder:
   arch: amd64
-  remote: ssh://jesse@34.106.199.33
+  remote: ssh://jesse@34.106.61.4
   cache:
     type: registry
 
