@@ -86,6 +86,37 @@ class UrlFetcherTest < ActiveSupport::TestCase
     assert_equal "Content too large", result.error
   end
 
+  test "blocks redirect to localhost (DNS rebinding protection)" do
+    fetcher = UrlFetcher.new(url: "https://example.com")
+
+    # Simulate redirect to localhost
+    new_env = { url: URI.parse("http://localhost/secret") }
+
+    assert_raises(Faraday::ConnectionFailed) do
+      fetcher.send(:validate_redirect_target, {}, new_env)
+    end
+  end
+
+  test "blocks redirect to private IP" do
+    fetcher = UrlFetcher.new(url: "https://example.com")
+
+    new_env = { url: URI.parse("http://192.168.1.1/admin") }
+
+    assert_raises(Faraday::ConnectionFailed) do
+      fetcher.send(:validate_redirect_target, {}, new_env)
+    end
+  end
+
+  test "blocks redirect to cloud metadata endpoint" do
+    fetcher = UrlFetcher.new(url: "https://example.com")
+
+    new_env = { url: URI.parse("http://169.254.169.254/latest/meta-data/") }
+
+    assert_raises(Faraday::ConnectionFailed) do
+      fetcher.send(:validate_redirect_target, {}, new_env)
+    end
+  end
+
   # SSRF protection tests - test blocked_ip? method directly
 
   test "blocked_ip? returns true for localhost" do

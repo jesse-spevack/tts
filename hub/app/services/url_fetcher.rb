@@ -102,9 +102,30 @@ class UrlFetcher
     Faraday.new do |f|
       f.options.timeout = TIMEOUT_SECONDS
       f.options.open_timeout = TIMEOUT_SECONDS
-      f.response :follow_redirects
+      f.response :follow_redirects, callback: method(:validate_redirect_target)
       f.adapter Faraday.default_adapter
     end
+  end
+
+  # Callback to validate each redirect target against SSRF blocklist
+  # This prevents DNS rebinding attacks where initial DNS is safe but redirect resolves to internal IP
+  def validate_redirect_target(_old_env, new_env)
+    new_url = new_env[:url].to_s
+    new_uri = URI.parse(new_url)
+
+    return if new_uri.host.nil?
+
+    addresses = Timeout.timeout(DNS_TIMEOUT_SECONDS) do
+      Resolv.getaddresses(new_uri.host)
+    end
+
+    if addresses.empty? || addresses.any? { |addr| blocked_ip?(addr) }
+      Rails.logger.warn "event=redirect_blocked_internal url=#{new_url}"
+      raise Faraday::ConnectionFailed, "Redirect to blocked address"
+    end
+  rescue Resolv::ResolvError, Timeout::Error
+    Rails.logger.warn "event=redirect_dns_failed url=#{new_url}"
+    raise Faraday::ConnectionFailed, "Redirect DNS resolution failed"
   end
 
   class Result
