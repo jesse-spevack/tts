@@ -1,6 +1,12 @@
 require "test_helper"
 
 class UrlFetcherTest < ActiveSupport::TestCase
+  include Mocktail::DSL
+
+  teardown do
+    Mocktail.reset
+  end
+
   test "fetches HTML from valid URL" do
     stub_request(:get, "https://example.com/article")
       .to_return(status: 200, body: "<html><body>Hello</body></html>", headers: { "Content-Type" => "text/html" })
@@ -58,5 +64,81 @@ class UrlFetcherTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_includes result.html, "New page"
+  end
+
+  # SSRF protection tests - test blocked_ip? method directly
+
+  test "blocked_ip? returns true for localhost" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "127.0.0.1")
+    assert fetcher.send(:blocked_ip?, "127.0.0.255")
+  end
+
+  test "blocked_ip? returns true for private 10.x.x.x" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "10.0.0.1")
+    assert fetcher.send(:blocked_ip?, "10.255.255.255")
+  end
+
+  test "blocked_ip? returns true for private 172.16.x.x" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "172.16.0.1")
+    assert fetcher.send(:blocked_ip?, "172.31.255.255")
+  end
+
+  test "blocked_ip? returns true for private 192.168.x.x" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "192.168.0.1")
+    assert fetcher.send(:blocked_ip?, "192.168.255.255")
+  end
+
+  test "blocked_ip? returns true for cloud metadata 169.254.x.x" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "169.254.169.254")
+  end
+
+  test "blocked_ip? returns true for IPv6 loopback" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "::1")
+  end
+
+  test "blocked_ip? returns true for IPv6 private" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "fc00::1")
+    assert fetcher.send(:blocked_ip?, "fd00::1")
+  end
+
+  test "blocked_ip? returns false for public IPs" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert_not fetcher.send(:blocked_ip?, "93.184.216.34")
+    assert_not fetcher.send(:blocked_ip?, "8.8.8.8")
+    assert_not fetcher.send(:blocked_ip?, "1.1.1.1")
+  end
+
+  test "blocked_ip? returns true for invalid IP" do
+    fetcher = UrlFetcher.new(url: "http://example.com")
+    assert fetcher.send(:blocked_ip?, "not-an-ip")
+  end
+
+  test "safe_host? integration with actual localhost" do
+    fetcher = UrlFetcher.new(url: "http://localhost/admin")
+    assert_not fetcher.send(:safe_host?)
+  end
+
+  test "safe_host? integration with 127.0.0.1" do
+    fetcher = UrlFetcher.new(url: "http://127.0.0.1/admin")
+    assert_not fetcher.send(:safe_host?)
+  end
+
+  test "blocks localhost URL via call" do
+    result = UrlFetcher.call(url: "http://localhost/admin")
+    assert result.failure?
+    assert_equal "URL not allowed", result.error
+  end
+
+  test "blocks 127.0.0.1 URL via call" do
+    result = UrlFetcher.call(url: "http://127.0.0.1/secret")
+    assert result.failure?
+    assert_equal "URL not allowed", result.error
   end
 end

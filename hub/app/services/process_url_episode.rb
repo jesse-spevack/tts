@@ -19,8 +19,7 @@ class ProcessUrlEpisode
     extract_content
     check_character_limit
     process_with_llm
-    update_episode_metadata
-    upload_and_enqueue
+    update_and_enqueue
 
     log_info "process_url_episode_completed"
   rescue ProcessingError => e
@@ -83,18 +82,18 @@ class ProcessUrlEpisode
     log_info "llm_processing_completed", title: @llm_result.title
   end
 
-  def update_episode_metadata
-    episode.update!(
-      title: @llm_result.title,
-      author: @llm_result.author,
-      description: @llm_result.description
-    )
+  def update_and_enqueue
+    Episode.transaction do
+      episode.update!(
+        title: @llm_result.title,
+        author: @llm_result.author,
+        description: @llm_result.description
+      )
 
-    log_info "episode_metadata_updated"
-  end
+      log_info "episode_metadata_updated"
 
-  def upload_and_enqueue
-    UploadAndEnqueueEpisode.call(episode: episode, content: @llm_result.content)
+      UploadAndEnqueueEpisode.call(episode: episode, content: @llm_result.content)
+    end
   end
 
   def fail_episode(error_message)

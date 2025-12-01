@@ -119,4 +119,25 @@ class ArticleExtractorTest < ActiveSupport::TestCase
     assert result.success?
     assert result.character_count.positive?
   end
+
+  test "fails when HTML exceeds size limit" do
+    # Create HTML larger than 10MB
+    large_content = "x" * (11 * 1024 * 1024)
+    html = "<article><p>#{large_content}</p></article>"
+
+    result = ArticleExtractor.call(html: html)
+
+    assert result.failure?
+    assert_equal "Article content too large", result.error
+  end
+
+  test "accepts HTML at size limit" do
+    # Create HTML just under 10MB with valid content
+    padding = "y" * 200
+    html = "<article><p>Valid content with enough text. #{padding}</p></article>"
+
+    result = ArticleExtractor.call(html: html)
+
+    assert result.success?
+  end
 end

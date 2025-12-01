@@ -19,8 +19,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     )
 
     Mocktail.replace(LlmProcessor)
-    Mocktail.replace(GcsUploader)
-    Mocktail.replace(CloudTasksEnqueuer)
+    Mocktail.replace(UploadAndEnqueueEpisode)
   end
 
   test "processes URL and updates episode" do
@@ -88,12 +87,6 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   private
 
   def stub_gcs_and_tasks
-    mock_gcs = Mocktail.of(GcsUploader)
-    stubs { |m| mock_gcs.upload_staging_file(content: m.any, filename: m.any) }.with { "staging/test.md" }
-    stubs { |m| GcsUploader.new(m.any, podcast_id: m.any) }.with { mock_gcs }
-
-    mock_tasks = Mocktail.of(CloudTasksEnqueuer)
-    stubs { |m| mock_tasks.enqueue_episode_processing(episode_id: m.any, podcast_id: m.any, staging_path: m.any, metadata: m.any, voice_name: m.any) }.with { "task-123" }
-    stubs { CloudTasksEnqueuer.new }.with { mock_tasks }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
   end
 end

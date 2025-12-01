@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class LlmProcessor
+  MAX_TITLE_LENGTH = 255
+  MAX_AUTHOR_LENGTH = 255
+  MAX_DESCRIPTION_LENGTH = 1000
+
   def self.call(text:, episode:, user:)
     new(text: text, episode: episode, user: user).call
   end
@@ -20,22 +24,22 @@ class LlmProcessor
     Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
 
     parsed = parse_response(response.content)
+    validated = validate_and_sanitize(parsed)
     RecordLlmUsage.call(episode: episode, response: response)
 
-    Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{parsed['title']}"
+    Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{validated[:title]}"
 
-    Result.success(
-      title: parsed["title"],
-      author: parsed["author"],
-      description: parsed["description"],
-      content: parsed["content"]
-    )
+    Result.success(**validated)
   rescue RubyLLM::Error => e
     Rails.logger.error "event=llm_api_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
 
     Result.failure("Failed to process content")
   rescue JSON::ParserError => e
     Rails.logger.error "event=llm_json_parse_error episode_id=#{episode.id} error=#{e.message}"
+
+    Result.failure("Failed to process content")
+  rescue ValidationError => e
+    Rails.logger.error "event=llm_validation_error episode_id=#{episode.id} error=#{e.message}"
 
     Result.failure("Failed to process content")
   end
@@ -53,6 +57,33 @@ class LlmProcessor
     json_content = content.gsub(/```json\n?/, "").gsub(/```\n?/, "").strip
     JSON.parse(json_content)
   end
+
+  def validate_and_sanitize(parsed)
+    content = extract_string(parsed, "content")
+    raise ValidationError, "Missing content in LLM response" if content.blank?
+
+    {
+      title: truncate(extract_string(parsed, "title", "Untitled"), MAX_TITLE_LENGTH),
+      author: truncate(extract_string(parsed, "author", "Unknown"), MAX_AUTHOR_LENGTH),
+      description: truncate(extract_string(parsed, "description", ""), MAX_DESCRIPTION_LENGTH),
+      content: content
+    }
+  end
+
+  def extract_string(hash, key, default = nil)
+    value = hash[key]
+    return default unless value.is_a?(String)
+
+    value.strip.presence || default
+  end
+
+  def truncate(string, max_length)
+    return "" if string.nil?
+
+    string.length > max_length ? "#{string[0, max_length - 3]}..." : string
+  end
+
+  class ValidationError < StandardError; end
 
   class Result
     attr_reader :title, :author, :description, :content, :error

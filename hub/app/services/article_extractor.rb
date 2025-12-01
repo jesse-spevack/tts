@@ -2,6 +2,7 @@ class ArticleExtractor
   REMOVE_TAGS = %w[script style nav footer header aside form noscript iframe].freeze
   CONTENT_SELECTORS = %w[article main body].freeze
   MIN_CONTENT_LENGTH = 100
+  MAX_HTML_BYTES = 10 * 1024 * 1024 # 10MB
 
   def self.call(html:)
     new(html: html).call
@@ -12,7 +13,13 @@ class ArticleExtractor
   end
 
   def call
-    Rails.logger.info "event=article_extraction_request html_bytes=#{html.bytesize}"
+    html_size = html.bytesize
+    Rails.logger.info "event=article_extraction_request html_bytes=#{html_size}"
+
+    if html_size > MAX_HTML_BYTES
+      Rails.logger.warn "event=article_extraction_too_large html_bytes=#{html_size} max_bytes=#{MAX_HTML_BYTES}"
+      return Result.failure("Article content too large")
+    end
 
     doc = Nokogiri::HTML(html)
     remove_unwanted_elements(doc)
