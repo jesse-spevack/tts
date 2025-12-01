@@ -1,19 +1,17 @@
 class ProcessUrlEpisode
-  def self.call(episode:, gcs_uploader: nil, tasks_enqueuer: nil, llm_processor: nil)
+  def self.call(episode:, gcs_uploader: nil, tasks_enqueuer: nil)
     new(
       episode: episode,
       gcs_uploader: gcs_uploader,
-      tasks_enqueuer: tasks_enqueuer,
-      llm_processor: llm_processor
+      tasks_enqueuer: tasks_enqueuer
     ).call
   end
 
-  def initialize(episode:, gcs_uploader: nil, tasks_enqueuer: nil, llm_processor: nil)
+  def initialize(episode:, gcs_uploader: nil, tasks_enqueuer: nil)
     @episode = episode
     @user = episode.user
     @gcs_uploader = gcs_uploader
     @tasks_enqueuer = tasks_enqueuer
-    @llm_processor = llm_processor
   end
 
   def call
@@ -68,7 +66,7 @@ class ProcessUrlEpisode
 
   def process_with_llm
     Rails.logger.info "event=llm_processing_started episode_id=#{episode.id} characters=#{@extract_result.character_count}"
-    @llm_result = llm_processor.call(text: @extract_result.text, episode: episode, user: user)
+    @llm_result = LlmProcessor.call(text: @extract_result.text, episode: episode, user: user)
     if @llm_result.failure?
       Rails.logger.warn "event=llm_processing_failed episode_id=#{episode.id} error=#{@llm_result.error}"
       raise ProcessingError, @llm_result.error
@@ -133,10 +131,6 @@ class ProcessUrlEpisode
 
   def tasks_enqueuer
     @tasks_enqueuer ||= CloudTasksEnqueuer.new
-  end
-
-  def llm_processor
-    @llm_processor ||= LlmProcessor
   end
 
   class ProcessingError < StandardError; end

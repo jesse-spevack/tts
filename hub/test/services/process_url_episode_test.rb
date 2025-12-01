@@ -15,6 +15,8 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       source_url: "https://example.com/article",
       status: :processing
     )
+
+    Mocktail.replace(LlmProcessor)
   end
 
   test "processes URL and updates episode" do
@@ -30,15 +32,15 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       content: "Article content here."
     )
 
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+
     mock_gcs = MockGcsUploader.new
     mock_tasks = MockCloudTasksEnqueuer.new
-    mock_llm = MockLlmProcessor.new(mock_llm_result)
 
     ProcessUrlEpisode.call(
       episode: @episode,
       gcs_uploader: mock_gcs,
-      tasks_enqueuer: mock_tasks,
-      llm_processor: mock_llm
+      tasks_enqueuer: mock_tasks
     )
 
     @episode.reload
@@ -94,16 +96,6 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   class MockCloudTasksEnqueuer
     def enqueue_episode_processing(**args)
       "task-123"
-    end
-  end
-
-  class MockLlmProcessor
-    def initialize(result)
-      @result = result
-    end
-
-    def call(**args)
-      @result
     end
   end
 end

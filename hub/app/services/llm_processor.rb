@@ -1,16 +1,14 @@
 class LlmProcessor
   MODEL = "vertex_ai/claude-3-haiku@20240307"
 
-  def self.call(text:, episode:, user:, chat_client: nil, models_registry: nil)
-    new(text: text, episode: episode, user: user, chat_client: chat_client, models_registry: models_registry).call
+  def self.call(text:, episode:, user:)
+    new(text: text, episode: episode, user: user).call
   end
 
-  def initialize(text:, episode:, user:, chat_client: nil, models_registry: nil)
+  def initialize(text:, episode:, user:)
     @text = text
     @episode = episode
     @user = user
-    @chat_client = chat_client
-    @models_registry = models_registry
   end
 
   def call
@@ -42,11 +40,10 @@ class LlmProcessor
 
   private
 
-  attr_reader :text, :episode, :user, :chat_client, :models_registry
+  attr_reader :text, :episode, :user
 
   def chat_response(prompt)
-    client = chat_client || RubyLLM.chat(model: MODEL)
-    client.ask(prompt)
+    RubyLLM.chat(model: MODEL).ask(prompt)
   end
 
   def parse_response(content)
@@ -56,8 +53,7 @@ class LlmProcessor
   end
 
   def record_usage(response)
-    registry = models_registry || RubyLLM.models
-    info = registry.find(response.model_id)
+    info = RubyLLM.models.find(response.model_id)
 
     input_cost = response.input_tokens * info.input_price_per_million / 1_000_000
     output_cost = response.output_tokens * info.output_price_per_million / 1_000_000
