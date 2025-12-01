@@ -1,26 +1,27 @@
-class LlmProcessor
-  MODEL = "vertex_ai/claude-3-haiku@20240307"
+# frozen_string_literal: true
 
-  def self.call(text:, episode:, user:)
-    new(text: text, episode: episode, user: user).call
+class LlmProcessor
+  def self.call(text:, episode:, user:, llm_client: LlmClient.new)
+    new(text: text, episode: episode, user: user, llm_client: llm_client).call
   end
 
-  def initialize(text:, episode:, user:)
+  def initialize(text:, episode:, user:, llm_client:)
     @text = text
     @episode = episode
     @user = user
+    @llm_client = llm_client
   end
 
   def call
-    Rails.logger.info "event=llm_request_started episode_id=#{episode.id} model=#{MODEL} input_chars=#{text.length}"
+    Rails.logger.info "event=llm_request_started episode_id=#{episode.id} input_chars=#{text.length}"
 
     prompt = UrlProcessingPrompt.build(text: text)
-    response = chat_response(prompt)
+    response = llm_client.ask(prompt)
 
     Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
 
     parsed = parse_response(response.content)
-    record_usage(response)
+    RecordLlmUsage.call(episode: episode, response: response, llm_client: llm_client)
 
     Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{parsed['title']}"
 
@@ -40,35 +41,12 @@ class LlmProcessor
 
   private
 
-  attr_reader :text, :episode, :user
-
-  def chat_response(prompt)
-    RubyLLM.chat(model: MODEL).ask(prompt)
-  end
+  attr_reader :text, :episode, :user, :llm_client
 
   def parse_response(content)
     # Strip markdown code blocks if present
     json_content = content.gsub(/```json\n?/, "").gsub(/```\n?/, "").strip
     JSON.parse(json_content)
-  end
-
-  def record_usage(response)
-    info = RubyLLM.models.find(response.model_id)
-
-    input_cost = response.input_tokens * info.input_price_per_million / 1_000_000
-    output_cost = response.output_tokens * info.output_price_per_million / 1_000_000
-    total_cost_cents = (input_cost + output_cost) * 100
-
-    LlmUsage.create!(
-      episode: episode,
-      model_id: response.model_id,
-      provider: "vertex_ai",
-      input_tokens: response.input_tokens,
-      output_tokens: response.output_tokens,
-      cost_cents: total_cost_cents
-    )
-
-    Rails.logger.info "event=llm_usage_recorded episode_id=#{episode.id} model=#{response.model_id} cost_cents=#{total_cost_cents.round(4)}"
   end
 
   class Result
