@@ -31,7 +31,7 @@ class ArticleExtractor
     end
 
     Rails.logger.info "event=article_extraction_success extracted_chars=#{text.length}"
-    Result.success(text)
+    Result.success(text, title: extract_title(doc), author: extract_author(doc))
   end
 
   private
@@ -59,20 +59,30 @@ class ArticleExtractor
     nil
   end
 
-  class Result
-    attr_reader :text, :error
+  def extract_title(doc)
+    doc.at_css("title")&.text&.strip.presence
+  end
 
-    def self.success(text)
-      new(text: text, error: nil)
+  def extract_author(doc)
+    doc.at_css('meta[name="author"]')&.[]("content")&.strip.presence
+  end
+
+  class Result
+    attr_reader :text, :error, :title, :author
+
+    def self.success(text, title: nil, author: nil)
+      new(text: text, error: nil, title: title, author: author)
     end
 
     def self.failure(error)
-      new(text: nil, error: error)
+      new(text: nil, error: error, title: nil, author: nil)
     end
 
-    def initialize(text:, error:)
+    def initialize(text:, error:, title:, author:)
       @text = text
       @error = error
+      @title = title
+      @author = author
     end
 
     def success?
