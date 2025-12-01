@@ -8,12 +8,12 @@ class LlmClientTest < ActiveSupport::TestCase
     Mocktail.replace(RubyLLM)
   end
 
-  test "ask sends prompt to RubyLLM chat" do
+  test "ask sends prompt to RubyLLM chat with provider" do
     mock_response = OpenStruct.new(content: "response", input_tokens: 10, output_tokens: 5)
     mock_chat = Object.new
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
-    stubs { RubyLLM.chat(model: LlmClient::DEFAULT_MODEL) }.with { mock_chat }
+    stubs { RubyLLM.chat(model: LlmClient::DEFAULT_MODEL, provider: LlmClient::PROVIDER) }.with { mock_chat }
 
     client = LlmClient.new
     result = client.ask("test prompt")
@@ -22,12 +22,12 @@ class LlmClientTest < ActiveSupport::TestCase
   end
 
   test "ask uses custom model when provided" do
-    custom_model = "vertex_ai/claude-3-opus@20240229"
+    custom_model = "gemini-1.5-flash"
     mock_response = OpenStruct.new(content: "response")
     mock_chat = Object.new
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
-    stubs { RubyLLM.chat(model: custom_model) }.with { mock_chat }
+    stubs { RubyLLM.chat(model: custom_model, provider: LlmClient::PROVIDER) }.with { mock_chat }
 
     client = LlmClient.new(model: custom_model)
     result = client.ask("test prompt")
@@ -43,7 +43,7 @@ class LlmClientTest < ActiveSupport::TestCase
     stubs { RubyLLM.models }.with { mock_registry }
 
     client = LlmClient.new
-    result = client.find_model("claude-3-haiku-20240307")
+    result = client.find_model("gemini-2.0-flash")
 
     assert_equal 0.25, result.input_price_per_million
     assert_equal 1.25, result.output_price_per_million

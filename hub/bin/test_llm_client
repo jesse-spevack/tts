@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../config/environment"
+
+puts "Testing LLM Client..."
+puts "=" * 50
+puts "Model: #{LlmClient::DEFAULT_MODEL}"
+puts "Provider: #{LlmClient::PROVIDER}"
+puts "Project: #{ENV['GOOGLE_CLOUD_PROJECT']}"
+puts "Location: #{ENV.fetch('VERTEX_AI_LOCATION', 'us-central1')}"
+puts "=" * 50
+
+client = LlmClient.new
+
+prompt = "Reply with exactly: 'Hello from Gemini on Vertex AI!'"
+
+puts "\nSending prompt: #{prompt}"
+puts "-" * 50
+
+begin
+  response = client.ask(prompt)
+
+  puts "\nResponse:"
+  puts response.content
+  puts "-" * 50
+  puts "Input tokens: #{response.input_tokens}"
+  puts "Output tokens: #{response.output_tokens}"
+  puts "Model ID: #{response.model_id}"
+  puts "\n✓ LLM Client working!"
+rescue => e
+  puts "\n✗ Error: #{e.class}"
+  puts e.message
+  puts e.backtrace.first(5).join("\n")
+  exit 1
+end
