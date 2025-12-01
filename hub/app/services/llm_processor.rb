@@ -14,11 +14,17 @@ class LlmProcessor
   end
 
   def call
+    Rails.logger.info "event=llm_request_started episode_id=#{episode.id} model=#{MODEL} input_chars=#{text.length}"
+
     prompt = UrlProcessingPrompt.build(text: text)
     response = chat_response(prompt)
-    parsed = parse_response(response.content)
 
+    Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
+
+    parsed = parse_response(response.content)
     record_usage(response)
+
+    Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{parsed['title']}"
 
     Result.success(
       title: parsed["title"],
@@ -26,8 +32,11 @@ class LlmProcessor
       description: parsed["description"],
       content: parsed["content"]
     )
-  rescue RubyLLM::Error, JSON::ParserError => e
-    Rails.logger.error "event=llm_processing_failed episode_id=#{episode.id} error=#{e.message}"
+  rescue RubyLLM::Error => e
+    Rails.logger.error "event=llm_api_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
+    Result.failure("Failed to process content")
+  rescue JSON::ParserError => e
+    Rails.logger.error "event=llm_json_parse_error episode_id=#{episode.id} error=#{e.message}"
     Result.failure("Failed to process content")
   end
 
@@ -62,6 +71,8 @@ class LlmProcessor
       output_tokens: response.output_tokens,
       cost_cents: total_cost_cents
     )
+
+    Rails.logger.info "event=llm_usage_recorded episode_id=#{episode.id} model=#{response.model_id} cost_cents=#{total_cost_cents.round(4)}"
   end
 
   class Result

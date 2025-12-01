@@ -12,12 +12,18 @@ class ArticleExtractor
   end
 
   def call
+    Rails.logger.info "event=article_extraction_request html_bytes=#{html.bytesize}"
+
     doc = Nokogiri::HTML(html)
     remove_unwanted_elements(doc)
     text = extract_content(doc)
 
-    return Result.failure("Could not extract article content") if text.length < MIN_CONTENT_LENGTH
+    if text.length < MIN_CONTENT_LENGTH
+      Rails.logger.warn "event=article_extraction_insufficient_content extracted_chars=#{text.length} min_required=#{MIN_CONTENT_LENGTH}"
+      return Result.failure("Could not extract article content")
+    end
 
+    Rails.logger.info "event=article_extraction_success extracted_chars=#{text.length}"
     Result.success(text)
   end
 

@@ -10,13 +10,26 @@ class UrlFetcher
   end
 
   def call
-    return Result.failure("Invalid URL") unless valid_url?
+    unless valid_url?
+      Rails.logger.warn "event=url_validation_failed url=#{url}"
+      return Result.failure("Invalid URL")
+    end
 
+    Rails.logger.info "event=url_fetch_request url=#{url}"
     response = connection.get(url)
-    return Result.failure("Could not fetch URL") unless response.success?
 
+    unless response.success?
+      Rails.logger.warn "event=url_fetch_http_error url=#{url} status=#{response.status}"
+      return Result.failure("Could not fetch URL")
+    end
+
+    Rails.logger.info "event=url_fetch_success url=#{url} status=#{response.status} bytes=#{response.body.bytesize}"
     Result.success(response.body)
-  rescue Faraday::TimeoutError, Faraday::ConnectionFailed
+  rescue Faraday::TimeoutError => e
+    Rails.logger.warn "event=url_fetch_timeout url=#{url}"
+    Result.failure("Could not fetch URL")
+  rescue Faraday::ConnectionFailed => e
+    Rails.logger.warn "event=url_fetch_connection_failed url=#{url} error=#{e.message}"
     Result.failure("Could not fetch URL")
   end
 
