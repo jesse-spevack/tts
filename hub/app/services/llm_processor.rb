@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class LlmProcessor
+  MAX_INPUT_CHARS = 100_000 # ~25k tokens, well within Gemini context window
   MAX_TITLE_LENGTH = 255
   MAX_AUTHOR_LENGTH = 255
   MAX_DESCRIPTION_LENGTH = 1000
@@ -17,6 +18,11 @@ class LlmProcessor
 
   def call
     Rails.logger.info "event=llm_request_started episode_id=#{episode.id} input_chars=#{text.length}"
+
+    if text.length > MAX_INPUT_CHARS
+      Rails.logger.warn "event=llm_input_too_large episode_id=#{episode.id} input_chars=#{text.length} max_chars=#{MAX_INPUT_CHARS}"
+      return Result.failure("Article content too large for processing")
+    end
 
     prompt = UrlProcessingPrompt.build(text: text)
     response = llm_client.ask(prompt)

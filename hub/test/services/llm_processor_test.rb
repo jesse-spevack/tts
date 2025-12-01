@@ -152,6 +152,15 @@ class LlmProcessorTest < ActiveSupport::TestCase
     assert_equal "Valid content", result.content
   end
 
+  test "fails when input text exceeds max length" do
+    large_text = "x" * 150_000
+
+    result = LlmProcessor.call(text: large_text, episode: @episode, user: @user)
+
+    assert result.failure?
+    assert_equal "Article content too large for processing", result.error
+  end
+
   private
 
   def mock_llm_response(content:, input_tokens: 100, output_tokens: 50, model_id: "claude-3-haiku-20240307")
