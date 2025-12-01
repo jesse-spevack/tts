@@ -3,6 +3,11 @@
 module EpisodeLogging
   private
 
+  # Including class must define this method
+  def episode
+    raise NotImplementedError, "#{self.class} must define #episode to use EpisodeLogging"
+  end
+
   def log_info(event, **attrs)
     Rails.logger.info build_log_message(event, attrs)
   end
