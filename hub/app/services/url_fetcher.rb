@@ -1,5 +1,7 @@
 class UrlFetcher
   TIMEOUT_SECONDS = 10
+  DNS_TIMEOUT_SECONDS = 5
+  MAX_CONTENT_LENGTH = 10 * 1024 * 1024 # 10MB
 
   # SSRF protection: block private/internal IP ranges
   BLOCKED_IP_RANGES = [
@@ -33,12 +35,27 @@ class UrlFetcher
       return Result.failure("URL not allowed")
     end
 
+    # Check Content-Length via HEAD request first (if available)
+    head_response = connection.head(url)
+    content_length = head_response.headers["content-length"]&.to_i
+
+    if content_length && content_length > MAX_CONTENT_LENGTH
+      Rails.logger.warn "event=url_fetch_too_large url=#{url} content_length=#{content_length} max=#{MAX_CONTENT_LENGTH}"
+      return Result.failure("Content too large")
+    end
+
     Rails.logger.info "event=url_fetch_request url=#{url}"
     response = connection.get(url)
 
     unless response.success?
       Rails.logger.warn "event=url_fetch_http_error url=#{url} status=#{response.status}"
       return Result.failure("Could not fetch URL")
+    end
+
+    # Double-check actual body size
+    if response.body.bytesize > MAX_CONTENT_LENGTH
+      Rails.logger.warn "event=url_fetch_body_too_large url=#{url} bytes=#{response.body.bytesize}"
+      return Result.failure("Content too large")
     end
 
     Rails.logger.info "event=url_fetch_success url=#{url} status=#{response.status} bytes=#{response.body.bytesize}"
@@ -56,22 +73,21 @@ class UrlFetcher
   attr_reader :url
 
   def valid_url?
-    uri = URI.parse(url)
-    uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
-  rescue URI::InvalidURIError
-    false
+    UrlValidator.valid?(url)
   end
 
   def safe_host?
     uri = URI.parse(url)
     return false if uri.host.nil?
 
-    # Resolve DNS to check actual IP
-    addresses = Resolv.getaddresses(uri.host)
+    # Resolve DNS to check actual IP (with timeout)
+    addresses = Timeout.timeout(DNS_TIMEOUT_SECONDS) do
+      Resolv.getaddresses(uri.host)
+    end
     return false if addresses.empty?
 
     addresses.none? { |addr| blocked_ip?(addr) }
-  rescue Resolv::ResolvError
+  rescue Resolv::ResolvError, Timeout::Error
     false
   end
 

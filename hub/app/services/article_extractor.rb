@@ -21,6 +21,7 @@ class ArticleExtractor
       return Result.failure("Article content too large")
     end
 
+    # Nokogiri::HTML is safe by default - it doesn't fetch external resources
     doc = Nokogiri::HTML(html)
     remove_unwanted_elements(doc)
     text = extract_content(doc)

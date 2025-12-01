@@ -8,6 +8,8 @@ class UrlFetcherTest < ActiveSupport::TestCase
   end
 
   test "fetches HTML from valid URL" do
+    stub_request(:head, "https://example.com/article")
+      .to_return(status: 200, headers: { "Content-Length" => "100" })
     stub_request(:get, "https://example.com/article")
       .to_return(status: 200, body: "<html><body>Hello</body></html>", headers: { "Content-Type" => "text/html" })
 
@@ -25,7 +27,7 @@ class UrlFetcherTest < ActiveSupport::TestCase
   end
 
   test "fails on connection timeout" do
-    stub_request(:get, "https://example.com/slow")
+    stub_request(:head, "https://example.com/slow")
       .to_timeout
 
     result = UrlFetcher.call(url: "https://example.com/slow")
@@ -35,6 +37,8 @@ class UrlFetcherTest < ActiveSupport::TestCase
   end
 
   test "fails on 404 response" do
+    stub_request(:head, "https://example.com/missing")
+      .to_return(status: 200)
     stub_request(:get, "https://example.com/missing")
       .to_return(status: 404)
 
@@ -45,6 +49,8 @@ class UrlFetcherTest < ActiveSupport::TestCase
   end
 
   test "fails on 500 response" do
+    stub_request(:head, "https://example.com/error")
+      .to_return(status: 200)
     stub_request(:get, "https://example.com/error")
       .to_return(status: 500)
 
@@ -55,6 +61,10 @@ class UrlFetcherTest < ActiveSupport::TestCase
   end
 
   test "follows redirects" do
+    stub_request(:head, "https://example.com/old")
+      .to_return(status: 302, headers: { "Location" => "https://example.com/new" })
+    stub_request(:head, "https://example.com/new")
+      .to_return(status: 200)
     stub_request(:get, "https://example.com/old")
       .to_return(status: 302, headers: { "Location" => "https://example.com/new" })
     stub_request(:get, "https://example.com/new")
@@ -64,6 +74,16 @@ class UrlFetcherTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_includes result.html, "New page"
+  end
+
+  test "rejects content exceeding max size based on Content-Length header" do
+    stub_request(:head, "https://example.com/large")
+      .to_return(status: 200, headers: { "Content-Length" => "20000000" })
+
+    result = UrlFetcher.call(url: "https://example.com/large")
+
+    assert result.failure?
+    assert_equal "Content too large", result.error
   end
 
   # SSRF protection tests - test blocked_ip? method directly

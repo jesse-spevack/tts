@@ -2,6 +2,7 @@ require "test_helper"
 
 class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
+  include Mocktail::DSL
 
   setup do
     @user = users(:one)
@@ -16,6 +17,12 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
       source_url: "https://example.com/article",
       status: :processing
     )
+
+    Mocktail.replace(UrlFetcher)
+  end
+
+  teardown do
+    Mocktail.reset
   end
 
   test "can be enqueued" do
@@ -25,11 +32,10 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
   end
 
   test "finds episode by id" do
-    # Stub the URL fetch to avoid real HTTP call
-    stub_request(:get, "https://example.com/article")
-      .to_return(status: 404)
+    # Stub the URL fetch to return an error
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.failure("Could not fetch URL") }
 
-    # Job should run without error (episode will fail due to 404, but that's expected)
+    # Job should run without error (episode will fail due to fetch error, but that's expected)
     ProcessUrlEpisodeJob.perform_now(@episode.id)
 
     @episode.reload

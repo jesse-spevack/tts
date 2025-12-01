@@ -27,12 +27,7 @@ class CreateUrlEpisode
   attr_reader :podcast, :user, :url
 
   def valid_url?
-    return false if url.blank?
-
-    uri = URI.parse(url)
-    uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
-  rescue URI::InvalidURIError
-    false
+    UrlValidator.valid?(url)
   end
 
   def create_episode

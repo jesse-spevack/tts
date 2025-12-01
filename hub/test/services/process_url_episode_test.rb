@@ -18,6 +18,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       status: :processing
     )
 
+    Mocktail.replace(UrlFetcher)
     Mocktail.replace(LlmProcessor)
     Mocktail.replace(UploadAndEnqueueEpisode)
   end
@@ -25,8 +26,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   test "processes URL and updates episode" do
     html = "<article><h1>Real Title</h1><p>Article content here that is long enough to pass the minimum character requirement for extraction. This paragraph contains substantial content to be processed.</p></article>"
 
-    stub_request(:get, "https://example.com/article")
-      .to_return(status: 200, body: html)
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.success(html) }
 
     mock_llm_result = LlmProcessor::Result.success(
       title: "Real Title",
@@ -47,8 +47,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed on fetch error" do
-    stub_request(:get, "https://example.com/article")
-      .to_return(status: 404)
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.failure("Could not fetch URL") }
 
     ProcessUrlEpisode.call(episode: @episode)
 
@@ -61,8 +60,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     long_content = "x" * 20_000
     html = "<article><p>#{long_content}</p></article>"
 
-    stub_request(:get, "https://example.com/article")
-      .to_return(status: 200, body: html)
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.success(html) }
 
     ProcessUrlEpisode.call(episode: @episode)
 
@@ -74,8 +72,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   test "marks episode as failed on extraction error" do
     html = "<html><body></body></html>"
 
-    stub_request(:get, "https://example.com/article")
-      .to_return(status: 200, body: html)
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.success(html) }
 
     ProcessUrlEpisode.call(episode: @episode)
 
@@ -84,9 +81,13 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "Could not extract article content", @episode.error_message
   end
 
+  teardown do
+    Mocktail.reset
+  end
+
   private
 
   def stub_gcs_and_tasks
-    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { true }
   end
 end
