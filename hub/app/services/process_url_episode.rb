@@ -110,7 +110,7 @@ class ProcessUrlEpisode
   def max_characters_for(user)
     case user.tier
     when "free" then EpisodeSubmissionValidator::MAX_CHARACTERS_FREE
-    when "pro" then EpisodeSubmissionValidator::MAX_CHARACTERS_PRO
+    when "premium" then EpisodeSubmissionValidator::MAX_CHARACTERS_PREMIUM
     when "unlimited" then nil
     end
   end
