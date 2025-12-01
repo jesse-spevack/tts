@@ -109,7 +109,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # Verify that the service is called with max_characters: nil for unlimited users
     mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
 
-    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
+    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:) {
       assert_nil max_characters, "Expected max_characters to be nil for unlimited tier users"
       mock_result
     } do
@@ -124,36 +124,6 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to episodes_path
-  end
-
-  test "create passes user voice_name to submission service" do
-    user = users(:unlimited_user)
-    sign_in_as(user)
-
-    file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test content"),
-      "text/markdown",
-      original_filename: "test.md"
-    )
-
-    voice_name_passed = nil
-    mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
-
-    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:, voice_name:) {
-      voice_name_passed = voice_name
-      mock_result
-    } do
-      post episodes_url, params: {
-        episode: {
-          title: "Test",
-          author: "Author",
-          description: "Desc",
-          content: file
-        }
-      }
-    end
-
-    assert_equal "en-GB-Chirp3-HD-Enceladus", voice_name_passed
   end
 
   test "allows free tier user to access new when under limit" do

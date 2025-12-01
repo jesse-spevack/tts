@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 require "test_helper"
-require "minitest/mock"
 
 class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
+  include Mocktail::DSL
+
   setup do
     @podcast = podcasts(:one)
     @user = users(:one)
@@ -12,22 +15,22 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     }
     @uploaded_file = StringIO.new("# Test Content\n\nThis is test markdown.")
 
-    @mock_uploader = Object.new
-    @mock_enqueuer = Object.new
+    Mocktail.replace(UploadAndEnqueueEpisode)
+  end
+
+  teardown do
+    Mocktail.reset
   end
 
   test "creates episode with valid params" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
-      uploaded_file: @uploaded_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      uploaded_file: @uploaded_file
+    )
 
     assert result.success?
     assert_kind_of Episode, result.episode
@@ -40,126 +43,49 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   test "returns failure when episode is invalid" do
     invalid_params = { title: "", author: "", description: "" }
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: invalid_params,
-      uploaded_file: @uploaded_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      uploaded_file: @uploaded_file
+    )
 
     assert result.failure?
     assert_not result.episode.persisted?
     assert result.episode.errors.any?
   end
 
-  test "uploads file to GCS staging with correct content and filename" do
-    uploaded_content = nil
-    uploaded_filename = nil
+  test "calls UploadAndEnqueueEpisode with episode and content" do
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
-    @mock_uploader.define_singleton_method(:upload_staging_file) do |content:, filename:|
-      uploaded_content = content
-      uploaded_filename = filename
-      "staging/#{filename}"
-    end
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
-
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
-      uploaded_file: @uploaded_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      uploaded_file: @uploaded_file
+    )
 
     assert result.success?
-    assert_includes uploaded_content, "Test Content"
-    assert_match(/^\d+-\d+\.md$/, uploaded_filename)
-    assert uploaded_filename.start_with?("#{result.episode.id}-")
+
+    # Verify UploadAndEnqueueEpisode was called
+    call = Mocktail.calls(UploadAndEnqueueEpisode, :call).first
+    assert_not_nil call
+    assert_equal result.episode, call.kwargs[:episode]
+    assert_includes call.kwargs[:content], "Test Content"
   end
 
-  test "enqueues processing with correct parameters" do
-    enqueued_args = nil
-    podcast_id = @podcast.podcast_id
-
-    @mock_uploader.define_singleton_method(:upload_staging_file) do |content:, filename:|
-      "podcasts/#{podcast_id}/staging/#{filename}"
-    end
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) do |**args|
-      enqueued_args = args
-      nil
-    end
-
-    result = EpisodeSubmissionService.new(
-      podcast: @podcast,
-      user: @user,
-      params: @params,
-      uploaded_file: @uploaded_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
-
-    assert result.success?
-    assert_equal result.episode.id, enqueued_args[:episode_id]
-    assert_equal @podcast.podcast_id, enqueued_args[:podcast_id]
-    assert_kind_of String, enqueued_args[:staging_path]
-    assert_equal "Test Episode", enqueued_args[:metadata][:title]
-    assert_equal "Test Author", enqueued_args[:metadata][:author]
-    assert_equal "Test Description", enqueued_args[:metadata][:description]
-  end
-
-  test "does not upload or enqueue when episode save fails" do
-    upload_called = false
-    enqueue_called = false
-
-    @mock_uploader.define_singleton_method(:upload_staging_file) do |content:, filename:|
-      upload_called = true
-      "staging/#{filename}"
-    end
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) do |**args|
-      enqueue_called = true
-      nil
-    end
-
+  test "does not call UploadAndEnqueueEpisode when episode save fails" do
     invalid_params = { title: "", author: "", description: "" }
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: invalid_params,
-      uploaded_file: @uploaded_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      uploaded_file: @uploaded_file
+    )
 
     assert result.failure?
-    assert_not upload_called, "Should not upload when save fails"
-    assert_not enqueue_called, "Should not enqueue when save fails"
-  end
-
-  test "class method call delegates to instance" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
-
-    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
-
-    GcsUploader.stub :new, @mock_uploader do
-      CloudTasksEnqueuer.stub :new, @mock_enqueuer do
-        result = EpisodeSubmissionService.call(
-          podcast: @podcast,
-          user: @user,
-          params: @params,
-          uploaded_file: @uploaded_file
-        )
-
-        assert result.success?
-        assert result.episode.persisted?
-      end
-    end
-  ensure
-    ENV.delete("GOOGLE_CLOUD_BUCKET")
+    assert_empty Mocktail.calls(UploadAndEnqueueEpisode, :call)
   end
 
   test "returns failure when uploaded file is nil" do
@@ -176,7 +102,6 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   end
 
   test "returns failure when uploaded file is missing read method" do
-    # Simulate an object without read method
     fake_file = Object.new
 
     result = EpisodeSubmissionService.call(
@@ -195,15 +120,13 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     large_content = "a" * 10_001
     large_file = StringIO.new(large_content)
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
       uploaded_file: large_file,
-      max_characters: 10_000,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      max_characters: 10_000
+    )
 
     assert result.failure?
     assert_not result.episode.persisted?
@@ -213,115 +136,55 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
   end
 
   test "accepts file with exactly max_characters" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
     content = "a" * 10_000
     file = StringIO.new(content)
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
       uploaded_file: file,
-      max_characters: 10_000,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      max_characters: 10_000
+    )
 
     assert result.success?
     assert result.episode.persisted?
   end
 
   test "accepts file larger than 10k when max_characters is nil (unlimited)" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
     large_content = "a" * 50_000
     large_file = StringIO.new(large_content)
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
       uploaded_file: large_file,
-      max_characters: nil, # unlimited
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      max_characters: nil
+    )
 
     assert result.success?
     assert result.episode.persisted?
   end
 
   test "skips character limit check when max_characters not provided" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
     large_content = "a" * 50_000
     large_file = StringIO.new(large_content)
 
-    result = EpisodeSubmissionService.new(
+    result = EpisodeSubmissionService.call(
       podcast: @podcast,
       user: @user,
       params: @params,
-      uploaded_file: large_file,
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
+      uploaded_file: large_file
+    )
 
     assert result.success?
     assert result.episode.persisted?
-  end
-
-  test "class method forwards max_characters parameter" do
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) { |**args| nil }
-
-    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
-
-    large_content = "a" * 10_001
-    large_file = StringIO.new(large_content)
-
-    GcsUploader.stub :new, @mock_uploader do
-      CloudTasksEnqueuer.stub :new, @mock_enqueuer do
-        result = EpisodeSubmissionService.call(
-          podcast: @podcast,
-          user: @user,
-          params: @params,
-          uploaded_file: large_file,
-          max_characters: 10_000
-        )
-
-        assert result.failure?
-        assert_not result.episode.persisted?
-        assert_includes result.episode.errors[:content].first, "too large"
-      end
-    end
-  ensure
-    ENV.delete("GOOGLE_CLOUD_BUCKET")
-  end
-
-  test "enqueues processing with voice_name parameter" do
-    enqueued_args = nil
-
-    @mock_uploader.define_singleton_method(:upload_staging_file) { |content:, filename:| "staging/#{filename}" }
-    @mock_enqueuer.define_singleton_method(:enqueue_episode_processing) do |**args|
-      enqueued_args = args
-      nil
-    end
-
-    result = EpisodeSubmissionService.new(
-      podcast: @podcast,
-      user: @user,
-      params: @params,
-      uploaded_file: @uploaded_file,
-      voice_name: "en-GB-Standard-D",
-      gcs_uploader: @mock_uploader,
-      enqueuer: @mock_enqueuer
-    ).call
-
-    assert result.success?
-    assert_equal "en-GB-Standard-D", enqueued_args[:voice_name]
   end
 end

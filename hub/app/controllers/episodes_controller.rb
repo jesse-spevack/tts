@@ -46,8 +46,7 @@ class EpisodesController < ApplicationController
       user: Current.user,
       params: episode_params,
       uploaded_file: params[:episode][:content],
-      max_characters: validation.max_characters,
-      voice_name: Current.user.voice_name
+      max_characters: validation.max_characters
     )
 
     if result.success?

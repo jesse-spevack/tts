@@ -1,17 +1,14 @@
 class EpisodeSubmissionService
-  def self.call(podcast:, user:, params:, uploaded_file:, max_characters: nil, voice_name: nil)
-    new(podcast: podcast, user: user, params: params, uploaded_file: uploaded_file, max_characters: max_characters, voice_name: voice_name).call
+  def self.call(podcast:, user:, params:, uploaded_file:, max_characters: nil)
+    new(podcast: podcast, user: user, params: params, uploaded_file: uploaded_file, max_characters: max_characters).call
   end
 
-  def initialize(podcast:, user:, params:, uploaded_file:, max_characters: nil, voice_name: nil, gcs_uploader: nil, enqueuer: nil)
+  def initialize(podcast:, user:, params:, uploaded_file:, max_characters: nil)
     @podcast = podcast
     @user = user
-    @voice_name = voice_name
     @params = params
     @uploaded_file = uploaded_file
     @max_characters = max_characters
-    @gcs_uploader = gcs_uploader
-    @enqueuer = enqueuer
   end
 
   def call
@@ -34,8 +31,8 @@ class EpisodeSubmissionService
 
     Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{user.id} title=\"#{episode.title}\""
 
-    staging_path = upload_to_staging(episode)
-    enqueue_processing(episode, staging_path)
+    content = uploaded_file.read
+    UploadAndEnqueueEpisode.call(episode: episode, content: content)
 
     Result.success(episode)
   rescue Google::Cloud::Error => e
@@ -50,7 +47,7 @@ class EpisodeSubmissionService
 
   private
 
-  attr_reader :podcast, :user, :params, :uploaded_file, :max_characters, :voice_name
+  attr_reader :podcast, :user, :params, :uploaded_file, :max_characters
 
   def build_episode
     podcast.episodes.build(
@@ -59,44 +56,6 @@ class EpisodeSubmissionService
       author: params[:author],
       description: params[:description]
     )
-  end
-
-  def upload_to_staging(episode)
-    content = uploaded_file.read
-    filename = "#{episode.id}-#{Time.now.to_i}.md"
-
-    staging_path = gcs_uploader.upload_staging_file(content: content, filename: filename)
-
-    Rails.logger.info "event=staging_uploaded episode_id=#{episode.id} staging_path=#{staging_path} size_bytes=#{content.bytesize}"
-
-    staging_path
-  end
-
-  def enqueue_processing(episode, staging_path)
-    task_name = enqueuer.enqueue_episode_processing(
-      episode_id: episode.id,
-      podcast_id: podcast.podcast_id,
-      staging_path: staging_path,
-      metadata: {
-        title: episode.title,
-        author: episode.author,
-        description: episode.description
-      },
-      voice_name: voice_name
-    )
-
-    Rails.logger.info "event=task_enqueued episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} task_name=#{task_name}"
-  end
-
-  def gcs_uploader
-    @gcs_uploader ||= GcsUploader.new(
-      ENV.fetch("GOOGLE_CLOUD_BUCKET"),
-      podcast_id: podcast.podcast_id
-    )
-  end
-
-  def enqueuer
-    @enqueuer ||= CloudTasksEnqueuer.new
   end
 
   def validate_file_size(limit)
