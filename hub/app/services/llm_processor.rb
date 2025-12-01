@@ -32,9 +32,11 @@ class LlmProcessor
     )
   rescue RubyLLM::Error => e
     Rails.logger.error "event=llm_api_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
+
     Result.failure("Failed to process content")
   rescue JSON::ParserError => e
     Rails.logger.error "event=llm_json_parse_error episode_id=#{episode.id} error=#{e.message}"
+
     Result.failure("Failed to process content")
   end
 

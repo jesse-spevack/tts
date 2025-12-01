@@ -9,6 +9,7 @@ class LlmClient
 
   def ask(prompt)
     Rails.logger.info "event=llm_client_ask model=#{model}"
+
     RubyLLM.chat(model: model).ask(prompt)
   end
 

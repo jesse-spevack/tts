@@ -25,6 +25,7 @@ class ProcessUrlEpisode
     fail_episode(e.message)
   rescue StandardError => e
     Rails.logger.error "event=process_url_episode_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
+
     fail_episode(e.message)
   end
 
@@ -34,21 +35,27 @@ class ProcessUrlEpisode
 
   def fetch_url
     Rails.logger.info "event=url_fetch_started episode_id=#{episode.id} url=#{episode.source_url}"
+
     @fetch_result = UrlFetcher.call(url: episode.source_url)
     if @fetch_result.failure?
       Rails.logger.warn "event=url_fetch_failed episode_id=#{episode.id} error=#{@fetch_result.error}"
+
       raise ProcessingError, @fetch_result.error
     end
+
     Rails.logger.info "event=url_fetch_completed episode_id=#{episode.id} bytes=#{@fetch_result.html.bytesize}"
   end
 
   def extract_content
     Rails.logger.info "event=article_extraction_started episode_id=#{episode.id}"
+
     @extract_result = ArticleExtractor.call(html: @fetch_result.html)
     if @extract_result.failure?
       Rails.logger.warn "event=article_extraction_failed episode_id=#{episode.id} error=#{@extract_result.error}"
+
       raise ProcessingError, @extract_result.error
     end
+
     Rails.logger.info "event=article_extraction_completed episode_id=#{episode.id} characters=#{@extract_result.character_count}"
   end
 
@@ -57,16 +64,20 @@ class ProcessUrlEpisode
     return unless max_chars && @extract_result.character_count > max_chars
 
     Rails.logger.warn "event=character_limit_exceeded episode_id=#{episode.id} characters=#{@extract_result.character_count} limit=#{max_chars} tier=#{user.tier}"
+
     raise ProcessingError, "This content is too long for your account tier"
   end
 
   def process_with_llm
     Rails.logger.info "event=llm_processing_started episode_id=#{episode.id} characters=#{@extract_result.character_count}"
+
     @llm_result = LlmProcessor.call(text: @extract_result.text, episode: episode, user: user)
     if @llm_result.failure?
       Rails.logger.warn "event=llm_processing_failed episode_id=#{episode.id} error=#{@llm_result.error}"
+
       raise ProcessingError, @llm_result.error
     end
+
     Rails.logger.info "event=llm_processing_completed episode_id=#{episode.id} title=#{@llm_result.title}"
   end
 
@@ -76,18 +87,23 @@ class ProcessUrlEpisode
       author: @llm_result.author,
       description: @llm_result.description
     )
+
     Rails.logger.info "event=episode_metadata_updated episode_id=#{episode.id}"
   end
 
   def upload_and_enqueue
     staging_path = upload_to_staging(@llm_result.content)
+
     Rails.logger.info "event=content_uploaded episode_id=#{episode.id} staging_path=#{staging_path}"
+
     enqueue_processing(staging_path)
+
     Rails.logger.info "event=processing_enqueued episode_id=#{episode.id}"
   end
 
   def fail_episode(error_message)
     episode.update!(status: :failed, error_message: error_message)
+
     Rails.logger.warn "event=episode_marked_failed episode_id=#{episode.id} error=#{error_message}"
   end
 
