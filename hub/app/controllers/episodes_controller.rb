@@ -12,6 +12,33 @@ class EpisodesController < ApplicationController
   end
 
   def create
+    if params[:url].present?
+      create_from_url
+    else
+      create_from_markdown
+    end
+  end
+
+  private
+
+  def create_from_url
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: Current.user,
+      url: params[:url]
+    )
+
+    if result.success?
+      RecordEpisodeUsage.call(user: Current.user)
+      redirect_to episodes_path, notice: "Processing article from URL..."
+    else
+      flash.now[:alert] = result.error
+      @episode = @podcast.episodes.build
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def create_from_markdown
     validation = EpisodeSubmissionValidator.call(user: Current.user)
 
     result = EpisodeSubmissionService.call(
@@ -19,8 +46,7 @@ class EpisodesController < ApplicationController
       user: Current.user,
       params: episode_params,
       uploaded_file: params[:episode][:content],
-      max_characters: validation.max_characters,
-      voice_name: Current.user.voice_name
+      max_characters: validation.max_characters
     )
 
     if result.success?
@@ -37,8 +63,6 @@ class EpisodesController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
-
-  private
 
   def require_can_create_episode
     result = CanCreateEpisode.call(user: Current.user)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_164257) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_01_051326) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -30,14 +30,29 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_164257) do
     t.text "error_message"
     t.string "gcs_episode_id"
     t.integer "podcast_id", null: false
+    t.integer "source_type", default: 0, null: false
+    t.string "source_url"
     t.string "status", default: "pending", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["podcast_id"], name: "index_episodes_on_podcast_id"
+    t.index ["source_type"], name: "index_episodes_on_source_type"
     t.index ["status"], name: "index_episodes_on_status"
     t.index ["user_id"], name: "index_episodes_on_user_id"
+  end
+
+  create_table "llm_usages", force: :cascade do |t|
+    t.decimal "cost_cents", precision: 10, scale: 4
+    t.datetime "created_at", null: false
+    t.integer "episode_id", null: false
+    t.integer "input_tokens", null: false
+    t.string "model_id", null: false
+    t.integer "output_tokens", null: false
+    t.string "provider", null: false
+    t.datetime "updated_at", null: false
+    t.index ["episode_id"], name: "index_llm_usages_on_episode_id"
   end
 
   create_table "podcast_memberships", force: :cascade do |t|
@@ -83,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_164257) do
   add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "podcasts"
   add_foreign_key "episodes", "users"
+  add_foreign_key "llm_usages", "episodes"
   add_foreign_key "podcast_memberships", "podcasts"
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sessions", "users"

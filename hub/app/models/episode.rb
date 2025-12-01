@@ -1,10 +1,14 @@
 class Episode < ApplicationRecord
   belongs_to :podcast
   belongs_to :user
+  has_one :llm_usage, dependent: :destroy
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
+  enum :source_type, { file: 0, url: 1 }
 
   validates :title, presence: true, length: { maximum: 255 }
+  validates :source_url, presence: true, if: :url?
+  validates :source_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { source_url.present? }
   validates :author, presence: true, length: { maximum: 255 }
   validates :description, presence: true, length: { maximum: 1000 }
 

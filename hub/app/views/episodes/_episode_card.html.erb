@@ -4,6 +4,11 @@
       <%= status_badge(episode.status) %>
     </div>
     <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
+    <% if episode.url? && episode.source_url.present? %>
+      <p class="text-xs text-[var(--color-subtext)] truncate mb-1">
+        <%= link_to episode.source_url, episode.source_url, target: "_blank", class: "hover:underline" %>
+      </p>
+    <% end %>
     <div class="flex justify-between items-center text-sm text-[var(--color-subtext)]">
       <span>by <%= episode.author %></span>
       <span><%= episode.created_at.strftime("%b %d, %Y") %></span>

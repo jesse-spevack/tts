@@ -47,6 +47,7 @@ env:
     - GOOGLE_CLOUD_BUCKET
     - GOOGLE_CLOUD_PROJECT
     - SERVICE_ACCOUNT_EMAIL
+    - VERTEX_AI_LOCATION
     - KAMAL_REGISTRY_PASSWORD
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
