@@ -26,7 +26,7 @@ class RecordLlmUsage
       cost_cents: total_cost_cents
     )
 
-    Rails.logger.info "event=llm_usage_recorded episode_id=#{episode.id} model=#{response.model_id} cost_cents=#{total_cost_cents.round(4)}"
+    Rails.logger.info "event=llm_usage_recorded llm_usage_id=#{usage.id} episode_id=#{episode.id} model=#{response.model_id} cost_cents=#{total_cost_cents.round(4)}"
 
     usage
   end
