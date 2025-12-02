@@ -24,7 +24,7 @@ module Api
       end
 
       def episode_params
-        params.permit(:status, :gcs_episode_id, :audio_size_bytes, :error_message)
+        params.permit(:status, :gcs_episode_id, :audio_size_bytes, :duration_seconds, :error_message)
       end
     end
   end
