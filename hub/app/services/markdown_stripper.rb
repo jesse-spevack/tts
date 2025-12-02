@@ -13,9 +13,11 @@ module MarkdownStripper
     return text if text.nil?
 
     text = text.dup
+    text = remove_yaml_frontmatter(text)
     text = remove_code_blocks(text)
     text = remove_images(text)
     text = convert_links(text)
+    text = remove_html_tags(text)
     text = remove_headers(text)
     text = remove_formatting(text)
     text = remove_strikethrough(text)
@@ -70,5 +72,13 @@ module MarkdownStripper
 
   def self.remove_horizontal_rules(text)
     text.gsub(/^(\*{3,}|-{3,}|_{3,})$/, "")
+  end
+
+  def self.remove_yaml_frontmatter(text)
+    text.gsub(/\A---\s*\n.*?\n---\s*\n/m, "")
+  end
+
+  def self.remove_html_tags(text)
+    text.gsub(/<[^>]+>/, "")
   end
 end

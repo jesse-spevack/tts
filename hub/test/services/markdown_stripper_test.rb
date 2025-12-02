@@ -68,4 +68,13 @@ class MarkdownStripperTest < ActiveSupport::TestCase
   test "removes horizontal rules" do
     assert_equal "Above\n\nBelow", MarkdownStripper.strip("Above\n---\nBelow")
   end
+
+  test "removes HTML tags" do
+    assert_equal "plain text", MarkdownStripper.strip("<div>plain text</div>")
+  end
+
+  test "removes YAML frontmatter" do
+    input = "---\ntitle: Test\nauthor: Me\n---\nContent here"
+    assert_equal "Content here", MarkdownStripper.strip(input)
+  end
 end
