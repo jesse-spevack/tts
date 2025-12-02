@@ -28,8 +28,7 @@ class EpisodeSubmissionService
 
     content = uploaded_file.read
 
-    episode = build_episode
-    episode.content_preview = ContentPreview.generate(content)
+    episode = build_episode(content: content)
     return Result.failure(episode) unless episode.save
 
     Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{user.id} title=\"#{episode.title}\""
@@ -51,12 +50,13 @@ class EpisodeSubmissionService
 
   attr_reader :podcast, :user, :params, :uploaded_file, :max_characters
 
-  def build_episode
+  def build_episode(content: nil)
     podcast.episodes.build(
       user: user,
       title: params[:title],
       author: params[:author],
-      description: params[:description]
+      description: params[:description],
+      content_preview: content ? ContentPreview.generate(content) : nil
     )
   end
 
