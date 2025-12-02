@@ -11,6 +11,7 @@
 module MarkdownStripper
   def self.strip(text)
     return text if text.nil?
+    return text if text.empty?
 
     text = text.dup
     text = remove_yaml_frontmatter(text)
@@ -26,7 +27,8 @@ module MarkdownStripper
     text = remove_ordered_lists(text)
     text = remove_blockquotes(text)
     text = remove_horizontal_rules(text)
-    text.strip
+    text = clean_whitespace(text)
+    text
   end
 
   def self.remove_code_blocks(text)
@@ -80,5 +82,9 @@ module MarkdownStripper
 
   def self.remove_html_tags(text)
     text.gsub(/<[^>]+>/, "")
+  end
+
+  def self.clean_whitespace(text)
+    text.gsub(/\n{3,}/, "\n\n").strip
   end
 end

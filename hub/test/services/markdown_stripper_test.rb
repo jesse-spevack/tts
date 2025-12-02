@@ -77,4 +77,17 @@ class MarkdownStripperTest < ActiveSupport::TestCase
     input = "---\ntitle: Test\nauthor: Me\n---\nContent here"
     assert_equal "Content here", MarkdownStripper.strip(input)
   end
+
+  test "collapses multiple newlines into double newlines" do
+    input = "Para one\n\n\n\n\nPara two"
+    assert_equal "Para one\n\nPara two", MarkdownStripper.strip(input)
+  end
+
+  test "handles nil input" do
+    assert_nil MarkdownStripper.strip(nil)
+  end
+
+  test "handles empty string" do
+    assert_equal "", MarkdownStripper.strip("")
+  end
 end
