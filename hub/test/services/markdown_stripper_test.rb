@@ -31,4 +31,16 @@ class MarkdownStripperTest < ActiveSupport::TestCase
   test "removes strikethrough" do
     assert_equal "deleted", MarkdownStripper.strip("~~deleted~~")
   end
+
+  test "converts links to just the text" do
+    assert_equal "click here", MarkdownStripper.strip("[click here](https://example.com)")
+  end
+
+  test "removes images completely" do
+    assert_equal "", MarkdownStripper.strip("![alt text](image.png)").strip
+  end
+
+  test "removes images but keeps surrounding text" do
+    assert_equal "Before  After", MarkdownStripper.strip("Before ![img](url) After")
+  end
 end

@@ -5,10 +5,20 @@ module MarkdownStripper
     return text if text.nil?
 
     text = text.dup
+    text = remove_images(text)
+    text = convert_links(text)
     text = remove_headers(text)
     text = remove_formatting(text)
     text = remove_strikethrough(text)
     text.strip
+  end
+
+  def self.remove_images(text)
+    text.gsub(/!\[([^\]]*)\]\([^)]+\)/, "")
+  end
+
+  def self.convert_links(text)
+    text.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
   end
 
   def self.remove_headers(text)
