@@ -1,16 +1,34 @@
 # frozen_string_literal: true
 
+# Strips markdown syntax from text, leaving only plain text content.
+#
+# NOTE: This logic is duplicated from lib/text_converter.rb. The duplication
+# exists because Hub (Rails app) and the TTS lib have separate load paths and
+# don't share code. We chose duplication over adding cross-project dependencies
+# for this simple, stable functionality.
+#
+# See also: lib/text_converter.rb
 module MarkdownStripper
   def self.strip(text)
     return text if text.nil?
 
     text = text.dup
+    text = remove_code_blocks(text)
     text = remove_images(text)
     text = convert_links(text)
     text = remove_headers(text)
     text = remove_formatting(text)
     text = remove_strikethrough(text)
+    text = remove_inline_code(text)
     text.strip
+  end
+
+  def self.remove_code_blocks(text)
+    text.gsub(/```[\s\S]*?```/m, "")
+  end
+
+  def self.remove_inline_code(text)
+    text.gsub(/`([^`]+)`/, '\1')
   end
 
   def self.remove_images(text)

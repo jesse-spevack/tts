@@ -1,3 +1,12 @@
+# Converts markdown text to plain text by stripping all markdown syntax.
+# Used by TextProcessor to prepare content for TTS conversion.
+#
+# NOTE: This logic is duplicated in hub/app/services/markdown_stripper.rb.
+# The duplication exists because Hub (Rails app) and the TTS lib have separate
+# load paths and don't share code. We chose duplication over adding cross-project
+# dependencies for this simple, stable functionality.
+#
+# See also: hub/app/services/markdown_stripper.rb
 module TextConverter
   def self.remove_yaml_frontmatter(text)
     text.gsub(/\A---\s*\n.*?\n---\s*\n/m, "")

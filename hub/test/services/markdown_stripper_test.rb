@@ -43,4 +43,13 @@ class MarkdownStripperTest < ActiveSupport::TestCase
   test "removes images but keeps surrounding text" do
     assert_equal "Before  After", MarkdownStripper.strip("Before ![img](url) After")
   end
+
+  test "removes fenced code blocks" do
+    input = "Before\n```ruby\ncode here\n```\nAfter"
+    assert_equal "Before\n\nAfter", MarkdownStripper.strip(input)
+  end
+
+  test "removes inline code but keeps content" do
+    assert_equal "use the function method", MarkdownStripper.strip("use the `function` method")
+  end
 end
