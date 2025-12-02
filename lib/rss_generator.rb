@@ -84,6 +84,6 @@ class RSSGenerator
 
     minutes = duration_seconds / 60
     seconds = duration_seconds % 60
-    xml.tag! "itunes:duration", format("%d:%02d", minutes, seconds)
+    xml.tag! "itunes:duration", format("%<min>d:%<sec>02d", min: minutes, sec: seconds)
   end
 end
