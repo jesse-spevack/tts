@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_01_051326) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_02_155443) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -24,6 +24,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_01_051326) do
   create_table "episodes", force: :cascade do |t|
     t.integer "audio_size_bytes"
     t.string "author", null: false
+    t.text "content_preview"
     t.datetime "created_at", null: false
     t.text "description", null: false
     t.integer "duration_seconds"
