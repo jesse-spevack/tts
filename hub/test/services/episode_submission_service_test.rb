@@ -187,4 +187,23 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     assert result.success?
     assert result.episode.persisted?
   end
+
+  test "sets content_preview on episode" do
+    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
+
+    long_content = "A" * 100 + " middle " + "Z" * 100
+    uploaded_file = StringIO.new(long_content)
+
+    result = EpisodeSubmissionService.call(
+      podcast: @podcast,
+      user: @user,
+      params: @params,
+      uploaded_file: uploaded_file
+    )
+
+    assert result.success?
+    assert_not_nil result.episode.content_preview
+    assert result.episode.content_preview.start_with?("A" * 57 + "...")
+    assert result.episode.content_preview.end_with?("..." + "Z" * 57)
+  end
 end

@@ -26,12 +26,14 @@ class EpisodeSubmissionService
       return validation_result if validation_result
     end
 
+    content = uploaded_file.read
+
     episode = build_episode
+    episode.content_preview = ContentPreview.generate(content)
     return Result.failure(episode) unless episode.save
 
     Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{user.id} title=\"#{episode.title}\""
 
-    content = uploaded_file.read
     UploadAndEnqueueEpisode.call(episode: episode, content: content)
 
     Result.success(episode)
