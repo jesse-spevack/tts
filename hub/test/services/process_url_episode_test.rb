@@ -116,6 +116,31 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "LLM description.", @episode.description
   end
 
+  test "sets content_preview on episode from LLM content" do
+    long_content = "B" * 100 + " middle " + "X" * 100
+    # Use HTML with enough content to pass ArticleExtractor's minimum length
+    html = "<article><h1>Title</h1><p>#{"x" * 200}</p></article>"
+
+    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.success(html) }
+
+    mock_llm_result = LlmProcessor::Result.success(
+      title: "Title",
+      author: "Author",
+      description: "Description",
+      content: long_content
+    )
+
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stub_gcs_and_tasks
+
+    ProcessUrlEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_not_nil @episode.content_preview, "content_preview should be set; episode status: #{@episode.status}, error: #{@episode.error_message}"
+    assert @episode.content_preview.start_with?("B" * 57 + "...")
+    assert @episode.content_preview.end_with?("..." + "X" * 57)
+  end
+
   teardown do
     Mocktail.reset
   end
