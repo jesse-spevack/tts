@@ -99,6 +99,29 @@ class TestRSSGenerator < Minitest::Test
     assert_match(/\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}/, pubdate)
   end
 
+  def test_includes_itunes_duration_when_provided
+    episodes_with_duration = [
+      {
+        "title" => "Episode With Duration",
+        "description" => "Description",
+        "mp3_url" => "https://example.com/episode.mp3",
+        "file_size_bytes" => 1_000_000,
+        "published_at" => "2025-10-26T10:00:00Z",
+        "guid" => "test-guid",
+        "duration_seconds" => 754
+      }
+    ]
+
+    generator = RSSGenerator.new(@podcast_config, episodes_with_duration)
+    xml = generator.generate
+
+    doc = REXML::Document.new(xml)
+    item = doc.root.elements["channel/item[1]"]
+    duration = item.elements["itunes:duration"]
+
+    assert_equal "12:34", duration.text
+  end
+
   def test_uses_podcast_author_when_episode_author_missing
     episodes_without_author = [
       {
