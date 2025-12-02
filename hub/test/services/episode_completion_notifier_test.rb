@@ -2,22 +2,23 @@ require "test_helper"
 
 class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
+
   test "sends first_episode_ready email for user's first completed episode" do
     episode = episodes(:one)
     episode.update!(status: :complete)
 
     assert_emails 1 do
-      EpisodeCompletionNotifier.call(episode: episode)
+      EpisodeCompletionNotifier.call(episode:)
     end
   end
 
   test "does not send email if already sent" do
     episode = episodes(:one)
     episode.update!(status: :complete)
-    SentMessage.record!(user: episode.user, message_type: "first_episode_ready")
+    SentMessage.create!(user: episode.user, message_type: "first_episode_ready")
 
     assert_no_emails do
-      EpisodeCompletionNotifier.call(episode: episode)
+      EpisodeCompletionNotifier.call(episode:)
     end
   end
 
@@ -25,9 +26,9 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     episode = episodes(:one)
     episode.update!(status: :complete)
 
-    EpisodeCompletionNotifier.call(episode: episode)
+    EpisodeCompletionNotifier.call(episode:)
 
-    assert SentMessage.sent?(user: episode.user, message_type: "first_episode_ready")
+    assert SentMessage.exists?(user: episode.user, message_type: "first_episode_ready")
   end
 
   test "does not send email for non-complete episodes" do
@@ -35,7 +36,7 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     episode.update!(status: :processing)
 
     assert_no_emails do
-      EpisodeCompletionNotifier.call(episode: episode)
+      EpisodeCompletionNotifier.call(episode:)
     end
   end
 end

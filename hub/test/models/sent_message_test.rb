@@ -1,35 +1,28 @@
 require "test_helper"
 
 class SentMessageTest < ActiveSupport::TestCase
-  test "sent? returns false when no message has been sent" do
-    user = users(:one)
-    refute SentMessage.sent?(user: user, message_type: "first_episode_ready")
+  test "requires user" do
+    message = SentMessage.new(message_type: "first_episode_ready")
+    refute message.valid?
+    assert_includes message.errors[:user], "must exist"
   end
 
-  test "sent? returns true when message has been sent" do
-    user = users(:one)
-    SentMessage.record!(user: user, message_type: "first_episode_ready")
-    assert SentMessage.sent?(user: user, message_type: "first_episode_ready")
+  test "requires message_type" do
+    message = SentMessage.new(user: users(:one))
+    refute message.valid?
+    assert_includes message.errors[:message_type], "can't be blank"
   end
 
-  test "record! creates a sent message" do
-    user = users(:one)
-    assert_difference "SentMessage.count", 1 do
-      SentMessage.record!(user: user, message_type: "first_episode_ready")
-    end
+  test "enforces uniqueness of message_type per user" do
+    SentMessage.create!(user: users(:one), message_type: "first_episode_ready")
+    duplicate = SentMessage.new(user: users(:one), message_type: "first_episode_ready")
+    refute duplicate.valid?
+    assert_includes duplicate.errors[:message_type], "has already been taken"
   end
 
-  test "record! raises error on duplicate message type for same user" do
-    user = users(:one)
-    SentMessage.record!(user: user, message_type: "first_episode_ready")
-    assert_raises ActiveRecord::RecordInvalid do
-      SentMessage.record!(user: user, message_type: "first_episode_ready")
-    end
-  end
-
-  test "different users can have same message type" do
-    SentMessage.record!(user: users(:one), message_type: "first_episode_ready")
-    SentMessage.record!(user: users(:two), message_type: "first_episode_ready")
-    assert_equal 2, SentMessage.where(message_type: "first_episode_ready").count
+  test "allows same message_type for different users" do
+    SentMessage.create!(user: users(:one), message_type: "first_episode_ready")
+    other = SentMessage.new(user: users(:two), message_type: "first_episode_ready")
+    assert other.valid?
   end
 end
