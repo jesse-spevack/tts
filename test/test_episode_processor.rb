@@ -42,7 +42,7 @@ class TestEpisodeProcessor < Minitest::Test
     with_process_stubs(tts_stub: mock_tts) do
       # Should not raise - voice_name is accepted
       processor.process(title: "Test", author: "Author", description: "Desc",
-                        markdown_content: "# Test", voice_name: "en-GB-Standard-D")
+                        text_content: "Test content", voice_name: "en-GB-Standard-D")
     end
   end
 
@@ -57,7 +57,7 @@ class TestEpisodeProcessor < Minitest::Test
 
     with_process_stubs(tts_stub: tts_stub) do
       processor.process(title: "Test", author: "Author", description: "Desc",
-                        markdown_content: "# Test", voice_name: "en-GB-Standard-D")
+                        text_content: "Test content", voice_name: "en-GB-Standard-D")
     end
 
     assert_equal "en-GB-Standard-D", tts_config_received.voice_name
@@ -79,11 +79,9 @@ class TestEpisodeProcessor < Minitest::Test
 
   def with_process_stubs(tts_stub:, &)
     TTS.stub :new, tts_stub do
-      TextProcessor.stub :convert_to_plain_text, "text" do
-        PodcastPublisher.stub :new, mock_publisher do
-          YAML.stub :safe_load_file, {} do
-            GCSUploader.stub(:new, Object.new) { EpisodeManifest.stub(:new, Object.new, &) }
-          end
+      PodcastPublisher.stub :new, mock_publisher do
+        YAML.stub :safe_load_file, {} do
+          GCSUploader.stub(:new, Object.new) { EpisodeManifest.stub(:new, Object.new, &) }
         end
       end
     end

@@ -1,13 +1,8 @@
 # frozen_string_literal: true
 
 # Strips markdown syntax from text, leaving only plain text content.
-#
-# NOTE: This logic is duplicated from lib/text_converter.rb. The duplication
-# exists because Hub (Rails app) and the TTS lib have separate load paths and
-# don't share code. We chose duplication over adding cross-project dependencies
-# for this simple, stable functionality.
-#
-# See also: lib/text_converter.rb
+# Used by ContentPreview for episode cards and by UploadAndEnqueueEpisode
+# to convert markdown to plain text before sending to TTS processing.
 module MarkdownStripper
   def self.strip(text)
     return text if text.nil?

@@ -159,16 +159,16 @@ def process_episode_task(payload)
 
   logger.info log_event(:processing_started, podcast_id: podcast_id, episode_id: episode_id, title: title)
 
-  # Download markdown from GCS
+  # Download plain text from GCS (markdown already stripped by Hub)
   gcs = GCSUploader.new(ENV.fetch("GOOGLE_CLOUD_BUCKET", nil), podcast_id: podcast_id)
-  markdown_content = gcs.download_file(remote_path: staging_path)
+  text_content = gcs.download_file(remote_path: staging_path)
   logger.info log_event(:file_downloaded, podcast_id: podcast_id, episode_id: episode_id,
-                                          size_bytes: markdown_content.bytesize)
+                                          size_bytes: text_content.bytesize)
 
   # Process episode
   processor = EpisodeProcessor.new(ENV.fetch("GOOGLE_CLOUD_BUCKET"), podcast_id)
   episode_data = processor.process(title: title, author: author, description: description,
-                                   markdown_content: markdown_content, voice_name: voice_name)
+                                   text_content: text_content, voice_name: voice_name)
   logger.info log_event(:episode_processed, podcast_id: podcast_id, episode_id: episode_id,
                                             gcs_episode_id: episode_data["id"])
 
