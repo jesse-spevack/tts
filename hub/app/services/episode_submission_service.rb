@@ -56,7 +56,7 @@ class EpisodeSubmissionService
       title: params[:title],
       author: params[:author],
       description: params[:description],
-      content_preview: content ? ContentPreview.generate(content) : nil
+      content_preview: ContentPreview.generate(content)
     )
   end
 
