@@ -7,7 +7,8 @@
 - [ ] Add TTL to MP3s in GCS (retention policy for cost management)
 - [ ] Update the landing page design 
 - [ ] Consolidate mocking libraries (both Minitest::Mock and Mocktail in use)
-- [ ] Unlimited users should get better LLM model 
+- [ ] Unlimited users should get better LLM model
+- [ ] Extract markdown stripping to a shared gem (currently duplicated in `lib/text_converter.rb` and `hub/app/services/markdown_stripper.rb`) 
 
 
 
