@@ -1,4 +1,6 @@
 require "time"
+require "tempfile"
+require "mp3info"
 require_relative "episode_manifest"
 require_relative "rss_generator"
 
@@ -7,10 +9,12 @@ class PodcastPublisher
   # @param podcast_config [Hash] Podcast-level configuration
   # @param gcs_uploader [GCSUploader] GCS uploader instance
   # @param episode_manifest [EpisodeManifest] Episode manifest instance
-  def initialize(podcast_config:, gcs_uploader:, episode_manifest:)
+  # @param duration_calculator [Proc] Optional callable for calculating duration (for testing)
+  def initialize(podcast_config:, gcs_uploader:, episode_manifest:, duration_calculator: nil)
     @podcast_config = podcast_config
     @gcs_uploader = gcs_uploader
     @episode_manifest = episode_manifest
+    @duration_calculator = duration_calculator || method(:calculate_duration_from_mp3)
   end
 
   # Publish episode to podcast feed
@@ -20,8 +24,14 @@ class PodcastPublisher
   def publish(audio_content:, metadata:)
     guid = EpisodeManifest.generate_guid(metadata["title"])
     mp3_url = upload_mp3(audio_content: audio_content, guid: guid)
-    episode_data = build_episode_data(metadata: metadata, guid: guid, mp3_url: mp3_url,
-                                      file_size: audio_content.bytesize)
+    duration_seconds = @duration_calculator.call(audio_content)
+    episode_data = build_episode_data(
+      metadata: metadata,
+      guid: guid,
+      mp3_url: mp3_url,
+      file_size: audio_content.bytesize,
+      duration_seconds: duration_seconds
+    )
 
     update_manifest(episode_data)
     upload_rss_feed
@@ -36,7 +46,16 @@ class PodcastPublisher
     @gcs_uploader.upload_content(content: audio_content, remote_path: remote_path)
   end
 
-  def build_episode_data(metadata:, guid:, mp3_url:, file_size:)
+  def calculate_duration_from_mp3(audio_content)
+    Tempfile.create(["episode", ".mp3"]) do |temp_file|
+      temp_file.binmode
+      temp_file.write(audio_content)
+      temp_file.flush
+      Mp3Info.open(temp_file.path) { |mp3| mp3.length.round }
+    end
+  end
+
+  def build_episode_data(metadata:, guid:, mp3_url:, file_size:, duration_seconds:)
     {
       "id" => guid,
       "title" => metadata["title"],
@@ -44,6 +63,7 @@ class PodcastPublisher
       "author" => metadata["author"],
       "mp3_url" => mp3_url,
       "file_size_bytes" => file_size,
+      "duration_seconds" => duration_seconds,
       "published_at" => Time.now.utc.iso8601,
       "guid" => guid
     }

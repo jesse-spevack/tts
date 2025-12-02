@@ -10,10 +10,12 @@ class TestPodcastPublisher < Minitest::Test
     }
     @mock_uploader = MockGCSUploaderForPublisher.new
     @mock_manifest = MockEpisodeManifestForPublisher.new
+    @mock_duration_calculator = ->(_audio) { 60 }
     @publisher = PodcastPublisher.new(
       podcast_config: @podcast_config,
       gcs_uploader: @mock_uploader,
-      episode_manifest: @mock_manifest
+      episode_manifest: @mock_manifest,
+      duration_calculator: @mock_duration_calculator
     )
 
     # Create fake audio content
@@ -59,6 +61,22 @@ class TestPodcastPublisher < Minitest::Test
     assert_equal "Test", episode_data["description"]
     assert_equal @audio_content.bytesize, episode_data["file_size_bytes"]
     assert_match(/^\d{8}-\d{6}-test-episode$/, episode_data["id"])
+  end
+
+  def test_publish_returns_duration_seconds
+    mock_calculator = ->(_audio) { 125 }
+    publisher = PodcastPublisher.new(
+      podcast_config: @podcast_config,
+      gcs_uploader: @mock_uploader,
+      episode_manifest: @mock_manifest,
+      duration_calculator: mock_calculator
+    )
+    metadata = { "title" => "Test Episode", "description" => "Test" }
+
+    episode_data = publisher.publish(audio_content: @audio_content, metadata: metadata)
+
+    assert episode_data.key?("duration_seconds"), "Expected episode_data to include duration_seconds"
+    assert_equal 125, episode_data["duration_seconds"]
   end
 end
 
