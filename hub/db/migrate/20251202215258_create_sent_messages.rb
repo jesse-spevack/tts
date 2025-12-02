@@ -7,6 +7,6 @@ class CreateSentMessages < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :sent_messages, [:user_id, :message_type], unique: true
+    add_index :sent_messages, [ :user_id, :message_type ], unique: true
   end
 end

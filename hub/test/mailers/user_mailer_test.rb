@@ -5,7 +5,7 @@ class UserMailerTest < ActionMailer::TestCase
     episode = episodes(:two)  # This fixture has status: complete
     mail = UserMailer.first_episode_ready(episode: episode)
 
-    assert_equal [episode.user.email_address], mail.to
+    assert_equal [ episode.user.email_address ], mail.to
   end
 
   test "first_episode_ready has correct subject" do
