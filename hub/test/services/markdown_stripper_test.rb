@@ -11,4 +11,24 @@ class MarkdownStripperTest < ActiveSupport::TestCase
     assert_equal "Subtitle", MarkdownStripper.strip("## Subtitle")
     assert_equal "Deep", MarkdownStripper.strip("###### Deep")
   end
+
+  test "removes bold formatting with asterisks" do
+    assert_equal "bold text", MarkdownStripper.strip("**bold text**")
+  end
+
+  test "removes bold formatting with underscores" do
+    assert_equal "bold text", MarkdownStripper.strip("__bold text__")
+  end
+
+  test "removes italic formatting with asterisks" do
+    assert_equal "italic text", MarkdownStripper.strip("*italic text*")
+  end
+
+  test "removes italic formatting with underscores" do
+    assert_equal "italic text", MarkdownStripper.strip("_italic text_")
+  end
+
+  test "removes strikethrough" do
+    assert_equal "deleted", MarkdownStripper.strip("~~deleted~~")
+  end
 end

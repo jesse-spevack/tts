@@ -6,10 +6,21 @@ module MarkdownStripper
 
     text = text.dup
     text = remove_headers(text)
+    text = remove_formatting(text)
+    text = remove_strikethrough(text)
     text.strip
   end
 
   def self.remove_headers(text)
     text.gsub(/^\#{1,6}\s+/, "")
+  end
+
+  def self.remove_formatting(text)
+    text = text.gsub(/(\*\*|__)(.*?)\1/, '\2')
+    text.gsub(/(\*|_)(.*?)\1/, '\2')
+  end
+
+  def self.remove_strikethrough(text)
+    text.gsub(/~~(.*?)~~/, '\1')
   end
 end
