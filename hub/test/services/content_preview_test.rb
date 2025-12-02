@@ -47,4 +47,47 @@ class ContentPreviewTest < ActiveSupport::TestCase
     result = ContentPreview.generate(text_with_whitespace)
     assert_equal "Hello world", result
   end
+
+  test "strips markdown headers before generating preview" do
+    markdown = "# Title\n\nThis is the content"
+    result = ContentPreview.generate(markdown)
+    refute_includes result, "#"
+    assert_includes result, "Title"
+  end
+
+  test "strips markdown formatting before generating preview" do
+    markdown = "**Bold** and *italic* text"
+    result = ContentPreview.generate(markdown)
+    refute_includes result, "*"
+    assert_includes result, "Bold"
+    assert_includes result, "italic"
+  end
+
+  test "strips markdown links before generating preview" do
+    markdown = "Click [here](https://example.com) to continue"
+    result = ContentPreview.generate(markdown)
+    refute_includes result, "["
+    refute_includes result, "]"
+    refute_includes result, "("
+    assert_includes result, "here"
+  end
+
+  test "strips complex markdown document" do
+    markdown = <<~MD
+      # Welcome
+
+      This is **important** content with a [link](http://example.com).
+
+      - Item one
+      - Item two
+
+      > A quote here
+    MD
+    result = ContentPreview.generate(markdown)
+    refute_includes result, "#"
+    refute_includes result, "**"
+    refute_includes result, "["
+    refute_includes result, "-"
+    refute_includes result, ">"
+  end
 end

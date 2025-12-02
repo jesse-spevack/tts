@@ -7,7 +7,7 @@ class ContentPreview
   def self.generate(text)
     return nil if text.nil?
 
-    text = text.strip
+    text = MarkdownStripper.strip(text)
     return text if text.empty?
 
     # If text is short enough, return as-is
