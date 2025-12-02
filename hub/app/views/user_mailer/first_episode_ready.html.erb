@@ -1,0 +1,15 @@
+<h1>Your episode is ready!</h1>
+
+<p>Your episode "<strong><%= @episode.title %></strong>" has been converted to audio.</p>
+
+<h2>Add your podcast to any podcast app:</h2>
+
+<p>Copy this RSS feed URL and paste it into your favorite podcast app:</p>
+
+<p style="background-color: #f4f4f4; padding: 12px; font-family: monospace; word-break: break-all;">
+  <%= @feed_url %>
+</p>
+
+<p>
+  <%= link_to "Need help? Learn how to add a private RSS feed →", @help_url %>
+</p>
