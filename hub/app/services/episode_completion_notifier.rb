@@ -18,7 +18,7 @@ class EpisodeCompletionNotifier
   attr_reader :episode
 
   def send_first_episode_email
-    return unless RecordSentMessage.call(user: episode.user, message_type: "first_episode_ready")
+    return unless RecordSentMessage.call(user: episode.user, message_type: SentMessage::FIRST_EPISODE_READY)
 
     UserMailer.first_episode_ready(episode:).deliver_later
   end

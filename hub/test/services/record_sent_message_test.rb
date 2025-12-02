@@ -32,4 +32,15 @@ class RecordSentMessageTest < ActiveSupport::TestCase
     assert RecordSentMessage.call(user:, message_type: "welcome")
     assert_equal 2, SentMessage.where(user:).count
   end
+
+  test "handles concurrent creation attempts gracefully" do
+    user = users(:one)
+    threads = 5.times.map do
+      Thread.new { RecordSentMessage.call(user:, message_type: "first_episode_ready") }
+    end
+    results = threads.map(&:value)
+
+    assert_equal 1, results.count(true)
+    assert_equal 1, SentMessage.where(user:, message_type: "first_episode_ready").count
+  end
 end

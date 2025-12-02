@@ -9,17 +9,13 @@ class RecordSentMessage
   end
 
   def call
-    return false if already_sent?
-
     SentMessage.create!(user:, message_type:)
     true
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    false
   end
 
   private
 
   attr_reader :user, :message_type
-
-  def already_sent?
-    SentMessage.exists?(user:, message_type:)
-  end
 end
