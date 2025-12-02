@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_02_161658) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_02_215258) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -75,6 +75,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_161658) do
     t.index ["podcast_id"], name: "index_podcasts_on_podcast_id", unique: true
   end
 
+  create_table "sent_messages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "message_type", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "message_type"], name: "index_sent_messages_on_user_id_and_message_type", unique: true
+    t.index ["user_id"], name: "index_sent_messages_on_user_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -102,5 +111,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_161658) do
   add_foreign_key "llm_usages", "episodes"
   add_foreign_key "podcast_memberships", "podcasts"
   add_foreign_key "podcast_memberships", "users"
+  add_foreign_key "sent_messages", "users"
   add_foreign_key "sessions", "users"
 end
