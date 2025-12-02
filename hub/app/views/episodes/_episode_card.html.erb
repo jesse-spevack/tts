@@ -13,5 +13,10 @@
       <span>by <%= episode.author %></span>
       <span><%= episode.created_at.strftime("%b %d, %Y") %></span>
     </div>
+    <% if episode.content_preview.present? %>
+      <p class="mt-2 text-xs text-[var(--color-subtext)] font-mono truncate">
+        <%= episode.content_preview %>
+      </p>
+    <% end %>
   <% end %>
 <% end %>
