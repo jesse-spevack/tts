@@ -125,4 +125,27 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert_nil episode.audio_url
   end
+
+  test "validates duration_seconds is positive" do
+    episode = episodes(:one)
+    episode.duration_seconds = -1
+    episode.valid?
+
+    assert_includes episode.errors[:duration_seconds], "must be greater than 0"
+  end
+
+  test "validates duration_seconds max is 24 hours" do
+    episode = episodes(:one)
+    episode.duration_seconds = 86_401
+    episode.valid?
+
+    assert_includes episode.errors[:duration_seconds], "must be less than or equal to 86400"
+  end
+
+  test "allows nil duration_seconds" do
+    episode = episodes(:one)
+    episode.duration_seconds = nil
+
+    assert episode.valid?
+  end
 end

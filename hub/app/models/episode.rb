@@ -11,6 +11,7 @@ class Episode < ApplicationRecord
   validates :source_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { source_url.present? }
   validates :author, presence: true, length: { maximum: 255 }
   validates :description, presence: true, length: { maximum: 1000 }
+  validates :duration_seconds, numericality: { greater_than: 0, less_than_or_equal_to: 86_400 }, allow_nil: true
 
   scope :newest_first, -> { order(created_at: :desc) }
 

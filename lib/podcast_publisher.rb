@@ -48,7 +48,7 @@ class PodcastPublisher
     Tempfile.create(["episode", ".mp3"]) do |temp_file|
       temp_file.binmode
       temp_file.write(audio_content)
-      temp_file.flush
+      temp_file.close
       Mp3Info.open(temp_file.path) { |mp3| mp3.length.round }
     end
   end
