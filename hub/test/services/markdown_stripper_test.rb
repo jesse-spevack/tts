@@ -52,4 +52,20 @@ class MarkdownStripperTest < ActiveSupport::TestCase
   test "removes inline code but keeps content" do
     assert_equal "use the function method", MarkdownStripper.strip("use the `function` method")
   end
+
+  test "removes unordered list markers" do
+    assert_equal "item one\nitem two", MarkdownStripper.strip("- item one\n- item two")
+  end
+
+  test "removes ordered list markers" do
+    assert_equal "first\nsecond", MarkdownStripper.strip("1. first\n2. second")
+  end
+
+  test "removes blockquote markers" do
+    assert_equal "quoted text", MarkdownStripper.strip("> quoted text")
+  end
+
+  test "removes horizontal rules" do
+    assert_equal "Above\n\nBelow", MarkdownStripper.strip("Above\n---\nBelow")
+  end
 end

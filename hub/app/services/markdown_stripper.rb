@@ -20,6 +20,10 @@ module MarkdownStripper
     text = remove_formatting(text)
     text = remove_strikethrough(text)
     text = remove_inline_code(text)
+    text = remove_unordered_lists(text)
+    text = remove_ordered_lists(text)
+    text = remove_blockquotes(text)
+    text = remove_horizontal_rules(text)
     text.strip
   end
 
@@ -50,5 +54,21 @@ module MarkdownStripper
 
   def self.remove_strikethrough(text)
     text.gsub(/~~(.*?)~~/, '\1')
+  end
+
+  def self.remove_unordered_lists(text)
+    text.gsub(/^\s*[-*+]\s+/, "")
+  end
+
+  def self.remove_ordered_lists(text)
+    text.gsub(/^\s*\d+\.\s+/, "")
+  end
+
+  def self.remove_blockquotes(text)
+    text.gsub(/^\s*>\s?/, "")
+  end
+
+  def self.remove_horizontal_rules(text)
+    text.gsub(/^(\*{3,}|-{3,}|_{3,})$/, "")
   end
 end
