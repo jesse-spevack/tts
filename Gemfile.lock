@@ -200,6 +200,7 @@ GEM
     rubocop-ast (1.47.1)
       parser (>= 3.3.7.2)
       prism (~> 1.4)
+    ruby-mp3info (0.8.10)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     signet (0.21.0)
@@ -250,6 +251,7 @@ DEPENDENCIES
   rack-test (~> 2.1)
   rackup
   rubocop
+  ruby-mp3info
   sinatra (~> 4.0)
   sinatra-contrib (~> 4.0)
   webmock
