@@ -8,6 +8,7 @@ gem "minitest"
 
 # TTS providers
 gem "google-cloud-text_to_speech", "~> 2.0"
+gem "ruby-mp3info"
 
 # Podcast feed
 gem "builder"

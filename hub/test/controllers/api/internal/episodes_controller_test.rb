@@ -23,7 +23,8 @@ module Api
           params: {
             status: "complete",
             gcs_episode_id: "episode_abc123",
-            audio_size_bytes: 1_000_000
+            audio_size_bytes: 1_000_000,
+            duration_seconds: 754
           }.to_json,
           headers: {
             "Content-Type" => "application/json",
@@ -35,6 +36,7 @@ module Api
         assert_equal "complete", @episode.status
         assert_equal "episode_abc123", @episode.gcs_episode_id
         assert_equal 1_000_000, @episode.audio_size_bytes
+        assert_equal 754, @episode.duration_seconds
       end
 
       test "update marks episode failed with error message" do

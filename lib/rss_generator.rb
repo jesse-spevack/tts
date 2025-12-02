@@ -74,6 +74,16 @@ class RSSGenerator
 
       pubdate = Time.parse(episode["published_at"])
       xml.pubDate pubdate.rfc2822
+
+      add_duration(xml, episode["duration_seconds"])
     end
+  end
+
+  def add_duration(xml, duration_seconds)
+    return unless duration_seconds
+
+    minutes = duration_seconds / 60
+    seconds = duration_seconds % 60
+    xml.tag! "itunes:duration", format("%<min>d:%<sec>02d", min: minutes, sec: seconds)
   end
 end

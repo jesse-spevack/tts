@@ -27,4 +27,14 @@ class EpisodesHelperTest < ActionView::TestCase
     assert_includes result, "Pending"
     assert_includes result, "var(--color-yellow)"
   end
+
+  test "format_duration formats seconds as MM:SS" do
+    assert_equal "12:34", format_duration(754)
+    assert_equal "0:05", format_duration(5)
+    assert_equal "60:00", format_duration(3600)
+  end
+
+  test "format_duration returns nil for nil input" do
+    assert_nil format_duration(nil)
+  end
 end

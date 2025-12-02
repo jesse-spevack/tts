@@ -26,6 +26,14 @@ module EpisodesHelper
     end
   end
 
+  def format_duration(duration_seconds)
+    return nil unless duration_seconds
+
+    minutes = duration_seconds / 60
+    seconds = duration_seconds % 60
+    format("%d:%02d", minutes, seconds)
+  end
+
   # Keep old method for backwards compatibility during migration
   def status_class(status)
     case status

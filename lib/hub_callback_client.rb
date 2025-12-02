@@ -12,7 +12,8 @@ class HubCallbackClient
     patch_episode(episode_id, {
       status: "complete",
       gcs_episode_id: episode_data["id"],
-      audio_size_bytes: episode_data["file_size_bytes"]
+      audio_size_bytes: episode_data["file_size_bytes"],
+      duration_seconds: episode_data["duration_seconds"]
     })
   end
 

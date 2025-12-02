@@ -13,7 +13,8 @@ class TestHubCallbackClient < Minitest::Test
     episode_id = 123
     episode_data = {
       "id" => "episode_abc123",
-      "file_size_bytes" => 5_242_880
+      "file_size_bytes" => 5_242_880,
+      "duration_seconds" => 754
     }
 
     stub_request(:patch, "#{@hub_url}/api/internal/episodes/#{episode_id}")
@@ -25,7 +26,8 @@ class TestHubCallbackClient < Minitest::Test
         body: {
           status: "complete",
           gcs_episode_id: "episode_abc123",
-          audio_size_bytes: 5_242_880
+          audio_size_bytes: 5_242_880,
+          duration_seconds: 754
         }.to_json
       )
       .to_return(status: 200, body: '{"status":"success"}')
