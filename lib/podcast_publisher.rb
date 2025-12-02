@@ -9,12 +9,10 @@ class PodcastPublisher
   # @param podcast_config [Hash] Podcast-level configuration
   # @param gcs_uploader [GCSUploader] GCS uploader instance
   # @param episode_manifest [EpisodeManifest] Episode manifest instance
-  # @param duration_calculator [Proc] Optional callable for calculating duration (for testing)
-  def initialize(podcast_config:, gcs_uploader:, episode_manifest:, duration_calculator: nil)
+  def initialize(podcast_config:, gcs_uploader:, episode_manifest:)
     @podcast_config = podcast_config
     @gcs_uploader = gcs_uploader
     @episode_manifest = episode_manifest
-    @duration_calculator = duration_calculator || method(:calculate_duration_from_mp3)
   end
 
   # Publish episode to podcast feed
@@ -24,7 +22,7 @@ class PodcastPublisher
   def publish(audio_content:, metadata:)
     guid = EpisodeManifest.generate_guid(metadata["title"])
     mp3_url = upload_mp3(audio_content: audio_content, guid: guid)
-    duration_seconds = @duration_calculator.call(audio_content)
+    duration_seconds = calculate_duration(audio_content)
     episode_data = build_episode_data(
       metadata: metadata,
       guid: guid,
@@ -46,7 +44,7 @@ class PodcastPublisher
     @gcs_uploader.upload_content(content: audio_content, remote_path: remote_path)
   end
 
-  def calculate_duration_from_mp3(audio_content)
+  def calculate_duration(audio_content)
     Tempfile.create(["episode", ".mp3"]) do |temp_file|
       temp_file.binmode
       temp_file.write(audio_content)
