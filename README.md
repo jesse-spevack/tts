@@ -172,7 +172,6 @@ gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"episod
 
 ## Known Limitations
 
-- Episode duration not tracked in metadata
 - No automatic retry if Generator callback to Hub fails
 - No processing timeout for stuck episodes
 - Single podcast per user
