@@ -3,7 +3,7 @@ class UserMailer < ApplicationMailer
     @episode = episode
     @user = episode.user
     @feed_url = episode.podcast.feed_url
-    @help_url = "#{root_url}help/add-rss-feed"
+    @help_url = help_add_rss_feed_url
 
     mail(
       to: @user.email_address,

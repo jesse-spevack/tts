@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   # Static pages
   get "terms", to: "pages#terms"
   get "how-it-sounds", to: "pages#how_it_sounds"
+  get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
 
   namespace :api do
     namespace :internal do
