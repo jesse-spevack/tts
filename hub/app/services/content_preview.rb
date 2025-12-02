@@ -18,9 +18,9 @@ class ContentPreview
     start_chars = PREVIEW_LENGTH - ELLIPSIS.length
     end_chars = PREVIEW_LENGTH - ELLIPSIS.length
 
-    start_part = text[0, start_chars].strip + ELLIPSIS
-    end_part = ELLIPSIS + text[-end_chars, end_chars].strip
+    start_part = text[0, start_chars].strip
+    end_part = text[-end_chars, end_chars].strip
 
-    "#{start_part}\" \"#{end_part}"
+    "#{start_part}... #{end_part}"
   end
 end

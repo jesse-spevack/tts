@@ -203,7 +203,8 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_not_nil result.episode.content_preview
-    assert result.episode.content_preview.start_with?("A" * 57 + "...")
-    assert result.episode.content_preview.end_with?("..." + "Z" * 57)
+    assert result.episode.content_preview.start_with?("A" * 57)
+    assert result.episode.content_preview.include?("... ")
+    assert result.episode.content_preview.end_with?("Z" * 57)
   end
 end

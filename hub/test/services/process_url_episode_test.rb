@@ -137,8 +137,9 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     @episode.reload
     assert_not_nil @episode.content_preview, "content_preview should be set; episode status: #{@episode.status}, error: #{@episode.error_message}"
-    assert @episode.content_preview.start_with?("B" * 57 + "...")
-    assert @episode.content_preview.end_with?("..." + "X" * 57)
+    assert @episode.content_preview.start_with?("B" * 57)
+    assert @episode.content_preview.include?("... ")
+    assert @episode.content_preview.end_with?("X" * 57)
   end
 
   teardown do
