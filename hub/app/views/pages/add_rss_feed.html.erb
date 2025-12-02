@@ -1,0 +1,49 @@
+<% content_for :raw_body do %>
+  <div class="bg-[var(--color-base)] px-6 py-16 lg:px-8">
+    <div class="mx-auto max-w-3xl text-base/7 text-[var(--color-text)]">
+      <p class="text-base/7 font-semibold text-[var(--color-primary)]">Help</p>
+      <h1 class="mt-2 text-4xl font-semibold tracking-tight text-pretty sm:text-5xl">How to add your private podcast feed</h1>
+      <p class="mt-6 text-xl/8 text-[var(--color-subtext)]">
+        Copy your RSS feed URL from your episodes page, then follow the instructions for your podcast app below.
+      </p>
+
+      <div class="mt-10 max-w-2xl text-[var(--color-subtext)]">
+        <h2 class="mt-8 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Apple Podcasts (iPhone)</h2>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li>Open the <strong class="text-[var(--color-text)]">Apple Podcasts</strong> app</li>
+          <li>Tap <strong class="text-[var(--color-text)]">Library</strong> at the bottom</li>
+          <li>Tap <strong class="text-[var(--color-text)]">&#x22EE;</strong> (three dots) in the top right</li>
+          <li>Tap <strong class="text-[var(--color-text)]">Add a Show by URL</strong></li>
+          <li>Paste your RSS feed URL and tap <strong class="text-[var(--color-text)]">Follow</strong></li>
+        </ol>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Overcast</h2>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li>Open <strong class="text-[var(--color-text)]">Overcast</strong></li>
+          <li>Tap the <strong class="text-[var(--color-text)]">+</strong> button</li>
+          <li>Tap <strong class="text-[var(--color-text)]">Add URL</strong></li>
+          <li>Paste your RSS feed URL and tap <strong class="text-[var(--color-text)]">Add</strong></li>
+        </ol>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Pocket Casts</h2>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li>Open <strong class="text-[var(--color-text)]">Pocket Casts</strong></li>
+          <li>Tap <strong class="text-[var(--color-text)]">Search</strong> (magnifying glass)</li>
+          <li>Scroll down and tap <strong class="text-[var(--color-text)]">Submit RSS Feed</strong></li>
+          <li>Paste your RSS feed URL and tap <strong class="text-[var(--color-text)]">Subscribe</strong></li>
+        </ol>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Other Apps</h2>
+        <p class="mt-4">
+          Most podcast apps have an "Add by URL" or "Add RSS feed" option in their menu. Look for it in settings or when adding a new podcast.
+        </p>
+
+        <div class="mt-12 pt-8 border-t border-[var(--color-overlay0)]">
+          <p>
+            <%= link_to "← Back to your episodes", episodes_path, class: "text-[var(--color-primary)] hover:underline" %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -10,4 +10,7 @@ class PagesController < ApplicationController
 
   def terms
   end
+
+  def add_rss_feed
+  end
 end

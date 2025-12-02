@@ -183,6 +183,44 @@ module Api
         @episode.reload
         assert_equal "failed", @episode.status
       end
+
+      test "calls EpisodeCompletionNotifier when episode completes" do
+        @episode.update!(status: "pending")
+
+        assert_emails 1 do
+          patch api_internal_episode_url(@episode),
+            params: { status: "complete", gcs_episode_id: "episode_abc123" }.to_json,
+            headers: { "Content-Type" => "application/json", "X-Generator-Secret" => @secret }
+        end
+      end
+
+      test "does not send email when episode fails" do
+        @episode.update!(status: "pending")
+
+        assert_no_emails do
+          patch api_internal_episode_url(@episode),
+            params: { status: "failed", error_message: "Processing error" }.to_json,
+            headers: { "Content-Type" => "application/json", "X-Generator-Secret" => @secret }
+        end
+      end
+
+      test "does not send duplicate emails on repeated completion updates" do
+        @episode.update!(status: "pending")
+
+        # First completion - should send email
+        assert_emails 1 do
+          patch api_internal_episode_url(@episode),
+            params: { status: "complete", gcs_episode_id: "episode_abc123" }.to_json,
+            headers: { "Content-Type" => "application/json", "X-Generator-Secret" => @secret }
+        end
+
+        # Second completion - should not send email
+        assert_no_emails do
+          patch api_internal_episode_url(@episode),
+            params: { status: "complete", gcs_episode_id: "episode_abc123" }.to_json,
+            headers: { "Content-Type" => "application/json", "X-Generator-Secret" => @secret }
+        end
+      end
     end
   end
 end

@@ -6,6 +6,7 @@ module Api
       def update
         if @episode.update(episode_params)
           RefundEpisodeUsage.call(user: @episode.user) if @episode.failed?
+          notify_completion if @episode.complete?
           Rails.logger.info "event=episode_callback_received episode_id=#{@episode.id} status=#{@episode.status}"
           render json: { status: "success" }
         else
@@ -25,6 +26,12 @@ module Api
 
       def episode_params
         params.permit(:status, :gcs_episode_id, :audio_size_bytes, :duration_seconds, :error_message)
+      end
+
+      def notify_completion
+        EpisodeCompletionNotifier.call(episode: @episode)
+      rescue StandardError => e
+        Rails.logger.error "event=episode_notification_failed episode_id=#{@episode.id} error=#{e.message}"
       end
     end
   end
