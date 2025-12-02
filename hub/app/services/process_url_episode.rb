@@ -83,16 +83,19 @@ class ProcessUrlEpisode
   end
 
   def update_and_enqueue
+    content = @llm_result.content
+
     Episode.transaction do
       episode.update!(
         title: @extract_result.title || @llm_result.title,
         author: @extract_result.author || @llm_result.author,
-        description: @llm_result.description
+        description: @llm_result.description,
+        content_preview: ContentPreview.generate(content)
       )
 
       log_info "episode_metadata_updated"
 
-      UploadAndEnqueueEpisode.call(episode: episode, content: @llm_result.content)
+      UploadAndEnqueueEpisode.call(episode: episode, content: content)
     end
   end
 
