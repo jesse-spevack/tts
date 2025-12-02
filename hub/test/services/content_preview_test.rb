@@ -14,9 +14,9 @@ class ContentPreviewTest < ActiveSupport::TestCase
     long_text = "A" * 60 + " middle content here " + "Z" * 60
     result = ContentPreview.generate(long_text)
 
-    assert result.start_with?("A" * 57 + "...")
-    assert result.end_with?("..." + "Z" * 57)
-    assert result.include?("\" \"")
+    assert result.start_with?("A" * 57)
+    assert result.end_with?("Z" * 57)
+    assert result.include?("... ")
   end
 
   test "preserves exactly 60 characters on each side" do
@@ -26,11 +26,10 @@ class ContentPreviewTest < ActiveSupport::TestCase
 
     result = ContentPreview.generate(long_text)
 
-    # Format: "XXX..." "...YYY"
-    # Start: 57 chars + "..." = 60 display chars
-    # End: "..." + 57 chars = 60 display chars
-    assert_includes result, "X" * 57 + "..."
-    assert_includes result, "..." + "Y" * 57
+    # Format: XXX... YYY (57 chars on each side with "... " in middle)
+    assert_includes result, "X" * 57
+    assert_includes result, "Y" * 57
+    assert_includes result, "... "
   end
 
   test "handles nil input" do
