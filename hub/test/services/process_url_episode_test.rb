@@ -35,7 +35,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       content: "Article content here."
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
@@ -105,7 +105,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       content: "Article content here."
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
@@ -130,7 +130,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
       content: long_content
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any, user: m.any) }.with { mock_llm_result }
+    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
