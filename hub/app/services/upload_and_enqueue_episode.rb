@@ -26,9 +26,8 @@ class UploadAndEnqueueEpisode
 
   def upload_to_staging
     filename = "#{episode.id}-#{Time.now.to_i}.txt"
-    plain_text = MarkdownStripper.strip(content)
 
-    gcs_uploader.upload_staging_file(content: plain_text, filename: filename)
+    gcs_uploader.upload_staging_file(content: content, filename: filename)
   end
 
   def enqueue_processing(staging_path)
