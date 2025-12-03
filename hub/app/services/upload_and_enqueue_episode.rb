@@ -25,7 +25,7 @@ class UploadAndEnqueueEpisode
   attr_reader :episode, :content
 
   def upload_to_staging
-    filename = "#{episode.id}-#{Time.now.to_i}.md"
+    filename = "#{episode.id}-#{Time.now.to_i}.txt"
 
     gcs_uploader.upload_staging_file(content: content, filename: filename)
   end

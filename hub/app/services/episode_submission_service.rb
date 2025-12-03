@@ -26,14 +26,15 @@ class EpisodeSubmissionService
       return validation_result if validation_result
     end
 
-    content = uploaded_file.read
+    raw_content = uploaded_file.read
+    plain_text = MarkdownStripper.strip(raw_content)
 
-    episode = build_episode(content: content)
+    episode = build_episode(plain_text: plain_text)
     return Result.failure(episode) unless episode.save
 
     Rails.logger.info "event=episode_created episode_id=#{episode.id} podcast_id=#{podcast.podcast_id} user_id=#{user.id} title=\"#{episode.title}\""
 
-    UploadAndEnqueueEpisode.call(episode: episode, content: content)
+    UploadAndEnqueueEpisode.call(episode: episode, content: plain_text)
 
     Result.success(episode)
   rescue Google::Cloud::Error => e
@@ -50,13 +51,13 @@ class EpisodeSubmissionService
 
   attr_reader :podcast, :user, :params, :uploaded_file, :max_characters
 
-  def build_episode(content: nil)
+  def build_episode(plain_text: nil)
     podcast.episodes.build(
       user: user,
       title: params[:title],
       author: params[:author],
       description: params[:description],
-      content_preview: ContentPreview.generate(content)
+      content_preview: ContentPreview.generate(plain_text)
     )
   end
 

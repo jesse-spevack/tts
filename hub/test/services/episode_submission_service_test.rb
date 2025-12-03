@@ -55,7 +55,7 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
     assert result.episode.errors.any?
   end
 
-  test "calls UploadAndEnqueueEpisode with episode and content" do
+  test "calls UploadAndEnqueueEpisode with episode and stripped plain text" do
     stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { nil }
 
     result = EpisodeSubmissionService.call(
@@ -67,11 +67,13 @@ class EpisodeSubmissionServiceTest < ActiveSupport::TestCase
 
     assert result.success?
 
-    # Verify UploadAndEnqueueEpisode was called
+    # Verify UploadAndEnqueueEpisode was called with plain text (markdown stripped)
     call = Mocktail.calls(UploadAndEnqueueEpisode, :call).first
     assert_not_nil call
     assert_equal result.episode, call.kwargs[:episode]
+    # Should have "Test Content" but NOT the markdown "#" header
     assert_includes call.kwargs[:content], "Test Content"
+    refute_includes call.kwargs[:content], "#"
   end
 
   test "does not call UploadAndEnqueueEpisode when episode save fails" do

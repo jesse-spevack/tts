@@ -1,6 +1,5 @@
 require "yaml"
 require "fileutils"
-require_relative "text_processor"
 require_relative "tts"
 require_relative "podcast_publisher"
 require_relative "gcs_uploader"
@@ -8,7 +7,7 @@ require_relative "episode_manifest"
 require_relative "filename_generator"
 require_relative "podcast_id_validator"
 
-# Orchestrates episode processing from markdown to published podcast
+# Orchestrates episode processing from plain text to published podcast
 # Reuses all existing infrastructure from generate.rb
 class EpisodeProcessor
   attr_reader :bucket_name, :podcast_id
@@ -27,22 +26,17 @@ class EpisodeProcessor
   # @param title [String] Episode title
   # @param author [String] Episode author
   # @param description [String] Episode description
-  # @param markdown_content [String] Article body in markdown
-  def process(title:, author:, description:, markdown_content:, voice_name: nil)
+  # @param text_content [String] Article body in plain text (markdown already stripped by Hub)
+  def process(title:, author:, description:, text_content:, voice_name: nil)
     print_start(title)
 
-    # Step 1: Convert markdown to plain text
-    text = TextProcessor.convert_to_plain_text(markdown_content)
-    log_or_puts "✓ Processed #{text.length} characters"
-
-    # Step 2: Generate TTS audio
-    log_or_puts "\n[2/3] Generating TTS audio..."
+    log_or_puts "\n[1/2] Generating TTS audio..."
     config = voice_name ? TTS::Config.new(voice_name: voice_name) : TTS::Config.new
     tts = TTS.new(config: config)
-    audio_content = tts.synthesize(text)
+    audio_content = tts.synthesize(text_content)
     log_or_puts "✓ Generated #{format_size(audio_content.bytesize)} of audio"
 
-    # Step 3: Publish to podcast feed (no temp file!)
+    # Step 2: Publish to podcast feed
     episode_data = publish_to_feed(audio_content: audio_content, title: title, author: author, description: description)
 
     print_success(title)
@@ -53,7 +47,7 @@ class EpisodeProcessor
   private
 
   def publish_to_feed(audio_content:, title:, author:, description:)
-    log_or_puts "\n[3/3] Publishing to feed..."
+    log_or_puts "\n[2/2] Publishing to feed..."
 
     podcast_config = YAML.safe_load_file("config/podcast.yml")
     gcs_uploader = GCSUploader.new(@bucket_name, podcast_id: @podcast_id)
