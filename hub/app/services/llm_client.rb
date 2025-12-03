@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LlmClient
-  DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20"
+  DEFAULT_MODEL = "gemini-2.5-flash"
   PROVIDER = :vertexai
 
   def initialize(model: DEFAULT_MODEL)
