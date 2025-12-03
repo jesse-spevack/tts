@@ -11,7 +11,6 @@ class LlmClientTest < ActiveSupport::TestCase
   test "ask sends prompt to RubyLLM chat with provider" do
     mock_response = OpenStruct.new(content: "response", input_tokens: 10, output_tokens: 5)
     mock_chat = Object.new
-    mock_chat.define_singleton_method(:with_params) { |**_params| self }
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
     stubs { RubyLLM.chat(model: LlmClient::DEFAULT_MODEL, provider: LlmClient::PROVIDER) }.with { mock_chat }
@@ -26,7 +25,6 @@ class LlmClientTest < ActiveSupport::TestCase
     custom_model = "gemini-1.5-flash"
     mock_response = OpenStruct.new(content: "response")
     mock_chat = Object.new
-    mock_chat.define_singleton_method(:with_params) { |**_params| self }
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
     stubs { RubyLLM.chat(model: custom_model, provider: LlmClient::PROVIDER) }.with { mock_chat }
