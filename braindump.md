@@ -7,7 +7,8 @@
 - [ ] Add TTL to MP3s in GCS (retention policy for cost management)
 - [ ] Update the landing page design 
 - [ ] Consolidate mocking libraries (both Minitest::Mock and Mocktail in use)
-- [ ] Unlimited users should get better LLM model 
+- [ ] Unlimited users should get better LLM model
+- [ ] Audit codebase for unused method arguments (RuboCop doesn't catch args stored but never read)
 
 
 
