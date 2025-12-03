@@ -7,7 +7,6 @@ class LlmProcessorTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @text = "This is some article content about technology trends."
-    @user = users(:one)
 
     Mocktail.replace(LlmClient)
     Mocktail.replace(RecordLlmUsage)
@@ -26,7 +25,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal "Technology Trends", result.title
@@ -40,7 +39,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stubs { |m| mock_client.ask(m.any) }.with { raise RubyLLM::Error.new("API error", response: nil) }
     stubs { LlmClient.new }.with { mock_client }
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.failure?
     assert_equal "Failed to process content", result.error
@@ -50,7 +49,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     mock_response = mock_llm_response(content: "not valid json")
     stub_llm_client(mock_response)
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.failure?
     assert_equal "Failed to process content", result.error
@@ -63,7 +62,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal "Test", result.title
@@ -77,7 +76,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     )
     stub_llm_client(mock_response)
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.failure?
     assert_equal "Failed to process content", result.error
@@ -89,7 +88,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     )
     stub_llm_client(mock_response)
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.failure?
     assert_equal "Failed to process content", result.error
@@ -102,7 +101,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal "Untitled", result.title
@@ -115,7 +114,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal "Unknown", result.author
@@ -129,7 +128,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal 255, result.title.length
@@ -143,7 +142,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     stub_llm_client(mock_response)
     stub_record_usage
 
-    result = LlmProcessor.call(text: @text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: @text, episode: @episode)
 
     assert result.success?
     assert_equal "Untitled", result.title
@@ -155,7 +154,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
   test "fails when input text exceeds max length" do
     large_text = "x" * 150_000
 
-    result = LlmProcessor.call(text: large_text, episode: @episode, user: @user)
+    result = LlmProcessor.call(text: large_text, episode: @episode)
 
     assert result.failure?
     assert_equal "Article content too large for processing", result.error

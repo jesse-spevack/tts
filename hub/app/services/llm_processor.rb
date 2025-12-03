@@ -6,14 +6,13 @@ class LlmProcessor
   MAX_AUTHOR_LENGTH = 255
   MAX_DESCRIPTION_LENGTH = 1000
 
-  def self.call(text:, episode:, user:)
-    new(text: text, episode: episode, user: user).call
+  def self.call(text:, episode:)
+    new(text: text, episode: episode).call
   end
 
-  def initialize(text:, episode:, user:)
+  def initialize(text:, episode:)
     @text = text
     @episode = episode
-    @user = user
   end
 
   def call
@@ -52,7 +51,7 @@ class LlmProcessor
 
   private
 
-  attr_reader :text, :episode, :user
+  attr_reader :text, :episode
 
   def llm_client
     @llm_client ||= LlmClient.new
