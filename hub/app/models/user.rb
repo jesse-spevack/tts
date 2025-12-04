@@ -17,9 +17,11 @@ class User < ApplicationRecord
   }
 
   def voice
-    return Voice.find(voice_preference)[:google_voice] if voice_preference.present?
-
-    unlimited? ? "en-GB-Chirp3-HD-Enceladus" : "en-GB-Standard-D"
+    if voice_preference.present?
+      voice_data = Voice.find(voice_preference)
+      return voice_data[:google_voice] if voice_data
+    end
+    unlimited? ? Voice::DEFAULT_CHIRP : Voice::DEFAULT_STANDARD
   end
 
   def available_voices

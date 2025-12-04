@@ -5,6 +5,9 @@ class Voice
   CHIRP = %w[elara callum lark nash].freeze
   ALL = (STANDARD + CHIRP).freeze
 
+  DEFAULT_STANDARD = "en-GB-Standard-D"
+  DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"
+
   CATALOG = {
     "wren"    => { name: "Wren",    accent: "British",  gender: "Female", google_voice: "en-GB-Standard-C" },
     "felix"   => { name: "Felix",   accent: "British",  gender: "Male",   google_voice: "en-GB-Standard-D" },
@@ -17,7 +20,7 @@ class Voice
   }.freeze
 
   def self.for_tier(tier)
-    tier == "unlimited" ? ALL : STANDARD
+    tier.to_s == "unlimited" ? ALL : STANDARD
   end
 
   def self.sample_url(key)

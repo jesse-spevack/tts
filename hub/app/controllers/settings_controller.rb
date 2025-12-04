@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class SettingsController < ApplicationController
+  before_action :require_authentication
+
   def show
     @voices = Current.user.available_voices.map do |key|
       Voice.find(key).merge(key: key, sample_url: Voice.sample_url(key))

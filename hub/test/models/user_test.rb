@@ -130,7 +130,7 @@ class UserTest < ActiveSupport::TestCase
     user.tier = :free
     user.voice_preference = nil
 
-    assert_equal "en-GB-Standard-D", user.voice
+    assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
   test "voice returns default Chirp voice when voice_preference is nil and tier is unlimited" do
@@ -138,7 +138,16 @@ class UserTest < ActiveSupport::TestCase
     user.tier = :unlimited
     user.voice_preference = nil
 
-    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+    assert_equal Voice::DEFAULT_CHIRP, user.voice
+  end
+
+  test "voice returns default when voice_preference is invalid" do
+    user = users(:one)
+    user.tier = :free
+    # Bypass validation to simulate corrupted data
+    user.write_attribute(:voice_preference, "invalid_voice")
+
+    assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
   test "available_voices returns STANDARD for free tier" do

@@ -6,13 +6,20 @@ export default class extends Controller {
 
   connect() {
     this.audio = new Audio(this.urlValue)
-    this.audio.addEventListener("ended", () => this.showPlayIcon())
-    this.audio.addEventListener("pause", () => this.showPlayIcon())
-    this.audio.addEventListener("play", () => this.showPauseIcon())
+    this.onEnded = () => this.showPlayIcon()
+    this.onPause = () => this.showPlayIcon()
+    this.onPlay = () => this.showPauseIcon()
+
+    this.audio.addEventListener("ended", this.onEnded)
+    this.audio.addEventListener("pause", this.onPause)
+    this.audio.addEventListener("play", this.onPlay)
   }
 
   disconnect() {
     if (this.audio) {
+      this.audio.removeEventListener("ended", this.onEnded)
+      this.audio.removeEventListener("pause", this.onPause)
+      this.audio.removeEventListener("play", this.onPlay)
       this.audio.pause()
       this.audio = null
     }
