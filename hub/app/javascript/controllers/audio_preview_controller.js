@@ -22,8 +22,10 @@ export default class extends Controller {
     event.preventDefault()
 
     if (this.audio.paused) {
-      // Stop any other playing audio
-      document.querySelectorAll("audio").forEach(a => a.pause())
+      // Stop any other playing previews
+      this.application.controllers
+        .filter(c => c.identifier === "audio-preview" && c !== this)
+        .forEach(c => c.audio?.pause())
       this.audio.play()
     } else {
       this.audio.pause()
