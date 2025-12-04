@@ -2,13 +2,13 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static values = { url: String }
-  static targets = ["button"]
+  static targets = ["button", "playIcon", "pauseIcon"]
 
   connect() {
     this.audio = new Audio(this.urlValue)
-    this.audio.addEventListener("ended", () => this.updateButton("play"))
-    this.audio.addEventListener("pause", () => this.updateButton("play"))
-    this.audio.addEventListener("play", () => this.updateButton("pause"))
+    this.audio.addEventListener("ended", () => this.showPlayIcon())
+    this.audio.addEventListener("pause", () => this.showPlayIcon())
+    this.audio.addEventListener("play", () => this.showPauseIcon())
   }
 
   disconnect() {
@@ -42,9 +42,17 @@ export default class extends Controller {
     event.stopPropagation()
   }
 
-  updateButton(state) {
-    if (this.hasButtonTarget) {
-      this.buttonTarget.textContent = state === "play" ? "▶ Preview" : "⏸ Pause"
+  showPlayIcon() {
+    if (this.hasPlayIconTarget && this.hasPauseIconTarget) {
+      this.playIconTarget.classList.remove("hidden")
+      this.pauseIconTarget.classList.add("hidden")
+    }
+  }
+
+  showPauseIcon() {
+    if (this.hasPlayIconTarget && this.hasPauseIconTarget) {
+      this.playIconTarget.classList.add("hidden")
+      this.pauseIconTarget.classList.remove("hidden")
     }
   }
 }
