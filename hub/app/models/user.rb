@@ -9,18 +9,23 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   validates :email_address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :voice_preference, inclusion: { in: Voice::ALL }, allow_nil: true
 
   scope :with_valid_auth_token, -> {
     where.not(auth_token: nil)
          .where("auth_token_expires_at > ?", Time.current)
   }
 
-  def voice_name
-    if unlimited?
-      "en-GB-Chirp3-HD-Enceladus"
-    else
-      "en-GB-Standard-D"
+  def voice
+    if voice_preference.present?
+      voice_data = Voice.find(voice_preference)
+      return voice_data[:google_voice] if voice_data
     end
+    unlimited? ? Voice::DEFAULT_CHIRP : Voice::DEFAULT_STANDARD
+  end
+
+  def available_voices
+    Voice.for_tier(tier)
   end
 
   def email

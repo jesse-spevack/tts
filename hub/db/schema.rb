@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_02_215258) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_04_185530) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -100,6 +100,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_02_215258) do
     t.string "email_address"
     t.integer "tier", default: 0
     t.datetime "updated_at", null: false
+    t.string "voice_preference"
     t.index ["auth_token"], name: "index_users_on_auth_token"
     t.index ["auth_token_expires_at"], name: "index_users_on_auth_token_expires_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true

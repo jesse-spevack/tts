@@ -1,0 +1,52 @@
+<div class="max-w-2xl mx-auto">
+  <%= link_to episodes_path, class: "text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)] mb-4 inline-flex items-center gap-1" do %>
+    <%= render "shared/icons/arrow_left" %> Back to Episodes
+  <% end %>
+  <h1 class="text-2xl font-semibold mb-8">Settings</h1>
+
+  <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+    <%= form_with url: settings_path, method: :patch, class: "space-y-6" do %>
+      <h2 class="text-lg font-medium">Voice</h2>
+      <p class="text-[var(--color-subtext)] text-sm">Choose the voice for your podcast episodes.</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <% @voices.each do |voice| %>
+          <label class="group relative flex rounded-lg border-2 p-4 cursor-pointer transition-colors
+                        border-[var(--color-overlay0)] bg-[var(--color-surface)]
+                        has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary)]/5">
+            <input type="radio" name="voice" value="<%= voice[:key] %>"
+                   <%= "checked" if @selected_voice == voice[:key] %>
+                   class="absolute inset-0 appearance-none focus:outline-none cursor-pointer">
+            <div class="flex-1">
+              <span class="block font-medium"><%= voice[:name] %></span>
+              <span class="mt-1 block text-sm text-[var(--color-subtext)]">
+                <%= voice[:accent] %> &middot; <%= voice[:gender] %>
+              </span>
+              <div data-controller="audio-preview" data-audio-preview-url-value="<%= voice[:sample_url] %>" class="mt-3 flex items-center gap-3 relative z-10">
+                <button type="button"
+                        data-audio-preview-target="button"
+                        data-action="click->audio-preview#toggle"
+                        class="text-sm text-[var(--color-primary)] hover:opacity-70 inline-flex items-center gap-1">
+                  <span data-audio-preview-target="playIcon"><%= render "shared/icons/play" %></span>
+                  <span data-audio-preview-target="pauseIcon" class="hidden"><%= render "shared/icons/pause" %></span>
+                  Preview
+                </button>
+                <button type="button"
+                        data-action="click->audio-preview#restart"
+                        class="text-[var(--color-subtext)] hover:text-[var(--color-text)]"
+                        title="Restart">
+                  <%= render "shared/icons/restart" %>
+                </button>
+              </div>
+            </div>
+            <span class="invisible text-[var(--color-primary)] group-has-[:checked]:visible">
+              <%= render "shared/icons/check_circle_solid" %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+
+      <%= submit_tag "Save Changes", class: button_classes(type: :primary) %>
+    <% end %>
+  <% end %>
+</div>

@@ -148,4 +148,19 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert episode.valid?
   end
+
+  test "voice delegates to user" do
+    episode = episodes(:one)
+    episode.user.voice_preference = "sloane"
+
+    assert_equal "en-US-Standard-C", episode.voice
+  end
+
+  test "voice returns user default when no preference set" do
+    episode = episodes(:one)
+    episode.user.voice_preference = nil
+    episode.user.tier = :free
+
+    assert_equal "en-GB-Standard-D", episode.voice
+  end
 end

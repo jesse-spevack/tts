@@ -17,6 +17,7 @@
         </span>
       </button>
       <% if authenticated? %>
+        <%= link_to "Settings", settings_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
         <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
         <%= button_to "Logout", session_path, method: :delete, class: button_classes(type: :link) %>
       <% end %>
