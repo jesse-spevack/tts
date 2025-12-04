@@ -65,21 +65,93 @@ class UserTest < ActiveSupport::TestCase
     assert_equal user.email_address, user.email
   end
 
-  test "voice_name returns Standard voice for free tier" do
+  test "voice returns Standard voice for free tier with no preference" do
     user = users(:one)
-    user.update!(tier: :free)
-    assert_equal "en-GB-Standard-D", user.voice_name
+    user.tier = :free
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Standard-D", user.voice
   end
 
-  test "voice_name returns Standard voice for premium tier" do
+  test "voice returns Standard voice for premium tier with no preference" do
     user = users(:one)
-    user.update!(tier: :premium)
-    assert_equal "en-GB-Standard-D", user.voice_name
+    user.tier = :premium
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Standard-D", user.voice
   end
 
-  test "voice_name returns Chirp3-HD voice for unlimited tier" do
+  test "voice returns Chirp3-HD voice for unlimited tier with no preference" do
     user = users(:one)
-    user.update!(tier: :unlimited)
-    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice_name
+    user.tier = :unlimited
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+  end
+
+  test "voice_preference validates inclusion in Voice::ALL" do
+    user = users(:one)
+    user.voice_preference = "invalid_voice"
+
+    assert_not user.valid?
+    assert_includes user.errors[:voice_preference], "is not included in the list"
+  end
+
+  test "voice_preference allows nil" do
+    user = users(:one)
+    user.voice_preference = nil
+
+    assert user.valid?
+  end
+
+  test "voice_preference allows valid standard voice" do
+    user = users(:one)
+    user.voice_preference = "wren"
+
+    assert user.valid?
+  end
+
+  test "voice_preference allows valid chirp voice" do
+    user = users(:one)
+    user.voice_preference = "elara"
+
+    assert user.valid?
+  end
+
+  test "voice returns google_voice for selected voice_preference" do
+    user = users(:one)
+    user.voice_preference = "wren"
+
+    assert_equal "en-GB-Standard-C", user.voice
+  end
+
+  test "voice returns default Standard voice when voice_preference is nil and tier is free" do
+    user = users(:one)
+    user.tier = :free
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Standard-D", user.voice
+  end
+
+  test "voice returns default Chirp voice when voice_preference is nil and tier is unlimited" do
+    user = users(:one)
+    user.tier = :unlimited
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+  end
+
+  test "available_voices returns STANDARD for free tier" do
+    user = users(:one)
+    user.tier = :free
+
+    assert_equal Voice::STANDARD, user.available_voices
+  end
+
+  test "available_voices returns ALL for unlimited tier" do
+    user = users(:one)
+    user.tier = :unlimited
+
+    assert_equal Voice::ALL, user.available_voices
   end
 end
