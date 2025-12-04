@@ -29,6 +29,8 @@ VOICES = {
 
 client = Google::Cloud::TextToSpeech.text_to_speech
 
+Dir.mkdir("tmp") unless Dir.exist?("tmp")
+
 VOICES.each do |name, google_voice|
   puts "Generating #{name}..."
 
