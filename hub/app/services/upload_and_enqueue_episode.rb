@@ -40,7 +40,7 @@ class UploadAndEnqueueEpisode
         author: episode.author,
         description: episode.description
       },
-      voice_name: episode.user.voice_name
+      voice_name: episode.voice
     )
   end
 
