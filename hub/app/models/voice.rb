@@ -21,7 +21,7 @@ class Voice
   end
 
   def self.sample_url(key)
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET")
+    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     "https://storage.googleapis.com/#{bucket}/voices/#{key}.mp3"
   end
 
