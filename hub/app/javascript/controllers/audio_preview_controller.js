@@ -38,6 +38,10 @@ export default class extends Controller {
     this.audio.play()
   }
 
+  stopPropagation(event) {
+    event.stopPropagation()
+  }
+
   updateButton(state) {
     if (this.hasButtonTarget) {
       this.buttonTarget.textContent = state === "play" ? "▶ Preview" : "⏸ Pause"

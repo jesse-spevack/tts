@@ -18,28 +18,29 @@
                         peer-checked:bg-[var(--color-primary)]/5">
               <div class="flex items-center justify-between mb-2">
                 <span class="font-medium"><%= voice[:name] %></span>
-                <div class="w-4 h-4 rounded-full border-2 transition-colors
-                            border-[var(--color-overlay0)] peer-checked:border-[var(--color-primary)]
-                            peer-checked:bg-[var(--color-primary)]"></div>
+                <div class="w-4 h-4 rounded-full border-2 transition-colors flex items-center justify-center
+                            border-[var(--color-overlay0)] peer-checked:border-[var(--color-primary)]">
+                  <div class="w-2 h-2 rounded-full transition-colors scale-0 peer-checked:scale-100 bg-[var(--color-primary)]"></div>
+                </div>
               </div>
               <p class="text-sm text-[var(--color-subtext)]">
                 <%= voice[:accent] %> &middot; <%= voice[:gender] %>
               </p>
+              <div data-controller="audio-preview" data-audio-preview-url-value="<%= voice[:sample_url] %>" class="mt-3 flex items-center gap-2">
+                <button type="button"
+                        data-audio-preview-target="button"
+                        data-action="click->audio-preview#toggle click->audio-preview#stopPropagation"
+                        class="text-sm text-[var(--color-primary)] hover:underline">
+                  ▶ Preview
+                </button>
+                <button type="button"
+                        data-action="click->audio-preview#restart click->audio-preview#stopPropagation"
+                        class="text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)]"
+                        title="Restart">
+                  ↺
+                </button>
+              </div>
             </label>
-            <div data-controller="audio-preview" data-audio-preview-url-value="<%= voice[:sample_url] %>" class="mt-3 ml-4 flex items-center gap-2">
-              <button type="button"
-                      data-audio-preview-target="button"
-                      data-action="click->audio-preview#toggle"
-                      class="text-sm text-[var(--color-primary)] hover:underline">
-                ▶ Preview
-              </button>
-              <button type="button"
-                      data-action="click->audio-preview#restart"
-                      class="text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)]"
-                      title="Restart">
-                ↺
-              </button>
-            </div>
           </div>
         <% end %>
       </div>
