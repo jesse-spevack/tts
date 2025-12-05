@@ -10,7 +10,7 @@
           data-tab-switch-target="tab"
           data-tab="file"
           data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[var(--color-surface0)] text-[var(--color-text)]"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
         >
           Upload File
         </button>
@@ -19,14 +19,14 @@
           data-tab-switch-target="tab"
           data-tab="url"
           data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[var(--color-surface0)] text-[var(--color-text)]"
         >
           From URL
         </button>
       </div>
 
       <!-- File Form Panel -->
-      <div data-tab-switch-target="panel" data-tab="file">
+      <div data-tab-switch-target="panel" data-tab="file" class="hidden">
         <%= form_with model: @episode, url: episodes_path, local: true, multipart: true, class: "space-y-6" do |f| %>
           <% if @episode.errors.any? %>
             <div class="border border-[var(--color-red)] rounded-lg p-4 bg-[var(--color-red)]/10">
@@ -86,7 +86,7 @@
       </div>
 
       <!-- URL Form Panel -->
-      <div data-tab-switch-target="panel" data-tab="url" class="hidden">
+      <div data-tab-switch-target="panel" data-tab="url">
         <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
           <div>
             <%= f.label :url, "Article URL", class: label_classes %>
