@@ -1,9 +1,11 @@
-<header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50" data-controller="theme">
+<header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50" data-controller="theme mobile-menu">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <div class="text-lg font-semibold">
       Very Normal TTS
     </div>
-    <div class="flex items-center gap-4">
+
+    <!-- Desktop nav (hidden on mobile) -->
+    <div class="hidden sm:flex items-center gap-4">
       <button
         data-action="click->theme#toggle"
         class="cursor-pointer hover:opacity-70"
@@ -20,6 +22,48 @@
         <%= link_to "Settings", settings_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
         <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
         <%= button_to "Logout", session_path, method: :delete, class: button_classes(type: :link) %>
+      <% end %>
+    </div>
+
+    <!-- Hamburger button (visible on mobile) -->
+    <button
+      data-action="click->mobile-menu#toggle"
+      class="sm:hidden cursor-pointer hover:opacity-70"
+      title="Toggle menu"
+    >
+      <span data-mobile-menu-target="hamburgerIcon">
+        <%= render "shared/icons/bars_3" %>
+      </span>
+      <span data-mobile-menu-target="closeIcon" class="hidden">
+        <%= render "shared/icons/x_mark" %>
+      </span>
+    </button>
+  </div>
+
+  <!-- Mobile menu panel -->
+  <div data-mobile-menu-target="menu" class="hidden sm:hidden border-t border-[var(--color-overlay0)]">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-4">
+      <% if authenticated? %>
+        <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
+      <% end %>
+
+      <button
+        data-action="click->theme#toggle click->mobile-menu#close"
+        class="flex items-center gap-2 text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer py-2"
+      >
+        <span data-theme-target="sunIcon" class="hidden">
+          <%= render "shared/icons/sun" %>
+        </span>
+        <span data-theme-target="moonIcon">
+          <%= render "shared/icons/moon" %>
+        </span>
+        <span data-theme-target="sunIcon" class="hidden">Light mode</span>
+        <span data-theme-target="moonIcon">Dark mode</span>
+      </button>
+
+      <% if authenticated? %>
+        <%= link_to "Settings", settings_path, data: { action: "click->mobile-menu#close" }, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] py-2" %>
+        <%= button_to "Logout", session_path, method: :delete, class: "#{button_classes(type: :link)} py-2 text-left" %>
       <% end %>
     </div>
   </div>
