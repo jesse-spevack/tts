@@ -10,4 +10,12 @@ class UrlNormalizerTest < ActiveSupport::TestCase
 
     assert_equal "https://jaymichaelson.substack.com/p/ghosts-in-the-machine", result
   end
+
+  test "strips tracking parameters from substack URLs" do
+    url = "https://jaymichaelson.substack.com/p/ghosts?r=5fkgm&utm_campaign=post&utm_medium=web"
+
+    result = UrlNormalizer.call(url: url)
+
+    assert_equal "https://jaymichaelson.substack.com/p/ghosts", result
+  end
 end
