@@ -8,21 +8,42 @@
         <button
           type="button"
           data-tab-switch-target="tab"
-          data-tab="file"
-          data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
-        >
-          Upload File
-        </button>
-        <button
-          type="button"
-          data-tab-switch-target="tab"
           data-tab="url"
           data-action="click->tab-switch#switch"
           class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[var(--color-surface0)] text-[var(--color-text)]"
         >
           From URL
         </button>
+        <button
+          type="button"
+          data-tab-switch-target="tab"
+          data-tab="file"
+          data-action="click->tab-switch#switch"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
+        >
+          Upload File
+        </button>
+      </div>
+
+      <!-- URL Form Panel -->
+      <div data-tab-switch-target="panel" data-tab="url">
+        <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
+          <div>
+            <%= f.label :url, "Article URL", class: label_classes %>
+            <%= f.url_field :url,
+                class: input_classes,
+                placeholder: "https://example.com/article",
+                required: true %>
+            <p class="mt-2 text-sm text-[var(--color-subtext)]">
+              We'll extract the article content, title, and author automatically.
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
+            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
+            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
+          </div>
+        <% end %>
       </div>
 
       <!-- File Form Panel -->
@@ -76,27 +97,6 @@
               <p class="text-[var(--color-subtext)] mb-2">Click to upload or drag and drop<br>(.md or .txt)</p>
               <p data-file-upload-target="filename" class="hidden text-sm font-medium text-[var(--color-primary)]"></p>
             </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
-            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
-            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
-          </div>
-        <% end %>
-      </div>
-
-      <!-- URL Form Panel -->
-      <div data-tab-switch-target="panel" data-tab="url">
-        <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
-          <div>
-            <%= f.label :url, "Article URL", class: label_classes %>
-            <%= f.url_field :url,
-                class: input_classes,
-                placeholder: "https://example.com/article",
-                required: true %>
-            <p class="mt-2 text-sm text-[var(--color-subtext)]">
-              We'll extract the article content, title, and author automatically.
-            </p>
           </div>
 
           <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
