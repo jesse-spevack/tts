@@ -289,4 +289,48 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to episodes_path
     assert_includes flash[:alert], "You've used your 2 free episodes this month"
   end
+
+  # Pagination tests
+
+  test "index paginates episodes to 10 per page" do
+    get episodes_url
+    assert_response :success
+
+    # Count episode cards rendered - should be 10 on first page
+    # We have 13 episodes for podcast :one (one + 12 pagination fixtures)
+    assert_select "[data-testid='episode-card']", count: 10
+  end
+
+  test "index shows second page when page param provided" do
+    get episodes_url, params: { page: 2 }
+    assert_response :success
+
+    # Second page should have remaining 3 episodes
+    assert_select "[data-testid='episode-card']", count: 3
+  end
+
+  test "index handles page beyond max by showing last page" do
+    get episodes_url, params: { page: 999 }
+    assert_response :success
+
+    # Should not error, should show last page with remaining episodes
+    assert_select "[data-testid='episode-card']"
+  end
+
+  test "index renders turbo frame for episodes list" do
+    get episodes_url
+    assert_response :success
+    assert_select "turbo-frame#episodes_list"
+  end
+
+  test "index does not show pagination when 10 or fewer episodes" do
+    # Delete pagination fixtures to have only 1 episode
+    Episode.where(podcast: podcasts(:one)).where.not(id: episodes(:one).id).delete_all
+
+    get episodes_url
+    assert_response :success
+
+    # Should not render pagination nav
+    assert_select "nav.pagination", count: 0
+  end
 end
