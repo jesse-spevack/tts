@@ -1,4 +1,4 @@
-<%= turbo_frame_tag dom_id(episode) do %>
+<%= turbo_frame_tag dom_id(episode), data: { testid: "episode-card" } do %>
   <%= render "shared/card" do %>
     <div class="mb-2 flex justify-between items-center">
       <%= status_badge(episode.status) %>

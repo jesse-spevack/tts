@@ -4,7 +4,7 @@ class EpisodesController < ApplicationController
   before_action :load_podcast
 
   def index
-    @episodes = @podcast.episodes.newest_first
+    @pagy, @episodes = pagy(@podcast.episodes.newest_first)
   end
 
   def new
