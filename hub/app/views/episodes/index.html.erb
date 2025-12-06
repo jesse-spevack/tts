@@ -22,24 +22,28 @@
     <% end %>
   </div>
 
-  <% if @episodes.any? %>
-    <div class="flex flex-col gap-3">
-      <% @episodes.each do |episode| %>
-        <%= render "episode_card", episode: episode %>
-      <% end %>
-    </div>
-  <% else %>
-    <%= render "shared/card", padding: "p-12" do %>
-      <div class="text-center">
-        <div class="max-w-sm mx-auto">
-          <p class="text-lg mb-4">No episodes yet</p>
-          <ol class="text-left text-[var(--color-subtext)] space-y-2">
-            <li>1. Click <strong>+ New Episode</strong> above</li>
-            <li>2. Upload a text file with your content</li>
-            <li>3. We'll generate the audio for you</li>
-          </ol>
-        </div>
+  <%= turbo_frame_tag "episodes_list" do %>
+    <% if @episodes.any? %>
+      <div class="flex flex-col gap-3">
+        <% @episodes.each do |episode| %>
+          <%= render "episode_card", episode: episode %>
+        <% end %>
       </div>
+
+      <%= render "pagination", pagy: @pagy %>
+    <% else %>
+      <%= render "shared/card", padding: "p-12" do %>
+        <div class="text-center">
+          <div class="max-w-sm mx-auto">
+            <p class="text-lg mb-4">No episodes yet</p>
+            <ol class="text-left text-[var(--color-subtext)] space-y-2">
+              <li>1. Click <strong>+ New Episode</strong> above</li>
+              <li>2. Upload a text file with your content</li>
+              <li>3. We'll generate the audio for you</li>
+            </ol>
+          </div>
+        </div>
+      <% end %>
     <% end %>
   <% end %>
 </div>
