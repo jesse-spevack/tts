@@ -1,0 +1,105 @@
+<% content_for :title do %>
+  <%= @episode.title %> | Very Normal TTS
+<% end %>
+
+<% content_for :head do %>
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="<%= episode_url(@episode) %>">
+  <meta property="og:title" content="<%= @episode.title %>">
+  <meta property="og:description" content="<%= truncate(@episode.description, length: 200) %>">
+  <meta property="og:site_name" content="Very Normal TTS">
+  <% if @episode.audio_url %>
+    <meta property="og:audio" content="<%= @episode.audio_url %>">
+    <meta property="og:audio:type" content="audio/mpeg">
+  <% end %>
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="<%= episode_url(@episode) %>">
+  <meta name="twitter:title" content="<%= @episode.title %>">
+  <meta name="twitter:description" content="<%= truncate(@episode.description, length: 200) %>">
+<% end %>
+
+<div class="max-w-2xl mx-auto">
+  <!-- Back link for authenticated users -->
+  <% if Current.user %>
+    <div class="mb-6">
+      <%= link_to episodes_path, class: "inline-flex items-center gap-2 text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)]" do %>
+        <%= render "shared/icons/arrow_left" %>
+        Back to Episodes
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Episode Card -->
+  <%= render "shared/card", padding: "p-6" do %>
+    <!-- Status & Duration -->
+    <div class="flex justify-between items-center mb-4">
+      <%= status_badge(@episode.status) %>
+      <% if @episode.duration_seconds %>
+        <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(@episode.duration_seconds) %></span>
+      <% end %>
+    </div>
+
+    <!-- Title -->
+    <h1 class="text-2xl font-semibold mb-2"><%= @episode.title %></h1>
+
+    <!-- Author & Date -->
+    <div class="flex items-center gap-4 text-sm text-[var(--color-subtext)] mb-4">
+      <span>by <%= @episode.author %></span>
+      <span><%= @episode.created_at.strftime("%B %d, %Y") %></span>
+    </div>
+
+    <!-- Description -->
+    <p class="text-[var(--color-text)] mb-6"><%= @episode.description %></p>
+
+    <!-- Audio Player -->
+    <% if @episode.complete? && @episode.audio_url %>
+      <div class="mb-6">
+        <audio controls class="w-full" preload="metadata">
+          <source src="<%= @episode.audio_url %>" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    <% elsif @episode.pending? || @episode.processing? %>
+      <div class="mb-6 p-4 bg-[var(--color-surface0)] rounded-lg text-center text-[var(--color-subtext)]">
+        This episode is still processing. Check back soon!
+      </div>
+    <% elsif @episode.failed? %>
+      <div class="mb-6 p-4 bg-red-100 dark:bg-red-900/20 rounded-lg text-center text-red-600 dark:text-red-400">
+        This episode failed to process.
+      </div>
+    <% end %>
+
+    <!-- Source URL -->
+    <% if @episode.url? && @episode.source_url.present? %>
+      <div class="text-sm text-[var(--color-subtext)] mb-6">
+        <span class="font-medium">Source:</span>
+        <%= link_to @episode.source_url, @episode.source_url, target: "_blank", class: "hover:underline break-all" %>
+      </div>
+    <% end %>
+
+    <!-- Share Section -->
+    <div class="border-t border-[var(--color-overlay0)] pt-4">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-[var(--color-subtext)]">Share this episode</span>
+        <div class="flex items-center gap-2">
+          <%= render "episodes/share_buttons", episode: @episode %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Attribution / CTA -->
+  <div class="mt-8 text-center">
+    <div class="inline-block p-6 bg-[var(--color-surface0)] rounded-lg">
+      <p class="text-lg font-medium mb-2">Turn any article into a podcast</p>
+      <p class="text-sm text-[var(--color-subtext)] mb-4">
+        This episode was created with Very Normal TTS.<br>
+        Create your own personal podcast feed in seconds.
+      </p>
+      <%= link_to "Get Started Free", root_path, class: button_classes(type: :primary) %>
+    </div>
+  </div>
+</div>

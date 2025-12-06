@@ -1,0 +1,64 @@
+<%# Share buttons for an episode %>
+<% share_url = episode_url(episode) %>
+<% share_text = "I just listened to '#{episode.title}' - converted to audio with Very Normal TTS!" %>
+<% share_text_encoded = CGI.escape(share_text) %>
+<% share_url_encoded = CGI.escape(share_url) %>
+
+<div class="flex items-center gap-1" data-controller="share" data-share-url-value="<%= share_url %>" data-share-text-value="<%= share_text %>">
+  <!-- Copy Link -->
+  <button
+    type="button"
+    data-action="share#copyLink"
+    class="p-2 rounded-lg hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors"
+    title="Copy link"
+  >
+    <span data-share-target="linkIcon">
+      <%= render "shared/icons/link" %>
+    </span>
+    <span data-share-target="checkIcon" class="hidden text-green-500">
+      <%= render "shared/icons/check_circle" %>
+    </span>
+  </button>
+
+  <!-- X/Twitter -->
+  <a
+    href="https://twitter.com/intent/tweet?text=<%= share_text_encoded %>&url=<%= share_url_encoded %>"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="p-2 rounded-lg hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors"
+    title="Share on X"
+  >
+    <%= render "shared/icons/x_twitter" %>
+  </a>
+
+  <!-- LinkedIn -->
+  <a
+    href="https://www.linkedin.com/sharing/share-offsite/?url=<%= share_url_encoded %>"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="p-2 rounded-lg hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors"
+    title="Share on LinkedIn"
+  >
+    <%= render "shared/icons/linkedin" %>
+  </a>
+
+  <!-- Facebook -->
+  <a
+    href="https://www.facebook.com/sharer/sharer.php?u=<%= share_url_encoded %>"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="p-2 rounded-lg hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors"
+    title="Share on Facebook"
+  >
+    <%= render "shared/icons/facebook" %>
+  </a>
+
+  <!-- Email -->
+  <a
+    href="mailto:?subject=<%= CGI.escape(episode.title) %>&body=<%= share_text_encoded %>%0A%0A<%= share_url_encoded %>"
+    class="p-2 rounded-lg hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors"
+    title="Share via email"
+  >
+    <%= render "shared/icons/email" %>
+  </a>
+</div>

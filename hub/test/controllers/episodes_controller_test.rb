@@ -333,4 +333,40 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # Should not render pagination nav
     assert_select "nav.pagination", count: 0
   end
+
+  # Show (public share page) tests
+
+  test "show is accessible without authentication" do
+    sign_out
+    episode = episodes(:one)
+
+    get episode_url(episode)
+    assert_response :success
+  end
+
+  test "show displays episode details" do
+    episode = episodes(:one)
+
+    get episode_url(episode)
+    assert_response :success
+    assert_select "h1", text: episode.title
+  end
+
+  test "show includes Open Graph meta tags" do
+    episode = episodes(:one)
+
+    get episode_url(episode)
+    assert_response :success
+    assert_select 'meta[property="og:title"]', count: 1
+    assert_select 'meta[property="og:description"]', count: 1
+    assert_select 'meta[property="og:url"]', count: 1
+  end
+
+  test "show includes share buttons" do
+    episode = episodes(:one)
+
+    get episode_url(episode)
+    assert_response :success
+    assert_select "[data-controller='share']", count: 1
+  end
 end

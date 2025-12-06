@@ -1,10 +1,14 @@
 class EpisodesController < ApplicationController
-  before_action :require_authentication
+  before_action :require_authentication, except: [ :show ]
   before_action :require_can_create_episode, only: [ :new, :create ]
-  before_action :load_podcast
+  before_action :load_podcast, except: [ :show ]
 
   def index
     @pagy, @episodes = pagy(@podcast.episodes.newest_first)
+  end
+
+  def show
+    @episode = Episode.find(params[:id])
   end
 
   def new

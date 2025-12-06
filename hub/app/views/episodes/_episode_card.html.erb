@@ -2,9 +2,16 @@
   <%= render "shared/card" do %>
     <div class="mb-2 flex justify-between items-center">
       <%= status_badge(episode.status) %>
-      <% if episode.duration_seconds %>
-        <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
-      <% end %>
+      <div class="flex items-center gap-2">
+        <% if episode.complete? %>
+          <%= link_to episode_path(episode), class: "p-1 rounded hover:bg-[var(--color-surface0)] text-[var(--color-subtext)] hover:text-[var(--color-text)] transition-colors", title: "Share episode" do %>
+            <%= render "shared/icons/share" %>
+          <% end %>
+        <% end %>
+        <% if episode.duration_seconds %>
+          <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
+        <% end %>
+      </div>
     </div>
     <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
     <% if episode.url? && episode.source_url.present? %>
