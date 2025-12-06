@@ -5,10 +5,7 @@
 - [ ] env for development in hub
 - [ ] Unique error IDs for support tickets (e.g., ERR-2024-ABC123 for easier debugging)
 - [ ] Add TTL to MP3s in GCS (retention policy for cost management)
-- [ ] Unlimited users should get better LLM model
 - [ ] Audit codebase for unused method arguments (RuboCop doesn't catch args stored but never read)
-- [ ] Add voice options
-- [ ] 
 
 
 
