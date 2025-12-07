@@ -1,0 +1,78 @@
+<% content_for :title, @episode.title %>
+
+<% content_for :head do %>
+  <meta property="og:title" content="<%= @episode.title %>">
+  <meta property="og:description" content="Transcribed for podcast by Very Normal TTS.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="<%= episode_url(@episode.prefix_id) %>">
+  <meta property="og:image" content="https://verynormal.info/content/images/2022/11/verynormallogo2.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= @episode.title %>">
+  <meta name="twitter:description" content="Transcribed for podcast by Very Normal TTS.">
+  <meta name="twitter:image" content="https://verynormal.info/content/images/2022/11/verynormallogo2.png">
+<% end %>
+
+<div class="max-w-2xl mx-auto">
+  <%= render "shared/card", padding: "p-8" do %>
+    <p class="text-sm text-[var(--color-subtext)] mb-2">Very Normal</p>
+
+    <h1 class="text-2xl font-semibold mb-2"><%= @episode.title %></h1>
+
+    <p class="text-sm text-[var(--color-subtext)] mb-6">
+      by <%= @episode.author %>
+      <% if @episode.duration_seconds %>
+        <span class="mx-2">&middot;</span>
+        <%= format_duration(@episode.duration_seconds) %>
+      <% end %>
+    </p>
+
+    <div class="mb-6">
+      <audio controls class="w-full" preload="metadata">
+        <source src="<%= @episode.audio_url %>" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>
+
+    <div class="flex gap-4">
+      <button type="button"
+              data-controller="clipboard"
+              data-clipboard-content-value="<%= episode_url(@episode.prefix_id) %>"
+              data-action="click->clipboard#copy"
+              class="flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors">
+        <span data-clipboard-target="copyIcon"><%= render "shared/icons/share" %></span>
+        <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/check_circle" %></span>
+        <span>Share</span>
+      </button>
+
+      <%= link_to @episode.audio_url, download: "#{@episode.title.parameterize}.mp3", class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
+        <%= render "shared/icons/download" %>
+        <span>Download MP3</span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% unless authenticated? %>
+    <div class="mt-8 text-center">
+      <h2 class="text-xl font-semibold mb-2">Enjoyed this episode?</h2>
+      <p class="text-[var(--color-subtext)] mb-6">Turn articles and blog posts into high quality audio and listen in your favorite podcast app on your own personal podcast feed.</p>
+
+      <%= form_with url: session_path, class: "max-w-md mx-auto" do |form| %>
+        <div class="flex flex-col sm:flex-row gap-4 sm:gap-x-4">
+          <%= form.label :email_address, "Email address", class: "sr-only" %>
+          <%= form.email_field :email_address,
+              required: true,
+              autocomplete: "username",
+              placeholder: "Enter your email",
+              class: "min-w-0 flex-auto rounded-lg bg-[var(--color-surface0)] px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--color-primary)]" %>
+          <%= form.submit "Get started", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] cursor-pointer" %>
+        </div>
+        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+          2 free episodes per month. No credit card required. By signing up, you agree to our
+          <%= link_to "Terms of Service", terms_path, class: "underline hover:text-[var(--color-text)]" %>.
+        </p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

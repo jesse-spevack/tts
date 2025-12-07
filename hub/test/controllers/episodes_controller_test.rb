@@ -333,4 +333,56 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # Should not render pagination nav
     assert_select "nav.pagination", count: 0
   end
+
+  # Public episode show tests
+
+  test "show renders episode page for complete episode without authentication" do
+    sign_out
+    episode = episodes(:two) # status: complete
+    get episode_url(episode.prefix_id)
+    assert_response :success
+  end
+
+  test "show returns 404 for non-complete episode" do
+    sign_out
+    episode = episodes(:one) # status: pending
+    get episode_url(episode.prefix_id)
+    assert_response :not_found
+  end
+
+  test "show returns 404 for non-existent episode" do
+    sign_out
+    get episode_url("ep_nonexistent")
+    assert_response :not_found
+  end
+
+  test "show displays episode title" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "h1", text: episode.title
+  end
+
+  test "show displays audio player for complete episode" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "audio[controls]"
+  end
+
+  test "show works for authenticated users too" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_response :success
+  end
+
+  test "show displays download button" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "a[download]", text: /Download MP3/
+  end
+
+  test "show displays copy link button" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "button[data-controller='clipboard']"
+  end
 end

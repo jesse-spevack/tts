@@ -163,4 +163,16 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert_equal "en-GB-Standard-D", episode.voice
   end
+
+  test "has a prefixed id starting with ep_" do
+    episode = episodes(:two)
+    assert episode.prefix_id.present?
+    assert episode.prefix_id.start_with?("ep_")
+  end
+
+  test "can be found by prefix_id" do
+    episode = episodes(:two)
+    found = Episode.find_by_prefix_id(episode.prefix_id)
+    assert_equal episode, found
+  end
 end
