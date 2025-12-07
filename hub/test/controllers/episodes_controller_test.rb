@@ -377,12 +377,48 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   test "show displays download button" do
     episode = episodes(:two)
     get episode_url(episode.prefix_id)
-    assert_select "a[download]", text: /Download MP3/
+    assert_select "a[href=?]", episode_path(episode.prefix_id, format: :mp3), text: /Download MP3/
   end
 
   test "show displays copy link button" do
     episode = episodes(:two)
     get episode_url(episode.prefix_id)
     assert_select "button[data-controller='clipboard']"
+  end
+
+  test "show with mp3 format redirects to signed GCS URL" do
+    episode = episodes(:two)
+
+    # Stub the download_url method on the specific episode instance
+    signed_url = "https://storage.googleapis.com/test-bucket/test.mp3?signature=abc"
+    episode.define_singleton_method(:download_url) { signed_url }
+
+    Episode.stub(:find_by_prefix_id!, episode) do
+      get episode_url(episode.prefix_id, format: :mp3)
+    end
+
+    assert_redirected_to signed_url
+  end
+
+  test "show with mp3 format returns 404 for incomplete episode" do
+    episode = episodes(:one)  # pending episode
+
+    get episode_url(episode.prefix_id, format: :mp3)
+
+    assert_response :not_found
+  end
+
+  test "show with mp3 format works without authentication" do
+    sign_out
+    episode = episodes(:two)
+
+    signed_url = "https://storage.googleapis.com/test-bucket/test.mp3?signature=abc"
+    episode.define_singleton_method(:download_url) { signed_url }
+
+    Episode.stub(:find_by_prefix_id!, episode) do
+      get episode_url(episode.prefix_id, format: :mp3)
+    end
+
+    assert_redirected_to signed_url
   end
 end

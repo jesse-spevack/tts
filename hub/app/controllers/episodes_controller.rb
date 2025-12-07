@@ -10,7 +10,11 @@ class EpisodesController < ApplicationController
   def show
     @episode = Episode.find_by_prefix_id!(params[:id])
     raise ActiveRecord::RecordNotFound unless @episode.complete?
-    @podcast = @episode.podcast
+
+    respond_to do |format|
+      format.html { @podcast = @episode.podcast }
+      format.mp3 { redirect_to @episode.download_url, allow_other_host: true }
+    end
   end
 
   def new

@@ -30,6 +30,10 @@ class Episode < ApplicationRecord
     "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/episodes/#{gcs_episode_id}.mp3"
   end
 
+  def download_url
+    GenerateEpisodeDownloadUrl.call(self)
+  end
+
   private
 
   def broadcast_status_change
