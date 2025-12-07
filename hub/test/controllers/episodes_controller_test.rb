@@ -367,4 +367,22 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     get episode_url(episode.prefix_id)
     assert_select "audio[controls]"
   end
+
+  test "show works for authenticated users too" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_response :success
+  end
+
+  test "show displays download button" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "a[download]", text: /Download MP3/
+  end
+
+  test "show displays copy link button" do
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "button[data-controller='clipboard']"
+  end
 end
