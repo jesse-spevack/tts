@@ -31,23 +31,7 @@ class Episode < ApplicationRecord
   end
 
   def download_url
-    return nil unless complete? && gcs_episode_id.present?
-
-    bucket_name = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    file_path = "podcasts/#{podcast.podcast_id}/episodes/#{gcs_episode_id}.mp3"
-    filename = "#{title.parameterize}.mp3"
-
-    storage = Google::Cloud::Storage.new
-    bucket = storage.bucket(bucket_name)
-    file = bucket.file(file_path)
-
-    file.signed_url(
-      method: "GET",
-      expires: 300,
-      query: {
-        "response-content-disposition" => "attachment; filename=\"#{filename}\""
-      }
-    )
+    GenerateEpisodeDownloadUrl.call(self)
   end
 
   private
