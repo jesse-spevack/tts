@@ -15,7 +15,7 @@
             <span data-clipboard-target="copyIcon"><%= render "shared/icons/share" %></span>
             <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/check_circle" %></span>
           </button>
-          <%= link_to episode.audio_url, download: "#{episode.title.parameterize}.mp3", class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors", title: "Download MP3" do %>
+          <%= link_to episode_path(episode.prefix_id, format: :mp3), class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors", title: "Download MP3" do %>
             <%= render "shared/icons/download" %>
           <% end %>
         <% end %>
