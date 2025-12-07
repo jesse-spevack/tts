@@ -6,13 +6,11 @@
 
     <h1 class="text-2xl font-semibold mb-2"><%= @episode.title %></h1>
 
-    <p class="text-sm text-[var(--color-subtext)] mb-6">
-      by <%= @episode.author %>
-      <% if @episode.duration_seconds %>
-        <span class="mx-2">&middot;</span>
+    <% if @episode.duration_seconds %>
+      <p class="text-sm text-[var(--color-subtext)] mb-6">
         <%= format_duration(@episode.duration_seconds) %>
-      <% end %>
-    </p>
+      </p>
+    <% end %>
 
     <div class="mb-6">
       <audio controls class="w-full" preload="metadata">
