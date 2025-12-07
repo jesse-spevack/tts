@@ -1,4 +1,6 @@
 class Episode < ApplicationRecord
+  has_prefix_id :ep
+
   belongs_to :podcast
   belongs_to :user
   has_one :llm_usage, dependent: :destroy
