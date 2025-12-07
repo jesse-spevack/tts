@@ -1,5 +1,15 @@
 <% content_for :title, @episode.title %>
 
+<% content_for :head do %>
+  <meta property="og:title" content="<%= @episode.title %>">
+  <meta property="og:description" content="Transcribed for podcast by Very Normal TTS.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="<%= episode_url(@episode.prefix_id) %>">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= @episode.title %>">
+  <meta name="twitter:description" content="Transcribed for podcast by Very Normal TTS.">
+<% end %>
+
 <div class="max-w-2xl mx-auto">
   <%= render "shared/card", padding: "p-8" do %>
     <p class="text-sm text-[var(--color-subtext)] mb-2">Very Normal</p>
