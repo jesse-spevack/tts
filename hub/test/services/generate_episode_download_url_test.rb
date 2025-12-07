@@ -1,8 +1,13 @@
 require "test_helper"
-require "minitest/mock"
 require "google/cloud/storage"
 
 class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
+  setup do
+    Mocktail.replace(Google::Cloud::Storage)
+    Mocktail.replace(GoogleCredentials)
+    stubs { GoogleCredentials.from_env }.with { {} }
+  end
+
   test "returns nil for incomplete episode" do
     episode = episodes(:one) # pending status
     assert_nil GenerateEpisodeDownloadUrl.call(episode)
@@ -27,12 +32,10 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
     mock_storage = Object.new
     mock_storage.define_singleton_method(:bucket) { |_| mock_bucket }
 
-    GoogleCredentials.stub :from_env, {} do
-      Google::Cloud::Storage.stub :new, mock_storage do
-        result = GenerateEpisodeDownloadUrl.call(episode)
-        assert_equal signed_url, result
-      end
-    end
+    stubs { |m| Google::Cloud::Storage.new(credentials: m.any) }.with { mock_storage }
+
+    result = GenerateEpisodeDownloadUrl.call(episode)
+    assert_equal signed_url, result
   end
 
   test "uses parameterized title for filename" do
@@ -53,11 +56,9 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
     mock_storage = Object.new
     mock_storage.define_singleton_method(:bucket) { |_| mock_bucket }
 
-    GoogleCredentials.stub :from_env, {} do
-      Google::Cloud::Storage.stub :new, mock_storage do
-        GenerateEpisodeDownloadUrl.call(episode)
-      end
-    end
+    stubs { |m| Google::Cloud::Storage.new(credentials: m.any) }.with { mock_storage }
+
+    GenerateEpisodeDownloadUrl.call(episode)
 
     assert_equal 'attachment; filename="my-great-episode.mp3"',
                  captured_query["response-content-disposition"]
