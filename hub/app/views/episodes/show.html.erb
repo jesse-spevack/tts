@@ -52,4 +52,11 @@
       <% end %>
     </div>
   <% end %>
+
+  <% unless authenticated? %>
+    <div class="mt-6 text-center">
+      <p class="text-[var(--color-subtext)] mb-4">Want to create your own personal podcast feed?</p>
+      <%= link_to "Get started", root_path, class: "inline-block rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] hover:bg-[var(--color-primary-hover)] transition-colors" %>
+    </div>
+  <% end %>
 </div>
