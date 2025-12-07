@@ -54,9 +54,25 @@
   <% end %>
 
   <% unless authenticated? %>
-    <div class="mt-6 text-center">
-      <p class="text-[var(--color-subtext)] mb-4">Want to create your own personal podcast feed?</p>
-      <%= link_to "Get started", root_path, class: "inline-block rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] hover:bg-[var(--color-primary-hover)] transition-colors" %>
+    <div class="mt-8 text-center">
+      <h2 class="text-xl font-semibold mb-2">Enjoyed this episode?</h2>
+      <p class="text-[var(--color-subtext)] mb-6">Turn articles and blog posts into high quality audio and listen in your favorite podcast app on your own personal podcast feed.</p>
+
+      <%= form_with url: session_path, class: "max-w-md mx-auto" do |form| %>
+        <div class="flex flex-col sm:flex-row gap-4 sm:gap-x-4">
+          <%= form.label :email_address, "Email address", class: "sr-only" %>
+          <%= form.email_field :email_address,
+              required: true,
+              autocomplete: "username",
+              placeholder: "Enter your email",
+              class: "min-w-0 flex-auto rounded-lg bg-[var(--color-surface0)] px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--color-primary)]" %>
+          <%= form.submit "Get started", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] cursor-pointer" %>
+        </div>
+        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+          2 free episodes per month. No credit card required. By signing up, you agree to our
+          <%= link_to "Terms of Service", terms_path, class: "underline hover:text-[var(--color-text)]" %>.
+        </p>
+      <% end %>
     </div>
   <% end %>
 </div>
