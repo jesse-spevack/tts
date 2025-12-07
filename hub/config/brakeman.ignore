@@ -1,40 +1,29 @@
 {
   "ignored_warnings": [
     {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "b43b6e83441d9f65c951bc054f78d5d11442bc098815074f16b413db5ef3704c",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/episodes/show.html.erb",
-      "line": 49,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(Episode.find_by_prefix_id!(params[:id]).audio_url, :download => (\"#{Episode.find_by_prefix_id!(params[:id]).title.parameterize}.mp3\"), :class => \"flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors\")",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "EpisodesController",
-          "method": "show",
-          "line": 14,
-          "file": "app/controllers/episodes_controller.rb",
-          "rendered": {
-            "name": "episodes/show",
-            "file": "app/views/episodes/show.html.erb"
-          }
-        }
-      ],
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "bbb38381f31bee2e965c87cfb9f7f696fd029a5075ed6e501ef245d186163eb7",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/episodes_controller.rb",
+      "line": 16,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(Episode.find_by_prefix_id!(params[:id]).download_url, :allow_other_host => true)",
+      "render_path": null,
       "location": {
-        "type": "template",
-        "template": "episodes/show"
+        "type": "method",
+        "class": "EpisodesController",
+        "method": "show"
       },
-      "user_input": "Episode.find_by_prefix_id!(params[:id]).audio_url",
+      "user_input": "Episode.find_by_prefix_id!(params[:id]).download_url",
       "confidence": "Weak",
       "cwe_id": [
-        79
+        601
       ],
-      "note": "audio_url is constructed server-side from ENV bucket name, podcast_id and gcs_episode_id, not user input"
+      "note": "download_url is constructed server-side from ENV bucket name, podcast.podcast_id, and gcs_episode_id - no user input flows into the redirect URL"
     }
   ],
-  "updated": "2025-12-07 04:34:49 +0000",
+  "updated": "2025-12-07 14:15:00 +0000",
   "brakeman_version": "7.1.1"
 }
