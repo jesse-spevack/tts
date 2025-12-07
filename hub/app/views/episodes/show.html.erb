@@ -1,0 +1,43 @@
+<% content_for :title, @episode.title %>
+
+<div class="max-w-2xl mx-auto">
+  <%= render "shared/card", padding: "p-8" do %>
+    <p class="text-sm text-[var(--color-subtext)] mb-2"><%= @podcast.title %></p>
+
+    <h1 class="text-2xl font-semibold mb-2"><%= @episode.title %></h1>
+
+    <p class="text-sm text-[var(--color-subtext)] mb-6">
+      by <%= @episode.author %>
+      <% if @episode.duration_seconds %>
+        <span class="mx-2">&middot;</span>
+        <%= format_duration(@episode.duration_seconds) %>
+      <% end %>
+    </p>
+
+    <div class="mb-6">
+      <audio controls class="w-full" preload="metadata">
+        <source src="<%= @episode.audio_url %>" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>
+
+    <div class="flex gap-4">
+      <button type="button"
+              data-controller="clipboard"
+              data-clipboard-content-value="<%= episode_url(@episode.prefix_id) %>"
+              data-action="click->clipboard#copy"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors cursor-pointer">
+        <span data-clipboard-target="copyIcon"><%= render "shared/icons/share" %></span>
+        <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/check_circle" %></span>
+        <span>Copy Link</span>
+      </button>
+
+      <%= link_to @episode.audio_url, download: "#{@episode.title.parameterize}.mp3", class: "flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface)] transition-colors" do %>
+        <%= render "shared/icons/download" %>
+        <span>Download MP3</span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
