@@ -297,7 +297,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Count episode cards rendered - should be 10 on first page
-    # We have 13 episodes for podcast :one (one + 12 pagination fixtures)
+    # We have 14 episodes for podcast :one (one + 12 pagination fixtures + failed_with_error)
     assert_select "[data-testid='episode-card']", count: 10
   end
 
@@ -305,8 +305,8 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     get episodes_url, params: { page: 2 }
     assert_response :success
 
-    # Second page should have remaining 3 episodes
-    assert_select "[data-testid='episode-card']", count: 3
+    # Second page should have remaining 4 episodes
+    assert_select "[data-testid='episode-card']", count: 4
   end
 
   test "index handles page beyond max by showing last page" do
