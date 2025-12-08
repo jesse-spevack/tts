@@ -334,6 +334,15 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav.pagination", count: 0
   end
 
+  # Failed episode error message tests
+
+  test "index displays error message for failed episodes" do
+    # Use the failed_with_error fixture
+    get episodes_url
+    assert_response :success
+    assert_includes response.body, "This content is too long for your account tier"
+  end
+
   # Public episode show tests
 
   test "show renders episode page for complete episode without authentication" do
