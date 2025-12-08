@@ -297,7 +297,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Count episode cards rendered - should be 10 on first page
-    # We have 13 episodes for podcast :one (one + 12 pagination fixtures)
+    # We have 14 episodes for podcast :one (one + 12 pagination fixtures + failed_with_error)
     assert_select "[data-testid='episode-card']", count: 10
   end
 
@@ -305,8 +305,8 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     get episodes_url, params: { page: 2 }
     assert_response :success
 
-    # Second page should have remaining 3 episodes
-    assert_select "[data-testid='episode-card']", count: 3
+    # Second page should have remaining 4 episodes
+    assert_select "[data-testid='episode-card']", count: 4
   end
 
   test "index handles page beyond max by showing last page" do
@@ -332,6 +332,26 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     # Should not render pagination nav
     assert_select "nav.pagination", count: 0
+  end
+
+  # Failed episode error message tests
+
+  test "index displays error message for failed episodes" do
+    # Use the failed_with_error fixture
+    get episodes_url
+    assert_response :success
+    assert_includes response.body, "This content is too long for your account tier"
+  end
+
+  test "index does not display error styling for completed episodes" do
+    # Delete the failed episode so we only have completed ones
+    Episode.where(status: :failed).delete_all
+
+    get episodes_url
+    assert_response :success
+
+    # Should not contain the error message paragraph with red styling
+    assert_no_match(/text-\[var\(--color-red\)\].*mt-1/, response.body)
   end
 
   # Public episode show tests
