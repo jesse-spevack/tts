@@ -155,3 +155,14 @@ pagination_ep_12:
   gcs_episode_id: pag12
   audio_size_bytes: 1000
   duration_seconds: 60
+
+failed_with_error:
+  podcast: one
+  user: one
+  title: Failed Episode
+  author: Test Author
+  description: Test description
+  status: failed
+  error_message: This content is too long for your account tier
+  audio_size_bytes: 0
+  duration_seconds: 0
