@@ -343,6 +343,17 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "This content is too long for your account tier"
   end
 
+  test "index does not display error styling for completed episodes" do
+    # Delete the failed episode so we only have completed ones
+    Episode.where(status: :failed).delete_all
+
+    get episodes_url
+    assert_response :success
+
+    # Should not contain the error message paragraph with red styling
+    assert_no_match(/text-\[var\(--color-red\)\].*mt-1/, response.body)
+  end
+
   # Public episode show tests
 
   test "show renders episode page for complete episode without authentication" do
