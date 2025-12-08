@@ -24,6 +24,9 @@
         <% end %>
       </div>
     </div>
+    <% if episode.failed? && episode.error_message.present? %>
+      <p class="text-sm text-[var(--color-red)] mt-1"><%= episode.error_message %></p>
+    <% end %>
     <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
     <% if episode.url? && episode.source_url.present? %>
       <p class="text-xs text-[var(--color-subtext)] truncate mb-1">
