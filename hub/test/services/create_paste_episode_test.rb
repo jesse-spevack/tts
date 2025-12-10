@@ -93,4 +93,46 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
       )
     end
   end
+
+  test "fails when text exceeds max characters for user tier" do
+    free_user = users(:free_user)
+    max_chars = MaxCharactersForUser.call(user: free_user)
+    text_over_limit = "A" * (max_chars + 1)
+
+    result = CreatePasteEpisode.call(
+      podcast: @podcast,
+      user: free_user,
+      text: text_over_limit
+    )
+
+    assert result.failure?
+    assert_includes result.error, "too long"
+  end
+
+  test "succeeds when text is at max characters for user tier" do
+    free_user = users(:free_user)
+    max_chars = MaxCharactersForUser.call(user: free_user)
+    text_at_limit = "A" * max_chars
+
+    result = CreatePasteEpisode.call(
+      podcast: @podcast,
+      user: free_user,
+      text: text_at_limit
+    )
+
+    assert result.success?
+  end
+
+  test "succeeds for unlimited tier user with very long text" do
+    unlimited_user = users(:unlimited_user)
+    very_long_text = "A" * 100_000
+
+    result = CreatePasteEpisode.call(
+      podcast: @podcast,
+      user: unlimited_user,
+      text: very_long_text
+    )
+
+    assert result.success?
+  end
 end

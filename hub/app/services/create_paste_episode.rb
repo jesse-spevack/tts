@@ -16,6 +16,7 @@ class CreatePasteEpisode
   def call
     return Result.failure("Text cannot be empty") if text.blank?
     return Result.failure("Text must be at least #{MINIMUM_LENGTH} characters") if text.length < MINIMUM_LENGTH
+    return Result.failure(max_characters_error) if exceeds_max_characters?
 
     episode = create_episode
     ProcessPasteEpisodeJob.perform_later(episode.id)
@@ -28,6 +29,16 @@ class CreatePasteEpisode
   private
 
   attr_reader :podcast, :user, :text
+
+  def exceeds_max_characters?
+    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars && text.length > max_chars
+  end
+
+  def max_characters_error
+    max_chars = MaxCharactersForUser.call(user: user)
+    "Text is too long for your account tier (#{text.length} characters, max #{max_chars})"
+  end
 
   def create_episode
     podcast.episodes.create!(
