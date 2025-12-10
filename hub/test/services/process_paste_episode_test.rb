@@ -96,6 +96,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     ProcessPasteEpisode.call(episode: @episode)
 
     verify { |m| UploadAndEnqueueEpisode.call(episode: @episode, content: cleaned_content) }
+    assert true
   end
 
   teardown do

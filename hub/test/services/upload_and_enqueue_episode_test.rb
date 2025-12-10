@@ -26,6 +26,7 @@ class UploadAndEnqueueEpisodeTest < ActiveSupport::TestCase
 
     verify { |m| mock_gcs.upload_staging_file(content: @plain_text_content, filename: m.any) }
     verify { |m| mock_tasks.enqueue_episode_processing(episode_id: @episode.id, podcast_id: m.any, staging_path: "staging/test.txt", metadata: m.any, voice_name: m.any) }
+    assert true
   end
 
   test "passes episode.voice to enqueue_episode_processing" do
@@ -42,5 +43,6 @@ class UploadAndEnqueueEpisodeTest < ActiveSupport::TestCase
     UploadAndEnqueueEpisode.call(episode: @episode, content: @plain_text_content)
 
     verify { |m| mock_tasks.enqueue_episode_processing(episode_id: m.any, podcast_id: m.any, staging_path: m.any, metadata: m.any, voice_name: "en-US-Standard-C") }
+    assert true
   end
 end

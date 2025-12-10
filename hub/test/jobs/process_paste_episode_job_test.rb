@@ -26,6 +26,7 @@ class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
     ProcessPasteEpisodeJob.perform_now(@episode.id)
 
     verify { ProcessPasteEpisode.call(episode: @episode) }
+    assert true
   end
 
   teardown do

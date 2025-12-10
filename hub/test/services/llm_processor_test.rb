@@ -174,6 +174,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     LlmProcessor.call(text: @text, episode: @episode)
 
     verify { |m| mock_client.ask(m.that { |prompt| prompt.include?("web article") }) }
+    assert true
   end
 
   test "uses PasteProcessingPrompt for paste source type" do
@@ -190,6 +191,7 @@ class LlmProcessorTest < ActiveSupport::TestCase
     LlmProcessor.call(text: @text, episode: @episode)
 
     verify { |m| mock_client.ask(m.that { |prompt| prompt.include?("pasted text") }) }
+    assert true
   end
 
   private
