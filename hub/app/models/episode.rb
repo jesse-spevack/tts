@@ -8,7 +8,7 @@ class Episode < ApplicationRecord
   delegate :voice, to: :user
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
-  enum :source_type, { file: 0, url: 1 }
+  enum :source_type, { file: 0, url: 1, paste: 2 }
 
   validates :title, presence: true, length: { maximum: 255 }
   validates :source_url, presence: true, if: :url?
