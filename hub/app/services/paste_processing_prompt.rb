@@ -23,11 +23,14 @@ class PasteProcessingPrompt
          - description: A single sentence summary
 
       2. Clean and optimize the content for listening:
+         - Remove navigation menus, headers, footers, and sidebars
+         - Remove cookie banners, "Subscribe to newsletter" CTAs, and ads
+         - Remove social media links and share buttons
          - Fix formatting issues from copy/paste (extra whitespace, broken paragraphs)
          - Expand abbreviations (e.g., "govt" -> "government")
          - Make lists sound natural when read aloud
          - Remove any URLs or email addresses
-         - Keep the content faithful to the original
+         - Keep the main article content faithful to the original
 
       OUTPUT FORMAT (JSON only, no markdown):
       {

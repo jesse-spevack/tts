@@ -31,11 +31,17 @@ class PasteProcessingPromptTest < ActiveSupport::TestCase
     assert_includes prompt, "content"
   end
 
-  test "does not mention web article or navigation cleanup" do
+  test "does not mention web article" do
     prompt = PasteProcessingPrompt.build(text: "test")
 
     refute_includes prompt, "web article"
-    refute_includes prompt, "navigation"
-    refute_includes prompt, "ads"
+  end
+
+  test "includes instructions to remove webpage boilerplate" do
+    prompt = PasteProcessingPrompt.build(text: "test")
+
+    assert_includes prompt, "navigation"
+    assert_includes prompt, "cookie"
+    assert_includes prompt, "Subscribe"
   end
 end
