@@ -160,6 +160,38 @@ class LlmProcessorTest < ActiveSupport::TestCase
     assert_equal "Article content too large for processing", result.error
   end
 
+  test "uses UrlProcessingPrompt for url source type" do
+    @episode.update!(source_type: :url, source_url: "https://example.com/article")
+    mock_response = mock_llm_response(
+      content: { title: "T", author: "A", description: "D", content: "C" }.to_json
+    )
+
+    mock_client = Mocktail.of(LlmClient)
+    stubs { |m| mock_client.ask(m.any) }.with { mock_response }
+    stubs { LlmClient.new }.with { mock_client }
+    stub_record_usage
+
+    LlmProcessor.call(text: @text, episode: @episode)
+
+    verify { |m| mock_client.ask(m.that { |prompt| prompt.include?("web article") }) }
+  end
+
+  test "uses PasteProcessingPrompt for paste source type" do
+    @episode.update!(source_type: :paste, source_text: @text)
+    mock_response = mock_llm_response(
+      content: { title: "T", author: "A", description: "D", content: "C" }.to_json
+    )
+
+    mock_client = Mocktail.of(LlmClient)
+    stubs { |m| mock_client.ask(m.any) }.with { mock_response }
+    stubs { LlmClient.new }.with { mock_client }
+    stub_record_usage
+
+    LlmProcessor.call(text: @text, episode: @episode)
+
+    verify { |m| mock_client.ask(m.that { |prompt| prompt.include?("pasted text") }) }
+  end
+
   private
 
   def mock_llm_response(content:, input_tokens: 100, output_tokens: 50, model_id: "claude-3-haiku-20240307")
