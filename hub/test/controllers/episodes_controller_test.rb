@@ -290,6 +290,55 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_includes flash[:alert], "You've used your 2 free episodes this month"
   end
 
+  # Paste text episode creation tests
+
+  test "create with text param creates paste episode and redirects" do
+    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+      post episodes_url, params: { text: "A" * 150 }
+    end
+
+    assert_redirected_to episodes_path
+    follow_redirect!
+    assert_match(/Processing/, response.body)
+  end
+
+  test "create with text param fails with empty text" do
+    post episodes_url, params: { text: "" }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "create with text param fails with text under 100 characters" do
+    post episodes_url, params: { text: "A" * 99 }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "create with text param records episode usage for free tier" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    assert_difference -> { EpisodeUsage.count }, 1 do
+      post episodes_url, params: { text: "A" * 150 }
+    end
+  end
+
+  test "redirects free tier user from text create when at monthly limit" do
+    free_user = users(:free_user)
+    sign_in_as free_user
+
+    EpisodeUsage.create!(
+      user: free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
+
+    post episodes_url, params: { text: "A" * 150 }
+
+    assert_redirected_to episodes_path
+    assert_includes flash[:alert], "You've used your 2 free episodes this month"
+  end
+
   # Pagination tests
 
   test "index paginates episodes to 10 per page" do
