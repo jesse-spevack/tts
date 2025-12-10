@@ -17,6 +17,15 @@
         <button
           type="button"
           data-tab-switch-target="tab"
+          data-tab="paste"
+          data-action="click->tab-switch#switch"
+          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
+        >
+          Paste Text
+        </button>
+        <button
+          type="button"
+          data-tab-switch-target="tab"
           data-tab="file"
           data-action="click->tab-switch#switch"
           class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
@@ -36,6 +45,28 @@
                 required: true %>
             <p class="mt-2 text-sm text-[var(--color-subtext)]">
               We'll extract the article content, title, and author automatically.
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
+            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
+            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Paste Text Form Panel -->
+      <div data-tab-switch-target="panel" data-tab="paste" class="hidden">
+        <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
+          <div>
+            <%= f.label :text, "Article Text", class: label_classes %>
+            <%= f.text_area :text,
+                rows: 12,
+                class: input_classes,
+                placeholder: "Paste your article text here...",
+                required: true %>
+            <p class="mt-2 text-sm text-[var(--color-subtext)]">
+              Paste article text. We'll extract the title and author automatically.
             </p>
           </div>
 

@@ -23,7 +23,7 @@ class LlmProcessor
       return Result.failure("Article content too large for processing")
     end
 
-    prompt = UrlProcessingPrompt.build(text: text)
+    prompt = build_prompt
     response = llm_client.ask(prompt)
 
     Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
@@ -55,6 +55,14 @@ class LlmProcessor
 
   def llm_client
     @llm_client ||= LlmClient.new
+  end
+
+  def build_prompt
+    if episode.paste?
+      PasteProcessingPrompt.build(text: text)
+    else
+      UrlProcessingPrompt.build(text: text)
+    end
   end
 
   def parse_response(content)

@@ -24,6 +24,8 @@ class EpisodesController < ApplicationController
   def create
     if params[:url].present?
       create_from_url
+    elsif params.key?(:text)
+      create_from_paste
     else
       create_from_markdown
     end
@@ -41,6 +43,23 @@ class EpisodesController < ApplicationController
     if result.success?
       RecordEpisodeUsage.call(user: Current.user)
       redirect_to episodes_path, notice: "Processing article from URL..."
+    else
+      flash.now[:alert] = result.error
+      @episode = @podcast.episodes.build
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def create_from_paste
+    result = CreatePasteEpisode.call(
+      podcast: @podcast,
+      user: Current.user,
+      text: params[:text]
+    )
+
+    if result.success?
+      RecordEpisodeUsage.call(user: Current.user)
+      redirect_to episodes_path, notice: "Processing pasted text..."
     else
       flash.now[:alert] = result.error
       @episode = @podcast.episodes.build
