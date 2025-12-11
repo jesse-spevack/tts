@@ -3,6 +3,8 @@
 require "test_helper"
 
 class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:one)
     @podcast = podcasts(:one)
