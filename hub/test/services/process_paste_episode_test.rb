@@ -19,7 +19,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     )
 
     Mocktail.replace(LlmProcessor)
-    Mocktail.replace(UploadAndEnqueueEpisode)
+    Mocktail.replace(SubmitEpisodeForProcessing)
   end
 
   test "processes text and updates episode metadata" do
@@ -31,7 +31,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     )
 
     stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
     ProcessPasteEpisode.call(episode: @episode)
 
@@ -51,7 +51,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     )
 
     stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
     ProcessPasteEpisode.call(episode: @episode)
 
@@ -81,7 +81,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     assert_equal "LLM processing failed", @episode.error_message
   end
 
-  test "calls UploadAndEnqueueEpisode with cleaned content" do
+  test "calls SubmitEpisodeForProcessing with cleaned content" do
     cleaned_content = "Cleaned content for TTS."
     mock_llm_result = LlmProcessor::Result.success(
       title: "Title",
@@ -91,11 +91,11 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     )
 
     stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
     ProcessPasteEpisode.call(episode: @episode)
 
-    verify { |m| UploadAndEnqueueEpisode.call(episode: @episode, content: cleaned_content) }
+    verify { |m| SubmitEpisodeForProcessing.call(episode: @episode, content: cleaned_content) }
     assert true
   end
 

@@ -27,7 +27,7 @@ class EpisodesController < ApplicationController
     elsif params.key?(:text)
       create_from_paste
     else
-      create_from_markdown
+      create_from_file
     end
   end
 
@@ -39,15 +39,7 @@ class EpisodesController < ApplicationController
       user: Current.user,
       url: params[:url]
     )
-
-    if result.success?
-      RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Processing article from URL..."
-    else
-      flash.now[:alert] = result.error
-      @episode = @podcast.episodes.build
-      render :new, status: :unprocessable_entity
-    end
+    handle_create_result(result, "Processing article from URL...")
   end
 
   def create_from_paste
@@ -56,10 +48,25 @@ class EpisodesController < ApplicationController
       user: Current.user,
       text: params[:text]
     )
+    handle_create_result(result, "Processing pasted text...")
+  end
 
+  def create_from_file
+    result = CreateFileEpisode.call(
+      podcast: @podcast,
+      user: Current.user,
+      title: episode_params[:title],
+      author: episode_params[:author],
+      description: episode_params[:description],
+      content: read_uploaded_content
+    )
+    handle_create_result(result, "Episode created! Processing...")
+  end
+
+  def handle_create_result(result, success_notice)
     if result.success?
       RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Processing pasted text..."
+      redirect_to episodes_path, notice: success_notice
     else
       flash.now[:alert] = result.error
       @episode = @podcast.episodes.build
@@ -67,30 +74,10 @@ class EpisodesController < ApplicationController
     end
   end
 
-  def create_from_markdown
-    validation = EpisodeSubmissionValidator.call(user: Current.user)
+  def read_uploaded_content
+    return nil unless params.dig(:episode, :content)&.respond_to?(:read)
 
-    result = EpisodeSubmissionService.call(
-      podcast: @podcast,
-      user: Current.user,
-      params: episode_params,
-      uploaded_file: params[:episode][:content],
-      max_characters: validation.max_characters
-    )
-
-    if result.success?
-      RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Episode created! Processing..."
-    else
-      @episode = result.episode
-      flash.now[:alert] = @episode.error_message if @episode.error_message
-
-      if @episode.errors[:content].any?
-        flash.now[:alert] = @episode.errors[:content].first
-      end
-
-      render :new, status: :unprocessable_entity
-    end
+    params[:episode][:content].read
   end
 
   def require_can_create_episode

@@ -64,7 +64,7 @@ class ProcessPasteEpisode
 
       log_info "episode_metadata_updated"
 
-      UploadAndEnqueueEpisode.call(episode: episode, content: content)
+      SubmitEpisodeForProcessing.call(episode: episode, content: content)
     end
   end
 

@@ -19,19 +19,13 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create episode" do
-    # Create a temporary markdown file for upload
     file = Rack::Test::UploadedFile.new(
       StringIO.new("# Test Content\n\nThis is test markdown."),
       "text/markdown",
       original_filename: "test.md"
     )
 
-    # Mock the service to return success
-    mock_episode = Episode.new(title: "Test Episode", author: "Test Author", description: "Test Description")
-    mock_episode.id = 999
-    mock_result = EpisodeSubmissionService::Result.success(mock_episode)
-
-    EpisodeSubmissionService.stub :call, mock_result do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -47,57 +41,38 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
   test "should render new on validation failure" do
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content"),
+      StringIO.new(""),
       "text/markdown",
       original_filename: "test.md"
     )
 
-    # Mock the service to return failure
-    mock_episode = Episode.new
-    mock_episode.errors.add(:title, "can't be blank")
-    mock_result = EpisodeSubmissionService::Result.failure(mock_episode)
-
-    EpisodeSubmissionService.stub :call, mock_result do
-      post episodes_url, params: {
-        episode: {
-          title: "",
-          author: "",
-          description: "",
-          content: file
-        }
+    post episodes_url, params: {
+      episode: {
+        title: "Test",
+        author: "Author",
+        description: "Desc",
+        content: file
       }
-    end
+    }
 
     assert_response :unprocessable_entity
   end
 
   test "should show error when no file uploaded" do
-    # Mock the service to return failure with file error
-    mock_episode = Episode.new(
-      title: "Test Episode",
-      author: "Test Author",
-      description: "Test Description",
-      status: "failed",
-      error_message: "No file uploaded"
-    )
-    mock_result = EpisodeSubmissionService::Result.failure(mock_episode)
-
-    EpisodeSubmissionService.stub :call, mock_result do
-      post episodes_url, params: {
-        episode: {
-          title: "Test Episode",
-          author: "Test Author",
-          description: "Test Description",
-          content: nil
-        }
+    post episodes_url, params: {
+      episode: {
+        title: "Test Episode",
+        author: "Test Author",
+        description: "Test Description",
+        content: nil
       }
-    end
+    }
 
     assert_response :unprocessable_entity
-    assert_includes response.body, "No file uploaded"
+    assert_includes response.body, "Content cannot be empty"
   end
 
-  test "passes nil max_characters to service for unlimited tier users" do
+  test "unlimited tier users can create episodes" do
     sign_in_as users(:unlimited_user)
 
     file = Rack::Test::UploadedFile.new(
@@ -106,13 +81,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    # Verify that the service is called with max_characters: nil for unlimited users
-    mock_result = EpisodeSubmissionService::Result.success(episodes(:one))
-
-    EpisodeSubmissionService.stub :call, ->(podcast:, user:, params:, uploaded_file:, max_characters:) {
-      assert_nil max_characters, "Expected max_characters to be nil for unlimited tier users"
-      mock_result
-    } do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -160,12 +129,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
-    podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
-    mock_result = EpisodeSubmissionService::Result.success(episode)
-
-    EpisodeSubmissionService.stub :call, mock_result do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: { title: "Test", author: "A", description: "D", content: file }
       }
@@ -208,17 +172,10 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    podcast = Podcast.create!(podcast_id: SecureRandom.uuid, title: "Test")
-    podcast.users << free_user
-    episode = podcast.episodes.create!(title: "Test", author: "A", description: "D", user: free_user)
-    mock_result = EpisodeSubmissionService::Result.success(episode)
-
     assert_difference "EpisodeUsage.count", 1 do
-      EpisodeSubmissionService.stub :call, mock_result do
-        post episodes_url, params: {
-          episode: { title: "Test", author: "A", description: "D", content: file }
-        }
-      end
+      post episodes_url, params: {
+        episode: { title: "Test", author: "A", description: "D", content: file }
+      }
     end
 
     usage = EpisodeUsage.current_for(free_user)
@@ -234,16 +191,10 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    mock_episode = Episode.new(title: "Test", author: "A", description: "D")
-    mock_episode.id = 999
-    mock_result = EpisodeSubmissionService::Result.success(mock_episode)
-
     assert_no_difference "EpisodeUsage.count" do
-      EpisodeSubmissionService.stub :call, mock_result do
-        post episodes_url, params: {
-          episode: { title: "Test", author: "A", description: "D", content: file }
-        }
-      end
+      post episodes_url, params: {
+        episode: { title: "Test", author: "A", description: "D", content: file }
+      }
     end
   end
 
