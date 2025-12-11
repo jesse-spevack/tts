@@ -11,8 +11,7 @@ class SubmitEpisodeForProcessing
   end
 
   def call
-    wrapped_content = wrap_content
-    staging_path = upload_content(wrapped_content)
+    staging_path = upload_content(wrap_content)
 
     Rails.logger.info "event=staging_uploaded episode_id=#{episode.id} staging_path=#{staging_path} size_bytes=#{content.bytesize}"
 
