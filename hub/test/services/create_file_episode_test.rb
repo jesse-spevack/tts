@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
+class CreateFileEpisodeTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
@@ -11,7 +11,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
   end
 
   test "creates episode with markdown source type" do
-    result = CreateMarkdownEpisode.call(
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test Title",
@@ -29,7 +29,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
   end
 
   test "sets episode status to processing" do
-    result = CreateMarkdownEpisode.call(
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -43,7 +43,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
 
   test "enqueues ProcessMarkdownEpisodeJob" do
     assert_enqueued_with(job: ProcessMarkdownEpisodeJob) do
-      CreateMarkdownEpisode.call(
+      CreateFileEpisode.call(
         podcast: @podcast,
         user: @user,
         title: "Test",
@@ -55,7 +55,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns failure when content is blank" do
-    result = CreateMarkdownEpisode.call(
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -73,7 +73,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
     max_chars = MaxCharactersForUser.call(user: @user)
     long_content = "a" * (max_chars + 1)
 
-    result = CreateMarkdownEpisode.call(
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -87,7 +87,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
   end
 
   test "sets content preview" do
-    result = CreateMarkdownEpisode.call(
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",

@@ -27,7 +27,7 @@ class EpisodesController < ApplicationController
     elsif params.key?(:text)
       create_from_paste
     else
-      create_from_markdown
+      create_from_file
     end
   end
 
@@ -67,8 +67,8 @@ class EpisodesController < ApplicationController
     end
   end
 
-  def create_from_markdown
-    result = CreateMarkdownEpisode.call(
+  def create_from_file
+    result = CreateFileEpisode.call(
       podcast: @podcast,
       user: Current.user,
       title: episode_params[:title],

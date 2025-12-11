@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateMarkdownEpisode
+class CreateFileEpisode
   def self.call(podcast:, user:, title:, author:, description:, content:)
     new(podcast: podcast, user: user, title: title, author: author, description: description, content: content).call
   end
@@ -21,7 +21,7 @@ class CreateMarkdownEpisode
     episode = create_episode
     ProcessMarkdownEpisodeJob.perform_later(episode.id)
 
-    Rails.logger.info "event=markdown_episode_created episode_id=#{episode.id} content_length=#{content.length}"
+    Rails.logger.info "event=file_episode_created episode_id=#{episode.id} content_length=#{content.length}"
 
     Result.success(episode)
   end
