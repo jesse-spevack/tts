@@ -21,7 +21,7 @@ class CreateMarkdownEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.success?
-    assert_equal :markdown, result.episode.source_type.to_sym
+    assert_equal :file, result.episode.source_type.to_sym
     assert_equal "Test Title", result.episode.title
     assert_equal "Test Author", result.episode.author
     assert_equal "Test description", result.episode.description

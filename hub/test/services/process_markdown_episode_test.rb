@@ -6,7 +6,7 @@ class ProcessMarkdownEpisodeTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @episode.update!(
-      source_type: :markdown,
+      source_type: :file,
       source_text: "# Test Header\n\nSome **bold** content.",
       title: "Test Title",
       author: "Test Author"

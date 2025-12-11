@@ -48,7 +48,7 @@ class CreateMarkdownEpisode
       title: title,
       author: author,
       description: description,
-      source_type: :markdown,
+      source_type: :file,
       source_text: content,
       content_preview: ContentPreview.generate(plain_text),
       status: :processing
