@@ -68,29 +68,29 @@ class EpisodesController < ApplicationController
   end
 
   def create_from_markdown
-    validation = EpisodeSubmissionValidator.call(user: Current.user)
-
-    result = EpisodeSubmissionService.call(
+    result = CreateMarkdownEpisode.call(
       podcast: @podcast,
       user: Current.user,
-      params: episode_params,
-      uploaded_file: params[:episode][:content],
-      max_characters: validation.max_characters
+      title: episode_params[:title],
+      author: episode_params[:author],
+      description: episode_params[:description],
+      content: read_uploaded_content
     )
 
     if result.success?
       RecordEpisodeUsage.call(user: Current.user)
       redirect_to episodes_path, notice: "Episode created! Processing..."
     else
-      @episode = result.episode
-      flash.now[:alert] = @episode.error_message if @episode.error_message
-
-      if @episode.errors[:content].any?
-        flash.now[:alert] = @episode.errors[:content].first
-      end
-
+      flash.now[:alert] = result.error
+      @episode = @podcast.episodes.build
       render :new, status: :unprocessable_entity
     end
+  end
+
+  def read_uploaded_content
+    return nil unless params[:episode][:content]&.respond_to?(:read)
+
+    params[:episode][:content].read
   end
 
   def require_can_create_episode
