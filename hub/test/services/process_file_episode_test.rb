@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ProcessMarkdownEpisodeTest < ActiveSupport::TestCase
+class ProcessFileEpisodeTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @episode.update!(
@@ -18,7 +18,7 @@ class ProcessMarkdownEpisodeTest < ActiveSupport::TestCase
   test "strips markdown and submits for processing" do
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { nil }
 
-    ProcessMarkdownEpisode.call(episode: @episode)
+    ProcessFileEpisode.call(episode: @episode)
 
     verify { |m| SubmitEpisodeForProcessing.call(episode: @episode, content: "Test Header\n\nSome bold content.") }
   end
@@ -26,7 +26,7 @@ class ProcessMarkdownEpisodeTest < ActiveSupport::TestCase
   test "marks episode as failed on error" do
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { raise StandardError, "Upload failed" }
 
-    ProcessMarkdownEpisode.call(episode: @episode)
+    ProcessFileEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status

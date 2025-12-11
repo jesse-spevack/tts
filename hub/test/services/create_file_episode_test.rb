@@ -41,8 +41,8 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     assert_equal "processing", result.episode.status
   end
 
-  test "enqueues ProcessMarkdownEpisodeJob" do
-    assert_enqueued_with(job: ProcessMarkdownEpisodeJob) do
+  test "enqueues ProcessFileEpisodeJob" do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       CreateFileEpisode.call(
         podcast: @podcast,
         user: @user,

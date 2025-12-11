@@ -19,7 +19,7 @@ class CreateFileEpisode
     return Result.failure(max_characters_error) if exceeds_max_characters?
 
     episode = create_episode
-    ProcessMarkdownEpisodeJob.perform_later(episode.id)
+    ProcessFileEpisodeJob.perform_later(episode.id)
 
     Rails.logger.info "event=file_episode_created episode_id=#{episode.id} content_length=#{content.length}"
 

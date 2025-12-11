@@ -25,7 +25,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessMarkdownEpisodeJob) do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -81,7 +81,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessMarkdownEpisodeJob) do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -129,7 +129,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessMarkdownEpisodeJob) do
+    assert_enqueued_with(job: ProcessFileEpisodeJob) do
       post episodes_url, params: {
         episode: { title: "Test", author: "A", description: "D", content: file }
       }
