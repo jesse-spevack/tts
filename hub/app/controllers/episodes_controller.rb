@@ -39,15 +39,7 @@ class EpisodesController < ApplicationController
       user: Current.user,
       url: params[:url]
     )
-
-    if result.success?
-      RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Processing article from URL..."
-    else
-      flash.now[:alert] = result.error
-      @episode = @podcast.episodes.build
-      render :new, status: :unprocessable_entity
-    end
+    handle_create_result(result, "Processing article from URL...")
   end
 
   def create_from_paste
@@ -56,15 +48,7 @@ class EpisodesController < ApplicationController
       user: Current.user,
       text: params[:text]
     )
-
-    if result.success?
-      RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Processing pasted text..."
-    else
-      flash.now[:alert] = result.error
-      @episode = @podcast.episodes.build
-      render :new, status: :unprocessable_entity
-    end
+    handle_create_result(result, "Processing pasted text...")
   end
 
   def create_from_file
@@ -76,10 +60,13 @@ class EpisodesController < ApplicationController
       description: episode_params[:description],
       content: read_uploaded_content
     )
+    handle_create_result(result, "Episode created! Processing...")
+  end
 
+  def handle_create_result(result, success_notice)
     if result.success?
       RecordEpisodeUsage.call(user: Current.user)
-      redirect_to episodes_path, notice: "Episode created! Processing..."
+      redirect_to episodes_path, notice: success_notice
     else
       flash.now[:alert] = result.error
       @episode = @podcast.episodes.build
