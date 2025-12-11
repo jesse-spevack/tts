@@ -11,7 +11,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
 
     Mocktail.replace(LlmProcessor)
-    Mocktail.replace(UploadAndEnqueueEpisode)
+    Mocktail.replace(SubmitEpisodeForProcessing)
   end
 
   test "full paste episode flow from form to completion" do
@@ -38,7 +38,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
       content: "Cleaned content."
     )
     stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stubs { |m| UploadAndEnqueueEpisode.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
     # Process the job
     perform_enqueued_jobs
