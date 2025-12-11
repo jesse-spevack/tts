@@ -88,7 +88,7 @@ class EpisodesController < ApplicationController
   end
 
   def read_uploaded_content
-    return nil unless params[:episode][:content]&.respond_to?(:read)
+    return nil unless params.dig(:episode, :content)&.respond_to?(:read)
 
     params[:episode][:content].read
   end
