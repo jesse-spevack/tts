@@ -8,12 +8,12 @@ class Episode < ApplicationRecord
   delegate :voice, to: :user
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
-  enum :source_type, { file: 0, url: 1, paste: 2 }
+  enum :source_type, { file: 0, url: 1, paste: 2, markdown: 3 }
 
   validates :title, presence: true, length: { maximum: 255 }
   validates :source_url, presence: true, if: :url?
   validates :source_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { source_url.present? }
-  validates :source_text, presence: true, if: :paste?
+  validates :source_text, presence: true, if: -> { paste? || markdown? }
   validates :author, presence: true, length: { maximum: 255 }
   validates :description, presence: true, length: { maximum: 1000 }
   validates :duration_seconds, numericality: { greater_than: 0, less_than_or_equal_to: 86_400 }, allow_nil: true
