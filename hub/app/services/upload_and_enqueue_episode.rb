@@ -26,8 +26,14 @@ class UploadAndEnqueueEpisode
 
   def upload_to_staging
     filename = "#{episode.id}-#{Time.now.to_i}.txt"
+    wrapped_content = BuildEpisodeWrapper.call(
+      title: episode.title,
+      author: episode.author,
+      tier: episode.user.tier,
+      content: content
+    )
 
-    gcs_uploader.upload_staging_file(content: content, filename: filename)
+    gcs_uploader.upload_staging_file(content: wrapped_content, filename: filename)
   end
 
   def enqueue_processing(staging_path)
