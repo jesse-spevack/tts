@@ -178,4 +178,4 @@ gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"episod
 
 ## License
 
-MIT
+[O'Saasy](https://osaasy.dev/)
