@@ -81,14 +81,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add VM to known_hosts
-        run: ssh-keyscan -H 34.106.61.4 >> ~/.ssh/known_hosts
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           working-directory: hub
           bundler-cache: true
+
+      - name: Add VM to known_hosts
+        run: ssh-keyscan 34.106.61.4 >> ~/.ssh/known_hosts
 
       - name: Write Kamal secrets
         working-directory: hub
