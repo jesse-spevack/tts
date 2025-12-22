@@ -19,17 +19,15 @@ class CloudTasksEnqueuerTest < ActiveSupport::TestCase
     ENV["GENERATOR_SERVICE_URL"] = "http://test.example.com"
     ENV["SERVICE_ACCOUNT_EMAIL"] = "test@example.com"
 
-    GoogleCredentials.stub :from_env, { "type" => "test" } do
-      Google::Cloud::Tasks.stub :cloud_tasks, mock_client do
-        enqueuer = CloudTasksEnqueuer.new
-        enqueuer.enqueue_episode_processing(
-          episode_id: 1,
-          podcast_id: "podcast_abc123",
-          staging_path: "staging/file.md",
-          metadata: { title: "Test", author: "Author", description: "Desc" },
-          voice_name: "en-GB-Standard-D"
-        )
-      end
+    Google::Cloud::Tasks.stub :cloud_tasks, mock_client do
+      enqueuer = CloudTasksEnqueuer.new
+      enqueuer.enqueue_episode_processing(
+        episode_id: 1,
+        podcast_id: "podcast_abc123",
+        staging_path: "staging/file.md",
+        metadata: { title: "Test", author: "Author", description: "Desc" },
+        voice_name: "en-GB-Standard-D"
+      )
     end
 
     body = JSON.parse(captured_task[:http_request][:body])

@@ -30,7 +30,7 @@ class GenerateEpisodeDownloadUrl
   end
 
   def storage
-    Google::Cloud::Storage.new(credentials: GoogleCredentials.from_env)
+    Google::Cloud::Storage.new(project_id: ENV["GOOGLE_CLOUD_PROJECT"])
   end
 
   def bucket_name
