@@ -1,3 +1,5 @@
+require "builder"
+
 # Duplicated from lib/rss_generator.rb
 # See braindump.md for de-duplication plan
 class RssGenerator
