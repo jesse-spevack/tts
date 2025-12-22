@@ -4,8 +4,6 @@ require "google/cloud/storage"
 class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
   setup do
     Mocktail.replace(Google::Cloud::Storage)
-    Mocktail.replace(GoogleCredentials)
-    stubs { GoogleCredentials.from_env }.with { {} }
   end
 
   test "returns nil for incomplete episode" do
@@ -32,7 +30,7 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
     mock_storage = Object.new
     mock_storage.define_singleton_method(:bucket) { |_| mock_bucket }
 
-    stubs { |m| Google::Cloud::Storage.new(credentials: m.any) }.with { mock_storage }
+    stubs { |m| Google::Cloud::Storage.new(project_id: m.any) }.with { mock_storage }
 
     result = GenerateEpisodeDownloadUrl.call(episode)
     assert_equal signed_url, result
@@ -56,7 +54,7 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
     mock_storage = Object.new
     mock_storage.define_singleton_method(:bucket) { |_| mock_bucket }
 
-    stubs { |m| Google::Cloud::Storage.new(credentials: m.any) }.with { mock_storage }
+    stubs { |m| Google::Cloud::Storage.new(project_id: m.any) }.with { mock_storage }
 
     GenerateEpisodeDownloadUrl.call(episode)
 
