@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_10_181709) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_22_143925) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -26,6 +26,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_10_181709) do
     t.string "author", null: false
     t.text "content_preview"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description", null: false
     t.integer "duration_seconds"
     t.text "error_message"
@@ -38,6 +39,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_10_181709) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["deleted_at"], name: "index_episodes_on_deleted_at"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["podcast_id"], name: "index_episodes_on_podcast_id"
     t.index ["source_type"], name: "index_episodes_on_source_type"

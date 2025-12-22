@@ -19,6 +19,15 @@
             <%= render "shared/icons/download" %>
           <% end %>
         <% end %>
+        <% if deletable?(episode) %>
+          <%= button_to episode_path(episode),
+              method: :delete,
+              class: "text-[var(--color-subtext)] hover:text-[var(--color-red)] transition-colors cursor-pointer",
+              title: "Delete episode",
+              data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?" } do %>
+            <%= render "shared/icons/trash" %>
+          <% end %>
+        <% end %>
         <% if episode.duration_seconds %>
           <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
         <% end %>

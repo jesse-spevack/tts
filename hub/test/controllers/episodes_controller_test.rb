@@ -441,4 +441,44 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to signed_url
   end
+
+  # Delete episode tests
+
+  test "destroy soft-deletes the episode" do
+    episode = episodes(:one)
+
+    delete episode_url(episode)
+
+    assert_not_nil Episode.unscoped.find(episode.id).deleted_at
+  end
+
+  test "destroy enqueues DeleteEpisodeJob with correct params" do
+    episode = episodes(:one)
+    episode.update!(gcs_episode_id: "20251222-test")
+
+    assert_enqueued_with(
+      job: DeleteEpisodeJob,
+      args: [ { podcast_id: episode.podcast.podcast_id, gcs_episode_id: "20251222-test" } ]
+    ) do
+      delete episode_url(episode)
+    end
+  end
+
+  test "destroy redirects to episodes index" do
+    episode = episodes(:one)
+
+    delete episode_url(episode)
+
+    assert_redirected_to episodes_path
+  end
+
+  test "deleted episodes do not appear in index" do
+    episode = episodes(:one)
+    episode.soft_delete!
+
+    get episodes_url
+
+    assert_response :success
+    assert_no_match episode.title, response.body
+  end
 end
