@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "pages#home"
 
-  resources :episodes, only: [ :index, :new, :create, :show ]
+  resources :episodes, only: [ :index, :new, :create, :show, :destroy ]
 
   # Magic link authentication
   get "auth", to: "sessions#new", as: :auth

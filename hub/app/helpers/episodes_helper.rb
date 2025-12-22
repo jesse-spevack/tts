@@ -34,6 +34,10 @@ module EpisodesHelper
     format("%d:%02d", minutes, seconds)
   end
 
+  def deletable?(episode)
+    episode.user_id == Current.user&.id
+  end
+
   # Keep old method for backwards compatibility during migration
   def status_class(status)
     case status

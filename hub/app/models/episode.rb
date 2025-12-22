@@ -18,7 +18,14 @@ class Episode < ApplicationRecord
   validates :description, presence: true, length: { maximum: 1000 }
   validates :duration_seconds, numericality: { greater_than: 0, less_than_or_equal_to: 86_400 }, allow_nil: true
 
+  default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
+
+  def soft_delete!
+    raise "Episode already deleted" if deleted_at.present?
+
+    update!(deleted_at: Time.current)
+  end
 
   # Broadcast updates when status changes
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?

@@ -175,4 +175,37 @@ class EpisodeTest < ActiveSupport::TestCase
     found = Episode.find_by_prefix_id(episode.prefix_id)
     assert_equal episode, found
   end
+
+  test "soft_delete! sets deleted_at to current time" do
+    episode = episodes(:one)
+    assert_nil episode.deleted_at
+
+    freeze_time do
+      episode.soft_delete!
+      assert_equal Time.current, episode.deleted_at
+    end
+  end
+
+  test "default scope excludes soft-deleted episodes" do
+    episode = episodes(:one)
+    episode.soft_delete!
+
+    assert_not_includes Episode.all, episode
+  end
+
+  test "soft-deleted episode still exists in database" do
+    episode = episodes(:one)
+    episode.soft_delete!
+
+    assert Episode.unscoped.exists?(episode.id)
+  end
+
+  test "soft_delete! raises if already deleted" do
+    episode = episodes(:one)
+    episode.soft_delete!
+
+    assert_raises(RuntimeError, "Episode already deleted") do
+      Episode.unscoped.find(episode.id).soft_delete!
+    end
+  end
 end

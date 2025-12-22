@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :podcast_memberships, dependent: :destroy
   has_many :podcasts, through: :podcast_memberships
+  has_many :episodes, dependent: :destroy
   has_many :sent_messages, dependent: :destroy
 
   enum :tier, { free: 0, premium: 1, unlimited: 2 }
