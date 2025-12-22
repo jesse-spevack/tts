@@ -15,7 +15,7 @@ class DeleteEpisodeJob < ApplicationJob
     manifest.save
     Rails.logger.info "event=delete_episode_manifest_updated podcast_id=#{podcast_id} gcs_episode_id=#{gcs_episode_id} remaining_episodes=#{manifest.episodes.size}"
 
-    podcast_config = YAML.load_file(Rails.root.join("../config/podcast.yml"))
+    podcast_config = YAML.load_file(Rails.root.join("config/podcast.yml"))
     feed_xml = RssGenerator.new(podcast_config, manifest.episodes).generate
     gcs.upload_content(content: feed_xml, remote_path: "feed.xml")
 

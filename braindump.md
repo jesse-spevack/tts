@@ -8,6 +8,7 @@
 - [ ] Audit codebase for unused method arguments (RuboCop doesn't catch args stored but never read)
 - [ ] De-duplicate shared code between hub/ and lib/ (EpisodeManifest, RSSGenerator, GCSUploader). Options: move lib/ into hub, extract to shared private gem, or use symlinks
 - [ ] Consider splitting GcsUploader into staging vs podcast content responsibilities during de-duplication
+- [ ] Customize podcast.yml settings (author, email, link, artwork) per user or per podcast instead of global defaults
 
 
 
