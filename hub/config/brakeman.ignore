@@ -1,6 +1,29 @@
 {
   "ignored_warnings": [
     {
+      "warning_type": "HTTP Verb Confusion",
+      "warning_code": 118,
+      "fingerprint": "e0f7c19e4b82e77e5c1197cddb5170b2e28655d7492d08be90c3a66a82ffec59",
+      "check_name": "VerbConfusion",
+      "message": "Potential HTTP verb confusion. `HEAD` is routed like `GET` but `request.get?` will return `false`",
+      "file": "app/controllers/concerns/trackable.rb",
+      "line": 15,
+      "link": "https://brakemanscanner.org/docs/warning_types/http_verb_confusion/",
+      "code": "return unless request.get?",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Trackable",
+        "method": "track_page_view"
+      },
+      "user_input": "request.get?",
+      "confidence": "Weak",
+      "cwe_id": [
+        352
+      ],
+      "note": "Intentional: HEAD requests should not be tracked (typically bots/health checks). Only GET requests should create page views."
+    },
+    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "bbb38381f31bee2e965c87cfb9f7f696fd029a5075ed6e501ef245d186163eb7",
