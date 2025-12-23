@@ -15,3 +15,7 @@ premium_user:
 unlimited_user:
   email_address: unlimited@example.com
   tier: 2  # unlimited
+
+admin_user:
+  email_address: admin@example.com
+  admin: true
