@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_23_151836) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_23_152010) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -57,6 +57,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_151836) do
     t.string "provider", null: false
     t.datetime "updated_at", null: false
     t.index ["episode_id"], name: "index_llm_usages_on_episode_id"
+  end
+
+  create_table "page_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "path", null: false
+    t.string "referrer"
+    t.string "referrer_host"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.string "visitor_hash", null: false
+    t.index ["created_at"], name: "index_page_views_on_created_at"
+    t.index ["path"], name: "index_page_views_on_path"
+    t.index ["referrer_host"], name: "index_page_views_on_referrer_host"
   end
 
   create_table "podcast_memberships", force: :cascade do |t|
