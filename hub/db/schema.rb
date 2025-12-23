@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_23_152010) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_23_155556) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -67,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_152010) do
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.string "visitor_hash", null: false
+    t.index ["created_at", "visitor_hash"], name: "index_page_views_on_created_at_and_visitor_hash"
     t.index ["created_at"], name: "index_page_views_on_created_at"
     t.index ["path"], name: "index_page_views_on_path"
     t.index ["referrer_host"], name: "index_page_views_on_referrer_host"

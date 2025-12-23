@@ -11,12 +11,12 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
-  test "returns forbidden for non-admin users" do
+  test "returns not found for non-admin users" do
     token = GenerateAuthToken.call(user: @regular_user)
     get auth_url, params: { token: token }
 
     get admin_analytics_url
-    assert_response :forbidden
+    assert_response :not_found
   end
 
   test "allows admin users to view analytics" do
