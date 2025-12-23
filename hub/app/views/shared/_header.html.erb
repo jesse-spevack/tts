@@ -20,6 +20,9 @@
       </button>
       <% if authenticated? %>
         <%= link_to "Settings", settings_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
+        <% if Current.user.admin? %>
+          <%= link_to "Analytics", admin_analytics_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
+        <% end %>
         <span class="text-sm text-[var(--color-subtext)]"><%= Current.user.email_address %></span>
         <%= button_to "Logout", session_path, method: :delete, class: button_classes(type: :link) %>
       <% end %>
@@ -63,6 +66,9 @@
 
       <% if authenticated? %>
         <%= link_to "Settings", settings_path, data: { action: "click->mobile-menu#close" }, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] py-2" %>
+        <% if Current.user.admin? %>
+          <%= link_to "Analytics", admin_analytics_path, data: { action: "click->mobile-menu#close" }, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] py-2" %>
+        <% end %>
         <%= button_to "Logout", session_path, method: :delete, class: "#{button_classes(type: :link)} py-2 text-left" %>
       <% end %>
     </div>
