@@ -131,6 +131,51 @@ class PageViewTest < ActiveSupport::TestCase
 
     assert_nil page_view.referrer_host
   end
+
+  # Query method tests
+  test ".stats returns total_views and unique_visitors since date" do
+    PageView.create!(path: "/", visitor_hash: "abc", user_agent: "test", created_at: 2.days.ago)
+    PageView.create!(path: "/", visitor_hash: "abc", user_agent: "test", created_at: 1.day.ago)
+    PageView.create!(path: "/", visitor_hash: "def", user_agent: "test", created_at: 1.day.ago)
+    PageView.create!(path: "/old", visitor_hash: "xyz", user_agent: "test", created_at: 10.days.ago)
+
+    stats = PageView.stats(since: 7.days.ago)
+
+    assert_equal 3, stats[:total_views]
+    assert_equal 2, stats[:unique_visitors]
+  end
+
+  test ".stats returns views_by_page ordered by count" do
+    PageView.create!(path: "/", visitor_hash: "a", user_agent: "test")
+    PageView.create!(path: "/", visitor_hash: "b", user_agent: "test")
+    PageView.create!(path: "/how-it-sounds", visitor_hash: "c", user_agent: "test")
+
+    stats = PageView.stats(since: 7.days.ago)
+
+    assert_equal({ "/" => 2, "/how-it-sounds" => 1 }, stats[:views_by_page])
+  end
+
+  test ".top_referrers returns referrer hosts ordered by count" do
+    PageView.create!(path: "/", visitor_hash: "a", user_agent: "test", referrer: "https://google.com/search")
+    PageView.create!(path: "/", visitor_hash: "b", user_agent: "test", referrer: "https://google.com/search")
+    PageView.create!(path: "/", visitor_hash: "c", user_agent: "test", referrer: "https://twitter.com/post")
+    PageView.create!(path: "/", visitor_hash: "d", user_agent: "test", referrer: nil)
+
+    referrers = PageView.top_referrers(since: 7.days.ago, limit: 10)
+
+    assert_equal({ "google.com" => 2, "twitter.com" => 1, nil => 1 }, referrers)
+  end
+
+  test ".daily_views returns views grouped by date" do
+    PageView.create!(path: "/", visitor_hash: "a", user_agent: "test", created_at: Date.current)
+    PageView.create!(path: "/", visitor_hash: "b", user_agent: "test", created_at: Date.current)
+    PageView.create!(path: "/", visitor_hash: "c", user_agent: "test", created_at: 1.day.ago)
+
+    daily = PageView.daily_views(since: 7.days.ago)
+
+    assert_equal 2, daily[Date.current.to_s]
+    assert_equal 1, daily[1.day.ago.to_date.to_s]
+  end
 end
 ```
 
@@ -191,6 +236,32 @@ class PageView < ApplicationRecord
   validates :path, presence: true
   validates :visitor_hash, presence: true
 
+  class << self
+    def stats(since:)
+      views = where("created_at >= ?", since)
+      {
+        total_views: views.count,
+        unique_visitors: views.distinct.count(:visitor_hash),
+        views_by_page: views.group(:path).order("count_all DESC").count
+      }
+    end
+
+    def top_referrers(since:, limit: 10)
+      where("created_at >= ?", since)
+        .group(:referrer_host)
+        .order("count_all DESC")
+        .limit(limit)
+        .count
+    end
+
+    def daily_views(since:)
+      where("created_at >= ?", since)
+        .group("date(created_at)")
+        .order("date(created_at) DESC")
+        .count
+    end
+  end
+
   private
 
   def extract_referrer_host
@@ -210,7 +281,7 @@ Run:
 ```bash
 cd hub && bin/rails test test/models/page_view_test.rb
 ```
-Expected: 5 tests, 0 failures
+Expected: 9 tests, 0 failures
 
 **Step 8: Commit**
 
@@ -510,41 +581,16 @@ module Admin
     before_action :require_admin
 
     def show
-      @period_7_days = 7.days.ago.beginning_of_day
-      @period_30_days = 30.days.ago.beginning_of_day
-
-      @stats_7_days = calculate_stats(@period_7_days)
-      @stats_30_days = calculate_stats(@period_30_days)
-
-      @top_referrers = PageView
-        .where("created_at >= ?", @period_30_days)
-        .group(:referrer_host)
-        .order("count_all DESC")
-        .limit(10)
-        .count
-
-      @daily_views = PageView
-        .where("created_at >= ?", @period_30_days)
-        .group("date(created_at)")
-        .order("date(created_at) DESC")
-        .count
+      @stats_7_days = PageView.stats(since: 7.days.ago)
+      @stats_30_days = PageView.stats(since: 30.days.ago)
+      @top_referrers = PageView.top_referrers(since: 30.days.ago)
+      @daily_views = PageView.daily_views(since: 30.days.ago)
     end
 
     private
 
     def require_admin
-      unless Current.session&.user&.admin?
-        head :forbidden
-      end
-    end
-
-    def calculate_stats(since)
-      views = PageView.where("created_at >= ?", since)
-      {
-        total_views: views.count,
-        unique_visitors: views.distinct.count(:visitor_hash),
-        views_by_page: views.group(:path).order("count_all DESC").count
-      }
+      head :forbidden unless Current.session&.user&.admin?
     end
   end
 end
