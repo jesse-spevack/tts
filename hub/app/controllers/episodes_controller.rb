@@ -35,7 +35,7 @@ class EpisodesController < ApplicationController
     @episode = Current.user.episodes.find_by_prefix_id!(params[:id])
     @episode.soft_delete!
     DeleteEpisodeJob.perform_later(
-      podcast_id: @episode.podcast.podcast_id,
+      gcs_podcast_id: @episode.podcast.podcast_id,
       gcs_episode_id: @episode.gcs_episode_id
     )
     redirect_to episodes_path, notice: "Episode deleted."

@@ -22,7 +22,7 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
     stubs { mock_rss.generate }.with { "<rss></rss>" }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
 
-    DeleteEpisodeJob.perform_now(podcast_id: "pod1", gcs_episode_id: "test-episode")
+    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
 
     verify { mock_gcs.delete_file(remote_path: "episodes/test-episode.mp3") }
   end
@@ -41,7 +41,7 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
     stubs { mock_rss.generate }.with { "<rss></rss>" }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
 
-    DeleteEpisodeJob.perform_now(podcast_id: "pod1", gcs_episode_id: "test-episode")
+    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
 
     verify { mock_manifest.remove_episode("test-episode") }
     verify { mock_manifest.save }
@@ -62,7 +62,7 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
     stubs { |m| RssGenerator.new(m.any, []) }.with { mock_rss }
     stubs { mock_rss.generate }.with { "<rss>feed content</rss>" }
 
-    DeleteEpisodeJob.perform_now(podcast_id: "pod1", gcs_episode_id: "test-episode")
+    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
 
     verify { mock_gcs.upload_content(content: "<rss>feed content</rss>", remote_path: "feed.xml") }
   end
