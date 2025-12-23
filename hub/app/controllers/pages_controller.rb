@@ -1,4 +1,5 @@
 class PagesController < ApplicationController
+  include Trackable
   allow_unauthenticated_access
 
   def home

@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   root "pages#home"
 
+  namespace :admin do
+    resource :analytics, only: [ :show ], controller: "analytics"
+  end
+
   resources :episodes, only: [ :index, :new, :create, :show, :destroy ]
 
   # Magic link authentication
