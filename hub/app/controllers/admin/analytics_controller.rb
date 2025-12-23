@@ -12,7 +12,7 @@ module Admin
     private
 
     def require_admin
-      head :not_found unless Current.session&.user&.admin?
+      head :not_found unless Current.admin?
     end
   end
 end
