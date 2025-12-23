@@ -458,7 +458,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
     assert_enqueued_with(
       job: DeleteEpisodeJob,
-      args: [ { podcast_id: episode.podcast.podcast_id, gcs_episode_id: "20251222-test" } ]
+      args: [ { gcs_podcast_id: episode.podcast.podcast_id, gcs_episode_id: "20251222-test" } ]
     ) do
       delete episode_url(episode)
     end
