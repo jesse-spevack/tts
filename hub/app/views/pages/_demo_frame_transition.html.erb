@@ -1,0 +1,39 @@
+<%# Frame 5: Transition - episode syncing to podcast apps %>
+
+<%= render "shared/demo_browser_frame" do %>
+  <div class="space-y-4 py-2 text-center">
+    <%# Syncing message %>
+    <div class="flex items-center justify-center gap-2">
+      <svg class="w-5 h-5 text-[var(--color-green)] animate-pop-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+      <span class="text-sm font-medium text-[var(--color-text)]">Added to your podcast feed</span>
+    </div>
+
+    <%# App logos - using brand color %>
+    <p class="text-xs text-[var(--color-subtext)]">Now available in</p>
+    <div class="flex items-center justify-center gap-4 text-[var(--color-primary)]">
+      <div class="flex flex-col items-center gap-1">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.5 15.5c0 -1.2 1 -2 2.5 -2s2.5 0.8 2.5 2C14.5 18 14 23 12 23s-2.5 -5 -2.5 -7.5Z"></path>
+          <path fill-rule="evenodd" d="M3.25 11a8.75 8.75 0 1 1 12.513 7.902 17.468 17.468 0 0 1 -0.335 1.76c3.975 -1.41 6.822 -5.203 6.822 -9.662C22.25 5.34 17.66 0.75 12 0.75S1.75 5.34 1.75 11c0 4.459 2.847 8.253 6.822 9.663l-0.03 -0.125a17.481 17.481 0 0 1 -0.305 -1.636A8.75 8.75 0 0 1 3.25 11Z" clip-rule="evenodd"></path>
+          <path fill-rule="evenodd" d="M6.75 11a5.25 5.25 0 1 1 9.119 3.549c0.086 0.301 0.131 0.62 0.131 0.951 0 0.288 -0.006 0.609 -0.02 0.953a6.75 6.75 0 1 0 -7.96 0c-0.014 -0.344 -0.02 -0.665 -0.02 -0.953 0 -0.331 0.045 -0.65 0.131 -0.951A5.231 5.231 0 0 1 6.75 11Z" clip-rule="evenodd"></path>
+          <path d="M9.75 10.25a2.25 2.25 0 1 0 4.5 0 2.25 2.25 0 1 0 -4.5 0"></path>
+        </svg>
+        <span class="text-xs text-[var(--color-subtext)]">Podcasts</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 23c6.075 0 11 -4.925 11 -11S18.075 1 12 1 1 5.925 1 12s4.925 11 11 11ZM5.993 9.159c1.19 -0.317 3.276 -0.649 5.57 -0.578 2.3 0.071 4.71 0.545 6.627 1.748a1 1 0 0 0 1.063 -1.695c-2.333 -1.463 -5.138 -1.975 -7.628 -2.052 -2.498 -0.077 -4.778 0.28 -6.146 0.644a1 1 0 1 0 0.514 1.933Zm5.036 3.41c-1.887 -0.066 -3.55 0.23 -4.469 0.508a1 1 0 0 1 -0.58 -1.914c1.127 -0.341 3.01 -0.667 5.12 -0.592 2.112 0.075 4.527 0.554 6.648 1.899a1 1 0 1 1 -1.07 1.69c-1.728 -1.096 -3.762 -1.523 -5.649 -1.59Zm-4.17 4.102c0.92 -0.23 2.508 -0.461 4.187 -0.38 1.694 0.082 3.346 0.476 4.524 1.37a1 1 0 0 0 1.21 -1.593c-1.64 -1.244 -3.76 -1.684 -5.638 -1.775 -1.893 -0.091 -3.677 0.165 -4.768 0.438a1 1 0 1 0 0.485 1.94Z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-xs text-[var(--color-subtext)]">Spotify</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 2.25A9.75 9.75 0 0 0 2.25 12a9.753 9.753 0 0 0 6.238 9.098l2.26 -7.538a2 2 0 1 1 2.502 0l2.262 7.538A9.753 9.753 0 0 0 21.75 12 9.75 9.75 0 0 0 12 2.25Zm0 19.5a9.788 9.788 0 0 1 -2.076 -0.221l0.078 -0.258L12 19.473l1.998 1.798 0.078 0.258A9.788 9.788 0 0 1 12 21.75ZM0.75 12C0.75 5.787 5.787 0.75 12 0.75S23.25 5.787 23.25 12 18.213 23.25 12 23.25 0.75 18.213 0.75 12Zm12.695 7.428 -0.698 -0.628 0.402 -0.361 0.296 0.99ZM12 18.128l0.83 -0.748 -0.83 -2.77 -0.83 2.77 0.83 0.747Zm-1.445 1.3 0.698 -0.628 -0.402 -0.361 -0.296 0.99ZM6.95 6.9a0.75 0.75 0 0 1 0.15 1.05c-0.44 0.586 -1.35 2.265 -1.35 4.05 0 1.785 0.91 3.464 1.35 4.05a0.75 0.75 0 1 1 -1.2 0.9c-0.56 -0.747 -1.65 -2.735 -1.65 -4.95 0 -2.215 1.09 -4.203 1.65 -4.95a0.75 0.75 0 0 1 1.05 -0.15Zm2.08 2.07a0.75 0.75 0 0 1 0 1.06c-0.238 0.238 -0.78 1.025 -0.78 1.97 0 0.945 0.542 1.732 0.78 1.97a0.75 0.75 0 1 1 -1.06 1.06c-0.43 -0.428 -1.22 -1.575 -1.22 -3.03 0 -1.455 0.79 -2.602 1.22 -3.03a0.75 0.75 0 0 1 1.06 0Zm9.07 -1.92a0.75 0.75 0 0 0 -1.2 0.9c0.44 0.586 1.35 2.265 1.35 4.05 0 1.785 -0.91 3.464 -1.35 4.05a0.75 0.75 0 1 0 1.2 0.9c0.56 -0.747 1.65 -2.735 1.65 -4.95 0 -2.215 -1.09 -4.203 -1.65 -4.95Zm-3.13 1.92a0.75 0.75 0 0 1 1.06 0c0.43 0.428 1.22 1.575 1.22 3.03 0 1.455 -0.79 2.602 -1.22 3.03a0.75 0.75 0 1 1 -1.06 -1.06c0.238 -0.238 0.78 -1.025 0.78 -1.97 0 -0.945 -0.542 -1.732 -0.78 -1.97a0.75 0.75 0 0 1 0 -1.06Z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-xs text-[var(--color-subtext)]">Overcast</span>
+      </div>
+    </div>
+  </div>
+<% end %>

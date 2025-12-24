@@ -2,19 +2,32 @@
   <!-- Hero Section -->
   <div class="bg-[var(--color-base)]">
     <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-        Turn any article, blog, or newsletter into a podcast
-      </h1>
-      <p class="mt-4 text-lg text-[var(--color-subtext)]">
-        For everyone who bookmarks more than they read
-      </p>
-      <div class="mt-10 flex items-center gap-x-6">
-        <a href="#signup" class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
-          Get started
-        </a>
-        <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
-          Hear a sample <span aria-hidden="true">&rarr;</span>
-        <% end %>
+      <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+        <%# Left column: Copy and CTA %>
+        <div>
+          <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+            Finally listen to your reading list
+          </h1>
+          <p class="mt-4 text-lg text-[var(--color-subtext)]">
+            Paste a URL, upload a file, or drop in text. We'll turn it into a podcast episode in your feed.
+          </p>
+          <div class="mt-10 flex items-center gap-x-6">
+            <a href="#signup" class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
+              Start listening free
+            </a>
+            <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
+              Hear a sample <span aria-hidden="true">&rarr;</span>
+            <% end %>
+          </div>
+          <p class="mt-4 text-sm text-[var(--color-subtext)]">
+            No credit card · 2 free episodes/month · Works with any podcast app
+          </p>
+        </div>
+
+        <%# Right column: Demo animation %>
+        <div class="mt-12 lg:mt-0">
+          <%= render "pages/hero_demo" %>
+        </div>
       </div>
     </div>
   </div>
@@ -61,12 +74,25 @@
     </div>
   </section>
 
-  <!-- Testimonial Section -->
+  <!-- Personal Note Section -->
   <section class="bg-[var(--color-base)]">
     <figure class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <blockquote class="text-xl/8 font-semibold tracking-tight text-[var(--color-text)] sm:text-2xl/9">
-        <p>"This started as a tool I built for myself. Now I use it every day to turn saved articles into something I can listen to while doing chores - all from my favorite podcast app."</p>
-      </blockquote>
+      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl text-[var(--color-text)]">Why I built this</h2>
+
+      <p class="mt-6 text-xl/8 text-[var(--color-text)] sm:text-2xl/9">
+        I built this for myself. I had dozens of articles open in browser tabs that I never made time to read, but I spend hours every week running, doing chores, and driving around for errands. Now I actually get through all of the long form writing I used to let pile up.
+      </p>
+
+      <div class="mt-6 space-y-6 text-xl/8 text-[var(--color-text)] sm:text-2xl/9">
+        <p>
+          Paste a link, get a podcast episode in your private feed. Works with Apple Podcasts, Spotify, Overcast—whatever you already use.
+        </p>
+
+        <p>
+          Very Normal TTS is free to try—2 episodes per month, no credit card required. Need more? <a href="mailto:jspevack@gmail.com" class="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] underline">Reach out</a> while we're still in alpha. I hope you find it as useful as I do.
+        </p>
+      </div>
+
       <figcaption class="mt-10 flex items-center gap-x-6">
         <img src="/jesse-profile.jpg" alt="" class="size-12 rounded-full bg-[var(--color-surface1)] object-cover" />
         <div class="text-sm/6">
@@ -89,7 +115,7 @@
           <dl class="space-y-10">
             <div>
               <dt class="text-base/7 font-semibold text-[var(--color-text)]">Does it sound robotic?</dt>
-              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Not at all. We use the latest text-to-speech technology from Google to produce natural-sounding voices. <a href="<%= how_it_sounds_path %>" class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]">Hear a sample</a> and judge for yourself.</dd>
+              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Not at all. We use the latest text-to-speech technology to produce natural-sounding voices. <a href="<%= how_it_sounds_path %>" class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]">Hear a sample</a> and judge for yourself.</dd>
             </div>
             <div>
               <dt class="text-base/7 font-semibold text-[var(--color-text)]">Which podcast apps are supported?</dt>
@@ -114,10 +140,10 @@
     <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
       <div class="lg:col-span-7">
         <h2 class="max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Try it free
+          Your reading list isn't going to listen to itself
         </h2>
         <p class="mt-2 text-[var(--color-subtext)]">
-          Enter your email and we'll send a login link
+          Start converting articles today. No credit card required.
         </p>
       </div>
       <%= form_with url: session_path, class: "w-full max-w-md lg:col-span-5 lg:pt-2" do |form| %>
@@ -128,7 +154,7 @@
               autocomplete: "username",
               placeholder: "Enter your email",
               class: "min-w-0 flex-auto rounded-lg bg-[var(--color-surface0)] px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--color-primary)]" %>
-          <%= form.submit "Send login link", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer" %>
+          <%= form.submit "Create my feed", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer" %>
         </div>
         <p class="mt-4 text-sm text-[var(--color-subtext)]">
           Free tier, no credit card required. By signing up, you agree to our
