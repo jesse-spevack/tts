@@ -13,7 +13,7 @@
 /* Typing text reveal */
 @keyframes type-reveal {
   from { max-width: 0; }
-  to { max-width: 34ch; }
+  to { max-width: 33ch; }
 }
 
 .animate-typing {
@@ -21,7 +21,7 @@
   overflow: hidden;
   white-space: nowrap;
   max-width: 0;
-  animation: type-reveal 1.5s steps(34, end) forwards;
+  animation: type-reveal 1.5s steps(33, end) forwards;
 }
 
 /* Spinner rotation */
@@ -107,7 +107,7 @@
   }
 
   .animate-typing {
-    max-width: 34ch;
+    max-width: 33ch;
   }
 
   .animate-progress,
