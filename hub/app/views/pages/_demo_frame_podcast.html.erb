@@ -1,0 +1,47 @@
+<%# Frame 6: Episode playing in podcast app %>
+
+<%= render "shared/demo_phone_frame" do %>
+  <div class="space-y-3">
+    <%# App header %>
+    <div class="text-center py-2">
+      <span class="text-xs font-medium text-[var(--color-subtext)]">Podcasts</span>
+    </div>
+
+    <%# Now playing card %>
+    <div class="rounded-lg bg-[var(--color-surface0)] p-3 space-y-2">
+      <%# Album art %>
+      <div class="w-full aspect-square rounded-md bg-[var(--color-primary)] flex items-center justify-center">
+        <svg class="w-8 h-8 text-[var(--color-primary-text)]" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z" />
+        </svg>
+      </div>
+
+      <%# Episode title %>
+      <div class="text-center">
+        <p class="text-xs font-medium text-[var(--color-text)] truncate">The Future of Remote Work</p>
+        <p class="text-xs text-[var(--color-subtext)]">12 min</p>
+      </div>
+
+      <%# Playback bar %>
+      <div class="relative h-1 rounded-full bg-[var(--color-surface1)] overflow-hidden">
+        <div class="absolute inset-y-0 left-0 bg-[var(--color-primary)] rounded-full animate-playback"></div>
+      </div>
+
+      <%# Playback controls %>
+      <div class="flex items-center justify-center gap-4 pt-1">
+        <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M8.445 14.832A1 1 0 0010 14v-4.586l4.445 3.418A1 1 0 0016 12V8a1 1 0 00-1.555-.832L10 10.586V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
+        </svg>
+        <%# Play/pause button (showing pause = playing) %>
+        <div class="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
+          <svg class="w-5 h-5 text-[var(--color-primary-text)]" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M11.555 5.168A1 1 0 0010 6v4.586L5.555 7.168A1 1 0 004 8v4a1 1 0 001.555.832L10 9.414V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+<% end %>
