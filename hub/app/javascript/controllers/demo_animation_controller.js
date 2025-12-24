@@ -21,7 +21,12 @@ export default class extends Controller {
       this.showStaticFallback()
       return
     }
-    this.startAnimation()
+    // Small delay to ensure CSS transitions are fully initialized
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.startAnimation()
+      })
+    })
   }
 
   disconnect() {
