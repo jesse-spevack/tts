@@ -10,5 +10,10 @@
 - [ ] Consider splitting GcsUploader into staging vs podcast content responsibilities during de-duplication
 - [ ] Customize podcast.yml settings (author, email, link, artwork) per user or per podcast instead of global defaults
 
+## Marketing / Blog Post Ideas
 
+- [ ] Personal story: "Why I built a tool to turn articles into podcasts"
+- [ ] Problem-focused: "I have 200 saved articles I'll never read"
+- [ ] SEO/how-to: "How to listen to articles as a podcast"
+- [ ] Build in public: Ongoing series about building the product, decisions made, lessons learned
 
