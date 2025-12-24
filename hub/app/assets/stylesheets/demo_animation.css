@@ -89,9 +89,9 @@
   animation: playback-advance 3s ease-out forwards;
 }
 
-/* Cross-fade transition */
+/* Demo frame - no transition to avoid crossfade artifacts */
 .demo-frame {
-  transition: opacity 0.3s ease-in-out;
+  /* Instant switch, no crossfade */
 }
 
 /* Respect reduced motion */

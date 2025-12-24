@@ -62,21 +62,11 @@ export default class extends Controller {
     this.currentFrameValue = index
     this.frameTargets.forEach((frame, i) => {
       if (i === index) {
-        frame.classList.remove("hidden")
-        // Small delay to allow hidden to be removed before opacity transition
-        requestAnimationFrame(() => {
-          frame.classList.remove("opacity-0")
-          frame.classList.add("opacity-100")
-        })
+        frame.classList.remove("hidden", "opacity-0")
+        frame.classList.add("opacity-100")
       } else {
+        frame.classList.add("hidden", "opacity-0")
         frame.classList.remove("opacity-100")
-        frame.classList.add("opacity-0")
-        // Delay hiding to allow fade-out transition
-        setTimeout(() => {
-          if (i !== this.currentFrameValue) {
-            frame.classList.add("hidden")
-          }
-        }, 300)
       }
     })
   }
