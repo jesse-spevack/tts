@@ -12,8 +12,9 @@ export default class extends Controller {
   // 2: Click (0.5s)
   // 3: Processing (2.5s)
   // 4: Success (2s)
-  // 5: Podcast app (4s, then shows replay)
-  frameDurations = [2000, 500, 2500, 2000, 4000]
+  // 5: Transition (2s)
+  // 6: Podcast app (4s, then shows replay)
+  frameDurations = [2000, 500, 2500, 2000, 2000, 4000]
 
   connect() {
     if (this.prefersReducedMotion) {

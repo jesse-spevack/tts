@@ -1,0 +1,36 @@
+<%# Frame 5: Transition - episode syncing to podcast apps %>
+
+<%= render "shared/demo_browser_frame" do %>
+  <div class="space-y-4 py-2 text-center">
+    <%# Syncing message %>
+    <div class="flex items-center justify-center gap-2">
+      <svg class="w-5 h-5 text-[var(--color-green)] animate-pop-in" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+      <span class="text-sm font-medium text-[var(--color-text)]">Added to your podcast feed</span>
+    </div>
+
+    <%# App logos %>
+    <p class="text-xs text-[var(--color-subtext)]">Now available in</p>
+    <div class="flex items-center justify-center gap-4">
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-b from-purple-500 to-purple-700 flex items-center justify-center">
+          <span class="text-white text-xs font-bold">▶</span>
+        </div>
+        <span class="text-xs text-[var(--color-subtext)]">Podcasts</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1DB954] flex items-center justify-center">
+          <span class="text-white text-xs font-bold">●●●</span>
+        </div>
+        <span class="text-xs text-[var(--color-subtext)]">Spotify</span>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
+          <span class="text-white text-xs font-bold">◐</span>
+        </div>
+        <span class="text-xs text-[var(--color-subtext)]">Overcast</span>
+      </div>
+    </div>
+  </div>
+<% end %>
