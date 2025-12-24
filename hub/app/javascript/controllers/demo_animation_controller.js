@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["frame"]
+  static targets = ["frame", "replay"]
   static values = {
     currentFrame: { type: Number, default: 0 },
     paused: { type: Boolean, default: false }
@@ -12,7 +12,7 @@ export default class extends Controller {
   // 2: Click (0.5s)
   // 3: Processing (2.5s)
   // 4: Success (2s)
-  // 5: Podcast app (4s, then loops)
+  // 5: Podcast app (4s, then shows replay)
   frameDurations = [2000, 500, 2500, 2000, 4000]
 
   connect() {
@@ -42,12 +42,16 @@ export default class extends Controller {
   scheduleNextFrame() {
     const duration = this.frameDurations[this.currentFrameValue]
     this.timeout = setTimeout(() => {
-      this.advanceFrame()
+      if (this.currentFrameValue === this.frameTargets.length - 1) {
+        this.showReplayButton()
+      } else {
+        this.advanceFrame()
+      }
     }, duration)
   }
 
   advanceFrame() {
-    const nextFrame = (this.currentFrameValue + 1) % this.frameTargets.length
+    const nextFrame = this.currentFrameValue + 1
     this.showFrame(nextFrame)
     this.scheduleNextFrame()
   }
@@ -73,6 +77,20 @@ export default class extends Controller {
         }, 300)
       }
     })
+  }
+
+  showReplayButton() {
+    if (this.hasReplayTarget) {
+      this.replayTarget.classList.remove("hidden")
+    }
+  }
+
+  replay() {
+    if (this.hasReplayTarget) {
+      this.replayTarget.classList.add("hidden")
+    }
+    this.showFrame(0)
+    this.scheduleNextFrame()
   }
 
   showStaticFallback() {
