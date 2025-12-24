@@ -2,55 +2,56 @@
 
 <div
   data-controller="demo-animation"
-  class="relative w-full max-w-sm mx-auto"
+  class="w-full max-w-sm mx-auto"
   aria-label="Demo showing how to convert an article to a podcast episode"
 >
-  <%# Invisible height placeholder - uses tallest frame (podcast) to prevent layout shift %>
-  <div class="invisible" aria-hidden="true">
-    <%= render "pages/demo_frame_podcast" %>
-  </div>
+  <%# Animation container %>
+  <div class="relative">
+    <%# Invisible height placeholder - uses tallest frame (podcast) to prevent layout shift %>
+    <div class="invisible" aria-hidden="true">
+      <%= render "pages/demo_frame_podcast" %>
+    </div>
 
-  <%# Frame 1: URL Input %>
-  <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-    <%= render "pages/demo_frame_input" %>
-  </div>
+    <%# Frame 1: URL Input %>
+    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+      <%= render "pages/demo_frame_input" %>
+    </div>
 
-  <%# Frame 2: Button Click %>
-  <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-    <%= render "pages/demo_frame_click" %>
-  </div>
+    <%# Frame 2: Button Click %>
+    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+      <%= render "pages/demo_frame_click" %>
+    </div>
 
-  <%# Frame 3: Processing %>
-  <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-    <%= render "pages/demo_frame_processing" %>
-  </div>
+    <%# Frame 3: Processing %>
+    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+      <%= render "pages/demo_frame_processing" %>
+    </div>
 
-  <%# Frame 4: Success %>
-  <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-    <%= render "pages/demo_frame_success" %>
-  </div>
+    <%# Frame 4: Success %>
+    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+      <%= render "pages/demo_frame_success" %>
+    </div>
 
-  <%# Frame 5: Podcast App %>
-  <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-    <%= render "pages/demo_frame_podcast" %>
+    <%# Frame 5: Podcast App %>
+    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+      <%= render "pages/demo_frame_podcast" %>
+    </div>
+
+    <%# Static fallback for reduced motion (visible only when JS detects reduced motion) %>
+    <noscript>
+      <%= render "pages/demo_frame_success" %>
+    </noscript>
   </div>
 
   <%# Replay button - shown after animation completes %>
   <button
     data-demo-animation-target="replay"
     data-action="click->demo-animation#replay"
-    class="hidden absolute inset-0 flex items-center justify-center bg-[var(--color-base)]/80 rounded-lg cursor-pointer group"
+    class="hidden mt-4 mx-auto flex items-center gap-2 text-sm text-[var(--color-subtext)] hover:text-[var(--color-primary)] cursor-pointer"
   >
-    <div class="flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] group-hover:text-[var(--color-primary-hover)]">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-      Watch again
-    </div>
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+    Watch again
   </button>
-
-  <%# Static fallback for reduced motion (visible only when JS detects reduced motion) %>
-  <noscript>
-    <%= render "pages/demo_frame_success" %>
-  </noscript>
 </div>
