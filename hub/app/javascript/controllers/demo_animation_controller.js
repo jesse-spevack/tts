@@ -82,13 +82,13 @@ export default class extends Controller {
 
   showReplayButton() {
     if (this.hasReplayTarget) {
-      this.replayTarget.classList.remove("hidden")
+      this.replayTarget.classList.remove("invisible", "opacity-0")
     }
   }
 
   replay() {
     if (this.hasReplayTarget) {
-      this.replayTarget.classList.add("hidden")
+      this.replayTarget.classList.add("invisible", "opacity-0")
     }
     this.showFrame(0)
     this.scheduleNextFrame()
