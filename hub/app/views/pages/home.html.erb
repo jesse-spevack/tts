@@ -2,19 +2,32 @@
   <!-- Hero Section -->
   <div class="bg-[var(--color-base)]">
     <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-        Turn any article, blog, or newsletter into a podcast
-      </h1>
-      <p class="mt-4 text-lg text-[var(--color-subtext)]">
-        For everyone who bookmarks more than they read
-      </p>
-      <div class="mt-10 flex items-center gap-x-6">
-        <a href="#signup" class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
-          Get started
-        </a>
-        <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
-          Hear a sample <span aria-hidden="true">&rarr;</span>
-        <% end %>
+      <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+        <%# Left column: Copy and CTA %>
+        <div>
+          <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+            Finally listen to your reading list
+          </h1>
+          <p class="mt-4 text-lg text-[var(--color-subtext)]">
+            Paste a URL, upload a file, or drop in text. We'll turn it into a podcast episode in your feed.
+          </p>
+          <div class="mt-10 flex items-center gap-x-6">
+            <a href="#signup" class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
+              Start listening free
+            </a>
+            <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
+              Hear a sample <span aria-hidden="true">&rarr;</span>
+            <% end %>
+          </div>
+          <p class="mt-4 text-sm text-[var(--color-subtext)]">
+            Free forever · No credit card · Works with any podcast app
+          </p>
+        </div>
+
+        <%# Right column: Demo animation %>
+        <div class="mt-12 lg:mt-0">
+          <%= render "pages/hero_demo" %>
+        </div>
       </div>
     </div>
   </div>
