@@ -21,12 +21,7 @@ export default class extends Controller {
       this.showStaticFallback()
       return
     }
-    // Small delay to ensure CSS transitions are fully initialized
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.startAnimation()
-      })
-    })
+    this.startAnimation()
   }
 
   disconnect() {
@@ -34,7 +29,8 @@ export default class extends Controller {
   }
 
   startAnimation() {
-    this.showFrame(0)
+    // Frame 0 is already visible in HTML, just schedule next
+    this.currentFrameValue = 0
     this.scheduleNextFrame()
   }
 
