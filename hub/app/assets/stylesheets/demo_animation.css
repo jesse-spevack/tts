@@ -1,0 +1,115 @@
+/* Demo animation keyframes */
+
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-cursor {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Typing text reveal */
+@keyframes type-reveal {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animate-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: type-reveal 1.5s steps(30, end) forwards;
+}
+
+/* Spinner rotation */
+@keyframes spin-smooth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spinner {
+  animation: spin-smooth 1s linear infinite;
+}
+
+/* Progress bar fill */
+@keyframes progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress-fill 2.5s ease-out forwards;
+}
+
+/* Fade in and up */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+/* Pop in (for checkmark) */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.3s ease-out forwards;
+}
+
+/* Playback bar advancement */
+@keyframes playback-advance {
+  from { width: 10%; }
+  to { width: 40%; }
+}
+
+.animate-playback {
+  animation: playback-advance 3s ease-out forwards;
+}
+
+/* Cross-fade transition */
+.demo-frame {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-cursor,
+  .animate-typing,
+  .animate-spinner,
+  .animate-progress,
+  .animate-fade-in-up,
+  .animate-pop-in,
+  .animate-playback {
+    animation: none;
+  }
+
+  .animate-typing {
+    width: 100%;
+  }
+
+  .animate-progress,
+  .animate-playback {
+    width: 100%;
+  }
+}
