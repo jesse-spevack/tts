@@ -8,7 +8,12 @@ export default class extends Controller {
   }
 
   // Frame durations in milliseconds
-  frameDurations = [2000, 500, 2500, 2000, 1000, 3500]
+  // 1: Input (2s typing)
+  // 2: Click (0.5s)
+  // 3: Processing (2.5s)
+  // 4: Success (2s)
+  // 5: Podcast app (4s, then loops)
+  frameDurations = [2000, 500, 2500, 2000, 4000]
 
   connect() {
     if (this.prefersReducedMotion) {
@@ -51,20 +56,31 @@ export default class extends Controller {
     this.currentFrameValue = index
     this.frameTargets.forEach((frame, i) => {
       if (i === index) {
-        frame.classList.remove("hidden", "opacity-0")
-        frame.classList.add("opacity-100")
+        frame.classList.remove("hidden")
+        // Small delay to allow hidden to be removed before opacity transition
+        requestAnimationFrame(() => {
+          frame.classList.remove("opacity-0")
+          frame.classList.add("opacity-100")
+        })
       } else {
-        frame.classList.add("hidden", "opacity-0")
         frame.classList.remove("opacity-100")
+        frame.classList.add("opacity-0")
+        // Delay hiding to allow fade-out transition
+        setTimeout(() => {
+          if (i !== this.currentFrameValue) {
+            frame.classList.add("hidden")
+          }
+        }, 300)
       }
     })
   }
 
   showStaticFallback() {
-    // Show only the final "success" frame for reduced motion
+    // Show only the "success" frame for reduced motion (index 3)
     this.frameTargets.forEach((frame, i) => {
-      if (i === 3) { // Episode created frame
+      if (i === 3) {
         frame.classList.remove("hidden", "opacity-0")
+        frame.classList.add("opacity-100")
       } else {
         frame.classList.add("hidden")
       }
