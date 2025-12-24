@@ -178,4 +178,4 @@ gcloud logging read 'resource.type="cloud_run_revision" AND textPayload=~"episod
 
 ## License
 
-MIT
+[OSaaS Dev License](LICENSE) - MIT with SaaS restriction
