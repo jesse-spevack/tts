@@ -1,0 +1,37 @@
+<%# Hero demo animation - assembles all frames with Stimulus controller %>
+
+<div
+  data-controller="demo-animation"
+  class="relative w-full max-w-sm mx-auto"
+  aria-label="Demo showing how to convert an article to a podcast episode"
+>
+  <%# Frame 1: URL Input %>
+  <div data-demo-animation-target="frame" class="demo-frame hidden opacity-0">
+    <%= render "pages/demo_frame_input" %>
+  </div>
+
+  <%# Frame 2: Button Click %>
+  <div data-demo-animation-target="frame" class="demo-frame hidden opacity-0">
+    <%= render "pages/demo_frame_click" %>
+  </div>
+
+  <%# Frame 3: Processing %>
+  <div data-demo-animation-target="frame" class="demo-frame hidden opacity-0">
+    <%= render "pages/demo_frame_processing" %>
+  </div>
+
+  <%# Frame 4: Success %>
+  <div data-demo-animation-target="frame" class="demo-frame hidden opacity-0">
+    <%= render "pages/demo_frame_success" %>
+  </div>
+
+  <%# Frame 5: Podcast App %>
+  <div data-demo-animation-target="frame" class="demo-frame hidden opacity-0">
+    <%= render "pages/demo_frame_podcast" %>
+  </div>
+
+  <%# Static fallback for reduced motion (visible only when JS detects reduced motion) %>
+  <noscript>
+    <%= render "pages/demo_frame_success" %>
+  </noscript>
+</div>
