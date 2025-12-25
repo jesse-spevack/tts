@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["frame", "replay"]
+  static targets = ["frame", "replay", "overlay", "container"]
   static values = {
     currentFrame: { type: Number, default: 0 },
     paused: { type: Boolean, default: false }
@@ -9,17 +9,40 @@ export default class extends Controller {
 
   // Frame durations in milliseconds
   // 1: Input (2s typing)
-  // 2: Click (0.5s)
+  // 2: Click (0.25s)
   // 3: Processing (2.5s)
   // 4: Success (2s)
   // 5: Transition (2s)
-  // 6: Podcast app (4s, then shows replay)
-  frameDurations = [2000, 500, 2500, 2000, 2000, 4000]
+  // 6: Podcast play button (0.5s)
+  // 7: Podcast click (0.15s)
+  // 8: Podcast playing (4s, then shows replay)
+  frameDurations = [2000, 250, 2500, 2000, 2000, 500, 150, 4000]
 
   connect() {
     if (this.prefersReducedMotion) {
       this.showStaticFallback()
       return
+    }
+    // Don't auto-start - wait for user to click play
+  }
+
+  play() {
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.add("hidden")
+    }
+    // Hide border from container (keep padding to prevent layout shift)
+    if (this.hasContainerTarget) {
+      this.containerTarget.classList.remove("border-[var(--color-text)]/20")
+      this.containerTarget.classList.add("border-transparent")
+    }
+    // Trigger typing animation
+    const typingText = this.element.querySelector("[data-typing-text]")
+    const typingCursor = this.element.querySelector("[data-typing-cursor]")
+    if (typingText) {
+      typingText.classList.add("animate-typing")
+    }
+    if (typingCursor) {
+      typingCursor.style.display = ""
     }
     this.startAnimation()
   }
@@ -86,6 +109,10 @@ export default class extends Controller {
   }
 
   showStaticFallback() {
+    // Hide overlay for reduced motion users
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.add("hidden")
+    }
     // Show only the "success" frame for reduced motion (index 3)
     this.frameTargets.forEach((frame, i) => {
       if (i === 3) {

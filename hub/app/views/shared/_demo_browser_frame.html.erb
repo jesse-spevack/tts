@@ -3,7 +3,7 @@
 <%#   ... content ... %>
 <%# end %>
 
-<div class="rounded-lg border border-[var(--color-overlay0)] bg-[var(--color-surface0)] overflow-hidden shadow-sm">
+<div class="h-full flex flex-col rounded-lg border border-[var(--color-overlay0)] bg-[var(--color-surface0)] overflow-hidden shadow-sm">
   <%# Title bar %>
   <div class="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-overlay0)] bg-[var(--color-surface1)]">
     <div class="flex gap-1.5">
@@ -14,7 +14,7 @@
     <div class="flex-1 text-center text-xs text-[var(--color-subtext)]">Very Normal TTS</div>
   </div>
   <%# Content area %>
-  <div class="p-4 bg-[var(--color-base)]">
+  <div class="flex-1 p-4 bg-[var(--color-base)] flex items-center justify-center">
     <%= yield %>
   </div>
 </div>

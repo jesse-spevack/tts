@@ -1,4 +1,4 @@
-<%# Frame 6: Episode playing in podcast app %>
+<%# Frame: Episode ready to play in podcast app %>
 
 <%= render "shared/demo_phone_frame" do %>
   <div class="space-y-3">
@@ -20,19 +20,19 @@
         <p class="text-xs text-[var(--color-subtext)]">12 min</p>
       </div>
 
-      <%# Playback bar %>
+      <%# Playback bar - at start %>
       <div class="relative h-1 rounded-full bg-[var(--color-surface1)] overflow-hidden">
-        <div class="absolute inset-y-0 left-0 bg-[var(--color-primary)] rounded-full animate-playback"></div>
+        <div class="absolute inset-y-0 left-0 w-[10%] bg-[var(--color-primary)] rounded-full"></div>
       </div>
 
-      <%# Playback controls %>
+      <%# Playback controls - showing play button %>
       <div class="flex items-center justify-center gap-4 pt-1">
         <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
           <path d="M8.445 14.832A1 1 0 0010 14v-4.586l4.445 3.418A1 1 0 0016 12V8a1 1 0 00-1.555-.832L10 10.586V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
         </svg>
-        <%# Play/pause button (showing pause = playing) %>
+        <%# Play button %>
         <div class="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary-text)]">
-          <%= render "shared/icons/pause", css_class: "w-5 h-5" %>
+          <%= render "shared/icons/play", css_class: "w-5 h-5" %>
         </div>
         <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
           <path d="M11.555 5.168A1 1 0 0010 6v4.586L5.555 7.168A1 1 0 004 8v4a1 1 0 001.555.832L10 9.414V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4z" />

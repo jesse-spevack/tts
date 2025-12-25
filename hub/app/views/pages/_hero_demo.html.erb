@@ -6,46 +6,69 @@
   aria-label="Demo showing how to convert an article to a podcast episode"
 >
   <%# Animation container %>
-  <div class="relative">
-    <%# Invisible height placeholder - uses tallest frame (podcast) to prevent layout shift %>
-    <div class="invisible" aria-hidden="true">
-      <%= render "pages/demo_frame_podcast" %>
-    </div>
+  <div class="relative rounded-lg border border-[var(--color-text)]/20 p-6" data-demo-animation-target="container">
+      <%# Play button overlay - click to start demo %>
+      <div
+        data-demo-animation-target="overlay"
+        data-action="click->demo-animation#play"
+        class="absolute inset-0 z-10 flex flex-col items-center justify-center cursor-pointer rounded-lg bg-[var(--color-base)]"
+      >
+        <%# Play button circle %>
+        <div class="w-14 h-14 rounded-full bg-[var(--color-primary)] flex items-center justify-center hover:scale-105 active:scale-95 active:brightness-75 transition-all text-[var(--color-primary-text)]">
+          <%= render "shared/icons/play", css_class: "w-6 h-6" %>
+        </div>
+        <span class="mt-3 text-sm text-[var(--color-subtext)]">See how it works</span>
+      </div>
 
-    <%# Frame 1: URL Input - starts visible %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 opacity-100">
-      <%= render "pages/demo_frame_input" %>
-    </div>
+      <%# Invisible height placeholder - uses tallest frame (podcast) to prevent layout shift %>
+      <div class="invisible" aria-hidden="true">
+        <%= render "pages/demo_frame_podcast" %>
+      </div>
 
-    <%# Frame 2: Button Click %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-      <%= render "pages/demo_frame_click" %>
-    </div>
+      <%# Frame 1: URL Input - starts visible %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 opacity-100">
+        <%= render "pages/demo_frame_input" %>
+      </div>
 
-    <%# Frame 3: Processing %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-      <%= render "pages/demo_frame_processing" %>
-    </div>
+      <%# Frame 2: Button Click %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_click" %>
+      </div>
 
-    <%# Frame 4: Success %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-      <%= render "pages/demo_frame_success" %>
-    </div>
+      <%# Frame 3: Processing %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_processing" %>
+      </div>
 
-    <%# Frame 5: Transition %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-      <%= render "pages/demo_frame_transition" %>
-    </div>
+      <%# Frame 4: Success %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_success" %>
+      </div>
 
-    <%# Frame 6: Podcast App %>
-    <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
-      <%= render "pages/demo_frame_podcast" %>
-    </div>
+      <%# Frame 5: Transition %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_transition" %>
+      </div>
 
-    <%# Static fallback for reduced motion (visible only when JS detects reduced motion) %>
-    <noscript>
-      <%= render "pages/demo_frame_success" %>
-    </noscript>
+      <%# Frame 6: Podcast App - Play button %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_podcast_play" %>
+      </div>
+
+      <%# Frame 7: Podcast App - Play button clicked %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_podcast_click" %>
+      </div>
+
+      <%# Frame 8: Podcast App - Playing with pause button %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_podcast" %>
+      </div>
+
+      <%# Static fallback for reduced motion (visible only when JS detects reduced motion) %>
+      <noscript>
+        <%= render "pages/demo_frame_success" %>
+      </noscript>
   </div>
 
   <%# Replay button - shown after animation completes %>
