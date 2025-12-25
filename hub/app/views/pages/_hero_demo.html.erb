@@ -14,10 +14,8 @@
       class="absolute inset-0 z-10 flex flex-col items-center justify-center cursor-pointer rounded-lg bg-[var(--color-base)]/60"
     >
       <%# Play button circle %>
-      <div class="w-14 h-14 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-        <svg class="w-6 h-6 text-[var(--color-primary-text)] ml-1" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
+      <div class="w-14 h-14 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-lg hover:scale-105 transition-transform text-[var(--color-primary-text)]">
+        <%= render "shared/icons/play", css_class: "w-6 h-6" %>
       </div>
       <span class="mt-3 text-sm text-[var(--color-subtext)]">See how it works</span>
     </div>
