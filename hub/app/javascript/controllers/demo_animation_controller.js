@@ -21,6 +21,13 @@ export default class extends Controller {
       this.showStaticFallback()
       return
     }
+    // Don't auto-start - wait for user to click play
+  }
+
+  play() {
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.add("hidden")
+    }
     this.startAnimation()
   }
 
