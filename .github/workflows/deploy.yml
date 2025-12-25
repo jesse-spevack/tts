@@ -67,7 +67,7 @@ jobs:
           echo "MAILER_FROM_ADDRESS=$(gcloud secrets versions access latest --secret=mailer-from-address)" >> $GITHUB_ENV
           echo "CLOUD_TASKS_LOCATION=$(gcloud secrets versions access latest --secret=cloud-tasks-location)" >> $GITHUB_ENV
           echo "CLOUD_TASKS_QUEUE=$(gcloud secrets versions access latest --secret=cloud-tasks-queue)" >> $GITHUB_ENV
-          echo "GENERATOR_CALLBACK_SECRET=$(gcloud secrets versions access latest --secret=generator-callback-secret)" >> $GITHUB_ENV
+          echo "GENERATOR_CALLBACK_SECRET=$(gcloud secrets versions access latest --secret=callback-secret)" >> $GITHUB_ENV
           echo "GENERATOR_SERVICE_URL=$(gcloud secrets versions access latest --secret=generator-service-url)" >> $GITHUB_ENV
           echo "GOOGLE_CLOUD_BUCKET=$(gcloud secrets versions access latest --secret=google-cloud-bucket)" >> $GITHUB_ENV
           echo "GOOGLE_CLOUD_PROJECT=$(gcloud secrets versions access latest --secret=google-cloud-project)" >> $GITHUB_ENV
@@ -142,7 +142,7 @@ jobs:
           echo "CLOUD_TASKS_LOCATION=$(gcloud secrets versions access latest --secret=cloud-tasks-location)" >> $GITHUB_ENV
           echo "CLOUD_TASKS_QUEUE=$(gcloud secrets versions access latest --secret=cloud-tasks-queue)" >> $GITHUB_ENV
           echo "HUB_CALLBACK_URL=$(gcloud secrets versions access latest --secret=hub-callback-url)" >> $GITHUB_ENV
-          echo "HUB_CALLBACK_SECRET=$(gcloud secrets versions access latest --secret=hub-callback-secret)" >> $GITHUB_ENV
+          echo "HUB_CALLBACK_SECRET=$(gcloud secrets versions access latest --secret=callback-secret)" >> $GITHUB_ENV
 
       - name: Build container image
         run: |
