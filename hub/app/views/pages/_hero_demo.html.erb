@@ -5,9 +5,8 @@
   class="w-full max-w-sm mx-auto"
   aria-label="Demo showing how to convert an article to a podcast episode"
 >
-  <%# Animation container with border %>
-  <div class="rounded-lg border border-[var(--color-overlay0)] p-8">
-    <div class="relative">
+  <%# Animation container %>
+  <div class="relative">
       <%# Play button overlay - click to start demo %>
       <div
         data-demo-animation-target="overlay"
@@ -60,7 +59,6 @@
       <noscript>
         <%= render "pages/demo_frame_success" %>
       </noscript>
-    </div>
   </div>
 
   <%# Replay button - shown after animation completes %>
