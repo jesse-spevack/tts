@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["frame", "replay", "overlay"]
+  static targets = ["frame", "replay", "overlay", "container"]
   static values = {
     currentFrame: { type: Number, default: 0 },
     paused: { type: Boolean, default: false }
@@ -27,6 +27,10 @@ export default class extends Controller {
   play() {
     if (this.hasOverlayTarget) {
       this.overlayTarget.classList.add("hidden")
+    }
+    // Remove border from container
+    if (this.hasContainerTarget) {
+      this.containerTarget.classList.remove("border", "border-[var(--color-text)]/20", "p-6")
     }
     // Trigger typing animation
     const typingText = this.element.querySelector("[data-typing-text]")
