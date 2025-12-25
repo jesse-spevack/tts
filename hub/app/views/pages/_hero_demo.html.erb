@@ -50,7 +50,17 @@
         <%= render "pages/demo_frame_transition" %>
       </div>
 
-      <%# Frame 6: Podcast App %>
+      <%# Frame 6: Podcast App - Play button %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_podcast_play" %>
+      </div>
+
+      <%# Frame 7: Podcast App - Play button clicked %>
+      <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
+        <%= render "pages/demo_frame_podcast_click" %>
+      </div>
+
+      <%# Frame 8: Podcast App - Playing with pause button %>
       <div data-demo-animation-target="frame" class="demo-frame absolute inset-0 hidden opacity-0">
         <%= render "pages/demo_frame_podcast" %>
       </div>
