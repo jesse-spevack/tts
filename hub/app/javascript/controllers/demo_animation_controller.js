@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["frame", "replay"]
+  static targets = ["frame", "replay", "overlay"]
   static values = {
     currentFrame: { type: Number, default: 0 },
     paused: { type: Boolean, default: false }
