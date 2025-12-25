@@ -1,7 +1,7 @@
 <header class="fixed top-0 left-0 right-0 bg-[var(--color-base)] border-b border-[var(--color-overlay0)] z-50" data-controller="theme mobile-menu">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <div class="text-lg font-semibold">
-      Very Normal TTS
+      <%= link_to "Very Normal TTS", authenticated? ? episodes_path : root_path, class: "hover:text-[var(--color-primary)]" %>
     </div>
 
     <!-- Desktop nav (hidden on mobile) -->
