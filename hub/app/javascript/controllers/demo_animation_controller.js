@@ -29,9 +29,13 @@ export default class extends Controller {
       this.overlayTarget.classList.add("hidden")
     }
     // Trigger typing animation
-    const typingEl = this.element.querySelector(".animate-typing-target")
-    if (typingEl) {
-      typingEl.classList.add("animate-typing")
+    const typingText = this.element.querySelector("[data-typing-text]")
+    const typingCursor = this.element.querySelector("[data-typing-cursor]")
+    if (typingText) {
+      typingText.classList.add("animate-typing")
+    }
+    if (typingCursor) {
+      typingCursor.style.display = ""
     }
     this.startAnimation()
   }
