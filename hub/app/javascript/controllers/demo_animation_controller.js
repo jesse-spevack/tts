@@ -28,9 +28,10 @@ export default class extends Controller {
     if (this.hasOverlayTarget) {
       this.overlayTarget.classList.add("hidden")
     }
-    // Remove border from container
+    // Hide border from container (keep padding to prevent layout shift)
     if (this.hasContainerTarget) {
-      this.containerTarget.classList.remove("border", "border-[var(--color-text)]/20", "p-6")
+      this.containerTarget.classList.remove("border-[var(--color-text)]/20")
+      this.containerTarget.classList.add("border-transparent")
     }
     // Trigger typing animation
     const typingText = this.element.querySelector("[data-typing-text]")
