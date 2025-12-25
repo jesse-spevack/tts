@@ -93,6 +93,10 @@ export default class extends Controller {
   }
 
   showStaticFallback() {
+    // Hide overlay for reduced motion users
+    if (this.hasOverlayTarget) {
+      this.overlayTarget.classList.add("hidden")
+    }
     // Show only the "success" frame for reduced motion (index 3)
     this.frameTargets.forEach((frame, i) => {
       if (i === 3) {
