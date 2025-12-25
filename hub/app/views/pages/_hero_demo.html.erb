@@ -6,7 +6,7 @@
   aria-label="Demo showing how to convert an article to a podcast episode"
 >
   <%# Animation container %>
-  <div class="relative">
+  <div class="relative rounded-lg border border-[var(--color-text)]/20 p-6">
       <%# Play button overlay - click to start demo %>
       <div
         data-demo-animation-target="overlay"
@@ -14,7 +14,7 @@
         class="absolute inset-0 z-10 flex flex-col items-center justify-center cursor-pointer rounded-lg bg-[var(--color-base)]"
       >
         <%# Play button circle %>
-        <div class="w-14 h-14 rounded-full bg-[var(--color-primary)] flex items-center justify-center border-2 border-white/30 hover:scale-105 transition-transform text-[var(--color-primary-text)]">
+        <div class="w-14 h-14 rounded-full bg-[var(--color-primary)] flex items-center justify-center hover:scale-105 transition-transform text-[var(--color-primary-text)]">
           <%= render "shared/icons/play", css_class: "w-6 h-6" %>
         </div>
         <span class="mt-3 text-sm text-[var(--color-subtext)]">See how it works</span>
