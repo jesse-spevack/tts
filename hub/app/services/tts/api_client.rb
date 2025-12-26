@@ -8,10 +8,8 @@ module Tts
     CONTENT_FILTER_ERROR = "sensitive or harmful content"
     DEADLINE_EXCEEDED_ERROR = "Deadline Exceeded"
 
-    def initialize(config:, logger: nil)
+    def initialize(config:)
       @config = config
-      @logger = logger || Rails.logger
-
       @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
         client_config.timeout = @config.timeout
       end
@@ -28,7 +26,7 @@ module Tts
 
         retries += 1
         wait_time = 2**retries
-        @logger.warn "[TTS] Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
+        Rails.logger.warn "[TTS] Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
         sleep(wait_time)
         retry
       rescue Google::Cloud::Error => e
@@ -36,7 +34,7 @@ module Tts
         raise unless retries < max_retries && safe_message.include?(DEADLINE_EXCEEDED_ERROR)
 
         retries += 1
-        @logger.warn "[TTS] Timeout, retrying (#{retries}/#{max_retries})"
+        Rails.logger.warn "[TTS] Timeout, retrying (#{retries}/#{max_retries})"
         sleep(1)
         retry
       end
@@ -45,7 +43,7 @@ module Tts
     private
 
     def make_request(text:, voice:)
-      @logger.info "[TTS] Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
+      Rails.logger.info "[TTS] Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
 
       response = @client.synthesize_speech(
         input: { text: text },
@@ -53,11 +51,11 @@ module Tts
         audio_config: build_audio_config
       )
 
-      @logger.info "[TTS] API call successful (#{response.audio_content.bytesize} bytes audio)"
+      Rails.logger.info "[TTS] API call successful (#{response.audio_content.bytesize} bytes audio)"
       response.audio_content
     rescue StandardError => e
       safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
-      @logger.error "[TTS] API call failed: #{safe_message}"
+      Rails.logger.error "[TTS] API call failed: #{safe_message}"
       raise
     end
 

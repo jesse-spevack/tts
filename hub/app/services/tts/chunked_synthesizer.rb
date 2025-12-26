@@ -7,10 +7,9 @@ module Tts
   class ChunkedSynthesizer
     CONTENT_FILTER_ERROR = "sensitive or harmful content"
 
-    def initialize(api_client:, config:, logger: nil)
+    def initialize(api_client:, config:)
       @api_client = api_client
       @config = config
-      @logger = logger || Rails.logger
     end
 
     def synthesize(chunks, voice)
@@ -34,9 +33,9 @@ module Tts
     private
 
     def log_synthesis_start(chunks)
-      @logger.info "[TTS] Text too long, splitting into #{chunks.length} chunks..."
-      @logger.info "[TTS] Processing with #{@config.thread_pool_size} concurrent threads"
-      @logger.info "[TTS] Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
+      Rails.logger.info "[TTS] Text too long, splitting into #{chunks.length} chunks..."
+      Rails.logger.info "[TTS] Processing with #{@config.thread_pool_size} concurrent threads"
+      Rails.logger.info "[TTS] Chunk sizes: #{chunks.map(&:bytesize).join(', ')} bytes"
     end
 
     def launch_chunk_promises(chunks:, voice:, pool:)
@@ -57,7 +56,7 @@ module Tts
 
     def process_chunk(chunk:, index:, total:, voice:, skipped_chunks:)
       chunk_num = index + 1
-      @logger.info "[TTS] Chunk #{chunk_num}/#{total}: Starting (#{chunk.bytesize} bytes)"
+      Rails.logger.info "[TTS] Chunk #{chunk_num}/#{total}: Starting (#{chunk.bytesize} bytes)"
 
       chunk_start = Time.now
       audio = synthesize_chunk_with_error_handling(chunk: chunk, chunk_num: chunk_num, total: total, voice: voice,
@@ -79,21 +78,21 @@ module Tts
       safe_message = error.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
 
       if safe_message.include?(CONTENT_FILTER_ERROR)
-        @logger.warn "[TTS] Chunk #{chunk_num}/#{total}: SKIPPED - Content filter"
+        Rails.logger.warn "[TTS] Chunk #{chunk_num}/#{total}: SKIPPED - Content filter"
         skipped_chunks << chunk_num
       else
-        @logger.error "[TTS] Chunk #{chunk_num}/#{total}: Failed - #{safe_message}"
+        Rails.logger.error "[TTS] Chunk #{chunk_num}/#{total}: Failed - #{safe_message}"
         raise
       end
     end
 
     def log_chunk_completion(chunk_num:, total:, chunk_start:)
       chunk_duration = Time.now - chunk_start
-      @logger.info "[TTS] Chunk #{chunk_num}/#{total}: Done in #{chunk_duration.round(2)}s"
+      Rails.logger.info "[TTS] Chunk #{chunk_num}/#{total}: Done in #{chunk_duration.round(2)}s"
     end
 
     def wait_for_completion(promises)
-      @logger.info "[TTS] Waiting for all chunks to complete..."
+      Rails.logger.info "[TTS] Waiting for all chunks to complete..."
       promises.map(&:value!)
     end
 
@@ -115,11 +114,11 @@ module Tts
 
       if @skipped_chunks.any?
         skipped_list = @skipped_chunks.sort.join(", ")
-        @logger.warn "[TTS] Warning: Skipped #{@skipped_chunks.length} chunk(s) due to content filtering: #{skipped_list}"
+        Rails.logger.warn "[TTS] Warning: Skipped #{@skipped_chunks.length} chunk(s) due to content filtering: #{skipped_list}"
       end
 
-      @logger.info "[TTS] Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
-      @logger.info "[TTS] Total processing time: #{total_duration.round(2)}s"
+      Rails.logger.info "[TTS] Concatenating #{audio_parts.length}/#{chunks.length} audio chunks..."
+      Rails.logger.info "[TTS] Total processing time: #{total_duration.round(2)}s"
     end
   end
 end

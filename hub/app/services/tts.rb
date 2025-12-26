@@ -8,17 +8,15 @@ require_relative "tts/chunked_synthesizer"
 module Tts
   # Text-to-Speech conversion using Google Cloud TTS API.
   class Synthesizer
-    def initialize(config: Config.new, logger: nil)
+    def initialize(config: Config.new)
       @config = config
-      @logger = logger || Rails.logger
-
-      @api_client = ApiClient.new(config: config, logger: @logger)
-      @text_chunker = TextChunker.new(logger: @logger)
-      @chunked_synthesizer = ChunkedSynthesizer.new(api_client: @api_client, config: config, logger: @logger)
+      @api_client = ApiClient.new(config: config)
+      @text_chunker = TextChunker.new
+      @chunked_synthesizer = ChunkedSynthesizer.new(api_client: @api_client, config: config)
     end
 
     def synthesize(text, voice: nil)
-      @logger.info "[TTS] Generating audio..."
+      Rails.logger.info "[TTS] Generating audio..."
       voice ||= @config.voice_name
 
       chunks = @text_chunker.chunk(text, @config.byte_limit)
@@ -29,7 +27,7 @@ module Tts
                         @chunked_synthesizer.synthesize(chunks, voice)
                       end
 
-      @logger.info "[TTS] Generated #{format_size(audio_content.bytesize)}"
+      Rails.logger.info "[TTS] Generated #{format_size(audio_content.bytesize)}"
       audio_content
     end
 
