@@ -11,6 +11,7 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
 
     Mocktail.replace(GcsUploader)
     Mocktail.replace(CloudTasksEnqueuer)
+    Mocktail.replace(GenerateAudioJob)
   end
 
   test "wraps content, uploads, and enqueues for processing" do
@@ -73,5 +74,45 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
     assert_nothing_raised do
       SubmitEpisodeForProcessing.call(episode: @episode, content: "Test content")
     end
+  end
+
+  test "uses internal TTS for allowlisted podcasts" do
+    @episode.podcast.update!(podcast_id: "podcast_195c82bf8eeb2aae")
+    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+
+    SubmitEpisodeForProcessing.call(episode: @episode, content: "Test content")
+
+    # Verify GenerateAudioJob was called, not the external path
+    assert_equal 1, Mocktail.calls(GenerateAudioJob, :perform_later).size
+    assert_equal 0, Mocktail.calls(CloudTasksEnqueuer, :new).size
+  end
+
+  test "uses external generator for non-allowlisted podcasts" do
+    @episode.podcast.update!(podcast_id: "podcast_other")
+
+    mock_gcs = Mocktail.of(GcsUploader)
+    stubs { |m| mock_gcs.upload_staging_file(content: m.any, filename: m.any) }.with { "staging/test.txt" }
+    stubs { |m| GcsUploader.new(m.any, podcast_id: m.any) }.with { mock_gcs }
+
+    mock_tasks = Mocktail.of(CloudTasksEnqueuer)
+    stubs { |m| mock_tasks.enqueue_episode_processing(episode_id: m.any, podcast_id: m.any, staging_path: m.any, metadata: m.any, voice_name: m.any) }.with { "task-123" }
+    stubs { CloudTasksEnqueuer.new }.with { mock_tasks }
+
+    SubmitEpisodeForProcessing.call(episode: @episode, content: "Test content")
+
+    # Verify external path was used, not GenerateAudioJob
+    assert_equal 0, Mocktail.calls(GenerateAudioJob, :perform_later).size
+    assert_equal 1, Mocktail.calls(CloudTasksEnqueuer, :new).size
+  end
+
+  test "stores wrapped content in source_text for internal TTS" do
+    @episode.podcast.update!(podcast_id: "podcast_195c82bf8eeb2aae")
+    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+
+    SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+
+    @episode.reload
+    assert @episode.source_text.include?("Test Title")
+    assert @episode.source_text.include?("Article body.")
   end
 end
