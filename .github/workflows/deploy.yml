@@ -48,14 +48,12 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Add VM to known_hosts
         run: ssh-keyscan 34.106.61.4 >> ~/.ssh/known_hosts
 
       - name: Write Kamal secrets
-        working-directory: hub
         run: |
           cat > .kamal/secrets << EOF
           RAILS_MASTER_KEY=$RAILS_MASTER_KEY
@@ -70,5 +68,4 @@ jobs:
           EOF
 
       - name: Deploy with Kamal
-        working-directory: hub
         run: bin/kamal deploy
