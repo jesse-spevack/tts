@@ -6,6 +6,7 @@ class DeleteEpisodeJob < ApplicationJob
   def perform(episode)
     Rails.logger.info "event=delete_episode_started episode_id=#{episode.id}"
 
+    soft_delete_episode(episode)
     delete_audio_file(episode)
     regenerate_feed(episode.podcast)
 
@@ -16,6 +17,11 @@ class DeleteEpisodeJob < ApplicationJob
   end
 
   private
+
+  def soft_delete_episode(episode)
+    episode.update!(deleted_at: Time.current) unless episode.deleted_at.present?
+    Rails.logger.info "event=episode_soft_deleted episode_id=#{episode.id}"
+  end
 
   def delete_audio_file(episode)
     return unless episode.gcs_episode_id.present?

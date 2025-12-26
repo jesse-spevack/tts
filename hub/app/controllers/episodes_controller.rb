@@ -33,7 +33,6 @@ class EpisodesController < ApplicationController
 
   def destroy
     @episode = Current.user.episodes.find_by_prefix_id!(params[:id])
-    @episode.soft_delete!
     DeleteEpisodeJob.perform_later(@episode)
     redirect_to episodes_path, notice: "Episode deleted."
   end

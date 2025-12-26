@@ -445,9 +445,20 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   # Delete episode tests
 
   test "destroy soft-deletes the episode" do
+    Mocktail.replace(GcsUploader)
+    Mocktail.replace(GenerateRssFeed)
+
+    mock_gcs = Mocktail.of(GcsUploader)
+    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
+
     episode = episodes(:one)
 
-    delete episode_url(episode)
+    perform_enqueued_jobs do
+      delete episode_url(episode)
+    end
 
     assert_not_nil Episode.unscoped.find(episode.id).deleted_at
   end
