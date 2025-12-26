@@ -18,11 +18,17 @@ class GenerateEpisodeAudio
 
     @episode.update!(status: "processing")
 
+    Rails.logger.info "event=synthesizing_audio episode_id=#{@episode.id} voice=#{voice_name} text_bytes=#{content_text.bytesize}"
     audio_content = synthesize_audio
+
     gcs_episode_id = generate_episode_id
+    Rails.logger.info "event=uploading_audio episode_id=#{@episode.id} gcs_episode_id=#{gcs_episode_id} audio_bytes=#{audio_content.bytesize}"
     upload_audio(audio_content, gcs_episode_id)
+
+    Rails.logger.info "event=calculating_duration episode_id=#{@episode.id}"
     duration_seconds = calculate_duration(audio_content)
 
+    Rails.logger.info "event=updating_episode episode_id=#{@episode.id} duration_seconds=#{duration_seconds}"
     @episode.update!(
       status: "complete",
       gcs_episode_id: gcs_episode_id,
@@ -30,10 +36,14 @@ class GenerateEpisodeAudio
       duration_seconds: duration_seconds
     )
 
-    upload_feed unless @skip_feed_upload
+    unless @skip_feed_upload
+      Rails.logger.info "event=uploading_feed episode_id=#{@episode.id}"
+      upload_feed
+    end
 
     Rails.logger.info "event=generate_episode_audio_completed episode_id=#{@episode.id} gcs_episode_id=#{gcs_episode_id}"
 
+    Rails.logger.info "event=notifying_user episode_id=#{@episode.id}"
     notify_user
   rescue StandardError => e
     Rails.logger.error "event=generate_episode_audio_failed episode_id=#{@episode.id} error=#{e.class} message=#{e.message}"
@@ -49,7 +59,7 @@ class GenerateEpisodeAudio
   end
 
   def voice_name
-    @episode.user&.voice_preference || "en-GB-Chirp3-HD-Enceladus"
+    @episode.voice
   end
 
   def content_text
