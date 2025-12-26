@@ -55,7 +55,7 @@ class Tts::TextChunkerTest < ActiveSupport::TestCase
 
   test "handles empty text" do
     chunks = @chunker.chunk("", 100)
-    assert_equal [""], chunks
+    assert_equal [ "" ], chunks
   end
 
   test "preserves content integrity" do

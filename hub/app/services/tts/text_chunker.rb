@@ -6,7 +6,7 @@ module Tts
     def initialize; end
 
     def chunk(text, max_bytes)
-      return [text] if text.bytesize <= max_bytes
+      return [ text ] if text.bytesize <= max_bytes
 
       sentences = text.split(/(?<=[.!?])\s+/)
       chunks = []

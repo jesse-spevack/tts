@@ -23,9 +23,9 @@ module Tts
 
       audio_content = if chunks.length == 1
                         @api_client.call(text: chunks[0], voice: voice)
-                      else
+      else
                         @chunked_synthesizer.synthesize(chunks, voice)
-                      end
+      end
 
       Rails.logger.info "[TTS] Generated #{format_size(audio_content.bytesize)}"
       audio_content

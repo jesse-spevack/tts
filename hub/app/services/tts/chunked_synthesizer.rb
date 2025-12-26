@@ -64,7 +64,7 @@ module Tts
 
       log_chunk_completion(chunk_num: chunk_num, total: total, chunk_start: chunk_start) if audio
 
-      [index, audio]
+      [ index, audio ]
     end
 
     def synthesize_chunk_with_error_handling(chunk:, chunk_num:, total:, voice:, skipped_chunks:)

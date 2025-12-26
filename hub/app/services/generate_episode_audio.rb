@@ -87,7 +87,7 @@ class GenerateEpisodeAudio
   end
 
   def calculate_duration(audio_content)
-    Tempfile.create(["episode", ".mp3"]) do |temp_file|
+    Tempfile.create([ "episode", ".mp3" ]) do |temp_file|
       temp_file.binmode
       temp_file.write(audio_content)
       temp_file.close
