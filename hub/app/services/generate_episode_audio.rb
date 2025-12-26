@@ -11,6 +11,7 @@ class GenerateEpisodeAudio
   def initialize(episode:, skip_feed_upload: false)
     @episode = episode
     @skip_feed_upload = skip_feed_upload
+    @uploaded_audio_path = nil
   end
 
   def call
@@ -47,6 +48,7 @@ class GenerateEpisodeAudio
     notify_user
   rescue StandardError => e
     Rails.logger.error "event=generate_episode_audio_failed episode_id=#{@episode.id} error=#{e.class} message=#{e.message}"
+    cleanup_orphaned_audio
     @episode.update!(status: "failed", error_message: e.message)
   end
 
@@ -77,9 +79,10 @@ class GenerateEpisodeAudio
   end
 
   def upload_audio(audio_content, gcs_episode_id)
+    @uploaded_audio_path = "episodes/#{gcs_episode_id}.mp3"
     gcs_uploader.upload_content(
       content: audio_content,
-      remote_path: "episodes/#{gcs_episode_id}.mp3"
+      remote_path: @uploaded_audio_path
     )
   end
 
@@ -108,5 +111,14 @@ class GenerateEpisodeAudio
     EpisodeCompletionNotifier.call(episode: @episode) if @episode.user&.email_address.present?
   rescue StandardError => e
     Rails.logger.warn "event=notification_failed episode_id=#{@episode.id} error=#{e.message}"
+  end
+
+  def cleanup_orphaned_audio
+    return unless @uploaded_audio_path
+
+    Rails.logger.info "event=cleaning_up_orphaned_audio episode_id=#{@episode.id} path=#{@uploaded_audio_path}"
+    gcs_uploader.delete_file(remote_path: @uploaded_audio_path)
+  rescue StandardError => e
+    Rails.logger.warn "event=cleanup_failed episode_id=#{@episode.id} error=#{e.message}"
   end
 end
