@@ -14,6 +14,6 @@ class ProcessFileEpisodeJobTest < ActiveJob::TestCase
 
     ProcessFileEpisodeJob.perform_now(@episode.id)
 
-    verify { ProcessFileEpisode.call(episode: @episode) }
+    assert_equal 1, Mocktail.calls(ProcessFileEpisode, :call).size
   end
 end

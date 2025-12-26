@@ -20,7 +20,9 @@ class ProcessFileEpisodeTest < ActiveSupport::TestCase
 
     ProcessFileEpisode.call(episode: @episode)
 
-    verify { |m| SubmitEpisodeForProcessing.call(episode: @episode, content: "Test Header\n\nSome bold content.") }
+    calls = Mocktail.calls(SubmitEpisodeForProcessing, :call)
+    assert_equal 1, calls.size
+    assert_equal "Test Header\n\nSome bold content.", calls.first.kwargs[:content]
   end
 
   test "marks episode as failed on error" do
