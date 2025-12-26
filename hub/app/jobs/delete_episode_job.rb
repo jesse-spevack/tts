@@ -1,27 +1,42 @@
+# frozen_string_literal: true
+
 class DeleteEpisodeJob < ApplicationJob
   queue_as :default
 
-  def perform(gcs_podcast_id:, gcs_episode_id:)
-    Rails.logger.info "event=delete_episode_job_started gcs_podcast_id=#{gcs_podcast_id} gcs_episode_id=#{gcs_episode_id}"
+  def perform(episode)
+    Rails.logger.info "event=delete_episode_started episode_id=#{episode.id}"
 
-    gcs = GcsUploader.new(podcast_id: gcs_podcast_id)
+    delete_audio_file(episode)
+    regenerate_feed(episode.podcast)
 
-    deleted = gcs.delete_file(remote_path: "episodes/#{gcs_episode_id}.mp3")
-    Rails.logger.info "event=delete_episode_mp3_deleted gcs_podcast_id=#{gcs_podcast_id} gcs_episode_id=#{gcs_episode_id} deleted=#{deleted}"
-
-    manifest = EpisodeManifest.new(gcs)
-    manifest.load
-    manifest.remove_episode(gcs_episode_id)
-    manifest.save
-    Rails.logger.info "event=delete_episode_manifest_updated gcs_podcast_id=#{gcs_podcast_id} gcs_episode_id=#{gcs_episode_id} remaining_episodes=#{manifest.episodes.size}"
-
-    podcast_config = YAML.load_file(Rails.root.join("config/podcast.yml"))
-    feed_xml = RssGenerator.new(podcast_config, manifest.episodes).generate
-    gcs.upload_content(content: feed_xml, remote_path: "feed.xml")
-
-    Rails.logger.info "event=delete_episode_job_completed gcs_podcast_id=#{gcs_podcast_id} gcs_episode_id=#{gcs_episode_id}"
+    Rails.logger.info "event=delete_episode_completed episode_id=#{episode.id}"
   rescue StandardError => e
-    Rails.logger.error "event=delete_episode_job_failed gcs_podcast_id=#{gcs_podcast_id} gcs_episode_id=#{gcs_episode_id} error=#{e.class} message=#{e.message}"
+    Rails.logger.error "event=delete_episode_failed episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
     raise
+  end
+
+  private
+
+  def delete_audio_file(episode)
+    return unless episode.gcs_episode_id.present?
+
+    gcs_uploader(episode).delete_file(remote_path: "episodes/#{episode.gcs_episode_id}.mp3")
+    Rails.logger.info "event=audio_file_deleted episode_id=#{episode.id} gcs_episode_id=#{episode.gcs_episode_id}"
+  rescue StandardError => e
+    Rails.logger.warn "event=audio_delete_failed episode_id=#{episode.id} error=#{e.message}"
+  end
+
+  def regenerate_feed(podcast)
+    feed_xml = GenerateRssFeed.call(podcast: podcast)
+    gcs_uploader_for_podcast(podcast).upload_content(content: feed_xml, remote_path: "feed.xml")
+    Rails.logger.info "event=feed_regenerated podcast_id=#{podcast.podcast_id}"
+  end
+
+  def gcs_uploader(episode)
+    GcsUploader.new(podcast_id: episode.podcast.podcast_id)
+  end
+
+  def gcs_uploader_for_podcast(podcast)
+    GcsUploader.new(podcast_id: podcast.podcast_id)
   end
 end

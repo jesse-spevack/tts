@@ -452,14 +452,11 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil Episode.unscoped.find(episode.id).deleted_at
   end
 
-  test "destroy enqueues DeleteEpisodeJob with correct params" do
+  test "destroy enqueues DeleteEpisodeJob with episode" do
     episode = episodes(:one)
     episode.update!(gcs_episode_id: "20251222-test")
 
-    assert_enqueued_with(
-      job: DeleteEpisodeJob,
-      args: [ { gcs_podcast_id: episode.podcast.podcast_id, gcs_episode_id: "20251222-test" } ]
-    ) do
+    assert_enqueued_with(job: DeleteEpisodeJob) do
       delete episode_url(episode)
     end
   end

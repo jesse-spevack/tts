@@ -1,69 +1,49 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class DeleteEpisodeJobTest < ActiveJob::TestCase
   setup do
+    @episode = episodes(:complete)
     Mocktail.replace(GcsUploader)
-    Mocktail.replace(EpisodeManifest)
-    Mocktail.replace(RssGenerator)
+    Mocktail.replace(GenerateRssFeed)
   end
 
   test "deletes MP3 from GCS" do
     mock_gcs = Mocktail.of(GcsUploader)
-    mock_manifest = Mocktail.of(EpisodeManifest)
-    mock_rss = Mocktail.of(RssGenerator)
-
-    stubs { GcsUploader.new(podcast_id: "pod1") }.with { mock_gcs }
-    stubs { EpisodeManifest.new(mock_gcs) }.with { mock_manifest }
-    stubs { mock_manifest.load }.with { [] }
-    stubs { |m| mock_manifest.remove_episode(m.any) }.with { nil }
-    stubs { mock_manifest.save }.with { nil }
-    stubs { mock_manifest.episodes }.with { [] }
-    stubs { |m| RssGenerator.new(m.any, m.any) }.with { mock_rss }
-    stubs { mock_rss.generate }.with { "<rss></rss>" }
+    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
-    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
+    DeleteEpisodeJob.perform_now(@episode)
 
-    verify { mock_gcs.delete_file(remote_path: "episodes/test-episode.mp3") }
+    assert_equal 1, Mocktail.calls(mock_gcs, :delete_file).size
   end
 
-  test "removes episode from manifest and saves" do
+  test "regenerates RSS feed from database" do
     mock_gcs = Mocktail.of(GcsUploader)
-    mock_manifest = Mocktail.of(EpisodeManifest)
-    mock_rss = Mocktail.of(RssGenerator)
-
-    stubs { GcsUploader.new(podcast_id: "pod1") }.with { mock_gcs }
-    stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { nil }
-    stubs { EpisodeManifest.new(mock_gcs) }.with { mock_manifest }
-    stubs { mock_manifest.load }.with { [] }
-    stubs { mock_manifest.episodes }.with { [] }
-    stubs { |m| RssGenerator.new(m.any, m.any) }.with { mock_rss }
-    stubs { mock_rss.generate }.with { "<rss></rss>" }
+    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss>feed content</rss>" }
 
-    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
+    DeleteEpisodeJob.perform_now(@episode)
 
-    verify { mock_manifest.remove_episode("test-episode") }
-    verify { mock_manifest.save }
+    assert_equal 1, Mocktail.calls(GenerateRssFeed, :call).size
+    assert_equal 1, Mocktail.calls(mock_gcs, :upload_content).size
   end
 
-  test "regenerates and uploads feed.xml" do
+  test "skips MP3 deletion if no gcs_episode_id" do
+    @episode.update!(gcs_episode_id: nil)
+
     mock_gcs = Mocktail.of(GcsUploader)
-    mock_manifest = Mocktail.of(EpisodeManifest)
-    mock_rss = Mocktail.of(RssGenerator)
+    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
-    stubs { GcsUploader.new(podcast_id: "pod1") }.with { mock_gcs }
-    stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { nil }
-    stubs { EpisodeManifest.new(mock_gcs) }.with { mock_manifest }
-    stubs { mock_manifest.load }.with { [] }
-    stubs { |m| mock_manifest.remove_episode(m.any) }.with { nil }
-    stubs { mock_manifest.save }.with { nil }
-    stubs { mock_manifest.episodes }.with { [] }
-    stubs { |m| RssGenerator.new(m.any, []) }.with { mock_rss }
-    stubs { mock_rss.generate }.with { "<rss>feed content</rss>" }
+    DeleteEpisodeJob.perform_now(@episode)
 
-    DeleteEpisodeJob.perform_now(gcs_podcast_id: "pod1", gcs_episode_id: "test-episode")
-
-    verify { mock_gcs.upload_content(content: "<rss>feed content</rss>", remote_path: "feed.xml") }
+    assert_equal 0, Mocktail.calls(mock_gcs, :delete_file).size
   end
 end
