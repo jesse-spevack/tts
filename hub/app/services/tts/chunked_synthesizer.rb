@@ -69,7 +69,7 @@ module Tts
     end
 
     def synthesize_chunk_with_error_handling(chunk:, chunk_num:, total:, voice:, skipped_chunks:)
-      @api_client.call_with_retry(text: chunk, voice: voice, max_retries: @config.max_retries)
+      @api_client.call(text: chunk, voice: voice)
     rescue StandardError => e
       handle_chunk_error(error: e, chunk_num: chunk_num, total: total, skipped_chunks: skipped_chunks)
       nil

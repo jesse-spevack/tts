@@ -18,29 +18,12 @@ module Tts
     end
 
     def call(text:, voice:)
-      @logger.info "[TTS] Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
-
-      response = @client.synthesize_speech(
-        input: { text: text },
-        voice: build_voice_params(voice),
-        audio_config: build_audio_config
-      )
-
-      @logger.info "[TTS] API call successful (#{response.audio_content.bytesize} bytes audio)"
-      response.audio_content
-    rescue StandardError => e
-      safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
-      @logger.error "[TTS] API call failed: #{safe_message}"
-      raise
-    end
-
-    def call_with_retry(text:, voice:, max_retries: nil)
-      max_retries ||= @config.max_retries
+      max_retries = @config.max_retries
       retries = 0
 
       begin
-        call(text: text, voice: voice)
-      rescue Google::Cloud::ResourceExhaustedError => e
+        make_request(text: text, voice: voice)
+      rescue Google::Cloud::ResourceExhaustedError
         raise unless retries < max_retries
 
         retries += 1
@@ -60,6 +43,23 @@ module Tts
     end
 
     private
+
+    def make_request(text:, voice:)
+      @logger.info "[TTS] Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
+
+      response = @client.synthesize_speech(
+        input: { text: text },
+        voice: build_voice_params(voice),
+        audio_config: build_audio_config
+      )
+
+      @logger.info "[TTS] API call successful (#{response.audio_content.bytesize} bytes audio)"
+      response.audio_content
+    rescue StandardError => e
+      safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      @logger.error "[TTS] API call failed: #{safe_message}"
+      raise
+    end
 
     def build_voice_params(voice)
       {
