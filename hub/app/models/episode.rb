@@ -22,9 +22,13 @@ class Episode < ApplicationRecord
   scope :newest_first, -> { order(created_at: :desc) }
 
   def soft_delete!
-    raise "Episode already deleted" if deleted_at.present?
+    raise "Episode already deleted" if soft_deleted?
 
     update!(deleted_at: Time.current)
+  end
+
+  def soft_deleted?
+    deleted_at.present?
   end
 
   # Broadcast updates when status changes

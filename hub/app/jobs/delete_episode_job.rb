@@ -19,7 +19,7 @@ class DeleteEpisodeJob < ApplicationJob
   private
 
   def soft_delete_episode(episode)
-    episode.update!(deleted_at: Time.current) unless episode.deleted_at.present?
+    episode.update!(deleted_at: Time.current) unless episode.soft_deleted?
     Rails.logger.info "event=episode_soft_deleted episode_id=#{episode.id}"
   end
 

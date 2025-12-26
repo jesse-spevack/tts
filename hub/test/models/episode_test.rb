@@ -208,4 +208,16 @@ class EpisodeTest < ActiveSupport::TestCase
       Episode.unscoped.find(episode.id).soft_delete!
     end
   end
+
+  test "soft_deleted? returns false for non-deleted episode" do
+    episode = episodes(:one)
+    assert_not episode.soft_deleted?
+  end
+
+  test "soft_deleted? returns true for deleted episode" do
+    episode = episodes(:one)
+    episode.soft_delete!
+
+    assert Episode.unscoped.find(episode.id).soft_deleted?
+  end
 end
