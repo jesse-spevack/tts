@@ -16,9 +16,9 @@ class SubmitEpisodeForProcessing
     wrapped = wrap_content
     episode.update!(source_text: wrapped)
 
-    GenerateAudioJob.perform_later(episode)
+    GenerateEpisodeAudio.call(episode: episode)
 
-    Rails.logger.info "event=processing_enqueued episode_id=#{episode.id}"
+    Rails.logger.info "event=processing_completed episode_id=#{episode.id}"
   end
 
   private

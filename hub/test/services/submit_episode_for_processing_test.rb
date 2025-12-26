@@ -8,19 +8,19 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
     @episode.update!(title: "Test Title", author: "Test Author")
     @episode.user.update!(tier: :free)
 
-    Mocktail.replace(GenerateAudioJob)
+    Mocktail.replace(GenerateEpisodeAudio)
   end
 
-  test "wraps content and enqueues GenerateAudioJob" do
-    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+  test "wraps content and calls GenerateEpisodeAudio" do
+    stubs { |m| GenerateEpisodeAudio.call(episode: m.any) }.with { nil }
 
     SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")
 
-    assert_equal 1, Mocktail.calls(GenerateAudioJob, :perform_later).size
+    assert_equal 1, Mocktail.calls(GenerateEpisodeAudio, :call).size
   end
 
   test "stores wrapped content in source_text" do
-    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+    stubs { |m| GenerateEpisodeAudio.call(episode: m.any) }.with { nil }
 
     SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")
 
@@ -30,7 +30,7 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
   end
 
   test "includes free tier attribution for free users" do
-    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+    stubs { |m| GenerateEpisodeAudio.call(episode: m.any) }.with { nil }
 
     SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")
 
@@ -40,7 +40,7 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
 
   test "excludes free tier attribution for premium users" do
     @episode.user.update!(tier: :premium)
-    stubs { |m| GenerateAudioJob.perform_later(m.any) }.with { nil }
+    stubs { |m| GenerateEpisodeAudio.call(episode: m.any) }.with { nil }
 
     SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")
 
