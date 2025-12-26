@@ -9,3 +9,8 @@ two:
   podcast_id: podcast_fixture_two
   title: Test Podcast Two
   description: Test description two
+
+default:
+  podcast_id: podcast_default
+  title: Very normal podcast
+  description: Readings turned to audio by text to speech app.

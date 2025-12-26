@@ -19,3 +19,7 @@ unlimited_user:
 admin_user:
   email_address: admin@example.com
   admin: true
+
+jesse:
+  email_address: jesse@example.com
+  tier: 1

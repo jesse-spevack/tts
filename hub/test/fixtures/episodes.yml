@@ -192,3 +192,32 @@ failed_with_error:
   error_message: This content is too long for your account tier
   audio_size_bytes: 0
   duration_seconds: 0
+
+# Fixtures for TTS migration tests
+complete:
+  podcast: default
+  user: jesse
+  title: "Complete Episode"
+  author: "Test Author"
+  description: "A complete episode"
+  status: "complete"
+  gcs_episode_id: "20251226-120000-complete-episode"
+  audio_size_bytes: 1024000
+  duration_seconds: 300
+
+pending:
+  podcast: default
+  user: jesse
+  title: "Pending Episode"
+  author: "Test Author"
+  description: "A pending episode"
+  status: "pending"
+
+failed:
+  podcast: default
+  user: jesse
+  title: "Failed Episode TTS"
+  author: "Test Author"
+  description: "A failed episode"
+  status: "failed"
+  error_message: "Something went wrong"
