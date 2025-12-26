@@ -8,7 +8,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     @episode.update!(source_text: "Hello, this is a test episode.")
 
     Mocktail.replace(Tts::Synthesizer)
-    Mocktail.replace(GcsUploader)
+    Mocktail.replace(CloudStorage)
   end
 
   test "synthesizes audio and updates episode" do
@@ -16,9 +16,9 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     stubs { |m| mock_synthesizer.synthesize(m.any, voice: m.any) }.with { "fake audio content" }
     stubs { |m| Tts::Synthesizer.new(config: m.any) }.with { mock_synthesizer }
 
-    mock_gcs = Mocktail.of(GcsUploader)
+    mock_gcs = Mocktail.of(CloudStorage)
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
 
     GenerateEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
 
@@ -44,10 +44,10 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     stubs { |m| mock_synthesizer.synthesize(m.any, voice: m.any) }.with { "fake audio content" }
     stubs { |m| Tts::Synthesizer.new(config: m.any) }.with { mock_synthesizer }
 
-    mock_gcs = Mocktail.of(GcsUploader)
+    mock_gcs = Mocktail.of(CloudStorage)
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
 
     # Make episode update fail when trying to mark as complete
     @episode.define_singleton_method(:update!) do |**attrs|

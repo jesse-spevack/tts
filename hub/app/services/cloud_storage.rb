@@ -1,6 +1,6 @@
 require "google/cloud/storage"
 
-class GcsUploader
+class CloudStorage
   def initialize(bucket_name = nil, podcast_id:)
     @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
     @podcast_id = podcast_id

@@ -5,13 +5,13 @@ require "test_helper"
 class DeleteEpisodeJobTest < ActiveJob::TestCase
   setup do
     @episode = episodes(:complete)
-    Mocktail.replace(GcsUploader)
+    Mocktail.replace(CloudStorage)
     Mocktail.replace(GenerateRssFeed)
   end
 
   test "deletes MP3 from GCS" do
-    mock_gcs = Mocktail.of(GcsUploader)
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
     stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
@@ -22,8 +22,8 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
   end
 
   test "regenerates RSS feed from database" do
-    mock_gcs = Mocktail.of(GcsUploader)
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
     stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss>feed content</rss>" }
@@ -37,8 +37,8 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
   test "skips MP3 deletion if no gcs_episode_id" do
     @episode.update!(gcs_episode_id: nil)
 
-    mock_gcs = Mocktail.of(GcsUploader)
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
@@ -52,8 +52,8 @@ class DeleteEpisodeJobTest < ActiveJob::TestCase
     @episode.update_column(:deleted_at, nil)
     assert_nil @episode.deleted_at
 
-    mock_gcs = Mocktail.of(GcsUploader)
-    stubs { |m| GcsUploader.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
     stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }

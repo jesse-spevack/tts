@@ -80,7 +80,7 @@ class GenerateEpisodeAudio
 
   def upload_audio(audio_content, gcs_episode_id)
     @uploaded_audio_path = "episodes/#{gcs_episode_id}.mp3"
-    gcs_uploader.upload_content(
+    cloud_storage.upload_content(
       content: audio_content,
       remote_path: @uploaded_audio_path
     )
@@ -100,11 +100,11 @@ class GenerateEpisodeAudio
 
   def upload_feed
     feed_xml = GenerateRssFeed.call(podcast: @episode.podcast)
-    gcs_uploader.upload_content(content: feed_xml, remote_path: "feed.xml")
+    cloud_storage.upload_content(content: feed_xml, remote_path: "feed.xml")
   end
 
-  def gcs_uploader
-    @gcs_uploader ||= GcsUploader.new(podcast_id: @episode.podcast.podcast_id)
+  def cloud_storage
+    @cloud_storage ||= CloudStorage.new(podcast_id: @episode.podcast.podcast_id)
   end
 
   def notify_user
@@ -117,7 +117,7 @@ class GenerateEpisodeAudio
     return unless @uploaded_audio_path
 
     Rails.logger.info "event=cleaning_up_orphaned_audio episode_id=#{@episode.id} path=#{@uploaded_audio_path}"
-    gcs_uploader.delete_file(remote_path: @uploaded_audio_path)
+    cloud_storage.delete_file(remote_path: @uploaded_audio_path)
   rescue StandardError => e
     Rails.logger.warn "event=cleanup_failed episode_id=#{@episode.id} error=#{e.message}"
   end

@@ -26,7 +26,7 @@ class DeleteEpisodeJob < ApplicationJob
   def delete_audio_file(episode)
     return unless episode.gcs_episode_id.present?
 
-    gcs_uploader(episode).delete_file(remote_path: "episodes/#{episode.gcs_episode_id}.mp3")
+    cloud_storage(episode).delete_file(remote_path: "episodes/#{episode.gcs_episode_id}.mp3")
     Rails.logger.info "event=audio_file_deleted episode_id=#{episode.id} gcs_episode_id=#{episode.gcs_episode_id}"
   rescue StandardError => e
     Rails.logger.warn "event=audio_delete_failed episode_id=#{episode.id} error=#{e.message}"
@@ -34,15 +34,15 @@ class DeleteEpisodeJob < ApplicationJob
 
   def regenerate_feed(podcast)
     feed_xml = GenerateRssFeed.call(podcast: podcast)
-    gcs_uploader_for_podcast(podcast).upload_content(content: feed_xml, remote_path: "feed.xml")
+    cloud_storage_for_podcast(podcast).upload_content(content: feed_xml, remote_path: "feed.xml")
     Rails.logger.info "event=feed_regenerated podcast_id=#{podcast.podcast_id}"
   end
 
-  def gcs_uploader(episode)
-    GcsUploader.new(podcast_id: episode.podcast.podcast_id)
+  def cloud_storage(episode)
+    CloudStorage.new(podcast_id: episode.podcast.podcast_id)
   end
 
-  def gcs_uploader_for_podcast(podcast)
-    GcsUploader.new(podcast_id: podcast.podcast_id)
+  def cloud_storage_for_podcast(podcast)
+    CloudStorage.new(podcast_id: podcast.podcast_id)
   end
 end
