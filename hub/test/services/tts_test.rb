@@ -3,14 +3,18 @@
 require "test_helper"
 
 class TtsSynthesizerTest < ActiveSupport::TestCase
+  setup do
+    Mocktail.replace(Tts::ApiClient)
+  end
+
   test "synthesizes short text with single API call" do
     config = Tts::Config.new(byte_limit: 1000)
 
-    mock_api_client = Object.new
-    mock_api_client.define_singleton_method(:call) { |text:, voice:| "audio data" }
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio data" }
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.instance_variable_set(:@api_client, mock_api_client)
 
     result = synthesizer.synthesize("Short text.")
     assert_equal "audio data", result
@@ -18,6 +22,9 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
 
   test "uses chunked synthesizer for long text" do
     config = Tts::Config.new(byte_limit: 10)  # Very small limit to force chunking
+
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = Tts::Synthesizer.new(config: config)
 
@@ -33,34 +40,30 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
   test "uses custom voice when provided" do
     config = Tts::Config.new
 
-    mock_api_client = Object.new
-    voice_used = nil
-    mock_api_client.define_singleton_method(:call) do |text:, voice:|
-      voice_used = voice
-      "audio"
-    end
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio" }
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.instance_variable_set(:@api_client, mock_api_client)
-
     synthesizer.synthesize("Hello", voice: "custom-voice")
-    assert_equal "custom-voice", voice_used
+
+    calls = Mocktail.calls(mock_api_client, :call)
+    assert_equal 1, calls.size
+    assert_equal "custom-voice", calls.first.kwargs[:voice]
   end
 
   test "uses default voice from config when not provided" do
     config = Tts::Config.new(voice_name: "test-default-voice")
 
-    mock_api_client = Object.new
-    voice_used = nil
-    mock_api_client.define_singleton_method(:call) do |text:, voice:|
-      voice_used = voice
-      "audio"
-    end
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio" }
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.instance_variable_set(:@api_client, mock_api_client)
-
     synthesizer.synthesize("Hello")
-    assert_equal "test-default-voice", voice_used
+
+    calls = Mocktail.calls(mock_api_client, :call)
+    assert_equal 1, calls.size
+    assert_equal "test-default-voice", calls.first.kwargs[:voice]
   end
 end
