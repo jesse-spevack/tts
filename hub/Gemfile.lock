@@ -209,6 +209,12 @@ GEM
       google-cloud-errors (~> 1.0)
       google-cloud-location (~> 1.0)
       grpc-google-iam-v1 (~> 1.11)
+    google-cloud-text_to_speech (2.0.3)
+      google-cloud-core (~> 1.6)
+      google-cloud-text_to_speech-v1 (~> 1.7)
+    google-cloud-text_to_speech-v1 (1.15.1)
+      gapic-common (~> 1.2)
+      google-cloud-errors (~> 1.0)
     google-logging-utils (0.2.0)
     google-protobuf (4.33.1)
       bigdecimal
@@ -473,6 +479,7 @@ GEM
       rubocop (>= 1.72)
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
+    ruby-mp3info (0.8.10)
     ruby-progressbar (1.13.0)
     ruby-vips (2.2.5)
       ffi (~> 1.12)
@@ -604,6 +611,7 @@ DEPENDENCIES
   faraday-follow_redirects
   google-cloud-storage (~> 1.47)
   google-cloud-tasks (~> 2.6)
+  google-cloud-text_to_speech (~> 2.0)
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
@@ -617,6 +625,7 @@ DEPENDENCIES
   rails (~> 8.1.1)
   resend
   rubocop-rails-omakase
+  ruby-mp3info
   ruby_llm
   selenium-webdriver
   solid_cable
