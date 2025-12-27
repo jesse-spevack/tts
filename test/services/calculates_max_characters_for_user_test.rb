@@ -9,7 +9,7 @@ class CalculatesMaxCharactersForUserTest < ActiveSupport::TestCase
 
     result = CalculatesMaxCharactersForUser.call(user: user)
 
-    assert_equal EpisodeSubmissionValidator::MAX_CHARACTERS_FREE, result
+    assert_equal ValidatesEpisodeSubmission::MAX_CHARACTERS_FREE, result
   end
 
   test "returns PREMIUM limit for premium tier" do
@@ -18,7 +18,7 @@ class CalculatesMaxCharactersForUserTest < ActiveSupport::TestCase
 
     result = CalculatesMaxCharactersForUser.call(user: user)
 
-    assert_equal EpisodeSubmissionValidator::MAX_CHARACTERS_PREMIUM, result
+    assert_equal ValidatesEpisodeSubmission::MAX_CHARACTERS_PREMIUM, result
   end
 
   test "returns nil for unlimited tier" do

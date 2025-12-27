@@ -1,4 +1,6 @@
-class EpisodeSubmissionValidator
+# frozen_string_literal: true
+
+class ValidatesEpisodeSubmission
   MAX_CHARACTERS_FREE = 15_000
   MAX_CHARACTERS_PREMIUM = 50_000
 
