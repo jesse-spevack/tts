@@ -35,11 +35,7 @@ class Episode < ApplicationRecord
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
   def audio_url
-    return nil unless complete? && gcs_episode_id.present?
-
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    podcast_id = podcast.podcast_id
-    "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/episodes/#{gcs_episode_id}.mp3"
+    GeneratesEpisodeAudioUrl.call(self)
   end
 
   def download_url
