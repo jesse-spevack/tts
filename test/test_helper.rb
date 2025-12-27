@@ -1,6 +1,6 @@
 ENV["RAILS_ENV"] ||= "test"
 ENV["MAILER_FROM_ADDRESS"] ||= "test@example.com"
-ENV["MAILER_HOST"] ||= "example.com"
+ENV["APP_HOST"] ||= "example.com"
 require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
