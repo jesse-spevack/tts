@@ -56,7 +56,7 @@ gem "faraday"
 gem "faraday-follow_redirects"
 
 # Pagination
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.2"
 
 # Prefixed IDs for public URLs
 gem "prefixed_ids"
