@@ -23,7 +23,7 @@ class AsksLlm
   end
 
   def ask(prompt)
-    Rails.logger.info "event=llm_client_ask model=#{model} provider=#{PROVIDER}"
+    Rails.logger.info "event=asks_llm model=#{model} provider=#{PROVIDER}"
 
     RubyLLM.chat(model: model, provider: PROVIDER)
       .with_params(generationConfig: {
