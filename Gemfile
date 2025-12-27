@@ -44,7 +44,7 @@ gem "bcrypt"
 
 # Google Cloud services
 gem "google-cloud-storage", "~> 1.47"
-gem "google-cloud-tasks", "~> 2.6"
+gem "google-cloud-tasks", "~> 3.0"
 gem "google-cloud-text_to_speech", "~> 2.0"
 
 # Audio processing
