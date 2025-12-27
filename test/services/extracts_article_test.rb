@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ArticleExtractorTest < ActiveSupport::TestCase
+class ExtractsArticleTest < ActiveSupport::TestCase
   test "extracts article content from simple HTML" do
     html = <<~HTML
       <html>
@@ -17,7 +17,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_includes result.text, "Article Title"
@@ -39,7 +39,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_includes result.text, "Main Content"
@@ -59,7 +59,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_includes result.text, "Page Content"
@@ -77,7 +77,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_includes result.text, "Real content"
@@ -96,7 +96,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_not_includes result.text, "color"
@@ -105,7 +105,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
   test "fails when no content found" do
     html = "<html><body></body></html>"
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.failure?
     assert_equal "Could not extract article content", result.error
@@ -114,7 +114,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
   test "returns character count" do
     html = "<article><p>Hello world with enough content to pass the minimum length requirement. This paragraph contains sufficient characters for the extraction to succeed and return a positive character count.</p></article>"
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert result.character_count.positive?
@@ -125,7 +125,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
     large_content = "x" * (11 * 1024 * 1024)
     html = "<article><p>#{large_content}</p></article>"
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.failure?
     assert_equal "Article content too large", result.error
@@ -136,7 +136,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
     padding = "y" * 200
     html = "<article><p>Valid content with enough text. #{padding}</p></article>"
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
   end
@@ -153,7 +153,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_equal "My Article Title", result.title
@@ -174,7 +174,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_equal "Jane Smith", result.author
@@ -191,7 +191,7 @@ class ArticleExtractorTest < ActiveSupport::TestCase
       </html>
     HTML
 
-    result = ArticleExtractor.call(html: html)
+    result = ExtractsArticle.call(html: html)
 
     assert result.success?
     assert_nil result.title

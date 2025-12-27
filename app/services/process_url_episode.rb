@@ -52,7 +52,7 @@ class ProcessUrlEpisode
   def extract_content
     log_info "article_extraction_started"
 
-    @extract_result = ArticleExtractor.call(html: @fetch_result.html)
+    @extract_result = ExtractsArticle.call(html: @fetch_result.html)
     if @extract_result.failure?
       log_warn "article_extraction_failed", error: @extract_result.error
 
