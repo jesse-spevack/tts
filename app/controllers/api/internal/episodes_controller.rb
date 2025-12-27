@@ -29,7 +29,7 @@ module Api
       end
 
       def notify_completion
-        EpisodeCompletionNotifier.call(episode: @episode)
+        NotifiesEpisodeCompletion.call(episode: @episode)
       rescue StandardError => e
         Rails.logger.error "event=episode_notification_failed episode_id=#{@episode.id} error=#{e.message}"
       end

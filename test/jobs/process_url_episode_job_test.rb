@@ -18,7 +18,7 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
       status: :processing
     )
 
-    Mocktail.replace(UrlFetcher)
+    Mocktail.replace(FetchesUrl)
   end
 
   teardown do
@@ -33,7 +33,7 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
 
   test "finds episode by id" do
     # Stub the URL fetch to return an error
-    stubs { |m| UrlFetcher.call(url: m.any) }.with { UrlFetcher::Result.failure("Could not fetch URL") }
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.failure("Could not fetch URL") }
 
     # Job should run without error (episode will fail due to fetch error, but that's expected)
     ProcessUrlEpisodeJob.perform_now(@episode.id)

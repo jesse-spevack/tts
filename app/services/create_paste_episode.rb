@@ -31,12 +31,12 @@ class CreatePasteEpisode
   attr_reader :podcast, :user, :text
 
   def exceeds_max_characters?
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     max_chars && text.length > max_chars
   end
 
   def max_characters_error
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     "Text is too long for your account tier (#{text.length} characters, max #{max_chars})"
   end
 

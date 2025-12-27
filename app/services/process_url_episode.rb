@@ -36,10 +36,10 @@ class ProcessUrlEpisode
 
   def fetch_url
     log_info "url_normalization_started", url: episode.source_url
-    normalized_url = UrlNormalizer.call(url: episode.source_url)
+    normalized_url = NormalizesUrl.call(url: episode.source_url)
     log_info "url_fetch_started", url: normalized_url
 
-    @fetch_result = UrlFetcher.call(url: normalized_url)
+    @fetch_result = FetchesUrl.call(url: normalized_url)
     if @fetch_result.failure?
       log_warn "url_fetch_failed", error: @fetch_result.error
 
@@ -52,7 +52,7 @@ class ProcessUrlEpisode
   def extract_content
     log_info "article_extraction_started"
 
-    @extract_result = ArticleExtractor.call(html: @fetch_result.html)
+    @extract_result = ExtractsArticle.call(html: @fetch_result.html)
     if @extract_result.failure?
       log_warn "article_extraction_failed", error: @extract_result.error
 
@@ -63,7 +63,7 @@ class ProcessUrlEpisode
   end
 
   def check_character_limit
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     return unless max_chars && @extract_result.character_count > max_chars
 
     log_warn "character_limit_exceeded", characters: @extract_result.character_count, limit: max_chars, tier: user.tier
@@ -74,7 +74,7 @@ class ProcessUrlEpisode
   def process_with_llm
     log_info "llm_processing_started", characters: @extract_result.character_count
 
-    @llm_result = LlmProcessor.call(text: @extract_result.text, episode: episode)
+    @llm_result = ProcessesWithLlm.call(text: @extract_result.text, episode: episode)
     if @llm_result.failure?
       log_warn "llm_processing_failed", error: @llm_result.error
 
@@ -92,7 +92,7 @@ class ProcessUrlEpisode
         title: @extract_result.title || @llm_result.title,
         author: @extract_result.author || @llm_result.author,
         description: @llm_result.description,
-        content_preview: ContentPreview.generate(content)
+        content_preview: GeneratesContentPreview.call(content)
       )
 
       log_info "episode_metadata_updated"

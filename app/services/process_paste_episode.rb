@@ -32,7 +32,7 @@ class ProcessPasteEpisode
   attr_reader :episode, :user
 
   def check_character_limit
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     return unless max_chars && episode.source_text.length > max_chars
 
     log_warn "character_limit_exceeded", characters: episode.source_text.length, limit: max_chars, tier: user.tier
@@ -42,7 +42,7 @@ class ProcessPasteEpisode
   def process_with_llm
     log_info "llm_processing_started", characters: episode.source_text.length
 
-    @llm_result = LlmProcessor.call(text: episode.source_text, episode: episode)
+    @llm_result = ProcessesWithLlm.call(text: episode.source_text, episode: episode)
     if @llm_result.failure?
       log_warn "llm_processing_failed", error: @llm_result.error
       raise ProcessingError, @llm_result.error
@@ -59,7 +59,7 @@ class ProcessPasteEpisode
         title: @llm_result.title,
         author: @llm_result.author,
         description: @llm_result.description,
-        content_preview: ContentPreview.generate(content)
+        content_preview: GeneratesContentPreview.call(content)
       )
 
       log_info "episode_metadata_updated"

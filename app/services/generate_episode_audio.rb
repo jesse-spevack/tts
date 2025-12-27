@@ -56,8 +56,8 @@ class GenerateEpisodeAudio
 
   def synthesize_audio
     config = Tts::Config.new(voice_name: voice_name)
-    synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.synthesize(content_text, voice: voice_name)
+    synthesizer = SynthesizesAudio.new(config: config)
+    synthesizer.call(content_text, voice: voice_name)
   end
 
   def voice_name
@@ -108,7 +108,7 @@ class GenerateEpisodeAudio
   end
 
   def notify_user
-    EpisodeCompletionNotifier.call(episode: @episode) if @episode.user&.email_address.present?
+    NotifiesEpisodeCompletion.call(episode: @episode) if @episode.user&.email_address.present?
   rescue StandardError => e
     Rails.logger.warn "event=notification_failed episode_id=#{@episode.id} error=#{e.message}"
   end

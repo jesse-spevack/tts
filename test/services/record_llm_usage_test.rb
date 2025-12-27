@@ -12,7 +12,7 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
       output_tokens: 500
     )
 
-    Mocktail.replace(LlmClient)
+    Mocktail.replace(AsksLlm)
   end
 
   test "creates LlmUsage record with correct attributes" do
@@ -59,8 +59,8 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
       output_price_per_million: output_price
     )
 
-    mock_client = Mocktail.of(LlmClient)
+    mock_client = Mocktail.of(AsksLlm)
     stubs { |m| mock_client.find_model(m.any) }.with { mock_model_info }
-    stubs { LlmClient.new }.with { mock_client }
+    stubs { AsksLlm.new }.with { mock_client }
   end
 end

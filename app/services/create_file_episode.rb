@@ -31,17 +31,17 @@ class CreateFileEpisode
   attr_reader :podcast, :user, :title, :author, :description, :content
 
   def exceeds_max_characters?
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     max_chars && content.length > max_chars
   end
 
   def max_characters_error
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     "Content is too long for your account tier (#{content.length} characters, max #{max_chars})"
   end
 
   def create_episode
-    plain_text = MarkdownStripper.strip(content)
+    plain_text = StripsMarkdown.call(content)
 
     podcast.episodes.create!(
       user: user,
@@ -50,7 +50,7 @@ class CreateFileEpisode
       description: description,
       source_type: :file,
       source_text: content,
-      content_preview: ContentPreview.generate(plain_text),
+      content_preview: GeneratesContentPreview.call(plain_text),
       status: :processing
     )
   end
