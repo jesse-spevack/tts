@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pagy/extras/overflow"
+# Pagy 43 configuration
+# See: https://ddnexus.github.io/pagy/
 
-Pagy::DEFAULT[:limit] = 10
-Pagy::DEFAULT[:overflow] = :last_page
+Pagy.options[:limit] = 10

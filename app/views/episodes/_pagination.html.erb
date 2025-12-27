@@ -4,8 +4,8 @@
 <nav class="pagination flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 dark:border-white/10 mt-6">
   <%# Previous link %>
   <div class="-mt-px flex w-0 flex-1">
-    <% if pagy.prev %>
-      <%= link_to episodes_path(page: pagy.prev),
+    <% if pagy.previous %>
+      <%= link_to episodes_path(page: pagy.previous),
             class: "inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200",
             data: { turbo_frame: "episodes_list", turbo_action: "advance" } do %>
         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-gray-400 dark:text-gray-500">
@@ -23,19 +23,11 @@
     <% end %>
   </div>
 
-  <%# Page numbers (desktop only) %>
+  <%# Page indicator (desktop only) %>
   <div class="hidden md:-mt-px md:flex">
-    <% pagy.series.each do |item| %>
-      <% if item == :gap %>
-        <span class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500 dark:text-gray-400">...</span>
-      <% elsif item == pagy.page %>
-        <span aria-current="page" class="inline-flex items-center border-t-2 border-indigo-500 px-4 pt-4 text-sm font-medium text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"><%= item %></span>
-      <% else %>
-        <%= link_to item, episodes_path(page: item),
-              class: "inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200",
-              data: { turbo_frame: "episodes_list", turbo_action: "advance" } %>
-      <% end %>
-    <% end %>
+    <span class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+      Page <%= pagy.page %> of <%= pagy.pages %>
+    </span>
   </div>
 
   <%# Next link %>
