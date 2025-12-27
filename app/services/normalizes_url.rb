@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class UrlNormalizer
+class NormalizesUrl
   SUBSTACK_TRACKING_PARAMS = %w[
     r
     utm_campaign
