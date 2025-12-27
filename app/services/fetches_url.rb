@@ -1,4 +1,4 @@
-class UrlFetcher
+class FetchesUrl
   TIMEOUT_SECONDS = 10
   DNS_TIMEOUT_SECONDS = 5
   MAX_CONTENT_LENGTH = 10 * 1024 * 1024 # 10MB
