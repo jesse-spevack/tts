@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-class PasteProcessingPrompt
-  def self.build(text:)
-    new(text: text).build
+class BuildsPasteProcessingPrompt
+  def self.call(text:)
+    new(text: text).call
   end
 
   def initialize(text:)
     @text = text
   end
 
-  def build
+  def call
     <<~PROMPT
       You are processing pasted text for text-to-speech conversion.
 
