@@ -88,17 +88,17 @@ bin/kamal logs
 ```
 URL/File/Paste submitted
     ↓
-Content Extraction (UrlFetcher/ArticleExtractor)
-    ↓
-LlmProcessor (clean content, generate metadata)
-    ↓
 Solid Queue Job (async)
     ↓
-TTS Synthesizer → Google Cloud TTS API
+FetchesUrl + ExtractsArticle
+    ↓
+ProcessesWithLlm (clean content, generate metadata)
+    ↓
+SynthesizesAudio → Google Cloud TTS API
     ↓
 GCS Upload (audio file)
     ↓
-RSS Feed regenerated
+GenerateRssFeed uploaded
 ```
 
 ## Troubleshooting
