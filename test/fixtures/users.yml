@@ -1,19 +1,25 @@
+one:
+  email_address: user1@example.com
+
+two:
+  email_address: user2@example.com
+
 free_user:
   email_address: free@example.com
   tier: 0  # free
 
-basic_user:
-  email_address: basic@example.com
-  tier: 1  # basic
-
-plus_user:
-  email_address: plus@example.com
-  tier: 2  # plus
-
 premium_user:
   email_address: premium@example.com
-  tier: 3  # premium
+  tier: 1  # premium
 
 unlimited_user:
   email_address: unlimited@example.com
-  tier: 4  # unlimited
+  tier: 2  # unlimited
+
+admin_user:
+  email_address: admin@example.com
+  admin: true
+
+jesse:
+  email_address: jesse@example.com
+  tier: 1

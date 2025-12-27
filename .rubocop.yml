@@ -1,43 +1,8 @@
-# RuboCop configuration for TTS project
+# Omakase Ruby styling for Rails
+inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-AllCops:
-  TargetRubyVersion: 3.4
-  NewCops: enable
-  SuggestExtensions: false
-  Exclude:
-    - 'vendor/**/*'
-    - 'tmp/**/*'
-    - 'output/**/*'
-
-# Metrics - adjust these based on your preferences
-Metrics/MethodLength:
-  Max: 20  # Default is 10, relaxed for complex methods
-
-Metrics/AbcSize:
-  Max: 25  # Default is 17, relaxed for text processing
-
-Metrics/ClassLength:
-  Max: 150
-
-Metrics/BlockLength:
-  Max: 25
-  Exclude:
-    - 'test/**/*'  # Allow longer blocks in tests
-
-# Style preferences
-Style/Documentation:
-  Enabled: false  # Don't require top-level class documentation
-
-Style/StringLiterals:
-  EnforcedStyle: double_quotes  # Prefer double quotes
-
-Style/FrozenStringLiteralComment:
-  Enabled: false  # Don't require frozen string literal comments
-
-# Layout
-Layout/LineLength:
-  Max: 120  # Default is 80, modern screens can handle more
-
-# Naming
-Naming/MethodParameterName:
-  MinNameLength: 2  # Allow single-letter params like 'e' for exceptions
+# Overwrite or add rules to create your own house style
+#
+# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
+# Layout/SpaceInsideArrayLiteralBrackets:
+#   Enabled: false

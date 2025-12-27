@@ -4,10 +4,6 @@ on:
   pull_request:
   push:
 
-defaults:
-  run:
-    working-directory: hub
-
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
@@ -19,7 +15,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Scan for common Rails security vulnerabilities using static analysis
@@ -38,7 +33,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Scan for security vulnerabilities in JavaScript dependencies
@@ -55,15 +49,14 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Prepare RuboCop cache
         uses: actions/cache@v4
         env:
-          DEPENDENCIES_HASH: ${{ hashFiles('hub/.ruby-version', 'hub/**/.rubocop.yml', 'hub/**/.rubocop_todo.yml', 'hub/Gemfile.lock') }}
+          DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
         with:
-          path: hub/${{ env.RUBOCOP_CACHE_ROOT }}
+          path: ${{ env.RUBOCOP_CACHE_ROOT }}
           key: rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-${{ github.ref_name == github.event.repository.default_branch && github.run_id || 'default' }}
           restore-keys: |
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
@@ -87,7 +80,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Run tests
@@ -113,7 +105,6 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          working-directory: hub
           bundler-cache: true
 
       - name: Run System Tests
@@ -128,5 +119,5 @@ jobs:
         if: failure()
         with:
           name: screenshots
-          path: ${{ github.workspace }}/hub/tmp/screenshots
+          path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
