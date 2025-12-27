@@ -1,29 +1,31 @@
-# TTS Hub
+# Very Normal TTS
 
 A Rails application that converts web articles into podcast episodes using text-to-speech. Submit a URL, and the app extracts the article content, processes it with an LLM, and generates an audio episode you can listen to in any podcast player.
 
 ## Features
 
 - **URL to Podcast**: Paste any article URL and get an audio episode
-- **Markdown Upload**: Alternatively, upload markdown files directly
+- **Markdown Upload**: Upload markdown files directly
+- **Paste Text**: Paste text content directly
 - **Personal RSS Feed**: Each user gets a private podcast feed
 - **Magic Link Auth**: Passwordless authentication via email
-- **User Tiers**: Free (2 episodes/month), Premium, and Unlimited tiers
+- **User Tiers**: Free (2 episodes/month) and Premium tiers
 
 ## Tech Stack
 
 - **Framework**: Rails 8.1
 - **Ruby**: 3.4.5
 - **Database**: SQLite
+- **Background Jobs**: Solid Queue
 - **Frontend**: Hotwire (Turbo + Stimulus), Tailwind CSS
 - **Asset Pipeline**: Propshaft with Import Maps
 
 ### External Services
 
+- **Google Cloud Text-to-Speech**: Audio generation
 - **Google Cloud Storage**: Audio file and RSS feed hosting
-- **Google Cloud Tasks**: Async job processing
 - **Vertex AI (Gemini)**: LLM for content extraction and metadata
-- **External TTS Service**: Audio generation
+- **Resend**: Email delivery for magic links
 
 ## Development Setup
 
@@ -32,6 +34,7 @@ A Rails application that converts web articles into podcast episodes using text-
 - Ruby 3.4.5
 - SQLite 3
 - Node.js (for Tailwind CSS)
+- Google Cloud credentials (for TTS)
 
 ### Installation
 
@@ -64,10 +67,6 @@ Required environment variables for production:
 | `GOOGLE_CLOUD_BUCKET` | GCS bucket for audio/feeds |
 | `SERVICE_ACCOUNT_EMAIL` | GCP service account |
 | `VERTEX_AI_LOCATION` | Vertex AI region |
-| `CLOUD_TASKS_LOCATION` | Cloud Tasks region |
-| `CLOUD_TASKS_QUEUE` | Cloud Tasks queue name |
-| `GENERATOR_SERVICE_URL` | TTS generator endpoint |
-| `GENERATOR_CALLBACK_SECRET` | Auth for generator callbacks |
 
 ## Deployment
 
@@ -87,19 +86,19 @@ bin/kamal logs
 ## Architecture
 
 ```
-URL submitted
+URL/File/Paste submitted
     ↓
-UrlFetcher (fetch HTML)
+Content Extraction (UrlFetcher/ArticleExtractor)
     ↓
-ArticleExtractor (extract text + metadata)
+LlmProcessor (clean content, generate metadata)
     ↓
-LlmProcessor (clean content, generate description)
+Solid Queue Job (async)
     ↓
-Cloud Tasks (async)
+TTS Synthesizer → Google Cloud TTS API
     ↓
-External TTS Generator → GCS (audio file)
+GCS Upload (audio file)
     ↓
-RSS Feed updated
+RSS Feed regenerated
 ```
 
 ## Troubleshooting
@@ -112,7 +111,7 @@ If `kamal deploy` fails with:
 ERROR: failed to copy files: copy file range failed: no space left on device
 ```
 
-The remote server is out of disk space. Common cause: orphaned buildkit volumes from old IP addresses.
+The remote server is out of disk space. Common cause: orphaned buildkit volumes.
 
 **Diagnose:**
 
@@ -128,6 +127,3 @@ ssh jesse@<SERVER_IP> 'docker ps -a'  # find old buildkit container IDs
 ssh jesse@<SERVER_IP> 'docker rm -f <container_id>'
 ssh jesse@<SERVER_IP> 'docker volume rm <old_buildkit_volume_name>'
 ```
-
-**Prevention:** Reserve a static IP in GCP Console to prevent IP changes on VM restart.
-# Trigger deploy Mon Dec 22 12:19:19 MST 2025
