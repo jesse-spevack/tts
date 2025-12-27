@@ -58,12 +58,13 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_deliveries = true
 
-  # Set host to be used by links generated in mailer templates
-  # Set MAILER_HOST environment variable to your production domain
-  config.action_mailer.default_url_options = {
-    host: ENV.fetch("MAILER_HOST", "localhost"),
+  # Set default host for URL generation (mailers, background jobs, etc.)
+  # Used by both ActionMailer and route helpers like episode_url()
+  Rails.application.routes.default_url_options = {
+    host: ENV.fetch("APP_HOST", "localhost"),
     protocol: "https"
   }
+  config.action_mailer.default_url_options = Rails.application.routes.default_url_options
 
   # Use SMTP for production email delivery via Resend
   # Resend provides SMTP endpoints: https://resend.com/docs/send-with-smtp

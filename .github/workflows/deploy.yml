@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "RAILS_MASTER_KEY=$(gcloud secrets versions access latest --secret=rails-master-key)" >> $GITHUB_ENV
           echo "RESEND_API_KEY=$(gcloud secrets versions access latest --secret=resend-api-key)" >> $GITHUB_ENV
-          echo "MAILER_HOST=$(gcloud secrets versions access latest --secret=mailer-host)" >> $GITHUB_ENV
+          echo "APP_HOST=$(gcloud secrets versions access latest --secret=mailer-host)" >> $GITHUB_ENV
           echo "MAILER_FROM_ADDRESS=$(gcloud secrets versions access latest --secret=mailer-from-address)" >> $GITHUB_ENV
           echo "GOOGLE_CLOUD_BUCKET=$(gcloud secrets versions access latest --secret=google-cloud-bucket)" >> $GITHUB_ENV
           echo "GOOGLE_CLOUD_PROJECT=$(gcloud secrets versions access latest --secret=google-cloud-project)" >> $GITHUB_ENV
@@ -58,7 +58,7 @@ jobs:
           cat > .kamal/secrets << EOF
           RAILS_MASTER_KEY=$RAILS_MASTER_KEY
           RESEND_API_KEY=$RESEND_API_KEY
-          MAILER_HOST=$MAILER_HOST
+          APP_HOST=$APP_HOST
           MAILER_FROM_ADDRESS=$MAILER_FROM_ADDRESS
           GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET
           GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
