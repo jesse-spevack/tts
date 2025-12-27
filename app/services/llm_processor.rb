@@ -54,7 +54,7 @@ class LlmProcessor
   attr_reader :text, :episode
 
   def llm_client
-    @llm_client ||= LlmClient.new
+    @llm_client ||= CallsLlm.new
   end
 
   def build_prompt

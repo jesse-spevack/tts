@@ -3,7 +3,7 @@
 require "test_helper"
 require "ostruct"
 
-class LlmClientTest < ActiveSupport::TestCase
+class CallsLlmTest < ActiveSupport::TestCase
   setup do
     Mocktail.replace(RubyLLM)
   end
@@ -14,9 +14,9 @@ class LlmClientTest < ActiveSupport::TestCase
     mock_chat.define_singleton_method(:with_params) { |**_params| self }
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
-    stubs { RubyLLM.chat(model: LlmClient::DEFAULT_MODEL, provider: LlmClient::PROVIDER) }.with { mock_chat }
+    stubs { RubyLLM.chat(model: CallsLlm::DEFAULT_MODEL, provider: CallsLlm::PROVIDER) }.with { mock_chat }
 
-    client = LlmClient.new
+    client = CallsLlm.new
     result = client.ask("test prompt")
 
     assert_equal "response", result.content
@@ -29,9 +29,9 @@ class LlmClientTest < ActiveSupport::TestCase
     mock_chat.define_singleton_method(:with_params) { |**_params| self }
     mock_chat.define_singleton_method(:ask) { |_prompt| mock_response }
 
-    stubs { RubyLLM.chat(model: custom_model, provider: LlmClient::PROVIDER) }.with { mock_chat }
+    stubs { RubyLLM.chat(model: custom_model, provider: CallsLlm::PROVIDER) }.with { mock_chat }
 
-    client = LlmClient.new(model: custom_model)
+    client = CallsLlm.new(model: custom_model)
     result = client.ask("test prompt")
 
     assert_equal "response", result.content
@@ -44,7 +44,7 @@ class LlmClientTest < ActiveSupport::TestCase
 
     stubs { RubyLLM.models }.with { mock_registry }
 
-    client = LlmClient.new
+    client = CallsLlm.new
     result = client.find_model("gemini-2.0-flash")
 
     assert_equal 0.25, result.input_price_per_million
