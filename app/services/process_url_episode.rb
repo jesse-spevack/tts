@@ -92,7 +92,7 @@ class ProcessUrlEpisode
         title: @extract_result.title || @llm_result.title,
         author: @extract_result.author || @llm_result.author,
         description: @llm_result.description,
-        content_preview: ContentPreview.generate(content)
+        content_preview: GeneratesContentPreview.call(content)
       )
 
       log_info "episode_metadata_updated"

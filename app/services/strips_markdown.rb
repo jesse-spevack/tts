@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Strips markdown syntax from text, leaving only plain text content.
-# Used by ContentPreview for episode cards and by UploadAndEnqueueEpisode
+# Used by GeneratesContentPreview for episode cards and by UploadAndEnqueueEpisode
 # to convert markdown to plain text before sending to TTS processing.
 class StripsMarkdown
   def self.call(text)

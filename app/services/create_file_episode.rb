@@ -50,7 +50,7 @@ class CreateFileEpisode
       description: description,
       source_type: :file,
       source_text: content,
-      content_preview: ContentPreview.generate(plain_text),
+      content_preview: GeneratesContentPreview.call(plain_text),
       status: :processing
     )
   end
