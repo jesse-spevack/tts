@@ -184,7 +184,7 @@ module Api
         assert_equal "failed", @episode.status
       end
 
-      test "calls EpisodeCompletionNotifier when episode completes" do
+      test "calls NotifiesEpisodeCompletion when episode completes" do
         @episode.update!(status: "pending")
 
         assert_emails 1 do

@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
-class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
+class NotifiesEpisodeCompletionTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
   test "sends first_episode_ready email for user's first completed episode" do
@@ -8,7 +10,7 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     episode.update!(status: :complete)
 
     assert_emails 1 do
-      EpisodeCompletionNotifier.call(episode:)
+      NotifiesEpisodeCompletion.call(episode:)
     end
   end
 
@@ -18,7 +20,7 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     SentMessage.create!(user: episode.user, message_type: "first_episode_ready")
 
     assert_no_emails do
-      EpisodeCompletionNotifier.call(episode:)
+      NotifiesEpisodeCompletion.call(episode:)
     end
   end
 
@@ -26,7 +28,7 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     episode = episodes(:one)
     episode.update!(status: :complete)
 
-    EpisodeCompletionNotifier.call(episode:)
+    NotifiesEpisodeCompletion.call(episode:)
 
     assert SentMessage.exists?(user: episode.user, message_type: "first_episode_ready")
   end
@@ -36,7 +38,7 @@ class EpisodeCompletionNotifierTest < ActiveSupport::TestCase
     episode.update!(status: :processing)
 
     assert_no_emails do
-      EpisodeCompletionNotifier.call(episode:)
+      NotifiesEpisodeCompletion.call(episode:)
     end
   end
 end

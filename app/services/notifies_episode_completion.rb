@@ -1,4 +1,6 @@
-class EpisodeCompletionNotifier
+# frozen_string_literal: true
+
+class NotifiesEpisodeCompletion
   def self.call(episode:)
     new(episode:).call
   end

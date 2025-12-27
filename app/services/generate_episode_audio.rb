@@ -108,7 +108,7 @@ class GenerateEpisodeAudio
   end
 
   def notify_user
-    EpisodeCompletionNotifier.call(episode: @episode) if @episode.user&.email_address.present?
+    NotifiesEpisodeCompletion.call(episode: @episode) if @episode.user&.email_address.present?
   rescue StandardError => e
     Rails.logger.warn "event=notification_failed episode_id=#{@episode.id} error=#{e.message}"
   end
