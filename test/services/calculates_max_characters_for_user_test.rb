@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CalculatesCalculatesMaxCharactersForUserTest < ActiveSupport::TestCase
+class CalculatesMaxCharactersForUserTest < ActiveSupport::TestCase
   test "returns FREE limit for free tier" do
     user = users(:one)
     user.update!(tier: :free)

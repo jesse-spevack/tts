@@ -118,7 +118,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
   test "sets content_preview on episode from LLM content" do
     long_content = "B" * 100 + " middle " + "X" * 100
-    # Use HTML with enough content to pass ArticleExtractor's minimum length
+    # Use HTML with enough content to pass ExtractsArticle's minimum length
     html = "<article><h1>Title</h1><p>#{"x" * 200}</p></article>"
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.success(html) }
