@@ -28,7 +28,7 @@ class ProcessFileEpisode
   attr_reader :episode
 
   def strip_markdown
-    MarkdownStripper.strip(episode.source_text)
+    StripsMarkdown.call(episode.source_text)
   end
 
   def submit_for_processing(content)

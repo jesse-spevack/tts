@@ -41,7 +41,7 @@ class CreateFileEpisode
   end
 
   def create_episode
-    plain_text = MarkdownStripper.strip(content)
+    plain_text = StripsMarkdown.call(content)
 
     podcast.episodes.create!(
       user: user,
