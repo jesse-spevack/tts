@@ -1,6 +1,6 @@
 require "test_helper"
 
-class CanCreateEpisodeTest < ActiveSupport::TestCase
+class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
     @premium_user = users(:premium_user)
@@ -8,7 +8,7 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns allowed for premium user" do
-    result = CanCreateEpisode.call(user: @premium_user)
+    result = ChecksEpisodeCreationPermission.call(user: @premium_user)
 
     assert result.allowed?
     assert_not result.denied?
@@ -16,14 +16,14 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns allowed for unlimited user" do
-    result = CanCreateEpisode.call(user: @unlimited_user)
+    result = ChecksEpisodeCreationPermission.call(user: @unlimited_user)
 
     assert result.allowed?
     assert_nil result.remaining
   end
 
   test "returns allowed with remaining count for free user with no usage" do
-    result = CanCreateEpisode.call(user: @free_user)
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
     assert result.allowed?
     assert_equal 2, result.remaining
@@ -36,7 +36,7 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
       episode_count: 1
     )
 
-    result = CanCreateEpisode.call(user: @free_user)
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
     assert result.allowed?
     assert_equal 1, result.remaining
@@ -49,7 +49,7 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
       episode_count: 2
     )
 
-    result = CanCreateEpisode.call(user: @free_user)
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
     assert result.denied?
     assert_not result.allowed?
@@ -63,7 +63,7 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
       episode_count: 3
     )
 
-    result = CanCreateEpisode.call(user: @free_user)
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
     assert result.denied?
   end
@@ -75,7 +75,7 @@ class CanCreateEpisodeTest < ActiveSupport::TestCase
       episode_count: 5
     )
 
-    result = CanCreateEpisode.call(user: @free_user)
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
     assert result.allowed?
     assert_equal 2, result.remaining

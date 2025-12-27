@@ -1,4 +1,4 @@
-class CanCreateEpisode
+class ChecksEpisodeCreationPermission
   FREE_MONTHLY_LIMIT = 2
 
   def self.call(user:)
