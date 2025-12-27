@@ -61,7 +61,7 @@ class ProcessesWithLlm
     if episode.paste?
       PasteProcessingPrompt.build(text: text)
     else
-      UrlProcessingPrompt.build(text: text)
+      BuildsUrlProcessingPrompt.call(text: text)
     end
   end
 

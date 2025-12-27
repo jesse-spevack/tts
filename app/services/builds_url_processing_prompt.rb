@@ -1,13 +1,13 @@
-class UrlProcessingPrompt
-  def self.build(text:)
-    new(text: text).build
+class BuildsUrlProcessingPrompt
+  def self.call(text:)
+    new(text: text).call
   end
 
   def initialize(text:)
     @text = text
   end
 
-  def build
+  def call
     <<~PROMPT
       You are processing a web article for text-to-speech conversion.
 

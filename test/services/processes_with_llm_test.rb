@@ -160,7 +160,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     assert_equal "Article content too large for processing", result.error
   end
 
-  test "uses UrlProcessingPrompt for url source type" do
+  test "uses BuildsUrlProcessingPrompt for url source type" do
     @episode.update!(source_type: :url, source_url: "https://example.com/article")
     mock_response = mock_llm_response(
       content: { title: "T", author: "A", description: "D", content: "C" }.to_json
