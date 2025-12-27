@@ -36,6 +36,6 @@ class RecordLlmUsage
   attr_reader :episode, :response
 
   def llm_client
-    @llm_client ||= CallsLlm.new
+    @llm_client ||= AsksLlm.new
   end
 end

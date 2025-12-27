@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CallsLlm
+class AsksLlm
   # NOTE: The structured output config below (generationConfig with responseSchema)
   # is Gemini-specific. If switching to a different provider, update the ask method.
   DEFAULT_MODEL = "gemini-2.5-flash"

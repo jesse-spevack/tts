@@ -8,7 +8,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     @episode = episodes(:one)
     @text = "This is some article content about technology trends."
 
-    Mocktail.replace(CallsLlm)
+    Mocktail.replace(AsksLlm)
     Mocktail.replace(RecordLlmUsage)
   end
 
@@ -35,9 +35,9 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
   end
 
   test "fails on LLM error" do
-    mock_client = Mocktail.of(CallsLlm)
+    mock_client = Mocktail.of(AsksLlm)
     stubs { |m| mock_client.ask(m.any) }.with { raise RubyLLM::Error.new("API error", response: nil) }
-    stubs { CallsLlm.new }.with { mock_client }
+    stubs { AsksLlm.new }.with { mock_client }
 
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
@@ -166,9 +166,9 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
       content: { title: "T", author: "A", description: "D", content: "C" }.to_json
     )
 
-    mock_client = Mocktail.of(CallsLlm)
+    mock_client = Mocktail.of(AsksLlm)
     stubs { |m| mock_client.ask(m.any) }.with { mock_response }
-    stubs { CallsLlm.new }.with { mock_client }
+    stubs { AsksLlm.new }.with { mock_client }
     stub_record_usage
 
     ProcessesWithLlm.call(text: @text, episode: @episode)
@@ -183,9 +183,9 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
       content: { title: "T", author: "A", description: "D", content: "C" }.to_json
     )
 
-    mock_client = Mocktail.of(CallsLlm)
+    mock_client = Mocktail.of(AsksLlm)
     stubs { |m| mock_client.ask(m.any) }.with { mock_response }
-    stubs { CallsLlm.new }.with { mock_client }
+    stubs { AsksLlm.new }.with { mock_client }
     stub_record_usage
 
     ProcessesWithLlm.call(text: @text, episode: @episode)
@@ -206,9 +206,9 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
   end
 
   def stub_llm_client(response)
-    mock_client = Mocktail.of(CallsLlm)
+    mock_client = Mocktail.of(AsksLlm)
     stubs { |m| mock_client.ask(m.any) }.with { response }
-    stubs { CallsLlm.new }.with { mock_client }
+    stubs { AsksLlm.new }.with { mock_client }
   end
 
   def stub_record_usage
