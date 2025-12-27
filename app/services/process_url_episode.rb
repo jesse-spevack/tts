@@ -74,7 +74,7 @@ class ProcessUrlEpisode
   def process_with_llm
     log_info "llm_processing_started", characters: @extract_result.character_count
 
-    @llm_result = LlmProcessor.call(text: @extract_result.text, episode: episode)
+    @llm_result = ProcessesWithLlm.call(text: @extract_result.text, episode: episode)
     if @llm_result.failure?
       log_warn "llm_processing_failed", error: @llm_result.error
 

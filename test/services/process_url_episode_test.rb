@@ -19,7 +19,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     )
 
     Mocktail.replace(FetchesUrl)
-    Mocktail.replace(LlmProcessor)
+    Mocktail.replace(ProcessesWithLlm)
     Mocktail.replace(SubmitEpisodeForProcessing)
   end
 
@@ -28,14 +28,14 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.success(html) }
 
-    mock_llm_result = LlmProcessor::Result.success(
+    mock_llm_result = ProcessesWithLlm::Result.success(
       title: "Real Title",
       author: "John Doe",
       description: "A great article.",
       content: "Article content here."
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
@@ -98,14 +98,14 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.success(html) }
 
-    mock_llm_result = LlmProcessor::Result.success(
+    mock_llm_result = ProcessesWithLlm::Result.success(
       title: "LLM Title",
       author: "LLM Author",
       description: "LLM description.",
       content: "Article content here."
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
@@ -123,14 +123,14 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.success(html) }
 
-    mock_llm_result = LlmProcessor::Result.success(
+    mock_llm_result = ProcessesWithLlm::Result.success(
       title: "Title",
       author: "Author",
       description: "Description",
       content: long_content
     )
 
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)
@@ -150,13 +150,13 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     # Expect the normalized URL to be used
     stubs { FetchesUrl.call(url: "https://testauthor.substack.com/p/article") }.with { FetchesUrl::Result.success(html) }
 
-    mock_llm_result = LlmProcessor::Result.success(
+    mock_llm_result = ProcessesWithLlm::Result.success(
       title: "Title",
       author: "Author",
       description: "Description",
       content: "Content"
     )
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
     ProcessUrlEpisode.call(episode: @episode)

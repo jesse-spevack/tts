@@ -42,7 +42,7 @@ class ProcessPasteEpisode
   def process_with_llm
     log_info "llm_processing_started", characters: episode.source_text.length
 
-    @llm_result = LlmProcessor.call(text: episode.source_text, episode: episode)
+    @llm_result = ProcessesWithLlm.call(text: episode.source_text, episode: episode)
     if @llm_result.failure?
       log_warn "llm_processing_failed", error: @llm_result.error
       raise ProcessingError, @llm_result.error

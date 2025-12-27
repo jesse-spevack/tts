@@ -10,7 +10,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     @user.update!(tier: :unlimited)
     sign_in_as(@user)
 
-    Mocktail.replace(LlmProcessor)
+    Mocktail.replace(ProcessesWithLlm)
     Mocktail.replace(SubmitEpisodeForProcessing)
   end
 
@@ -31,13 +31,13 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     assert_equal text, episode.source_text
 
     # Mock LLM response
-    mock_llm_result = LlmProcessor::Result.success(
+    mock_llm_result = ProcessesWithLlm::Result.success(
       title: "Generated Title",
       author: "Generated Author",
       description: "Generated description.",
       content: "Cleaned content."
     )
-    stubs { |m| LlmProcessor.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
     # Process the job

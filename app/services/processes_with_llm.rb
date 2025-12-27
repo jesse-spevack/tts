@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LlmProcessor
+class ProcessesWithLlm
   MAX_INPUT_CHARS = 100_000 # ~25k tokens, well within Gemini context window
   MAX_TITLE_LENGTH = 255
   MAX_AUTHOR_LENGTH = 255
