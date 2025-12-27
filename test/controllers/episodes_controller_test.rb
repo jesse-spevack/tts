@@ -309,12 +309,12 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-testid='episode-card']", count: 4
   end
 
-  test "index handles page beyond max by showing last page" do
+  test "index handles page beyond max by showing empty page" do
     get episodes_url, params: { page: 999 }
     assert_response :success
 
-    # Should not error, should show last page with remaining episodes
-    assert_select "[data-testid='episode-card']"
+    # Pagy 43 returns empty page for out-of-range requests (no error, no episodes)
+    assert_select "[data-testid='episode-card']", count: 0
   end
 
   test "index renders turbo frame for episodes list" do

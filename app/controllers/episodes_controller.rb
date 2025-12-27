@@ -4,7 +4,7 @@ class EpisodesController < ApplicationController
   before_action :load_podcast, except: [ :show ]
 
   def index
-    @pagy, @episodes = pagy(@podcast.episodes.newest_first)
+    @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first)
   end
 
   def show
