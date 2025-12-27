@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class UrlValidator
+class ValidatesUrl
   def self.valid?(url)
     new(url).valid?
   end
