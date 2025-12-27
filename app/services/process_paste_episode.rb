@@ -32,7 +32,7 @@ class ProcessPasteEpisode
   attr_reader :episode, :user
 
   def check_character_limit
-    max_chars = MaxCharactersForUser.call(user: user)
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
     return unless max_chars && episode.source_text.length > max_chars
 
     log_warn "character_limit_exceeded", characters: episode.source_text.length, limit: max_chars, tier: user.tier

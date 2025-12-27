@@ -2,12 +2,12 @@
 
 require "test_helper"
 
-class MaxCharactersForUserTest < ActiveSupport::TestCase
+class CalculatesCalculatesMaxCharactersForUserTest < ActiveSupport::TestCase
   test "returns FREE limit for free tier" do
     user = users(:one)
     user.update!(tier: :free)
 
-    result = MaxCharactersForUser.call(user: user)
+    result = CalculatesMaxCharactersForUser.call(user: user)
 
     assert_equal EpisodeSubmissionValidator::MAX_CHARACTERS_FREE, result
   end
@@ -16,7 +16,7 @@ class MaxCharactersForUserTest < ActiveSupport::TestCase
     user = users(:one)
     user.update!(tier: :premium)
 
-    result = MaxCharactersForUser.call(user: user)
+    result = CalculatesMaxCharactersForUser.call(user: user)
 
     assert_equal EpisodeSubmissionValidator::MAX_CHARACTERS_PREMIUM, result
   end
@@ -25,7 +25,7 @@ class MaxCharactersForUserTest < ActiveSupport::TestCase
     user = users(:one)
     user.update!(tier: :unlimited)
 
-    result = MaxCharactersForUser.call(user: user)
+    result = CalculatesMaxCharactersForUser.call(user: user)
 
     assert_nil result
   end

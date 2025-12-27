@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class MaxCharactersForUser
+class CalculatesMaxCharactersForUser
   def self.call(user:)
     case user.tier
     when "free" then EpisodeSubmissionValidator::MAX_CHARACTERS_FREE
