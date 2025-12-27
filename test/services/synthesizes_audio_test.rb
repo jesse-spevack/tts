@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class TtsSynthesizerTest < ActiveSupport::TestCase
+class SynthesizesAudioTest < ActiveSupport::TestCase
   setup do
     Mocktail.replace(Tts::ApiClient)
   end
@@ -14,9 +14,9 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
     stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio data" }
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
-    synthesizer = Tts::Synthesizer.new(config: config)
+    synthesizer = SynthesizesAudio.new(config: config)
 
-    result = synthesizer.synthesize("Short text.")
+    result = synthesizer.call("Short text.")
     assert_equal "audio data", result
   end
 
@@ -26,14 +26,14 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
     mock_api_client = Mocktail.of(Tts::ApiClient)
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
-    synthesizer = Tts::Synthesizer.new(config: config)
+    synthesizer = SynthesizesAudio.new(config: config)
 
     # Mock the chunked synthesizer
     mock_chunked = Object.new
     mock_chunked.define_singleton_method(:synthesize) { |chunks, voice| "chunked audio" }
     synthesizer.instance_variable_set(:@chunked_synthesizer, mock_chunked)
 
-    result = synthesizer.synthesize("This is a longer text that will be chunked.")
+    result = synthesizer.call("This is a longer text that will be chunked.")
     assert_equal "chunked audio", result
   end
 
@@ -44,8 +44,8 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
     stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio" }
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
-    synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.synthesize("Hello", voice: "custom-voice")
+    synthesizer = SynthesizesAudio.new(config: config)
+    synthesizer.call("Hello", voice: "custom-voice")
 
     calls = Mocktail.calls(mock_api_client, :call)
     assert_equal 1, calls.size
@@ -59,8 +59,8 @@ class TtsSynthesizerTest < ActiveSupport::TestCase
     stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio" }
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
-    synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.synthesize("Hello")
+    synthesizer = SynthesizesAudio.new(config: config)
+    synthesizer.call("Hello")
 
     calls = Mocktail.calls(mock_api_client, :call)
     assert_equal 1, calls.size

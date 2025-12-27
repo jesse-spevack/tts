@@ -7,14 +7,14 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     @episode = episodes(:pending)
     @episode.update!(source_text: "Hello, this is a test episode.")
 
-    Mocktail.replace(Tts::Synthesizer)
+    Mocktail.replace(SynthesizesAudio)
     Mocktail.replace(CloudStorage)
   end
 
   test "synthesizes audio and updates episode" do
-    mock_synthesizer = Mocktail.of(Tts::Synthesizer)
-    stubs { |m| mock_synthesizer.synthesize(m.any, voice: m.any) }.with { "fake audio content" }
-    stubs { |m| Tts::Synthesizer.new(config: m.any) }.with { mock_synthesizer }
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     mock_gcs = Mocktail.of(CloudStorage)
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
@@ -28,9 +28,9 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed on error" do
-    mock_synthesizer = Mocktail.of(Tts::Synthesizer)
-    stubs { |m| mock_synthesizer.synthesize(m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
-    stubs { |m| Tts::Synthesizer.new(config: m.any) }.with { mock_synthesizer }
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     GenerateEpisodeAudio.call(episode: @episode)
 
@@ -40,9 +40,9 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
   end
 
   test "cleans up uploaded audio if episode update fails" do
-    mock_synthesizer = Mocktail.of(Tts::Synthesizer)
-    stubs { |m| mock_synthesizer.synthesize(m.any, voice: m.any) }.with { "fake audio content" }
-    stubs { |m| Tts::Synthesizer.new(config: m.any) }.with { mock_synthesizer }
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     mock_gcs = Mocktail.of(CloudStorage)
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }

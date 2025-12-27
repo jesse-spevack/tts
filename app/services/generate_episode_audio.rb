@@ -56,8 +56,8 @@ class GenerateEpisodeAudio
 
   def synthesize_audio
     config = Tts::Config.new(voice_name: voice_name)
-    synthesizer = Tts::Synthesizer.new(config: config)
-    synthesizer.synthesize(content_text, voice: voice_name)
+    synthesizer = SynthesizesAudio.new(config: config)
+    synthesizer.call(content_text, voice: voice_name)
   end
 
   def voice_name
