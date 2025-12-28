@@ -57,7 +57,7 @@ class Episode < ApplicationRecord
   private
 
   def content_within_tier_limit
-    max_chars = CalculatesMaxCharactersForUser.call(user: user)
+    max_chars = AppConfig::Tiers.character_limit_for(user.tier)
     return unless max_chars
 
     if source_text.length > max_chars
