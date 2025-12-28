@@ -33,7 +33,7 @@ class SessionsController < ApplicationController
     result = AuthenticateMagicLink.call(token: params[:token])
 
     if result.success?
-      start_new_session_for result.user
+      start_new_session_for result.data
       redirect_to after_authentication_url, notice: "Welcome back!"
     else
       redirect_to root_path, alert: "Invalid or expired login link. Please try again."

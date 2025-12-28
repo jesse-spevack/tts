@@ -11,7 +11,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
     result = AuthenticateMagicLink.call(token: token)
 
     assert result.success?
-    assert_equal @user, result.user
+    assert_equal @user, result.data
   end
 
   test "call invalidates token after successful authentication" do
@@ -28,7 +28,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
     result = AuthenticateMagicLink.call(token: "invalid_token")
 
     assert_not result.success?
-    assert_nil result.user
+    assert_nil result.data
   end
 
   test "call with expired token returns failure" do
@@ -43,14 +43,14 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
     result = AuthenticateMagicLink.call(token: raw_token)
 
     assert_not result.success?
-    assert_nil result.user
+    assert_nil result.data
   end
 
   test "call with nil token returns failure" do
     result = AuthenticateMagicLink.call(token: nil)
 
     assert_not result.success?
-    assert_nil result.user
+    assert_nil result.data
   end
 
   test "token cannot be reused after successful authentication" do
@@ -63,6 +63,6 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
     # Second authentication with same token fails
     second_result = AuthenticateMagicLink.call(token: token)
     assert_not second_result.success?
-    assert_nil second_result.user
+    assert_nil second_result.data
   end
 end

@@ -10,9 +10,9 @@ class SendMagicLinkTest < ActiveSupport::TestCase
         result = SendMagicLink.call(email_address: email)
 
         assert result.success?
-        assert_equal email, result.user.email_address
-        assert result.user.auth_token.present?
-        assert result.user.auth_token_expires_at.present?
+        assert_equal email, result.data.email_address
+        assert result.data.auth_token.present?
+        assert result.data.auth_token_expires_at.present?
       end
     end
   end
@@ -26,7 +26,7 @@ class SendMagicLinkTest < ActiveSupport::TestCase
         result = SendMagicLink.call(email_address: email)
 
         assert result.success?
-        assert_equal user.id, result.user.id
+        assert_equal user.id, result.data.id
       end
     end
   end
@@ -47,21 +47,21 @@ class SendMagicLinkTest < ActiveSupport::TestCase
     result = SendMagicLink.call(email_address: "  NewUser@EXAMPLE.com  ")
 
     assert result.success?
-    assert_equal "newuser@example.com", result.user.email_address
+    assert_equal "newuser@example.com", result.data.email_address
   end
 
   test "call with invalid email returns failure" do
     result = SendMagicLink.call(email_address: "not-an-email")
 
     assert_not result.success?
-    assert_nil result.user
+    assert_nil result.data
   end
 
   test "call with blank email returns failure" do
     result = SendMagicLink.call(email_address: "")
 
     assert_not result.success?
-    assert_nil result.user
+    assert_nil result.data
   end
 
   test "call enqueues email with correct user" do
@@ -76,7 +76,7 @@ class SendMagicLinkTest < ActiveSupport::TestCase
   test "call sets token expiration to 30 minutes from now" do
     result = SendMagicLink.call(email_address: "test@example.com")
 
-    user = result.user
+    user = result.data
     expected_expiration = 30.minutes.from_now
 
     assert_in_delta expected_expiration, user.auth_token_expires_at, 1.second

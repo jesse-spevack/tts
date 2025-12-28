@@ -5,8 +5,8 @@ module Api
     class EpisodesControllerTest < ActionDispatch::IntegrationTest
       setup do
         result = CreateUser.call(email_address: "test@example.com")
-        @user = result.user
-        @podcast = result.podcast
+        @user = result.data[:user]
+        @podcast = result.data[:podcast]
         @episode = @podcast.episodes.create!(
           title: "Test Episode",
           author: "Test Author",

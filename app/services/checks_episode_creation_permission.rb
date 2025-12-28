@@ -10,15 +10,15 @@ class ChecksEpisodeCreationPermission
   end
 
   def call
-    return Outcome.success if skip_tracking?
+    return Result.success if skip_tracking?
 
     usage = EpisodeUsage.current_for(user)
     remaining = AppConfig::Tiers::FREE_MONTHLY_EPISODES - usage.episode_count
 
     if remaining > 0
-      Outcome.success(nil, remaining: remaining)
+      Result.success(nil, remaining: remaining)
     else
-      Outcome.failure("Episode limit reached")
+      Result.failure("Episode limit reached")
     end
   end
 

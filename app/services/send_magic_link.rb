@@ -1,6 +1,4 @@
 class SendMagicLink
-  Result = Struct.new(:success?, :user, keyword_init: true)
-
   def self.call(email_address:)
     new(email_address: email_address).call
   end
@@ -14,12 +12,12 @@ class SendMagicLink
 
     if user.nil?
       result = CreateUser.call(email_address: @email_address)
-      return Result.new(success?: false, user: nil) unless result.success?
-      user = result.user
+      return Result.failure("Could not create user") unless result.success?
+      user = result.data[:user]
     end
 
     token = GenerateAuthToken.call(user: user)
     SessionsMailer.magic_link(user: user, token: token).deliver_later
-    Result.new(success?: true, user: user)
+    Result.success(user)
   end
 end

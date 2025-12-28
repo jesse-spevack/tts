@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ProcessFileEpisode
-  include EpisodeLogging
+  include EpisodeErrorHandling
 
   def self.call(episode:)
     new(episode: episode).call
@@ -33,10 +33,5 @@ class ProcessFileEpisode
 
   def submit_for_processing(content)
     SubmitEpisodeForProcessing.call(episode: episode, content: content)
-  end
-
-  def fail_episode(error_message)
-    episode.update!(status: :failed, error_message: error_message)
-    log_warn "episode_marked_failed", error: error_message
   end
 end
