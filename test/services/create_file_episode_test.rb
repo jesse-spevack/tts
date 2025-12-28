@@ -11,13 +11,15 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   end
 
   test "creates episode with markdown source type" do
+    long_content = "# Markdown content\n\n" + ("This is test content. " * 10)
+
     result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test Title",
       author: "Test Author",
       description: "Test description",
-      content: "# Markdown content"
+      content: long_content
     )
 
     assert result.success?
@@ -25,23 +27,27 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     assert_equal "Test Title", result.data.title
     assert_equal "Test Author", result.data.author
     assert_equal "Test description", result.data.description
-    assert_equal "# Markdown content", result.data.source_text
+    assert_equal long_content, result.data.source_text
   end
 
   test "sets episode status to processing" do
+    long_content = "A" * 150
+
     result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
       author: "Author",
       description: "Desc",
-      content: "Content here"
+      content: long_content
     )
 
     assert_equal "processing", result.data.status
   end
 
   test "enqueues ProcessFileEpisodeJob" do
+    long_content = "A" * 150
+
     assert_enqueued_with(job: ProcessFileEpisodeJob) do
       CreateFileEpisode.call(
         podcast: @podcast,
@@ -49,7 +55,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
         title: "Test",
         author: "Author",
         description: "Desc",
-        content: "Content here"
+        content: long_content
       )
     end
   end
@@ -68,6 +74,20 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     assert_equal "Content cannot be empty", result.error
   end
 
+  test "returns failure when content is under 100 characters" do
+    result = CreateFileEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      title: "Test",
+      author: "Author",
+      description: "Desc",
+      content: "short"
+    )
+
+    assert result.failure?
+    assert_equal "Content must be at least 100 characters", result.error
+  end
+
   test "returns failure when content exceeds max characters" do
     @user.update!(tier: :free)
     max_chars = CalculatesMaxCharactersForUser.call(user: @user)
@@ -83,17 +103,19 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_includes result.error, "too long"
+    assert_includes result.error, "exceeds your plan's"
   end
 
   test "sets content preview" do
+    long_content = "# Header\n\n" + ("Some markdown content here. " * 10)
+
     result = CreateFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
       author: "Author",
       description: "Desc",
-      content: "# Header\n\nSome markdown content here."
+      content: long_content
     )
 
     assert result.data.content_preview.present?

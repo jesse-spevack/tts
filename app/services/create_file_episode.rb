@@ -15,35 +15,9 @@ class CreateFileEpisode
   end
 
   def call
-    return Result.failure("Content cannot be empty") if content.blank?
-    return Result.failure(max_characters_error) if exceeds_max_characters?
-
-    episode = create_episode
-    ProcessFileEpisodeJob.perform_later(episode.id)
-
-    Rails.logger.info "event=file_episode_created episode_id=#{episode.id} content_length=#{content.length}"
-
-    Result.success(episode)
-  end
-
-  private
-
-  attr_reader :podcast, :user, :title, :author, :description, :content
-
-  def exceeds_max_characters?
-    max_chars = CalculatesMaxCharactersForUser.call(user: user)
-    max_chars && content.length > max_chars
-  end
-
-  def max_characters_error
-    max_chars = CalculatesMaxCharactersForUser.call(user: user)
-    "Content is too long for your account tier (#{content.length} characters, max #{max_chars})"
-  end
-
-  def create_episode
     plain_text = StripsMarkdown.call(content)
 
-    podcast.episodes.create!(
+    episode = podcast.episodes.create(
       user: user,
       title: title,
       author: author,
@@ -53,5 +27,16 @@ class CreateFileEpisode
       content_preview: GeneratesContentPreview.call(plain_text),
       status: :processing
     )
+
+    return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
+
+    ProcessFileEpisodeJob.perform_later(episode.id)
+    Rails.logger.info "event=file_episode_created episode_id=#{episode.id} content_length=#{content.length}"
+
+    Result.success(episode)
   end
+
+  private
+
+  attr_reader :podcast, :user, :title, :author, :description, :content
 end
