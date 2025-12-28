@@ -20,10 +20,10 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_includes result.text, "Article Title"
-    assert_includes result.text, "main content"
-    assert_not_includes result.text, "Navigation"
-    assert_not_includes result.text, "Footer content"
+    assert_includes result.data.text, "Article Title"
+    assert_includes result.data.text, "main content"
+    assert_not_includes result.data.text, "Navigation"
+    assert_not_includes result.data.text, "Footer content"
   end
 
   test "extracts from main tag if no article" do
@@ -42,9 +42,9 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_includes result.text, "Main Content"
-    assert_includes result.text, "Body text"
-    assert_not_includes result.text, "Nav"
+    assert_includes result.data.text, "Main Content"
+    assert_includes result.data.text, "Body text"
+    assert_not_includes result.data.text, "Nav"
   end
 
   test "falls back to body if no article or main" do
@@ -62,7 +62,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_includes result.text, "Page Content"
+    assert_includes result.data.text, "Page Content"
   end
 
   test "removes script tags" do
@@ -80,8 +80,8 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_includes result.text, "Real content"
-    assert_not_includes result.text, "alert"
+    assert_includes result.data.text, "Real content"
+    assert_not_includes result.data.text, "alert"
   end
 
   test "removes style tags" do
@@ -99,7 +99,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_not_includes result.text, "color"
+    assert_not_includes result.data.text, "color"
   end
 
   test "fails when no content found" do
@@ -117,7 +117,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert result.character_count.positive?
+    assert result.data.character_count.positive?
   end
 
   test "fails when HTML exceeds size limit" do
@@ -156,7 +156,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_equal "My Article Title", result.title
+    assert_equal "My Article Title", result.data.title
   end
 
   test "extracts author from meta tag" do
@@ -177,7 +177,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_equal "Jane Smith", result.author
+    assert_equal "Jane Smith", result.data.author
   end
 
   test "returns nil for missing metadata" do
@@ -194,7 +194,7 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     result = ExtractsArticle.call(html: html)
 
     assert result.success?
-    assert_nil result.title
-    assert_nil result.author
+    assert_nil result.data.title
+    assert_nil result.data.author
   end
 end
