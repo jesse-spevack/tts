@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class CreatePasteEpisode
-  MINIMUM_LENGTH = 100
-
   def self.call(podcast:, user:, text:)
     new(podcast: podcast, user: user, text: text).call
   end
@@ -15,7 +13,7 @@ class CreatePasteEpisode
 
   def call
     return Result.failure("Text cannot be empty") if text.blank?
-    return Result.failure("Text must be at least #{MINIMUM_LENGTH} characters") if text.length < MINIMUM_LENGTH
+    return Result.failure("Text must be at least #{AppConfig::Content::MIN_LENGTH} characters") if text.length < AppConfig::Content::MIN_LENGTH
     return Result.failure(max_characters_error) if exceeds_max_characters?
 
     episode = create_episode
