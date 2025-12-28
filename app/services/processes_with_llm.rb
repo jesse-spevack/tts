@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 class ProcessesWithLlm
-  MAX_INPUT_CHARS = 100_000 # ~25k tokens, well within Gemini context window
-  MAX_TITLE_LENGTH = 255
-  MAX_AUTHOR_LENGTH = 255
-  MAX_DESCRIPTION_LENGTH = 1000
-
   LlmData = Struct.new(:title, :author, :description, :content, keyword_init: true)
 
   def self.call(text:, episode:)
@@ -20,8 +15,8 @@ class ProcessesWithLlm
   def call
     Rails.logger.info "event=llm_request_started episode_id=#{episode.id} input_chars=#{text.length}"
 
-    if text.length > MAX_INPUT_CHARS
-      Rails.logger.warn "event=llm_input_too_large episode_id=#{episode.id} input_chars=#{text.length} max_chars=#{MAX_INPUT_CHARS}"
+    if text.length > AppConfig::Llm::MAX_INPUT_CHARS
+      Rails.logger.warn "event=llm_input_too_large episode_id=#{episode.id} input_chars=#{text.length} max_chars=#{AppConfig::Llm::MAX_INPUT_CHARS}"
       return Result.failure("Article content too large for processing")
     end
 
@@ -78,9 +73,9 @@ class ProcessesWithLlm
     raise ValidationError, "Missing content in LLM response" if content.blank?
 
     {
-      title: truncate(extract_string(parsed, "title", "Untitled"), MAX_TITLE_LENGTH),
-      author: truncate(extract_string(parsed, "author", "Unknown"), MAX_AUTHOR_LENGTH),
-      description: truncate(extract_string(parsed, "description", ""), MAX_DESCRIPTION_LENGTH),
+      title: truncate(extract_string(parsed, "title", "Untitled"), AppConfig::Llm::MAX_TITLE_LENGTH),
+      author: truncate(extract_string(parsed, "author", "Unknown"), AppConfig::Llm::MAX_AUTHOR_LENGTH),
+      description: truncate(extract_string(parsed, "description", ""), AppConfig::Llm::MAX_DESCRIPTION_LENGTH),
       content: content
     }
   end
