@@ -46,13 +46,13 @@ class ProcessUrlEpisode
       raise ProcessingError, @fetch_result.error
     end
 
-    log_info "url_fetch_completed", bytes: @fetch_result.html.bytesize
+    log_info "url_fetch_completed", bytes: @fetch_result.data.bytesize
   end
 
   def extract_content
     log_info "article_extraction_started"
 
-    @extract_result = ExtractsArticle.call(html: @fetch_result.html)
+    @extract_result = ExtractsArticle.call(html: @fetch_result.data)
     if @extract_result.failure?
       log_warn "article_extraction_failed", error: @extract_result.error
 

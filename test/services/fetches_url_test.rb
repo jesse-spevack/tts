@@ -16,7 +16,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     result = FetchesUrl.call(url: "https://example.com/article")
 
     assert result.success?
-    assert_includes result.html, "Hello"
+    assert_includes result.data, "Hello"
   end
 
   test "fails on invalid URL format" do
@@ -73,7 +73,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     result = FetchesUrl.call(url: "https://example.com/old")
 
     assert result.success?
-    assert_includes result.html, "New page"
+    assert_includes result.data, "New page"
   end
 
   test "rejects content exceeding max size based on Content-Length header" do
