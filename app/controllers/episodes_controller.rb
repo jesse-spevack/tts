@@ -88,7 +88,7 @@ class EpisodesController < ApplicationController
 
   def require_can_create_episode
     result = ChecksEpisodeCreationPermission.call(user: Current.user)
-    return if result.allowed?
+    return if result.success?
 
     flash[:alert] = "You've used your 2 free episodes this month! " \
                     "Upgrade to Premium for unlimited episodes."
