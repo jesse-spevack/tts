@@ -26,8 +26,7 @@ class GeneratesEpisodeAudioUrlTest < ActiveSupport::TestCase
 
     result = GeneratesEpisodeAudioUrl.call(episode)
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    expected = "https://storage.googleapis.com/#{bucket}/podcasts/#{episode.podcast.podcast_id}/episodes/abc123.mp3"
+    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/#{episode.podcast.podcast_id}/episodes/abc123.mp3"
     assert_equal expected, result
   end
 end

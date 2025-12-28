@@ -18,8 +18,7 @@ class Voice
   DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"
 
   def self.sample_url(key)
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    "https://storage.googleapis.com/#{bucket}/voices/#{key}.mp3"
+    AppConfig::Storage.voice_sample_url(key)
   end
 
   def self.find(key)
