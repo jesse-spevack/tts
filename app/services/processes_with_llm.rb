@@ -6,6 +6,8 @@ class ProcessesWithLlm
   MAX_AUTHOR_LENGTH = 255
   MAX_DESCRIPTION_LENGTH = 1000
 
+  LlmData = Struct.new(:title, :author, :description, :content, keyword_init: true)
+
   def self.call(text:, episode:)
     new(text: text, episode: episode).call
   end
@@ -34,7 +36,7 @@ class ProcessesWithLlm
 
     Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{validated[:title]}"
 
-    Result.success(**validated)
+    Result.success(LlmData.new(**validated))
   rescue RubyLLM::Error => e
     Rails.logger.error "event=llm_api_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
 
@@ -97,32 +99,4 @@ class ProcessesWithLlm
   end
 
   class ValidationError < StandardError; end
-
-  class Result
-    attr_reader :title, :author, :description, :content, :error
-
-    def self.success(title:, author:, description:, content:)
-      new(title: title, author: author, description: description, content: content, error: nil)
-    end
-
-    def self.failure(error)
-      new(title: nil, author: nil, description: nil, content: nil, error: error)
-    end
-
-    def initialize(title:, author:, description:, content:, error:)
-      @title = title
-      @author = author
-      @description = description
-      @content = content
-      @error = error
-    end
-
-    def success?
-      error.nil?
-    end
-
-    def failure?
-      !success?
-    end
-  end
 end

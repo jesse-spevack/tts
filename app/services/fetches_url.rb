@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FetchesUrl
   TIMEOUT_SECONDS = 10
   DNS_TIMEOUT_SECONDS = 5
@@ -126,30 +128,5 @@ class FetchesUrl
   rescue Resolv::ResolvError, Timeout::Error
     Rails.logger.warn "event=redirect_dns_failed url=#{new_url}"
     raise Faraday::ConnectionFailed, "Redirect DNS resolution failed"
-  end
-
-  class Result
-    attr_reader :html, :error
-
-    def self.success(html)
-      new(html: html, error: nil)
-    end
-
-    def self.failure(error)
-      new(html: nil, error: error)
-    end
-
-    def initialize(html:, error:)
-      @html = html
-      @error = error
-    end
-
-    def success?
-      error.nil?
-    end
-
-    def failure?
-      !success?
-    end
   end
 end

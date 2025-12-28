@@ -22,10 +22,10 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     end
 
     assert result.success?
-    assert result.episode.persisted?
-    assert_equal "processing", result.episode.status
-    assert_equal "paste", result.episode.source_type
-    assert_equal @valid_text, result.episode.source_text
+    assert result.data.persisted?
+    assert_equal "processing", result.data.status
+    assert_equal "paste", result.data.source_type
+    assert_equal @valid_text, result.data.source_text
   end
 
   test "creates episode with placeholder metadata" do
@@ -35,9 +35,9 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
       text: @valid_text
     )
 
-    assert_equal "Processing...", result.episode.title
-    assert_equal "Processing...", result.episode.author
-    assert_equal "Processing pasted text...", result.episode.description
+    assert_equal "Processing...", result.data.title
+    assert_equal "Processing...", result.data.author
+    assert_equal "Processing pasted text...", result.data.description
   end
 
   test "fails on empty text" do
@@ -49,7 +49,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
 
     assert result.failure?
     assert_equal "Text cannot be empty", result.error
-    assert_nil result.episode
+    assert_nil result.data
   end
 
   test "fails on nil text" do

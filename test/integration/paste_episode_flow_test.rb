@@ -31,12 +31,12 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     assert_equal text, episode.source_text
 
     # Mock LLM response
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Generated Title",
       author: "Generated Author",
       description: "Generated description.",
       content: "Cleaned content."
-    )
+    ))
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 

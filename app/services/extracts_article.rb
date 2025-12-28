@@ -1,8 +1,16 @@
+# frozen_string_literal: true
+
 class ExtractsArticle
   REMOVE_TAGS = %w[script style nav footer header aside form noscript iframe].freeze
   CONTENT_SELECTORS = %w[article main body].freeze
   MIN_CONTENT_LENGTH = 100
   MAX_HTML_BYTES = 10 * 1024 * 1024 # 10MB
+
+  ArticleData = Struct.new(:text, :title, :author, keyword_init: true) do
+    def character_count
+      text&.length || 0
+    end
+  end
 
   def self.call(html:)
     new(html: html).call
@@ -31,7 +39,7 @@ class ExtractsArticle
     end
 
     Rails.logger.info "event=article_extraction_success extracted_chars=#{text.length}"
-    Result.success(text, title: extract_title(doc), author: extract_author(doc))
+    Result.success(ArticleData.new(text: text, title: extract_title(doc), author: extract_author(doc)))
   end
 
   private
@@ -65,36 +73,5 @@ class ExtractsArticle
 
   def extract_author(doc)
     doc.at_css('meta[name="author"]')&.[]("content")&.strip.presence
-  end
-
-  class Result
-    attr_reader :text, :error, :title, :author
-
-    def self.success(text, title: nil, author: nil)
-      new(text: text, error: nil, title: title, author: author)
-    end
-
-    def self.failure(error)
-      new(text: nil, error: error, title: nil, author: nil)
-    end
-
-    def initialize(text:, error:, title:, author:)
-      @text = text
-      @error = error
-      @title = title
-      @author = author
-    end
-
-    def success?
-      error.nil?
-    end
-
-    def failure?
-      !success?
-    end
-
-    def character_count
-      text&.length || 0
-    end
   end
 end

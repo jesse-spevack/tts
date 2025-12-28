@@ -7,29 +7,29 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
     @unlimited_user = users(:unlimited_user)
   end
 
-  test "returns allowed for premium user" do
+  test "returns success for premium user" do
     result = ChecksEpisodeCreationPermission.call(user: @premium_user)
 
-    assert result.allowed?
-    assert_not result.denied?
-    assert_nil result.remaining
+    assert result.success?
+    refute result.failure?
+    assert_nil result.data
   end
 
-  test "returns allowed for unlimited user" do
+  test "returns success for unlimited user" do
     result = ChecksEpisodeCreationPermission.call(user: @unlimited_user)
 
-    assert result.allowed?
-    assert_nil result.remaining
+    assert result.success?
+    assert_nil result.data
   end
 
-  test "returns allowed with remaining count for free user with no usage" do
+  test "returns success with remaining count for free user with no usage" do
     result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
-    assert result.allowed?
-    assert_equal 2, result.remaining
+    assert result.success?
+    assert_equal 2, result.data[:remaining]
   end
 
-  test "returns allowed with remaining count for free user with 1 episode" do
+  test "returns success with remaining count for free user with 1 episode" do
     EpisodeUsage.create!(
       user: @free_user,
       period_start: Time.current.beginning_of_month.to_date,
@@ -38,11 +38,11 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
 
     result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
-    assert result.allowed?
-    assert_equal 1, result.remaining
+    assert result.success?
+    assert_equal 1, result.data[:remaining]
   end
 
-  test "returns denied for free user at limit" do
+  test "returns failure for free user at limit" do
     EpisodeUsage.create!(
       user: @free_user,
       period_start: Time.current.beginning_of_month.to_date,
@@ -51,12 +51,12 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
 
     result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
-    assert result.denied?
-    assert_not result.allowed?
-    assert_equal 0, result.remaining
+    assert result.failure?
+    refute result.success?
+    assert_equal "Episode limit reached", result.message
   end
 
-  test "returns denied for free user over limit" do
+  test "returns failure for free user over limit" do
     EpisodeUsage.create!(
       user: @free_user,
       period_start: Time.current.beginning_of_month.to_date,
@@ -65,7 +65,7 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
 
     result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
-    assert result.denied?
+    assert result.failure?
   end
 
   test "only counts current month usage" do
@@ -77,7 +77,7 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
 
     result = ChecksEpisodeCreationPermission.call(user: @free_user)
 
-    assert result.allowed?
-    assert_equal 2, result.remaining
+    assert result.success?
+    assert_equal 2, result.data[:remaining]
   end
 end
