@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class FetchesUrl
-  TIMEOUT_SECONDS = 10
-  DNS_TIMEOUT_SECONDS = 5
-  MAX_CONTENT_LENGTH = 10 * 1024 * 1024 # 10MB
-
   # SSRF protection: block private/internal IP ranges
   BLOCKED_IP_RANGES = [
     IPAddr.new("127.0.0.0/8"),       # Loopback
@@ -41,8 +37,8 @@ class FetchesUrl
     head_response = connection.head(url)
     content_length = head_response.headers["content-length"]&.to_i
 
-    if content_length && content_length > MAX_CONTENT_LENGTH
-      Rails.logger.warn "event=url_fetch_too_large url=#{url} content_length=#{content_length} max=#{MAX_CONTENT_LENGTH}"
+    if content_length && content_length > AppConfig::Content::MAX_FETCH_BYTES
+      Rails.logger.warn "event=url_fetch_too_large url=#{url} content_length=#{content_length} max=#{AppConfig::Content::MAX_FETCH_BYTES}"
       return Result.failure("Content too large")
     end
 
@@ -55,7 +51,7 @@ class FetchesUrl
     end
 
     # Double-check actual body size
-    if response.body.bytesize > MAX_CONTENT_LENGTH
+    if response.body.bytesize > AppConfig::Content::MAX_FETCH_BYTES
       Rails.logger.warn "event=url_fetch_body_too_large url=#{url} bytes=#{response.body.bytesize}"
       return Result.failure("Content too large")
     end
@@ -83,7 +79,7 @@ class FetchesUrl
     return false if uri.host.nil?
 
     # Resolve DNS to check actual IP (with timeout)
-    addresses = Timeout.timeout(DNS_TIMEOUT_SECONDS) do
+    addresses = Timeout.timeout(AppConfig::Network::DNS_TIMEOUT_SECONDS) do
       Resolv.getaddresses(uri.host)
     end
     return false if addresses.empty?
@@ -102,8 +98,8 @@ class FetchesUrl
 
   def connection
     Faraday.new do |f|
-      f.options.timeout = TIMEOUT_SECONDS
-      f.options.open_timeout = TIMEOUT_SECONDS
+      f.options.timeout = AppConfig::Network::TIMEOUT_SECONDS
+      f.options.open_timeout = AppConfig::Network::TIMEOUT_SECONDS
       f.response :follow_redirects, callback: method(:validate_redirect_target)
       f.adapter Faraday.default_adapter
     end
@@ -117,7 +113,7 @@ class FetchesUrl
 
     return if new_uri.host.nil?
 
-    addresses = Timeout.timeout(DNS_TIMEOUT_SECONDS) do
+    addresses = Timeout.timeout(AppConfig::Network::DNS_TIMEOUT_SECONDS) do
       Resolv.getaddresses(new_uri.host)
     end
 
