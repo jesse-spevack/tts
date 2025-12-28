@@ -28,10 +28,10 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal "Technology Trends", result.title
-    assert_equal "Unknown", result.author
-    assert_includes result.description, "technology"
-    assert_includes result.content, "article content"
+    assert_equal "Technology Trends", result.data.title
+    assert_equal "Unknown", result.data.author
+    assert_includes result.data.description, "technology"
+    assert_includes result.data.content, "article content"
   end
 
   test "fails on LLM error" do
@@ -65,7 +65,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal "Test", result.title
+    assert_equal "Test", result.data.title
   end
 
   # Validation tests
@@ -104,7 +104,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal "Untitled", result.title
+    assert_equal "Untitled", result.data.title
   end
 
   test "uses default author when missing" do
@@ -117,7 +117,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal "Unknown", result.author
+    assert_equal "Unknown", result.data.author
   end
 
   test "truncates long title" do
@@ -131,8 +131,8 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal 255, result.title.length
-    assert result.title.end_with?("...")
+    assert_equal 255, result.data.title.length
+    assert result.data.title.end_with?("...")
   end
 
   test "handles non-string values gracefully" do
@@ -145,10 +145,10 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     result = ProcessesWithLlm.call(text: @text, episode: @episode)
 
     assert result.success?
-    assert_equal "Untitled", result.title
-    assert_equal "Unknown", result.author
-    assert_equal "", result.description
-    assert_equal "Valid content", result.content
+    assert_equal "Untitled", result.data.title
+    assert_equal "Unknown", result.data.author
+    assert_equal "", result.data.description
+    assert_equal "Valid content", result.data.content
   end
 
   test "fails when input text exceeds max length" do

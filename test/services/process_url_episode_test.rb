@@ -28,12 +28,12 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
 
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Real Title",
       author: "John Doe",
       description: "A great article.",
       content: "Article content here."
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
@@ -98,12 +98,12 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
 
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "LLM Title",
       author: "LLM Author",
       description: "LLM description.",
       content: "Article content here."
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
@@ -123,12 +123,12 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
 
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Title",
       author: "Author",
       description: "Description",
       content: long_content
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
@@ -150,12 +150,12 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     # Expect the normalized URL to be used
     stubs { FetchesUrl.call(url: "https://testauthor.substack.com/p/article") }.with { Result.success(html) }
 
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Title",
       author: "Author",
       description: "Description",
       content: "Content"
-    )
+    ))
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 

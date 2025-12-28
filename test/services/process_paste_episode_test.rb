@@ -23,12 +23,12 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "processes text and updates episode metadata" do
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Extracted Title",
       author: "Extracted Author",
       description: "Extracted description.",
       content: "Cleaned content for TTS."
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
@@ -43,12 +43,12 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
 
   test "sets content_preview from LLM content" do
     long_content = "B" * 100 + " middle " + "X" * 100
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Title",
       author: "Author",
       description: "Description",
       content: long_content
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
@@ -70,7 +70,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed on LLM error" do
-    mock_llm_result = ProcessesWithLlm::Result.failure("LLM processing failed")
+    mock_llm_result = Result.failure("LLM processing failed")
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
 
@@ -83,12 +83,12 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
 
   test "calls SubmitEpisodeForProcessing with cleaned content" do
     cleaned_content = "Cleaned content for TTS."
-    mock_llm_result = ProcessesWithLlm::Result.success(
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Title",
       author: "Author",
       description: "Description",
       content: cleaned_content
-    )
+    ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }

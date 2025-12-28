@@ -81,17 +81,17 @@ class ProcessUrlEpisode
       raise ProcessingError, @llm_result.error
     end
 
-    log_info "llm_processing_completed", title: @llm_result.title
+    log_info "llm_processing_completed", title: @llm_result.data.title
   end
 
   def update_and_enqueue
-    content = @llm_result.content
+    content = @llm_result.data.content
 
     Episode.transaction do
       episode.update!(
-        title: @extract_result.data.title || @llm_result.title,
-        author: @extract_result.data.author || @llm_result.author,
-        description: @llm_result.description,
+        title: @extract_result.data.title || @llm_result.data.title,
+        author: @extract_result.data.author || @llm_result.data.author,
+        description: @llm_result.data.description,
         content_preview: GeneratesContentPreview.call(content)
       )
 
