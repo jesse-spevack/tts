@@ -2,10 +2,6 @@
 
 class CalculatesMaxCharactersForUser
   def self.call(user:)
-    case user.tier
-    when "free" then ValidatesEpisodeSubmission::MAX_CHARACTERS_FREE
-    when "premium" then ValidatesEpisodeSubmission::MAX_CHARACTERS_PREMIUM
-    when "unlimited" then nil
-    end
+    AppConfig::Tiers.character_limit_for(user.tier)
   end
 end

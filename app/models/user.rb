@@ -26,7 +26,7 @@ class User < ApplicationRecord
   end
 
   def available_voices
-    Voice.for_tier(tier)
+    AppConfig::Tiers.voices_for(tier)
   end
 
   def email
