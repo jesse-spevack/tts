@@ -63,7 +63,7 @@ class ProcessUrlEpisode
   end
 
   def check_character_limit
-    max_chars = CalculatesMaxCharactersForUser.call(user: user)
+    max_chars = AppConfig::Tiers.character_limit_for(user.tier)
     return unless max_chars && @extract_result.data.character_count > max_chars
 
     log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars, tier: user.tier
