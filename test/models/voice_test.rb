@@ -23,8 +23,7 @@ class VoiceTest < ActiveSupport::TestCase
   end
 
   test "sample_url returns GCS URL for voice" do
-    ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
-
-    assert_equal "https://storage.googleapis.com/test-bucket/voices/wren.mp3", Voice.sample_url("wren")
+    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/voices/wren.mp3"
+    assert_equal expected, Voice.sample_url("wren")
   end
 end

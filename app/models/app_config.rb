@@ -42,4 +42,25 @@ class AppConfig
     TIMEOUT_SECONDS = 10
     DNS_TIMEOUT_SECONDS = 5
   end
+
+  module Storage
+    BUCKET = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
+    BASE_URL = "https://storage.googleapis.com/#{BUCKET}".freeze
+
+    def self.bucket
+      BUCKET
+    end
+
+    def self.episode_audio_url(podcast_id, gcs_episode_id)
+      "#{BASE_URL}/podcasts/#{podcast_id}/episodes/#{gcs_episode_id}.mp3"
+    end
+
+    def self.feed_url(podcast_id)
+      "#{BASE_URL}/podcasts/#{podcast_id}/feed.xml"
+    end
+
+    def self.voice_sample_url(voice_key)
+      "#{BASE_URL}/voices/#{voice_key}.mp3"
+    end
+  end
 end

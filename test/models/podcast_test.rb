@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class PodcastTest < ActiveSupport::TestCase
@@ -26,9 +28,8 @@ class PodcastTest < ActiveSupport::TestCase
 
   test "feed_url returns correct URL" do
     podcast = podcasts(:one)
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
 
-    expected_url = "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast.podcast_id}/feed.xml"
+    expected_url = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/#{podcast.podcast_id}/feed.xml"
     assert_equal expected_url, podcast.feed_url
   end
 

@@ -12,8 +12,7 @@ class GeneratesPodcastFeedUrl
   def call
     return nil unless podcast.podcast_id.present?
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast.podcast_id}/feed.xml"
+    AppConfig::Storage.feed_url(podcast.podcast_id)
   end
 
   private

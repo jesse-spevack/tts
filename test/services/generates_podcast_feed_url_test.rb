@@ -16,8 +16,7 @@ class GeneratesPodcastFeedUrlTest < ActiveSupport::TestCase
 
     result = GeneratesPodcastFeedUrl.call(podcast)
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    expected = "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast.podcast_id}/feed.xml"
+    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/#{podcast.podcast_id}/feed.xml"
     assert_equal expected, result
   end
 end

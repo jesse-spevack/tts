@@ -51,8 +51,7 @@ class GenerateRssFeed
   end
 
   def feed_url
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    "https://storage.googleapis.com/#{bucket}/podcasts/#{@podcast.podcast_id}/feed.xml"
+    AppConfig::Storage.feed_url(@podcast.podcast_id)
   end
 
   def episodes
@@ -101,8 +100,7 @@ class GenerateRssFeed
   end
 
   def episode_mp3_url(episode)
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    "https://storage.googleapis.com/#{bucket}/podcasts/#{@podcast.podcast_id}/episodes/#{episode.gcs_episode_id}.mp3"
+    AppConfig::Storage.episode_audio_url(@podcast.podcast_id, episode.gcs_episode_id)
   end
 
   def add_duration(xml, duration_seconds)

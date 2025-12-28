@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 require "google/cloud/storage"
 
 class CloudStorage
   def initialize(bucket_name = nil, podcast_id:)
-    @bucket_name = bucket_name || ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
+    @bucket_name = bucket_name || AppConfig::Storage::BUCKET
     @podcast_id = podcast_id
     @storage = build_storage_client
   end

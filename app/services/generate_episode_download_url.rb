@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class GenerateEpisodeDownloadUrl
   def self.call(episode)
     new(episode).call
@@ -34,7 +36,7 @@ class GenerateEpisodeDownloadUrl
   end
 
   def bucket_name
-    ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
+    AppConfig::Storage::BUCKET
   end
 
   def file_path

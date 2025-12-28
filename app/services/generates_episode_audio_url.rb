@@ -12,9 +12,7 @@ class GeneratesEpisodeAudioUrl
   def call
     return nil unless episode.complete? && episode.gcs_episode_id.present?
 
-    bucket = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
-    podcast_id = episode.podcast.podcast_id
-    "https://storage.googleapis.com/#{bucket}/podcasts/#{podcast_id}/episodes/#{episode.gcs_episode_id}.mp3"
+    AppConfig::Storage.episode_audio_url(episode.podcast.podcast_id, episode.gcs_episode_id)
   end
 
   private
