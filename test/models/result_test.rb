@@ -35,8 +35,8 @@ class ResultTest < ActiveSupport::TestCase
   end
 
   test "success works with struct data" do
-    TestData = Struct.new(:name, :value, keyword_init: true)
-    data = TestData.new(name: "test", value: 42)
+    data_struct = Struct.new(:name, :value, keyword_init: true)
+    data = data_struct.new(name: "test", value: 42)
 
     result = Result.success(data)
 

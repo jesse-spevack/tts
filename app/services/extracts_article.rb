@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ExtractsArticle
   REMOVE_TAGS = %w[script style nav footer header aside form noscript iframe].freeze
   CONTENT_SELECTORS = %w[article main body].freeze

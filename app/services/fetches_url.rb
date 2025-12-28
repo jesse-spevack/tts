@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class FetchesUrl
   TIMEOUT_SECONDS = 10
   DNS_TIMEOUT_SECONDS = 5

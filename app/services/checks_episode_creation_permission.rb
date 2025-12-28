@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ChecksEpisodeCreationPermission
   FREE_MONTHLY_LIMIT = 2
 
