@@ -12,6 +12,8 @@ module Api
           author: "Test Author",
           description: "Test description",
           user: @user,
+          source_type: :url,
+          source_url: "https://example.com/test-article",
           status: "processing"
         )
         @secret = "test-callback-secret"

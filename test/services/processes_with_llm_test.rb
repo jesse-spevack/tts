@@ -178,7 +178,8 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
   end
 
   test "uses BuildsPasteProcessingPrompt for paste source type" do
-    @episode.update!(source_type: :paste, source_text: @text)
+    long_text = "A" * 150
+    @episode.update!(source_type: :paste, source_text: long_text)
     mock_response = mock_llm_response(
       content: { title: "T", author: "A", description: "D", content: "C" }.to_json
     )

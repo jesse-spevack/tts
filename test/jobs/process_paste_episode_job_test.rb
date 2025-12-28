@@ -6,6 +6,7 @@ class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
     @podcast = podcasts(:one)
+    @long_content = "A" * 150
     @episode = Episode.create!(
       podcast: @podcast,
       user: @user,
@@ -13,7 +14,7 @@ class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
       author: "Processing...",
       description: "Processing pasted text...",
       source_type: :paste,
-      source_text: "Test content for processing",
+      source_text: @long_content,
       status: :processing
     )
 

@@ -23,7 +23,7 @@ class EpisodeSourceTypeTest < ActiveSupport::TestCase
     )
 
     assert_not episode.valid?
-    assert_includes episode.errors[:source_text], "can't be blank"
+    assert_includes episode.errors[:source_text], "cannot be empty"
   end
 
   test "paste episode is valid with source_text" do
@@ -34,7 +34,7 @@ class EpisodeSourceTypeTest < ActiveSupport::TestCase
       author: "Author",
       description: "Description",
       source_type: :paste,
-      source_text: "Some pasted content"
+      source_text: "A" * 100
     )
 
     assert episode.valid?

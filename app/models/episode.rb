@@ -13,10 +13,22 @@ class Episode < ApplicationRecord
   validates :title, presence: true, length: { maximum: 255 }
   validates :source_url, presence: true, if: :url?
   validates :source_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { source_url.present? }
-  validates :source_text, presence: true, if: :paste?
   validates :author, presence: true, length: { maximum: 255 }
   validates :description, presence: true, length: { maximum: 1000 }
   validates :duration_seconds, numericality: { greater_than: 0, less_than_or_equal_to: 86_400 }, allow_nil: true
+
+  validates :source_text, presence: { message: "cannot be empty" },
+            if: -> { paste? || file? }
+
+  validates :source_text, length: {
+              minimum: AppConfig::Content::MIN_LENGTH,
+              message: "must be at least %{count} characters"
+            },
+            if: -> { paste? || file? },
+            allow_blank: true
+
+  validate :content_within_tier_limit, on: :create,
+           if: -> { source_text.present? }
 
   default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
@@ -43,6 +55,17 @@ class Episode < ApplicationRecord
   end
 
   private
+
+  def content_within_tier_limit
+    max_chars = CalculatesMaxCharactersForUser.call(user: user)
+    return unless max_chars
+
+    if source_text.length > max_chars
+      errors.add(:source_text,
+        "exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \
+        "(#{source_text.length.to_fs(:delimited)} characters)")
+    end
+  end
 
   def broadcast_status_change
     broadcast_replace_to(

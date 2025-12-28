@@ -46,7 +46,8 @@ class EpisodeSourceTest < ActiveSupport::TestCase
       title: "Test",
       author: "Test Author",
       description: "Test description",
-      source_type: :file
+      source_type: :file,
+      source_text: "A" * 100
     )
     assert episode.valid?
   end

@@ -5,7 +5,8 @@ require "test_helper"
 class ProcessFileEpisodeJobTest < ActiveJob::TestCase
   setup do
     @episode = episodes(:one)
-    @episode.update!(source_type: :file, source_text: "# Test markdown")
+    @long_content = "# Test markdown\n\n" + ("Content here for testing. " * 10)
+    @episode.update!(source_type: :file, source_text: @long_content)
     Mocktail.replace(ProcessFileEpisode)
   end
 

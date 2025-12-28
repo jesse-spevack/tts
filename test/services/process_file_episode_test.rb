@@ -5,9 +5,10 @@ require "test_helper"
 class ProcessFileEpisodeTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
+    @long_content = "# Test Header\n\n" + ("Some **bold** content here. " * 9) + "Some **bold** content here."
     @episode.update!(
       source_type: :file,
-      source_text: "# Test Header\n\nSome **bold** content.",
+      source_text: @long_content,
       title: "Test Title",
       author: "Test Author"
     )
@@ -22,7 +23,8 @@ class ProcessFileEpisodeTest < ActiveSupport::TestCase
 
     calls = Mocktail.calls(SubmitEpisodeForProcessing, :call)
     assert_equal 1, calls.size
-    assert_equal "Test Header\n\nSome bold content.", calls.first.kwargs[:content]
+    expected_plain = "Test Header\n\n" + ("Some bold content here. " * 9) + "Some bold content here."
+    assert_equal expected_plain, calls.first.kwargs[:content]
   end
 
   test "marks episode as failed on error" do
