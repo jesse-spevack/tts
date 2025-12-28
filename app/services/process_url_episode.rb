@@ -68,7 +68,9 @@ class ProcessUrlEpisode
 
     log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars, tier: user.tier
 
-    raise ProcessingError, "This content is too long for your account tier"
+    raise ProcessingError,
+      "Content exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \
+      "(#{@extract_result.data.character_count.to_fs(:delimited)} characters)"
   end
 
   def process_with_llm

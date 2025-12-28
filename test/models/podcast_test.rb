@@ -45,6 +45,8 @@ class PodcastTest < ActiveSupport::TestCase
       author: "Test Author",
       description: "Test Description",
       user: users(:one),
+      source_type: :url,
+      source_url: "https://example.com/test",
       status: "pending"
     )
 

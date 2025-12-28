@@ -19,8 +19,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create episode" do
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content\n\nThis is test markdown."),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )
@@ -75,8 +76,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   test "unlimited tier users can create episodes" do
     sign_in_as users(:unlimited_user)
 
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test content"),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )
@@ -123,8 +125,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     free_user = users(:free_user)
     sign_in_as free_user
 
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content"),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )
@@ -148,8 +151,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       episode_count: 2
     )
 
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content"),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )
@@ -166,8 +170,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     free_user = users(:free_user)
     sign_in_as free_user
 
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content"),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )
@@ -185,8 +190,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   test "does not record usage for non-free tier user" do
     sign_in_as users(:unlimited_user)
 
+    long_content = "# Test Content\n\n" + ("This is test markdown content. " * 10)
     file = Rack::Test::UploadedFile.new(
-      StringIO.new("# Test Content"),
+      StringIO.new(long_content),
       "text/markdown",
       original_filename: "test.md"
     )

@@ -6,6 +6,8 @@ one:
   title: MyString
   author: MyString
   description: MyText
+  source_type: url
+  source_url: https://example.com/article
   status: pending
   gcs_episode_id: MyString
   error_message: MyText
@@ -18,6 +20,8 @@ two:
   title: MyString
   author: MyString
   description: MyText
+  source_type: url
+  source_url: https://example.com/article
   status: complete
   gcs_episode_id: MyString
   error_message: MyText
@@ -200,6 +204,8 @@ complete:
   title: "Complete Episode"
   author: "Test Author"
   description: "A complete episode"
+  source_type: url
+  source_url: https://example.com/complete-article
   status: "complete"
   gcs_episode_id: "20251226-120000-complete-episode"
   audio_size_bytes: 1024000
@@ -211,6 +217,8 @@ pending:
   title: "Pending Episode"
   author: "Test Author"
   description: "A pending episode"
+  source_type: url
+  source_url: https://example.com/pending-article
   status: "pending"
 
 failed:
@@ -219,5 +227,7 @@ failed:
   title: "Failed Episode TTS"
   author: "Test Author"
   description: "A failed episode"
+  source_type: url
+  source_url: https://example.com/failed-article
   status: "failed"
   error_message: "Something went wrong"

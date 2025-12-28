@@ -48,7 +48,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_equal "Text cannot be empty", result.error
+    assert_equal "Content cannot be empty", result.error
     assert_nil result.data
   end
 
@@ -60,7 +60,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_equal "Text cannot be empty", result.error
+    assert_equal "Content cannot be empty", result.error
   end
 
   test "fails on text under 100 characters" do
@@ -71,7 +71,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_equal "Text must be at least 100 characters", result.error
+    assert_equal "Content must be at least 100 characters", result.error
   end
 
   test "succeeds on text exactly 100 characters" do
@@ -106,7 +106,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_includes result.error, "too long"
+    assert_includes result.error, "exceeds your plan's"
   end
 
   test "succeeds when text is at max characters for user tier" do
