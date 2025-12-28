@@ -66,7 +66,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     @episode.reload
     assert_equal "failed", @episode.status
-    assert_includes @episode.error_message, "too long"
+    assert_includes @episode.error_message, "exceeds your plan's"
   end
 
   test "marks episode as failed on extraction error" do
