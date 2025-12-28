@@ -150,17 +150,17 @@ class UserTest < ActiveSupport::TestCase
     assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
-  test "available_voices returns STANDARD for free tier" do
+  test "available_voices returns FREE_VOICES for free tier" do
     user = users(:one)
     user.tier = :free
 
-    assert_equal Voice::STANDARD, user.available_voices
+    assert_equal AppConfig::Tiers::FREE_VOICES, user.available_voices
   end
 
-  test "available_voices returns ALL for unlimited tier" do
+  test "available_voices returns UNLIMITED_VOICES for unlimited tier" do
     user = users(:one)
     user.tier = :unlimited
 
-    assert_equal Voice::ALL, user.available_voices
+    assert_equal AppConfig::Tiers::UNLIMITED_VOICES, user.available_voices
   end
 end
