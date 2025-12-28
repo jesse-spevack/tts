@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ProcessUrlEpisode
-  include EpisodeLogging
+  include EpisodeErrorHandling
 
   def self.call(episode:)
     new(episode: episode).call
@@ -22,7 +22,7 @@ class ProcessUrlEpisode
     update_and_enqueue
 
     log_info "process_url_episode_completed"
-  rescue ProcessingError => e
+  rescue EpisodeErrorHandling::ProcessingError => e
     fail_episode(e.message)
   rescue StandardError => e
     log_error "process_url_episode_error", error: e.class, message: e.message
@@ -43,7 +43,7 @@ class ProcessUrlEpisode
     if @fetch_result.failure?
       log_warn "url_fetch_failed", error: @fetch_result.error
 
-      raise ProcessingError, @fetch_result.error
+      raise EpisodeErrorHandling::ProcessingError, @fetch_result.error
     end
 
     log_info "url_fetch_completed", bytes: @fetch_result.data.bytesize
@@ -56,7 +56,7 @@ class ProcessUrlEpisode
     if @extract_result.failure?
       log_warn "article_extraction_failed", error: @extract_result.error
 
-      raise ProcessingError, @extract_result.error
+      raise EpisodeErrorHandling::ProcessingError, @extract_result.error
     end
 
     log_info "article_extraction_completed", characters: @extract_result.data.character_count
@@ -68,7 +68,7 @@ class ProcessUrlEpisode
 
     log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars, tier: user.tier
 
-    raise ProcessingError,
+    raise EpisodeErrorHandling::ProcessingError,
       "Content exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \
       "(#{@extract_result.data.character_count.to_fs(:delimited)} characters)"
   end
@@ -80,7 +80,7 @@ class ProcessUrlEpisode
     if @llm_result.failure?
       log_warn "llm_processing_failed", error: @llm_result.error
 
-      raise ProcessingError, @llm_result.error
+      raise EpisodeErrorHandling::ProcessingError, @llm_result.error
     end
 
     log_info "llm_processing_completed", title: @llm_result.data.title
@@ -102,12 +102,4 @@ class ProcessUrlEpisode
       SubmitEpisodeForProcessing.call(episode: episode, content: content)
     end
   end
-
-  def fail_episode(error_message)
-    episode.update!(status: :failed, error_message: error_message)
-
-    log_warn "episode_marked_failed", error: error_message
-  end
-
-  class ProcessingError < StandardError; end
 end

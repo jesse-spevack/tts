@@ -1,6 +1,4 @@
 class AuthenticateMagicLink
-  Result = Struct.new(:success?, :user, keyword_init: true)
-
   def self.call(token:)
     new(token: token).call
   end
@@ -10,7 +8,7 @@ class AuthenticateMagicLink
   end
 
   def call
-    return Result.new(success?: false, user: nil) if @token.blank?
+    return Result.failure("Invalid or expired token") if @token.blank?
 
     # Find all users with valid tokens to prevent timing attacks
     users = User.with_valid_auth_token
@@ -24,9 +22,9 @@ class AuthenticateMagicLink
 
       Rails.logger.info "event=user_authenticated user_id=#{user.id} email=#{LoggingHelper.mask_email(user.email_address)}"
 
-      Result.new(success?: true, user: user)
+      Result.success(user)
     else
-      Result.new(success?: false, user: nil)
+      Result.failure("Invalid or expired token")
     end
   end
 end
