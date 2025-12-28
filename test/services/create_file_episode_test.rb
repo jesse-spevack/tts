@@ -21,11 +21,11 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     )
 
     assert result.success?
-    assert_equal :file, result.episode.source_type.to_sym
-    assert_equal "Test Title", result.episode.title
-    assert_equal "Test Author", result.episode.author
-    assert_equal "Test description", result.episode.description
-    assert_equal "# Markdown content", result.episode.source_text
+    assert_equal :file, result.data.source_type.to_sym
+    assert_equal "Test Title", result.data.title
+    assert_equal "Test Author", result.data.author
+    assert_equal "Test description", result.data.description
+    assert_equal "# Markdown content", result.data.source_text
   end
 
   test "sets episode status to processing" do
@@ -38,7 +38,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
       content: "Content here"
     )
 
-    assert_equal "processing", result.episode.status
+    assert_equal "processing", result.data.status
   end
 
   test "enqueues ProcessFileEpisodeJob" do
@@ -96,6 +96,6 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
       content: "# Header\n\nSome markdown content here."
     )
 
-    assert result.episode.content_preview.present?
+    assert result.data.content_preview.present?
   end
 end

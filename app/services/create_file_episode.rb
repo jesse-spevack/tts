@@ -54,29 +54,4 @@ class CreateFileEpisode
       status: :processing
     )
   end
-
-  class Result
-    attr_reader :episode, :error
-
-    def self.success(episode)
-      new(episode: episode, error: nil)
-    end
-
-    def self.failure(error)
-      new(episode: nil, error: error)
-    end
-
-    def initialize(episode:, error:)
-      @episode = episode
-      @error = error
-    end
-
-    def success?
-      error.nil?
-    end
-
-    def failure?
-      !success?
-    end
-  end
 end
