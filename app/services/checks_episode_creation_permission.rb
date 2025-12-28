@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ChecksEpisodeCreationPermission
-  FREE_MONTHLY_LIMIT = 2
-
   def self.call(user:)
     new(user: user).call
   end
@@ -15,7 +13,7 @@ class ChecksEpisodeCreationPermission
     return Outcome.success if skip_tracking?
 
     usage = EpisodeUsage.current_for(user)
-    remaining = FREE_MONTHLY_LIMIT - usage.episode_count
+    remaining = AppConfig::Tiers::FREE_MONTHLY_EPISODES - usage.episode_count
 
     if remaining > 0
       Outcome.success(nil, remaining: remaining)
