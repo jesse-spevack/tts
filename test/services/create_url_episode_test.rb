@@ -71,4 +71,26 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
       )
     end
   end
+
+  test "returns failure when episode validation fails" do
+    # Pass nil user to trigger validation failure
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: nil,
+      url: "https://example.com/article"
+    )
+
+    assert result.failure?
+    assert_includes result.error, "User"
+  end
+
+  test "does not enqueue job when validation fails" do
+    assert_no_enqueued_jobs do
+      CreateUrlEpisode.call(
+        podcast: @podcast,
+        user: nil,
+        url: "https://example.com/article"
+      )
+    end
+  end
 end
