@@ -17,7 +17,7 @@ class CreateUrlEpisode
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessUrlEpisodeJob.perform_later(episode.id)
+    ProcessUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id)
 
     Rails.logger.info "event=url_episode_created episode_id=#{episode.id} url=#{url}"
 
