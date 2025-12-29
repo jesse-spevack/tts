@@ -15,7 +15,9 @@ class CreateUrlEpisode
     return Result.failure("Invalid URL") unless valid_url?
 
     episode = create_episode
-    ProcessUrlEpisodeJob.perform_later(episode.id)
+    return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
+
+    ProcessUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id)
 
     Rails.logger.info "event=url_episode_created episode_id=#{episode.id} url=#{url}"
 
@@ -31,7 +33,7 @@ class CreateUrlEpisode
   end
 
   def create_episode
-    podcast.episodes.create!(
+    podcast.episodes.create(
       user: user,
       title: "Processing...",
       author: "Processing...",
