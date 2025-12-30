@@ -22,23 +22,12 @@ class GenerateEpisodeDownloadUrl
       query: {
         "response-content-disposition" => "attachment; filename=\"#{filename}\""
       },
-      **signing_options
+      issuer: service_account_email,
+      signer: iam_signer
     )
   end
 
   private
-
-  def signing_options
-    return {} if has_service_account_credentials?
-
-    { issuer: service_account_email, signer: iam_signer }
-  end
-
-  def has_service_account_credentials?
-    # Check if we have a JSON keyfile with signing capability
-    ENV["GOOGLE_APPLICATION_CREDENTIALS"].present? &&
-      File.exist?(ENV["GOOGLE_APPLICATION_CREDENTIALS"])
-  end
 
   def service_account_email
     ENV.fetch("SERVICE_ACCOUNT_EMAIL")
@@ -46,16 +35,18 @@ class GenerateEpisodeDownloadUrl
 
   def iam_signer
     lambda do |string_to_sign|
-      iam_client = Google::Apis::IamcredentialsV1::IAMCredentialsService.new
-      iam_client.authorization = Google::Auth.get_application_default(
+      iam = Google::Apis::IamcredentialsV1::IAMCredentialsService.new
+      iam.authorization = Google::Auth.get_application_default(
         [ "https://www.googleapis.com/auth/iam" ]
       )
 
       request = Google::Apis::IamcredentialsV1::SignBlobRequest.new(
         payload: string_to_sign
       )
-      resource = "projects/-/serviceAccounts/#{service_account_email}"
-      response = iam_client.sign_service_account_blob(resource, request)
+      response = iam.sign_service_account_blob(
+        "projects/-/serviceAccounts/#{service_account_email}",
+        request
+      )
       response.signed_blob
     end
   end
