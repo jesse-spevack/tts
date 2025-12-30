@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "google/cloud/storage"
+require "google/apis/iamcredentials_v1"
+require "googleauth"
 
 class GenerateEpisodeDownloadUrl
   def self.call(episode)
@@ -19,11 +21,35 @@ class GenerateEpisodeDownloadUrl
       expires: 300,
       query: {
         "response-content-disposition" => "attachment; filename=\"#{filename}\""
-      }
+      },
+      issuer: service_account_email,
+      signer: iam_signer
     )
   end
 
   private
+
+  def service_account_email
+    ENV.fetch("SERVICE_ACCOUNT_EMAIL")
+  end
+
+  def iam_signer
+    lambda do |string_to_sign|
+      iam = Google::Apis::IamcredentialsV1::IAMCredentialsService.new
+      iam.authorization = Google::Auth.get_application_default(
+        [ "https://www.googleapis.com/auth/iam" ]
+      )
+
+      request = Google::Apis::IamcredentialsV1::SignBlobRequest.new(
+        payload: string_to_sign
+      )
+      response = iam.sign_service_account_blob(
+        "projects/-/serviceAccounts/#{service_account_email}",
+        request
+      )
+      response.signed_blob
+    end
+  end
 
   def file
     bucket.file(file_path)
