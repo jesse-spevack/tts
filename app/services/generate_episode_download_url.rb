@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "google/cloud/storage"
+
 class GenerateEpisodeDownloadUrl
   def self.call(episode)
     new(episode).call
