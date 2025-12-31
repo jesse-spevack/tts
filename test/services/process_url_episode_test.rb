@@ -142,29 +142,6 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     assert @episode.content_preview.end_with?("X" * 57)
   end
 
-  test "normalizes substack URL before fetching" do
-    @episode.update!(source_url: "https://open.substack.com/pub/testauthor/p/article?r=abc&utm_campaign=post")
-
-    html = "<article><p>Article content here that is long enough to pass the minimum character requirement for extraction. This paragraph contains substantial content to be processed and analyzed by the system.</p></article>"
-
-    # Expect the normalized URL to be used
-    stubs { FetchesUrl.call(url: "https://testauthor.substack.com/p/article") }.with { Result.success(html) }
-
-    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
-      title: "Title",
-      author: "Author",
-      description: "Description",
-      content: "Content"
-    ))
-    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stub_gcs_and_tasks
-
-    ProcessUrlEpisode.call(episode: @episode)
-
-    @episode.reload
-    assert_equal "processing", @episode.status
-  end
-
   teardown do
     Mocktail.reset
   end

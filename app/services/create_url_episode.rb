@@ -14,12 +14,18 @@ class CreateUrlEpisode
   def call
     return Result.failure("Invalid URL") unless valid_url?
 
+    Rails.logger.info "event=url_normalization_started url=#{url}"
+    normalize_result = NormalizesSubstackUrl.call(url: url)
+    return normalize_result if normalize_result.failure?
+
+    @normalized_url = normalize_result.data
+
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
     ProcessUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id)
 
-    Rails.logger.info "event=url_episode_created episode_id=#{episode.id} url=#{url}"
+    Rails.logger.info "event=url_episode_created episode_id=#{episode.id} url=#{@normalized_url}"
 
     Result.success(episode)
   end
@@ -39,7 +45,7 @@ class CreateUrlEpisode
       author: "Processing...",
       description: "Processing article from URL...",
       source_type: :url,
-      source_url: url,
+      source_url: @normalized_url,
       status: :processing
     )
   end
