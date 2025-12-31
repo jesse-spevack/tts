@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class NormalizesUrl
+class NormalizesSubstackUrl
   SUBSTACK_TRACKING_PARAMS = %w[
     r
     utm_campaign
@@ -20,16 +20,29 @@ class NormalizesUrl
 
   def call
     uri = URI.parse(url)
+
+    return Result.failure(inbox_error_message) if inbox_url?(uri)
+
     uri = normalize_open_substack(uri) if uri.host == "open.substack.com"
     uri = strip_substack_tracking_params(uri) if substack_domain?(uri)
-    uri.to_s
+
+    Result.success(uri.to_s)
   rescue URI::InvalidURIError
-    url
+    Result.success(url)
   end
 
   private
 
   attr_reader :url
+
+  def inbox_url?(uri)
+    uri.host&.match?(/\A(www\.)?substack\.com\z/) && uri.path&.start_with?("/inbox")
+  end
+
+  def inbox_error_message
+    "Substack inbox links require login. Please use the article's direct URL " \
+    "(e.g., author.substack.com/p/title)."
+  end
 
   def normalize_open_substack(uri)
     parts = uri.path.split("/")

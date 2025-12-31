@@ -93,4 +93,36 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
       )
     end
   end
+
+  test "fails on substack inbox URL" do
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      url: "https://substack.com/inbox/post/182789127"
+    )
+
+    assert result.failure?
+    assert_match(/inbox links require login/, result.error)
+  end
+
+  test "does not enqueue job for substack inbox URL" do
+    assert_no_enqueued_jobs do
+      CreateUrlEpisode.call(
+        podcast: @podcast,
+        user: @user,
+        url: "https://substack.com/inbox/post/182789127"
+      )
+    end
+  end
+
+  test "normalizes substack URL before storing" do
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      url: "https://open.substack.com/pub/author/p/title?utm_campaign=post"
+    )
+
+    assert result.success?
+    assert_equal "https://author.substack.com/p/title", result.data.source_url
+  end
 end

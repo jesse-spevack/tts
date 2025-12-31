@@ -35,11 +35,9 @@ class ProcessUrlEpisode
   attr_reader :episode, :user
 
   def fetch_url
-    log_info "url_normalization_started", url: episode.source_url
-    normalized_url = NormalizesUrl.call(url: episode.source_url)
-    log_info "url_fetch_started", url: normalized_url
+    log_info "url_fetch_started", url: episode.source_url
 
-    @fetch_result = FetchesUrl.call(url: normalized_url)
+    @fetch_result = FetchesUrl.call(url: episode.source_url)
     if @fetch_result.failure?
       log_warn "url_fetch_failed", error: @fetch_result.error
 
