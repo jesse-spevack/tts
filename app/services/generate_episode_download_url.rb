@@ -4,6 +4,18 @@ require "google/cloud/storage"
 require "google/apis/iamcredentials_v1"
 require "googleauth"
 
+# Generates signed download URLs for episode MP3 files stored in GCS.
+#
+# Uses IAM signBlob API because GCE metadata server credentials can't sign
+# URLs directly (no private key). The VM's service account must have
+# roles/iam.serviceAccountTokenCreator on SERVICE_ACCOUNT_EMAIL to sign.
+#
+# Example IAM binding (if VM runs as default Compute Engine SA):
+#   gcloud iam service-accounts add-iam-policy-binding \
+#     SERVICE_ACCOUNT_EMAIL \
+#     --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
+#     --role="roles/iam.serviceAccountTokenCreator"
+#
 class GenerateEpisodeDownloadUrl
   def self.call(episode)
     new(episode).call
