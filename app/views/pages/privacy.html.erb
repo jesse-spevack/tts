@@ -1,0 +1,79 @@
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-3xl font-bold mb-8">Privacy Policy</h1>
+
+  <%= render "shared/card", padding: "p-8" do %>
+    <div class="prose prose-sm text-[var(--color-text)]">
+      <p class="text-[var(--color-subtext)] mb-6">
+        <strong>Alpha Release</strong> — Last updated: <%= Date.today.strftime("%B %Y") %>
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">What We Collect</h2>
+
+      <p class="mb-2 text-[var(--color-subtext)]">
+        <strong>Account Information</strong> — Your email address and voice preference settings.
+      </p>
+      <p class="mb-2 text-[var(--color-subtext)]">
+        <strong>Content You Submit</strong> — URLs or text you provide for conversion, along with the generated audio files.
+      </p>
+      <p class="mb-2 text-[var(--color-subtext)]">
+        <strong>Session Data</strong> — IP address and browser information when you sign in, used to secure your account.
+      </p>
+      <p class="mb-2 text-[var(--color-subtext)]">
+        <strong>Usage Data</strong> — How many episodes you create per billing period.
+      </p>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        <strong>Anonymous Analytics</strong> — Page visits with referrer information, tracked using a non-identifying visitor hash. We don't use cookies for analytics.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">How We Use Your Data</h2>
+      <p class="mb-2 text-[var(--color-subtext)]">We use your data to:</p>
+      <ul class="mb-4 text-[var(--color-subtext)] list-disc list-inside">
+        <li>Authenticate you via magic link emails</li>
+        <li>Convert your content into audio</li>
+        <li>Generate your personal podcast feed</li>
+        <li>Track usage for billing purposes</li>
+        <li>Improve the service through anonymous analytics</li>
+      </ul>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        We don't sell your data or use it for advertising.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">Third-Party Services</h2>
+      <p class="mb-2 text-[var(--color-subtext)]">Your data is processed by these services:</p>
+      <ul class="mb-2 text-[var(--color-subtext)] list-disc list-inside">
+        <li><strong>Google Cloud</strong> — Stores your audio files and converts text to speech</li>
+        <li><strong>AI providers</strong> — Optimize content for text-to-speech conversion</li>
+        <li><strong>Resend</strong> — Delivers sign-in emails</li>
+      </ul>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        Each service has its own privacy policy governing how they handle data.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">Data Storage & Security</h2>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        Your audio files are stored in Google Cloud Storage. Account data is stored in our database. We use HTTPS for all connections and don't store passwords — authentication is handled via magic links.
+      </p>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        As alpha software, we make reasonable efforts to protect your data but can't guarantee absolute security.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">Deleting Your Data</h2>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        You can delete individual episodes from your dashboard. Deleted episodes are removed from your feed and our storage.
+      </p>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        To delete your entire account and all associated data, contact us at <%= mail_to "jspevack@gmail.com", "jspevack@gmail.com", class: "text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]" %>.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">Changes to This Policy</h2>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        We may update this policy as the service evolves. Continued use means you accept the changes.
+      </p>
+
+      <h2 class="text-lg font-semibold mt-6 mb-2">Contact</h2>
+      <p class="mb-4 text-[var(--color-subtext)]">
+        Questions about your data? Email <%= mail_to "jspevack@gmail.com", "jspevack@gmail.com", class: "text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]" %>.
+      </p>
+    </div>
+  <% end %>
+</div>

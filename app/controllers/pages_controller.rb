@@ -12,6 +12,9 @@ class PagesController < ApplicationController
   def terms
   end
 
+  def privacy
+  end
+
   def add_rss_feed
   end
 end
