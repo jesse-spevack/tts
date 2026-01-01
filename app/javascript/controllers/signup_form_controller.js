@@ -7,6 +7,12 @@ export default class extends Controller {
 
   connect() {
     this.capturePlanFromUrl()
+    this.boundCapture = this.capturePlanFromUrl.bind(this)
+    window.addEventListener("hashchange", this.boundCapture)
+  }
+
+  disconnect() {
+    window.removeEventListener("hashchange", this.boundCapture)
   }
 
   capturePlanFromUrl() {
