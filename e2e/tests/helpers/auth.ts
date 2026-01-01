@@ -27,7 +27,14 @@ export async function signInAs(page: Page, email: string, redirectTo: string = '
   const response = await page.request.get(`${BASE_URL}/test/magic_link_token/${encodeURIComponent(email)}`);
 
   if (!response.ok()) {
-    throw new Error(`Failed to get magic link token for ${email}: ${response.status()}`);
+    const body = await response.text();
+    throw new Error(`Failed to get magic link token for ${email}: ${response.status()} - ${body.substring(0, 200)}`);
+  }
+
+  const contentType = response.headers()['content-type'] || '';
+  if (!contentType.includes('application/json')) {
+    const body = await response.text();
+    throw new Error(`Expected JSON but got ${contentType}. Body: ${body.substring(0, 200)}`);
   }
 
   const { token } = await response.json();
