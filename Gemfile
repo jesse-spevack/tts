@@ -41,6 +41,7 @@ gem "image_processing", "~> 1.2"
 
 gem "resend"
 gem "bcrypt"
+gem "stripe"
 
 # Google Cloud services
 gem "google-cloud-storage", "~> 1.47"
