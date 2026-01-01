@@ -37,6 +37,11 @@ jobs:
           echo "GOOGLE_CLOUD_PROJECT=$(gcloud secrets versions access latest --secret=google-cloud-project)" >> $GITHUB_ENV
           echo "SERVICE_ACCOUNT_EMAIL=$(gcloud secrets versions access latest --secret=service-account-email)" >> $GITHUB_ENV
           echo "VERTEX_AI_LOCATION=$(gcloud secrets versions access latest --secret=vertex-ai-location)" >> $GITHUB_ENV
+          echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=stripe-secret-key)" >> $GITHUB_ENV
+          echo "STRIPE_PUBLISHABLE_KEY=$(gcloud secrets versions access latest --secret=stripe-publishable-key)" >> $GITHUB_ENV
+          echo "STRIPE_WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=stripe-webhook-secret)" >> $GITHUB_ENV
+          echo "STRIPE_PRICE_ID_MONTHLY=$(gcloud secrets versions access latest --secret=stripe-price-id-monthly)" >> $GITHUB_ENV
+          echo "STRIPE_PRICE_ID_ANNUAL=$(gcloud secrets versions access latest --secret=stripe-price-id-annual)" >> $GITHUB_ENV
           # Generate OAuth2 access token for Artifact Registry (instead of static secret)
           echo "KAMAL_REGISTRY_PASSWORD=$(gcloud auth print-access-token)" >> $GITHUB_ENV
 
@@ -64,6 +69,11 @@ jobs:
           GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
           SERVICE_ACCOUNT_EMAIL=$SERVICE_ACCOUNT_EMAIL
           VERTEX_AI_LOCATION=$VERTEX_AI_LOCATION
+          STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+          STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY
+          STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
+          STRIPE_PRICE_ID_MONTHLY=$STRIPE_PRICE_ID_MONTHLY
+          STRIPE_PRICE_ID_ANNUAL=$STRIPE_PRICE_ID_ANNUAL
           KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
           EOF
 
