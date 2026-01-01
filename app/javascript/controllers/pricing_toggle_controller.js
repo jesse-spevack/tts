@@ -15,8 +15,15 @@ export default class extends Controller {
     this.monthlyPriceTarget.classList.toggle("hidden", isAnnual)
     this.annualPriceTarget.classList.toggle("hidden", !isAnnual)
 
-    // Update premium button's plan
-    const plan = isAnnual ? "premium_annual" : "premium_monthly"
-    this.premiumLinkTarget.dataset.plan = plan
+    // Update premium button's data attributes
+    if (isAnnual) {
+      this.premiumLinkTarget.dataset.plan = "premium_annual"
+      this.premiumLinkTarget.dataset.heading = "Go Premium"
+      this.premiumLinkTarget.dataset.subtext = "$89/year · Unlimited episodes · Save 18%"
+    } else {
+      this.premiumLinkTarget.dataset.plan = "premium_monthly"
+      this.premiumLinkTarget.dataset.heading = "Go Premium"
+      this.premiumLinkTarget.dataset.subtext = "$9/month · Unlimited episodes · Cancel anytime"
+    }
   }
 }

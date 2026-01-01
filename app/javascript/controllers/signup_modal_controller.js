@@ -1,27 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 
-const PLAN_CONTENT = {
-  free: {
-    heading: "Start listening free",
-    subtext: "2 episodes/month, no credit card required"
-  },
-  premium_monthly: {
-    heading: "Go Premium",
-    subtext: "$9/month · Unlimited episodes · Cancel anytime"
-  },
-  premium_annual: {
-    heading: "Go Premium",
-    subtext: "$89/year · Unlimited episodes · Save 18%"
-  }
-}
-
 export default class extends Controller {
   static targets = ["dialog", "heading", "subtext", "planField"]
 
   open(event) {
     event.preventDefault()
-    const plan = event.currentTarget.dataset.plan || "free"
-    this.updateContent(plan)
+    const { plan, heading, subtext } = event.currentTarget.dataset
+    this.headingTarget.textContent = heading || "Start listening free"
+    this.subtextTarget.textContent = subtext || "2 episodes/month, no credit card required"
+    this.planFieldTarget.value = plan === "free" ? "" : (plan || "")
     this.dialogTarget.showModal()
   }
 
@@ -33,12 +20,5 @@ export default class extends Controller {
     if (event.target === this.dialogTarget) {
       this.close()
     }
-  }
-
-  updateContent(plan) {
-    const content = PLAN_CONTENT[plan] || PLAN_CONTENT.free
-    this.headingTarget.textContent = content.heading
-    this.subtextTarget.textContent = content.subtext
-    this.planFieldTarget.value = plan === "free" ? "" : plan
   }
 }
