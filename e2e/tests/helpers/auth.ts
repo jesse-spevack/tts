@@ -1,9 +1,74 @@
 // e2e/tests/helpers/auth.ts
 import { Page, expect } from '@playwright/test';
 
+const BASE_URL = 'http://localhost:3000';
+
+/**
+ * Test user emails matching fixtures in test/fixtures/users.yml
+ */
+export const TEST_USERS = {
+  free: 'free@example.com',
+  subscriber: 'subscriber@example.com',
+  canceled: 'canceled@example.com',
+  pastDue: 'pastdue@example.com',
+  complimentary: 'complimentary@example.com',
+  unlimited: 'unlimited@example.com',
+};
+
+/**
+ * Signs in as a test user by:
+ * 1. Fetching a fresh magic link token from the test endpoint
+ * 2. Visiting the session URL with that token
+ *
+ * Only works in development/test environments.
+ */
+export async function signInAs(page: Page, email: string, redirectTo: string = '/episodes') {
+  // Fetch a fresh token from the test endpoint
+  const response = await page.request.get(`${BASE_URL}/test/magic_link_token/${encodeURIComponent(email)}`);
+
+  if (!response.ok()) {
+    throw new Error(`Failed to get magic link token for ${email}: ${response.status()}`);
+  }
+
+  const { token } = await response.json();
+
+  // Authenticate via the magic link
+  await page.goto(`/session?token=${token}`);
+
+  // Should be redirected to episodes (or wherever authenticated users go)
+  await page.goto(redirectTo);
+}
+
+/**
+ * Signs in as a free user
+ */
+export async function signInAsFreeUser(page: Page) {
+  await signInAs(page, TEST_USERS.free);
+}
+
+/**
+ * Signs in as a premium subscriber
+ */
+export async function signInAsPremiumUser(page: Page) {
+  await signInAs(page, TEST_USERS.subscriber);
+}
+
+/**
+ * Signs in as a canceled subscriber
+ */
+export async function signInAsCanceledUser(page: Page) {
+  await signInAs(page, TEST_USERS.canceled);
+}
+
+/**
+ * Signs in as a past due subscriber
+ */
+export async function signInAsPastDueUser(page: Page) {
+  await signInAs(page, TEST_USERS.pastDue);
+}
+
 /**
  * Signs up a new user via the signup modal.
- * Returns the magic link token from the email (requires mailcatcher or similar).
  */
 export async function signupWithEmail(page: Page, email: string, plan: 'free' | 'premium_monthly' | 'premium_annual' = 'free') {
   // Click the appropriate signup button based on plan
@@ -12,7 +77,7 @@ export async function signupWithEmail(page: Page, email: string, plan: 'free' | 
   } else {
     // For premium plans, first select the plan via toggle if needed
     if (plan === 'premium_monthly') {
-      await page.click('input[value="monthly"]');
+      await page.click('label:has(input[value="monthly"])');
     }
     await page.click('button[data-plan="' + plan + '"], button[data-pricing-toggle-target="premiumLink"]');
   }
@@ -20,7 +85,7 @@ export async function signupWithEmail(page: Page, email: string, plan: 'free' | 
   // Fill in email in the modal
   await page.waitForSelector('dialog[open]');
   await page.fill('input[type="email"]', email);
-  await page.click('button[type="submit"]');
+  await page.click('input[type="submit"]');
 
   // Wait for confirmation
   await expect(page.locator('text=Check your email')).toBeVisible();
@@ -28,24 +93,10 @@ export async function signupWithEmail(page: Page, email: string, plan: 'free' | 
 
 /**
  * Authenticates via magic link token.
- * In test mode, we'll extract the token from the Rails test helper.
  */
 export async function authenticateWithToken(page: Page, token: string, plan?: string) {
   const url = plan
     ? `/session?token=${token}&plan=${plan}`
     : `/session?token=${token}`;
   await page.goto(url);
-}
-
-/**
- * Signs in an existing user by navigating directly with a test token.
- * Requires a test endpoint or fixture setup.
- */
-export async function signInAsTestUser(page: Page, email: string) {
-  // This will need a test-only endpoint that creates a session
-  // For now, use the magic link flow
-  await page.goto('/');
-  await page.click('button[data-plan="free"]');
-  await page.fill('input[type="email"]', email);
-  await page.click('button[type="submit"]');
 }
