@@ -31,6 +31,7 @@ Rails.application.routes.draw do
 
   # Billing
   get "pricing", to: redirect("/#pricing")
+  get "upgrade", to: "billing#upgrade", as: :upgrade
   resource :billing, only: [ :show ], controller: "billing"
   resource :portal_session, only: [ :create ]
   get "checkout", to: "checkout#show"
@@ -48,4 +49,9 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
+  # Test helpers (only available in development/test)
+  if Rails.env.local?
+    get "test/magic_link_token/:email", to: "test_helpers#magic_link_token"
+  end
 end
