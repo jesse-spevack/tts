@@ -38,17 +38,21 @@ class User < ApplicationRecord
     AppConfig::Tiers.voices_for(effective_tier)
   end
 
+  def character_limit
+    return nil if unlimited?
+    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium?
+    AppConfig::Tiers::FREE_CHARACTER_LIMIT
+  end
+
   def email
     email_address
   end
 
-  def tier
+  private
+
+  def effective_tier
     return "unlimited" if unlimited?
     return "premium" if premium?
     "free"
   end
-
-  private
-
-  alias_method :effective_tier, :tier
 end

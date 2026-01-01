@@ -61,10 +61,10 @@ class ProcessUrlEpisode
   end
 
   def check_character_limit
-    max_chars = AppConfig::Tiers.character_limit_for(user.tier)
+    max_chars = user.character_limit
     return unless max_chars && @extract_result.data.character_count > max_chars
 
-    log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars, tier: user.tier
+    log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars
 
     raise EpisodeErrorHandling::ProcessingError,
       "Content exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \

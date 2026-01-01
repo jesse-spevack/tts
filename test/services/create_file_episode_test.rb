@@ -90,7 +90,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
 
   test "returns failure when content exceeds max characters" do
     @user.update!(account_type: :standard)
-    max_chars = AppConfig::Tiers.character_limit_for(@user.tier)
+    max_chars = @user.character_limit
     long_content = "a" * (max_chars + 1)
 
     result = CreateFileEpisode.call(

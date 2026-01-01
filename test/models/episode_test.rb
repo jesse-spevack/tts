@@ -207,7 +207,7 @@ class EpisodeTest < ActiveSupport::TestCase
 
   test "paste episode validates tier character limit" do
     user = users(:free_user)
-    max_chars = AppConfig::Tiers.character_limit_for(user.tier)
+    max_chars = user.character_limit
 
     episode = Episode.new(
       podcast: podcasts(:one),
@@ -226,7 +226,7 @@ class EpisodeTest < ActiveSupport::TestCase
 
   test "paste episode accepts content at tier limit" do
     user = users(:free_user)
-    max_chars = AppConfig::Tiers.character_limit_for(user.tier)
+    max_chars = user.character_limit
 
     episode = Episode.new(
       podcast: podcasts(:one),
