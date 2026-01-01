@@ -10,9 +10,18 @@ class WebhooksController < ApplicationController
       payload, signature, AppConfig::Stripe::WEBHOOK_SECRET
     )
 
-    RoutesStripeWebhook.call(event: event)
+    result = RoutesStripeWebhook.call(event: event)
+
+    if result&.failure?
+      Rails.logger.error("[Stripe Webhook] Failed to process #{event.type}: #{result.error}")
+    end
+
     head :ok
-  rescue Stripe::SignatureVerificationError
+  rescue Stripe::SignatureVerificationError => e
+    Rails.logger.warn("[Stripe Webhook] Invalid signature: #{e.message}")
     head :bad_request
+  rescue StandardError => e
+    Rails.logger.error("[Stripe Webhook] Unexpected error: #{e.class} - #{e.message}")
+    raise
   end
 end
