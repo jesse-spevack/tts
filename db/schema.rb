@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_01_000450) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_000536) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -125,12 +125,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000450) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.integer "account_type", default: 0, null: false
     t.boolean "admin", default: false, null: false
     t.string "auth_token"
     t.datetime "auth_token_expires_at"
     t.datetime "created_at", null: false
     t.string "email_address"
-    t.integer "tier", default: 0
     t.datetime "updated_at", null: false
     t.string "voice_preference"
     t.index ["auth_token"], name: "index_users_on_auth_token"
