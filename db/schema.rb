@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_01_045328) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_052817) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -118,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_045328) do
     t.string "stripe_subscription_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["current_period_end"], name: "index_subscriptions_on_current_period_end"
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
     t.index ["user_id"], name: "index_subscriptions_on_user_id", unique: true
   end
