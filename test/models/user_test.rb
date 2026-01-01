@@ -43,47 +43,89 @@ class UserTest < ActiveSupport::TestCase
     assert_not_includes valid_users, user_without_expiration
   end
 
-  test "defaults to free tier" do
-    user = User.new(email_address: "test@example.com")
-    assert user.free?
-  end
-
-  test "can set tier to premium" do
-    user = users(:one)
-    user.update!(tier: :premium)
-    assert user.premium?
-  end
-
-  test "can set tier to unlimited" do
-    user = users(:one)
-    user.update!(tier: :unlimited)
-    assert user.unlimited?
-  end
-
   test "email returns email_address" do
     user = users(:one)
     assert_equal user.email_address, user.email
   end
 
-  test "voice returns Standard voice for free tier with no preference" do
+  # Account type enum tests
+  test "account_type enum has correct values" do
+    assert_equal({ "standard" => 0, "complimentary" => 1, "unlimited" => 2 }, User.account_types)
+  end
+
+  test "defaults to standard account_type" do
+    user = User.new(email_address: "test@example.com")
+    assert user.standard?
+  end
+
+  test "can set account_type to complimentary" do
     user = users(:one)
-    user.tier = :free
+    user.update!(account_type: :complimentary)
+    assert user.complimentary?
+  end
+
+  test "can set account_type to unlimited" do
+    user = users(:one)
+    user.update!(account_type: :unlimited)
+    assert user.unlimited?
+  end
+
+  # Premium/Free status tests
+  test "premium? returns true for user with active subscription" do
+    user = users(:subscriber)
+    assert user.premium?
+  end
+
+  test "premium? returns false for user without subscription" do
+    user = users(:free_user)
+    refute user.premium?
+  end
+
+  test "premium? returns true for complimentary user" do
+    user = users(:complimentary_user)
+    assert user.premium?
+  end
+
+  test "premium? returns true for unlimited user" do
+    user = users(:unlimited_user)
+    assert user.premium?
+  end
+
+  test "premium? returns false for user with canceled subscription" do
+    user = users(:canceled_subscriber)
+    refute user.premium?
+  end
+
+  test "free? returns true for standard user without subscription" do
+    user = users(:free_user)
+    assert user.free?
+  end
+
+  test "free? returns false for user with active subscription" do
+    user = users(:subscriber)
+    refute user.free?
+  end
+
+  test "free? returns false for complimentary user" do
+    user = users(:complimentary_user)
+    refute user.free?
+  end
+
+  test "free? returns false for unlimited user" do
+    user = users(:unlimited_user)
+    refute user.free?
+  end
+
+  # Voice tests
+  test "voice returns Standard voice for free user with no preference" do
+    user = users(:free_user)
     user.voice_preference = nil
 
     assert_equal "en-GB-Standard-D", user.voice
   end
 
-  test "voice returns Standard voice for premium tier with no preference" do
-    user = users(:one)
-    user.tier = :premium
-    user.voice_preference = nil
-
-    assert_equal "en-GB-Standard-D", user.voice
-  end
-
-  test "voice returns Chirp3-HD voice for unlimited tier with no preference" do
-    user = users(:one)
-    user.tier = :unlimited
+  test "voice returns Chirp3-HD voice for unlimited user with no preference" do
+    user = users(:unlimited_user)
     user.voice_preference = nil
 
     assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
@@ -125,42 +167,43 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "en-GB-Standard-C", user.voice
   end
 
-  test "voice returns default Standard voice when voice_preference is nil and tier is free" do
-    user = users(:one)
-    user.tier = :free
+  test "voice returns default Standard voice when voice_preference is nil and user is free" do
+    user = users(:free_user)
     user.voice_preference = nil
 
     assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
-  test "voice returns default Chirp voice when voice_preference is nil and tier is unlimited" do
-    user = users(:one)
-    user.tier = :unlimited
+  test "voice returns default Chirp voice when voice_preference is nil and user is unlimited" do
+    user = users(:unlimited_user)
     user.voice_preference = nil
 
     assert_equal Voice::DEFAULT_CHIRP, user.voice
   end
 
   test "voice returns default when voice_preference is invalid" do
-    user = users(:one)
-    user.tier = :free
+    user = users(:free_user)
     # Bypass validation to simulate corrupted data
     user.write_attribute(:voice_preference, "invalid_voice")
 
     assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
-  test "available_voices returns FREE_VOICES for free tier" do
-    user = users(:one)
-    user.tier = :free
+  test "available_voices returns FREE_VOICES for free user" do
+    user = users(:free_user)
 
     assert_equal AppConfig::Tiers::FREE_VOICES, user.available_voices
   end
 
-  test "available_voices returns UNLIMITED_VOICES for unlimited tier" do
-    user = users(:one)
-    user.tier = :unlimited
+  test "available_voices returns UNLIMITED_VOICES for unlimited user" do
+    user = users(:unlimited_user)
 
     assert_equal AppConfig::Tiers::UNLIMITED_VOICES, user.available_voices
+  end
+
+  test "available_voices returns PREMIUM_VOICES for premium user" do
+    user = users(:subscriber)
+
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
 end
