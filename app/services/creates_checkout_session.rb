@@ -23,11 +23,13 @@ class CreatesCheckoutSession
   attr_reader :user, :price_id, :success_url, :cancel_url
 
   def find_or_create_customer_id
-    return user.stripe_customer_id if user.stripe_customer_id.present?
+    user.with_lock do
+      return user.stripe_customer_id if user.stripe_customer_id.present?
 
-    customer = find_existing_customer || create_customer
-    user.update!(stripe_customer_id: customer.id)
-    customer.id
+      customer = find_existing_customer || create_customer
+      user.update!(stripe_customer_id: customer.id)
+      customer.id
+    end
   end
 
   def find_existing_customer
