@@ -143,6 +143,16 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     assert subscription.past_due?
   end
 
+  test "invoice.payment_failed with nil subscription is ignored" do
+    event = OpenStruct.new(
+      type: "invoice.payment_failed",
+      data: OpenStruct.new(object: OpenStruct.new(subscription: nil))
+    )
+
+    result = RoutesStripeWebhook.call(event: event)
+    assert_nil result
+  end
+
   test "ignores unhandled event types" do
     event = OpenStruct.new(
       type: "customer.created",

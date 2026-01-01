@@ -14,7 +14,8 @@ class RoutesStripeWebhook
     when "customer.subscription.updated", "customer.subscription.deleted"
       SyncsSubscription.call(stripe_subscription_id: event.data.object.id)
     when "invoice.payment_failed"
-      SyncsSubscription.call(stripe_subscription_id: event.data.object.subscription)
+      subscription_id = event.data.object.subscription
+      SyncsSubscription.call(stripe_subscription_id: subscription_id) if subscription_id.present?
     else
       Result.success
     end
