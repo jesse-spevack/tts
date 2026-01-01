@@ -42,6 +42,78 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "returns 200 for RecordNotFound (non-retryable)" do
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise ActiveRecord::RecordNotFound, "User not found" }
+
+    post webhooks_stripe_path,
+      params: payload,
+      headers: {
+        "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+        "CONTENT_TYPE" => "application/json"
+      }
+
+    assert_response :ok
+  end
+
+  test "returns 200 for RecordInvalid (non-retryable)" do
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_invalid" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise ActiveRecord::RecordInvalid.new(User.new) }
+
+    post webhooks_stripe_path,
+      params: payload,
+      headers: {
+        "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+        "CONTENT_TYPE" => "application/json"
+      }
+
+    assert_response :ok
+  end
+
+  test "returns 500 for Stripe errors (retryable)" do
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_stripe_err" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise Stripe::APIConnectionError, "Connection failed" }
+
+    post webhooks_stripe_path,
+      params: payload,
+      headers: {
+        "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+        "CONTENT_TYPE" => "application/json"
+      }
+
+    assert_response :internal_server_error
+  end
+
+  test "returns 500 for unexpected errors (retryable)" do
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_unexpected" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise RuntimeError, "Something unexpected" }
+
+    post webhooks_stripe_path,
+      params: payload,
+      headers: {
+        "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+        "CONTENT_TYPE" => "application/json"
+      }
+
+    assert_response :internal_server_error
+  end
+
   private
 
   def generate_stripe_signature(payload, timestamp)

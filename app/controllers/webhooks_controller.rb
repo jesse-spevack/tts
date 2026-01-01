@@ -20,8 +20,17 @@ class WebhooksController < ApplicationController
   rescue Stripe::SignatureVerificationError => e
     Rails.logger.warn("[Stripe Webhook] Invalid signature: #{e.message}")
     head :bad_request
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("[Stripe Webhook] Record not found: #{e.message}")
+    head :ok
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("[Stripe Webhook] Validation failed: #{e.message}")
+    head :ok
+  rescue Stripe::StripeError => e
+    Rails.logger.error("[Stripe Webhook] Stripe API error: #{e.message}")
+    head :internal_server_error
   rescue StandardError => e
     Rails.logger.error("[Stripe Webhook] Unexpected error: #{e.class} - #{e.message}")
-    raise
+    head :internal_server_error
   end
 end
