@@ -15,8 +15,8 @@ export default class extends Controller {
     this.monthlyPriceTarget.classList.toggle("hidden", isAnnual)
     this.annualPriceTarget.classList.toggle("hidden", !isAnnual)
 
-    // Update premium link
+    // Update premium button's plan
     const plan = isAnnual ? "premium_annual" : "premium_monthly"
-    this.premiumLinkTarget.href = `#signup?plan=${plan}`
+    this.premiumLinkTarget.dataset.plan = plan
   }
 }

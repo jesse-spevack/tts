@@ -33,6 +33,7 @@ Rails.application.routes.draw do
   get "pricing", to: redirect("/#pricing")
   resource :billing, only: [ :show ], controller: "billing"
   resource :portal_session, only: [ :create ]
+  get "checkout", to: "checkout#show"
   post "checkout", to: "checkout#create"
   get "checkout/success", to: "checkout#success"
   get "checkout/cancel", to: "checkout#cancel"

@@ -17,11 +17,12 @@ class SyncsSubscription
       stripe_subscription_id: stripe_subscription.id
     )
 
+    item = stripe_subscription.items.data.first
     subscription.update!(
       user: user,
       status: map_status(stripe_subscription.status),
-      stripe_price_id: stripe_subscription.items.data.first.price.id,
-      current_period_end: Time.at(stripe_subscription.current_period_end)
+      stripe_price_id: item.price.id,
+      current_period_end: Time.at(item.current_period_end)
     )
 
     Result.success(subscription)

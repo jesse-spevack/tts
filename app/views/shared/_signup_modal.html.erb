@@ -1,0 +1,46 @@
+<dialog
+  data-signup-modal-target="dialog"
+  data-action="click->signup-modal#closeOnBackdrop"
+  class="fixed inset-0 z-50 m-auto max-w-md rounded-xl bg-[var(--color-base)] p-6 shadow-xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+>
+  <div class="text-center">
+    <!-- Envelope Icon -->
+    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--color-primary)]/10">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-[var(--color-primary)]">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+      </svg>
+    </div>
+
+    <!-- Heading -->
+    <h3 data-signup-modal-target="heading" class="mt-4 text-xl font-semibold text-[var(--color-text)]">
+      Start listening free
+    </h3>
+
+    <!-- Subtext -->
+    <p data-signup-modal-target="subtext" class="mt-2 text-sm text-[var(--color-subtext)]">
+      2 episodes/month, no credit card required
+    </p>
+  </div>
+
+  <!-- Form -->
+  <%= form_with url: session_path, class: "mt-6" do |form| %>
+    <%= form.hidden_field :plan, value: "", data: { signup_modal_target: "planField" } %>
+
+    <div class="space-y-4">
+      <%= form.email_field :email_address,
+          required: true,
+          autocomplete: "email",
+          placeholder: "Enter your email",
+          class: "w-full rounded-lg bg-[var(--color-surface0)] px-4 py-3 text-base text-[var(--color-text)] outline-none ring-1 ring-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:ring-2 focus:ring-[var(--color-primary)]" %>
+
+      <%= form.submit "Send me a link",
+          class: "w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer" %>
+    </div>
+  <% end %>
+
+  <p class="mt-4 text-center text-xs text-[var(--color-subtext)]">
+    By signing up, you agree to our
+    <%= link_to "Terms", terms_path, class: "underline hover:text-[var(--color-primary)]" %>
+    and <%= link_to "Privacy Policy", privacy_path, class: "underline hover:text-[var(--color-primary)]" %>.
+  </p>
+</dialog>

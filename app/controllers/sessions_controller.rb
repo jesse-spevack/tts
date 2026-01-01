@@ -34,10 +34,19 @@ class SessionsController < ApplicationController
 
     if result.success?
       start_new_session_for result.data
-      redirect_to post_login_path(params[:plan]), notice: "Welcome back!"
+      # Skip flash message when redirecting to checkout - the checkout success page has its own welcome message
+      if checkout_flow?(params[:plan])
+        redirect_to post_login_path(params[:plan])
+      else
+        redirect_to post_login_path(params[:plan]), notice: "Welcome back!"
+      end
     else
       redirect_to root_path, alert: "Invalid or expired login link. Please try again."
     end
+  end
+
+  def checkout_flow?(plan)
+    plan.in?(%w[premium_monthly premium_annual])
   end
 
   def post_login_path(plan)

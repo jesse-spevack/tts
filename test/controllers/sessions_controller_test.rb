@@ -44,20 +44,22 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:session_id].to_s
   end
 
-  test "verify with premium_monthly plan redirects to checkout" do
+  test "verify with premium_monthly plan redirects to checkout without flash" do
     token = GenerateAuthToken.call(user: @user)
 
     get auth_url, params: { token: token, plan: "premium_monthly" }
 
     assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
+    assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
   end
 
-  test "verify with premium_annual plan redirects to checkout" do
+  test "verify with premium_annual plan redirects to checkout without flash" do
     token = GenerateAuthToken.call(user: @user)
 
     get auth_url, params: { token: token, plan: "premium_annual" }
 
     assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+    assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
   end
 
   test "verify without plan redirects to episodes" do

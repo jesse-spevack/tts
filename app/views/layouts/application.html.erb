@@ -27,7 +27,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-[var(--color-base)] text-[var(--color-text)]">
+  <body class="bg-[var(--color-base)] text-[var(--color-text)]" data-controller="signup-modal">
     <%= render "shared/header" %>
     <% if content_for?(:raw_body) %>
       <main class="mt-16">
@@ -40,5 +40,6 @@
         <%= yield %>
       </main>
     <% end %>
+    <%= render "shared/signup_modal" %>
   </body>
 </html>

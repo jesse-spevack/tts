@@ -1,50 +1,50 @@
 <div class="max-w-2xl mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Billing</h1>
+  <h1 class="text-3xl font-bold text-[var(--color-text)] mb-8">Billing</h1>
 
   <% if Current.user.unlimited? %>
-    <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-2">Unlimited Plan</h2>
-      <p class="text-purple-700 dark:text-purple-300">You have unlimited access with no restrictions.</p>
+    <div class="bg-[var(--color-primary)]/10 rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Unlimited Plan</h2>
+      <p class="text-[var(--color-subtext)]">You have unlimited access with no restrictions.</p>
     </div>
 
   <% elsif Current.user.complimentary? %>
-    <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-green-900 dark:text-green-100 mb-2">Premium (Complimentary)</h2>
-      <p class="text-green-700 dark:text-green-300">You have complimentary premium access.</p>
+    <div class="bg-[var(--color-green)]/10 rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Premium (Complimentary)</h2>
+      <p class="text-[var(--color-subtext)]">You have complimentary premium access.</p>
     </div>
 
   <% elsif @subscription&.active? %>
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Premium Plan</h2>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">
+    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Premium Plan</h2>
+      <p class="text-[var(--color-subtext)] mb-4">
         Renews on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>
       </p>
       <%= button_to "Manage Subscription", portal_session_path,
-        class: "px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600" %>
+        class: "px-4 py-2 bg-[var(--color-surface1)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface2)]" %>
     </div>
 
   <% elsif @subscription&.past_due? %>
-    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-2">Payment Failed</h2>
-      <p class="text-yellow-700 dark:text-yellow-300 mb-4">Please update your payment method to restore Premium access.</p>
+    <div class="bg-[var(--color-yellow)]/10 border border-[var(--color-yellow)]/30 rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Payment Failed</h2>
+      <p class="text-[var(--color-subtext)] mb-4">Please update your payment method to restore Premium access.</p>
       <%= button_to "Fix Payment", portal_session_path,
-        class: "px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700" %>
+        class: "px-4 py-2 bg-[var(--color-yellow)] text-[var(--color-base)] rounded-lg hover:opacity-90" %>
     </div>
 
   <% elsif @subscription&.canceled? %>
-    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Subscription Ended</h2>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">
+    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Subscription Ended</h2>
+      <p class="text-[var(--color-subtext)] mb-4">
         Your subscription ended on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>.
       </p>
     </div>
     <%= render "upgrade_options" %>
 
   <% else %>
-    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Free Plan</h2>
+    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Free Plan</h2>
       <% if @usage %>
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
+        <p class="text-[var(--color-subtext)] mb-4">
           <%= @usage.episode_count %> of <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes used this month
         </p>
       <% end %>

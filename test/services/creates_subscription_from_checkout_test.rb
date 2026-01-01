@@ -16,8 +16,7 @@ class CreatesSubscriptionFromCheckoutTest < ActiveSupport::TestCase
           id: "sub_from_checkout",
           customer: "cus_checkout",
           status: "active",
-          current_period_end: 1.month.from_now.to_i,
-          items: { data: [ { price: { id: "price_monthly" } } ] }
+          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
