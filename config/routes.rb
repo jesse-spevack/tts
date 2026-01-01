@@ -28,6 +28,16 @@ Rails.application.routes.draw do
 
   resource :session
   resource :settings, only: [ :show, :update ]
+
+  # Billing
+  get "pricing", to: redirect("/#pricing")
+  get "billing", to: "billing#show"
+  post "billing/portal", to: "billing#portal"
+  post "checkout", to: "checkout#create"
+  get "checkout/success", to: "checkout#success"
+  get "checkout/cancel", to: "checkout#cancel"
+  post "webhooks/stripe", to: "webhooks#stripe"
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
