@@ -1,9 +1,11 @@
 require "test_helper"
 
 class RecordEpisodeUsageTest < ActiveSupport::TestCase
+  include ActionMailer::TestHelper
+
   setup do
     @free_user = users(:free_user)
-    @premium_user = users(:premium_user)
+    @premium_user = users(:subscriber)
   end
 
   test "creates usage record and increments for free user" do
@@ -41,6 +43,33 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
 
     assert_no_difference "EpisodeUsage.count" do
       RecordEpisodeUsage.call(user: unlimited_user)
+    end
+  end
+
+  test "sends upgrade nudge when free user hits limit" do
+    EpisodeUsage.create!(
+      user: @free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 1
+    )
+
+    assert_enqueued_emails 1 do
+      RecordEpisodeUsage.call(user: @free_user)
+    end
+
+    usage = EpisodeUsage.current_for(@free_user)
+    assert_equal 2, usage.episode_count
+  end
+
+  test "does not send nudge if already at limit" do
+    EpisodeUsage.create!(
+      user: @free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
+
+    assert_no_enqueued_emails do
+      RecordEpisodeUsage.call(user: @free_user)
     end
   end
 end
