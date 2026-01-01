@@ -4,7 +4,7 @@ class CheckoutController < ApplicationController
   def create
     price_id = params[:price_id]
 
-    unless valid_price?(price_id)
+    unless ValidatesPrice.call(price_id)
       redirect_to billing_path, alert: "Invalid price selected"
       return
     end
@@ -28,11 +28,5 @@ class CheckoutController < ApplicationController
 
   def cancel
     redirect_to billing_path
-  end
-
-  private
-
-  def valid_price?(price_id)
-    [ AppConfig::Stripe::PRICE_ID_MONTHLY, AppConfig::Stripe::PRICE_ID_ANNUAL ].include?(price_id)
   end
 end
