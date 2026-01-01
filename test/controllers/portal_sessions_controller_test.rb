@@ -18,11 +18,11 @@ class PortalSessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "https://billing.stripe.com/test"
   end
 
-  test "create requires subscription" do
+  test "create requires stripe customer id" do
     sign_in_as(users(:free_user))
     post portal_session_path
     assert_redirected_to billing_path
-    assert_equal "No active subscription", flash[:alert]
+    assert_equal "No Stripe customer ID", flash[:alert]
   end
 
   test "create requires authentication" do

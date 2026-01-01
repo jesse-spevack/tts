@@ -2,6 +2,7 @@ require "test_helper"
 
 class CreatesBillingPortalSessionTest < ActiveSupport::TestCase
   setup do
+    @user = users(:subscriber)
     Stripe.api_key = "sk_test_fake"
   end
 
@@ -13,12 +14,24 @@ class CreatesBillingPortalSessionTest < ActiveSupport::TestCase
       )
 
     result = CreatesBillingPortalSession.call(
-      stripe_customer_id: "cus_test123",
+      user: @user,
       return_url: "https://example.com/billing"
     )
 
     assert result.success?
     assert_equal "https://billing.stripe.com/test", result.data
+  end
+
+  test "returns failure when user has no stripe_customer_id" do
+    user = users(:free_user)
+
+    result = CreatesBillingPortalSession.call(
+      user: user,
+      return_url: "https://example.com/billing"
+    )
+
+    refute result.success?
+    assert_equal "No Stripe customer ID", result.error
   end
 
   test "returns failure on Stripe error" do
@@ -29,7 +42,7 @@ class CreatesBillingPortalSessionTest < ActiveSupport::TestCase
       )
 
     result = CreatesBillingPortalSession.call(
-      stripe_customer_id: "cus_invalid",
+      user: @user,
       return_url: "https://example.com/billing"
     )
 

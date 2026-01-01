@@ -40,9 +40,9 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
 
   test "routes customer.subscription.updated to SyncsSubscription" do
     # Create existing subscription
+    @user.update!(stripe_customer_id: "cus_test")
     subscription = Subscription.create!(
       user: @user,
-      stripe_customer_id: "cus_test",
       stripe_subscription_id: "sub_test",
       stripe_price_id: "price_monthly",
       status: :active,
@@ -75,9 +75,9 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
 
   test "routes customer.subscription.deleted to SyncsSubscription" do
     # Create existing subscription
+    @user.update!(stripe_customer_id: "cus_del")
     subscription = Subscription.create!(
       user: @user,
-      stripe_customer_id: "cus_del",
       stripe_subscription_id: "sub_deleted",
       stripe_price_id: "price_monthly",
       status: :active,
@@ -110,9 +110,9 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
 
   test "routes invoice.payment_failed to SyncsSubscription" do
     # Create existing subscription
+    @user.update!(stripe_customer_id: "cus_fail")
     subscription = Subscription.create!(
       user: @user,
-      stripe_customer_id: "cus_fail",
       stripe_subscription_id: "sub_failed",
       stripe_price_id: "price_monthly",
       status: :active,

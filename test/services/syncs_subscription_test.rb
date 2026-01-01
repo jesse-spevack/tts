@@ -22,14 +22,14 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     assert result.success?
     subscription = result.data
     assert_equal @user, subscription.user
-    assert_equal "cus_new", subscription.stripe_customer_id
     assert subscription.active?
+    assert_equal "cus_new", @user.reload.stripe_customer_id
   end
 
   test "updates existing subscription" do
+    @user.update!(stripe_customer_id: "cus_existing")
     subscription = Subscription.create!(
       user: @user,
-      stripe_customer_id: "cus_existing",
       stripe_subscription_id: "sub_existing",
       stripe_price_id: "price_monthly",
       status: :active,

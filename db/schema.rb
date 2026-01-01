@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_01_000536) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_045328) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -114,12 +114,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000536) do
     t.datetime "created_at", null: false
     t.datetime "current_period_end", null: false
     t.integer "status", default: 0, null: false
-    t.string "stripe_customer_id", null: false
     t.string "stripe_price_id", null: false
     t.string "stripe_subscription_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["stripe_customer_id"], name: "index_subscriptions_on_stripe_customer_id", unique: true
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
     t.index ["user_id"], name: "index_subscriptions_on_user_id", unique: true
   end
@@ -131,11 +129,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_01_000536) do
     t.datetime "auth_token_expires_at"
     t.datetime "created_at", null: false
     t.string "email_address"
+    t.string "stripe_customer_id"
     t.datetime "updated_at", null: false
     t.string "voice_preference"
     t.index ["auth_token"], name: "index_users_on_auth_token"
     t.index ["auth_token_expires_at"], name: "index_users_on_auth_token_expires_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true
   end
 
   add_foreign_key "episode_usages", "users"

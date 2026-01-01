@@ -1,16 +1,18 @@
 class CreatesBillingPortalSession
-  def self.call(stripe_customer_id:, return_url:)
-    new(stripe_customer_id:, return_url:).call
+  def self.call(user:, return_url:)
+    new(user:, return_url:).call
   end
 
-  def initialize(stripe_customer_id:, return_url:)
-    @stripe_customer_id = stripe_customer_id
+  def initialize(user:, return_url:)
+    @user = user
     @return_url = return_url
   end
 
   def call
+    return Result.failure("No Stripe customer ID") unless user.stripe_customer_id.present?
+
     session = Stripe::BillingPortal::Session.create(
-      customer: stripe_customer_id,
+      customer: user.stripe_customer_id,
       return_url: return_url
     )
     Result.success(session.url)
@@ -20,5 +22,5 @@ class CreatesBillingPortalSession
 
   private
 
-  attr_reader :stripe_customer_id, :return_url
+  attr_reader :user, :return_url
 end
