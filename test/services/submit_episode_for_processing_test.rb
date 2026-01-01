@@ -6,7 +6,7 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @episode.update!(title: "Test Title", author: "Test Author")
-    @episode.user.update!(tier: :free)
+    @episode.user.update!(account_type: :standard)
 
     Mocktail.replace(GenerateEpisodeAudio)
   end
@@ -39,7 +39,7 @@ class SubmitEpisodeForProcessingTest < ActiveSupport::TestCase
   end
 
   test "excludes free tier attribution for premium users" do
-    @episode.user.update!(tier: :premium)
+    @episode.user.update!(account_type: :complimentary)
     stubs { |m| GenerateEpisodeAudio.call(episode: m.any) }.with { nil }
 
     SubmitEpisodeForProcessing.call(episode: @episode, content: "Article body.")

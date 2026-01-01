@@ -3,7 +3,7 @@ require "test_helper"
 class RefundEpisodeUsageTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
-    @premium_user = users(:premium_user)
+    @premium_user = users(:subscriber)
   end
 
   test "decrements usage record for free user" do

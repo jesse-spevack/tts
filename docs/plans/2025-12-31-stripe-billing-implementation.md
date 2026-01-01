@@ -2039,6 +2039,421 @@ git commit -m "chore: add Stripe secrets to deploy configuration"
 
 ---
 
+## Task 21: Add Pricing Section to Landing Page
+
+**Files:**
+- Modify: `app/views/pages/home.html.erb`
+
+**Step 1: Add pricing section between FAQ and Signup**
+
+Insert before the `<!-- Signup Section -->` comment:
+
+```erb
+<!-- Pricing Section -->
+<section id="pricing" class="bg-[var(--color-base)]">
+  <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8" data-controller="pricing-toggle">
+    <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Pricing</h2>
+    <p class="mt-4 text-base/7 text-[var(--color-subtext)]">
+      2 free episodes every month. Upgrade anytime for unlimited.
+    </p>
+
+    <!-- Monthly/Annual Toggle -->
+    <div class="mt-8 flex justify-center">
+      <fieldset aria-label="Payment frequency" class="grid grid-cols-2 gap-x-1 rounded-full p-1 text-center text-sm font-semibold bg-[var(--color-surface0)]">
+        <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+          <input type="radio" name="frequency" value="monthly" checked class="sr-only" data-action="change->pricing-toggle#update" />
+          <span>Monthly</span>
+        </label>
+        <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+          <input type="radio" name="frequency" value="annual" class="sr-only" data-action="change->pricing-toggle#update" />
+          <span>Annual</span>
+        </label>
+      </fieldset>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-3xl mx-auto">
+      <!-- Free Card -->
+      <div class="rounded-2xl p-8 ring-1 ring-[var(--color-overlay0)]">
+        <h3 class="text-lg font-semibold text-[var(--color-text)]">Free</h3>
+        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+          Try it out, no credit card required.
+        </p>
+
+        <p class="mt-6">
+          <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$0</span>
+          <span class="text-sm text-[var(--color-subtext)]">/month</span>
+        </p>
+
+        <a href="#signup" class="mt-6 block rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-primary)] hover:bg-[var(--color-surface0)]">
+          Create my feed
+        </a>
+
+        <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Private podcast feed
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Paste links, text, or upload files
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Choose your voice
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            2 episodes per month
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Up to 15,000 characters
+          </li>
+        </ul>
+      </div>
+
+      <!-- Premium Card -->
+      <div class="rounded-2xl p-8 ring-2 ring-[var(--color-primary)]">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-[var(--color-primary)]">Premium</h3>
+          <span class="rounded-full bg-[var(--color-primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
+            Most popular
+          </span>
+        </div>
+
+        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+          For serious readers and listeners.
+        </p>
+
+        <p class="mt-6" data-pricing-toggle-target="monthlyPrice">
+          <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$9</span>
+          <span class="text-sm text-[var(--color-subtext)]">/month</span>
+        </p>
+        <p class="mt-6 hidden" data-pricing-toggle-target="annualPrice">
+          <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$89</span>
+          <span class="text-sm text-[var(--color-subtext)]">/year</span>
+        </p>
+
+        <a href="#signup?plan=premium_monthly" data-pricing-toggle-target="premiumLink" class="mt-6 block rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)]">
+          Get Premium
+        </a>
+
+        <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Everything in Free, plus:
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Unlimited episodes
+          </li>
+          <li class="flex gap-x-3">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+            </svg>
+            Up to 50,000 characters
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+```
+
+**Step 2: Verify it renders**
+
+Run: `bin/rails server` and visit `http://localhost:3000/#pricing`
+
+Expected: See pricing section with two cards
+
+**Step 3: Commit**
+
+```bash
+git add app/views/pages/home.html.erb
+git commit -m "feat: add pricing section to landing page"
+```
+
+---
+
+## Task 22: Create Pricing Toggle Stimulus Controller
+
+**Files:**
+- Create: `app/javascript/controllers/pricing_toggle_controller.js`
+
+**Step 1: Create the controller**
+
+Create `app/javascript/controllers/pricing_toggle_controller.js`:
+
+```javascript
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["monthlyPrice", "annualPrice", "premiumLink"]
+
+  connect() {
+    this.update()
+  }
+
+  update() {
+    const selected = this.element.querySelector('input[name="frequency"]:checked')?.value || "monthly"
+    const isAnnual = selected === "annual"
+
+    // Toggle price visibility
+    this.monthlyPriceTarget.classList.toggle("hidden", isAnnual)
+    this.annualPriceTarget.classList.toggle("hidden", !isAnnual)
+
+    // Update premium link
+    const plan = isAnnual ? "premium_annual" : "premium_monthly"
+    this.premiumLinkTarget.href = `#signup?plan=${plan}`
+  }
+}
+```
+
+**Step 2: Verify controller loads**
+
+Run: `bin/rails server`, visit `http://localhost:3000/#pricing`, toggle between Monthly/Annual
+
+Expected: Price switches between $9/month and $89/year, link updates
+
+**Step 3: Commit**
+
+```bash
+git add app/javascript/controllers/pricing_toggle_controller.js
+git commit -m "feat: add pricing toggle Stimulus controller"
+```
+
+---
+
+## Task 23: Update Signup Form to Capture Plan Param
+
+**Files:**
+- Modify: `app/views/pages/home.html.erb`
+- Create: `app/javascript/controllers/signup_form_controller.js`
+
+**Step 1: Create Stimulus controller for signup form**
+
+Create `app/javascript/controllers/signup_form_controller.js`:
+
+```javascript
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["planField"]
+
+  connect() {
+    this.captureplanFromUrl()
+  }
+
+  captureplanFromUrl() {
+    const hash = window.location.hash
+    const match = hash.match(/[?&]plan=([^&]+)/)
+    if (match && this.hasPlanFieldTarget) {
+      this.planFieldTarget.value = match[1]
+    }
+  }
+}
+```
+
+**Step 2: Update signup form in home.html.erb**
+
+Update the signup form to include the controller and hidden field:
+
+```erb
+<%= form_with url: session_path, class: "w-full max-w-md lg:col-span-5 lg:pt-2", data: { controller: "signup-form" } do |form| %>
+  <%= form.hidden_field :plan, value: "", data: { signup_form_target: "planField" } %>
+  <div class="flex flex-col sm:flex-row gap-4 sm:gap-x-4">
+    ...
+  </div>
+<% end %>
+```
+
+**Step 3: Verify plan is captured**
+
+Run: `bin/rails server`, visit `http://localhost:3000/#signup?plan=premium_monthly`, inspect form
+
+Expected: Hidden field contains `premium_monthly`
+
+**Step 4: Commit**
+
+```bash
+git add app/javascript/controllers/signup_form_controller.js app/views/pages/home.html.erb
+git commit -m "feat: capture plan param in signup form"
+```
+
+---
+
+## Task 24: Preserve Plan Param in Magic Link Flow
+
+**Files:**
+- Modify: `app/controllers/sessions_controller.rb`
+- Modify: `app/mailers/session_mailer.rb`
+- Modify: `app/views/session_mailer/magic_link.html.erb` (or `.text.erb`)
+
+**Step 1: Pass plan to magic link**
+
+Update `sessions_controller.rb` create action to store plan:
+
+```ruby
+def create
+  @user = User.find_or_create_by!(email_address: params[:email_address])
+  @plan = params[:plan]
+
+  # Store plan in session or pass to mailer
+  SessionMailer.magic_link(@user, plan: @plan).deliver_later
+
+  redirect_to root_path, notice: "Check your email for a sign-in link."
+end
+```
+
+**Step 2: Update mailer to include plan in link**
+
+Update `session_mailer.rb`:
+
+```ruby
+def magic_link(user, plan: nil)
+  @user = user
+  @plan = plan
+  @magic_link_url = auth_verify_url(token: @user.auth_token, plan: @plan.presence)
+
+  mail(to: @user.email_address, subject: "Sign in to Very Normal TTS")
+end
+```
+
+**Step 3: Update verify action to redirect based on plan**
+
+Update sessions controller verify action:
+
+```ruby
+def verify
+  user = User.find_by(auth_token: params[:token])
+
+  if user&.auth_token_valid?
+    start_session(user)
+    redirect_to post_login_path(params[:plan])
+  else
+    redirect_to root_path, alert: "Invalid or expired link."
+  end
+end
+
+private
+
+def post_login_path(plan)
+  case plan
+  when "premium_monthly"
+    checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
+  when "premium_annual"
+    checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+  else
+    episodes_path # or dashboard
+  end
+end
+```
+
+**Step 4: Test the flow**
+
+1. Visit `/#signup?plan=premium_monthly`
+2. Enter email, submit
+3. Click magic link
+4. Expected: Redirected to `/checkout?price_id=<monthly_price>`
+
+**Step 5: Commit**
+
+```bash
+git add app/controllers/sessions_controller.rb app/mailers/session_mailer.rb
+git commit -m "feat: preserve plan param through magic link flow"
+```
+
+---
+
+## Task 25: Add Tests for Pricing Flow
+
+**Files:**
+- Create: `test/system/pricing_test.rb`
+- Modify: `test/controllers/sessions_controller_test.rb`
+
+**Step 1: Add system test for pricing section**
+
+Create `test/system/pricing_test.rb`:
+
+```ruby
+require "application_system_test_case"
+
+class PricingTest < ApplicationSystemTestCase
+  test "visiting pricing section shows both tiers" do
+    visit root_path(anchor: "pricing")
+
+    assert_text "Pricing"
+    assert_text "Free"
+    assert_text "Premium"
+    assert_text "$0"
+    assert_text "$9"
+  end
+
+  test "toggling to annual shows annual price" do
+    visit root_path(anchor: "pricing")
+
+    choose "Annual"
+
+    assert_text "$89"
+    assert_no_text "$9"
+  end
+end
+```
+
+**Step 2: Add controller test for plan param**
+
+Add to `test/controllers/sessions_controller_test.rb`:
+
+```ruby
+test "verify with premium_monthly plan redirects to checkout" do
+  user = users(:free_user)
+  user.update!(auth_token: "valid_token", auth_token_expires_at: 1.hour.from_now)
+
+  get auth_verify_path(token: "valid_token", plan: "premium_monthly")
+
+  assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
+end
+
+test "verify without plan redirects to episodes" do
+  user = users(:free_user)
+  user.update!(auth_token: "valid_token", auth_token_expires_at: 1.hour.from_now)
+
+  get auth_verify_path(token: "valid_token")
+
+  assert_redirected_to episodes_path
+end
+```
+
+**Step 3: Run tests**
+
+Run: `bin/rails test`
+
+Expected: All tests pass
+
+**Step 4: Commit**
+
+```bash
+git add test/system/pricing_test.rb test/controllers/sessions_controller_test.rb
+git commit -m "test: add pricing section and plan param tests"
+```
+
+---
+
 ## Verification Checklist
 
 Before marking complete, verify:
@@ -2047,6 +2462,10 @@ Before marking complete, verify:
 - [ ] `bundle exec rubocop` passes
 - [ ] Migrations run cleanly: `bin/rails db:migrate:reset`
 - [ ] Server starts: `bin/rails server`
+- [ ] Visit `/#pricing` — see both tiers, toggle works
+- [ ] Click "Get Premium" → scrolls to signup with `?plan=premium_monthly` in URL
+- [ ] Submit signup form → magic link includes plan param
+- [ ] Click magic link → redirected to `/checkout`
 - [ ] Visit `/billing` as logged-in user
 - [ ] Stripe CLI webhook forwarding works: `stripe listen --forward-to localhost:3000/webhooks/stripe`
 

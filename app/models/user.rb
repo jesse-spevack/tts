@@ -42,11 +42,13 @@ class User < ApplicationRecord
     email_address
   end
 
-  private
-
-  def effective_tier
+  def tier
     return "unlimited" if unlimited?
     return "premium" if premium?
     "free"
   end
+
+  private
+
+  alias_method :effective_tier, :tier
 end

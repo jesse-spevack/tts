@@ -201,10 +201,53 @@ When payment fails:
 
 ### Landing Page Pricing Section (`/#pricing`)
 
-- Two cards: Free vs Premium
-- Monthly/annual toggle for Premium
-- Feature comparison (episodes, character limit)
-- "Get Started" (free) / "Upgrade" (premium)
+**Placement:** Between FAQ and Signup sections
+
+**Layout:** Two cards side-by-side (stacked on mobile), max-width container matching existing sections.
+
+**Header:**
+```erb
+<h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Pricing</h2>
+<p class="mt-4 text-base/7 text-[var(--color-subtext)]">
+  2 free episodes every month. Upgrade anytime for unlimited.
+</p>
+```
+
+**Monthly/Annual Toggle:**
+- CSS-only toggle using radio buttons
+- Defaults to monthly
+- Controls which price displays on Premium card
+- Stimulus controller updates Premium button href when toggled
+
+**Free Card:**
+- Ring style: `ring-1 ring-[var(--color-overlay0)]` (subtle)
+- Price: $0/month
+- Button: "Create my feed" → `#signup` (outline style)
+- Features:
+  - Private podcast feed
+  - Paste links, text, or upload files
+  - Choose your voice
+  - 2 episodes per month
+  - Up to 15,000 characters
+
+**Premium Card (featured):**
+- Ring style: `ring-2 ring-[var(--color-primary)]` (emphasized)
+- Badge: "Most popular"
+- Price: $9/month or $89/year (toggles based on selection)
+- Button: "Get Premium" → `#signup?plan=premium_monthly` or `#signup?plan=premium_annual` (solid style)
+- Features:
+  - Everything in Free, plus:
+  - Unlimited episodes
+  - Up to 50,000 characters
+
+**Stimulus Controller:** `pricing_toggle_controller.js`
+- Updates Premium button href when toggle changes
+- `premium_monthly` ↔ `premium_annual`
+
+**Post-Signup Flow:**
+- Magic link preserves `plan` param
+- After login with `plan=premium_*`, redirect to `/checkout?price_id=<matching_stripe_price>`
+- Without `plan` param, redirect to dashboard (default)
 
 ### Billing Page (`/billing`)
 
