@@ -1,0 +1,23 @@
+active_subscription:
+  user: subscriber
+  stripe_customer_id: cus_test_active
+  stripe_subscription_id: sub_test_active
+  stripe_price_id: price_monthly
+  status: 0
+  current_period_end: <%= 1.month.from_now %>
+
+canceled_subscription:
+  user: canceled_subscriber
+  stripe_customer_id: cus_test_canceled
+  stripe_subscription_id: sub_test_canceled
+  stripe_price_id: price_monthly
+  status: 2
+  current_period_end: <%= 1.day.ago %>
+
+past_due_subscription:
+  user: past_due_subscriber
+  stripe_customer_id: cus_test_past_due
+  stripe_subscription_id: sub_test_past_due
+  stripe_price_id: price_monthly
+  status: 1
+  current_period_end: <%= 1.week.from_now %>
