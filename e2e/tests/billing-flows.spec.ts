@@ -10,8 +10,7 @@ test.describe('Billing Flows (Premium User)', () => {
     await expect(page.locator('text=Renews on')).toBeVisible();
   });
 
-  // Skip: Requires test user with real Stripe customer ID
-  test.skip('Manage Subscription button opens Stripe portal', async ({ page }) => {
+  test('Manage Subscription button opens Stripe portal', async ({ page }) => {
     await signInAsPremiumUser(page);
     await page.goto('/billing');
 
@@ -29,7 +28,9 @@ test.describe('Billing Flows (Premium User)', () => {
   });
 });
 
-test.describe('Billing Edge Cases', () => {
+// Skip: These tests require users with specific Stripe subscription states
+// that are complex to set up programmatically
+test.describe.skip('Billing Edge Cases', () => {
   test('canceled subscription shows upgrade options', async ({ page }) => {
     await signInAsCanceledUser(page);
     await page.goto('/billing');
