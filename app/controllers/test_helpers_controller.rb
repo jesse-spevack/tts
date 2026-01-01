@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class TestHelpersController < ApplicationController
+  allow_unauthenticated_access
   before_action :ensure_local_environment
 
   # GET /test/magic_link_token/:email

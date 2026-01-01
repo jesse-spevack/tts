@@ -5,12 +5,12 @@ import { signInAsFreeUser, signInAsPremiumUser } from './helpers/auth';
 test.describe('Upgrade Flows (Free User)', () => {
   test('free user sees Upgrade link in header', async ({ page }) => {
     await signInAsFreeUser(page);
-    await expect(page.locator('a:has-text("Upgrade")')).toBeVisible();
+    await expect(page.locator('a:has-text("Upgrade")').first()).toBeVisible();
   });
 
   test('clicking Upgrade goes to /upgrade page', async ({ page }) => {
     await signInAsFreeUser(page);
-    await page.click('a:has-text("Upgrade")');
+    await page.locator('a:has-text("Upgrade")').first().click();
     await expect(page).toHaveURL('/upgrade');
   });
 

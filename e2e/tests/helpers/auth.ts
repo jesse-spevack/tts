@@ -39,8 +39,8 @@ export async function signInAs(page: Page, email: string, redirectTo: string = '
 
   const { token } = await response.json();
 
-  // Authenticate via the magic link
-  await page.goto(`/session?token=${token}`);
+  // Authenticate via the magic link (uses /auth route)
+  await page.goto(`/auth?token=${token}`);
 
   // Should be redirected to episodes (or wherever authenticated users go)
   await page.goto(redirectTo);
@@ -103,7 +103,7 @@ export async function signupWithEmail(page: Page, email: string, plan: 'free' | 
  */
 export async function authenticateWithToken(page: Page, token: string, plan?: string) {
   const url = plan
-    ? `/session?token=${token}&plan=${plan}`
-    : `/session?token=${token}`;
+    ? `/auth?token=${token}&plan=${plan}`
+    : `/auth?token=${token}`;
   await page.goto(url);
 }

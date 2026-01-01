@@ -52,6 +52,6 @@ Rails.application.routes.draw do
 
   # Test helpers (only available in development/test)
   if Rails.env.local?
-    get "test/magic_link_token/:email", to: "test_helpers#magic_link_token"
+    get "test/magic_link_token/:email", to: "test_helpers#magic_link_token", constraints: { email: /[^\/]+/ }
   end
 end
