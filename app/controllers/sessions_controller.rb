@@ -13,7 +13,7 @@ class SessionsController < ApplicationController
   end
 
   def create
-    result = SendMagicLink.call(email_address: params[:email_address])
+    result = SendMagicLink.call(email_address: params[:email_address], plan: params[:plan])
 
     if result.success?
       redirect_to root_path, notice: "Check your email for a login link!"
@@ -34,9 +34,20 @@ class SessionsController < ApplicationController
 
     if result.success?
       start_new_session_for result.data
-      redirect_to after_authentication_url, notice: "Welcome back!"
+      redirect_to post_login_path(params[:plan]), notice: "Welcome back!"
     else
       redirect_to root_path, alert: "Invalid or expired login link. Please try again."
+    end
+  end
+
+  def post_login_path(plan)
+    case plan
+    when "premium_monthly"
+      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
+    when "premium_annual"
+      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+    else
+      after_authentication_url
     end
   end
 end
