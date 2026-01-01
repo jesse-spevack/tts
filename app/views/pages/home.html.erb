@@ -133,6 +133,131 @@
     </div>
   </section>
 
+  <!-- Pricing Section -->
+  <section id="pricing" class="bg-[var(--color-base)]">
+    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8" data-controller="pricing-toggle">
+      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Pricing</h2>
+      <p class="mt-4 text-base/7 text-[var(--color-subtext)]">
+        2 free episodes every month. Upgrade anytime for unlimited.
+      </p>
+
+      <!-- Monthly/Annual Toggle -->
+      <div class="mt-8 flex justify-center">
+        <fieldset aria-label="Payment frequency" class="grid grid-cols-2 gap-x-1 rounded-full p-1 text-center text-sm font-semibold bg-[var(--color-surface0)]">
+          <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+            <input type="radio" name="frequency" value="monthly" checked class="sr-only" data-action="change->pricing-toggle#update" />
+            <span>Monthly</span>
+          </label>
+          <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+            <input type="radio" name="frequency" value="annual" class="sr-only" data-action="change->pricing-toggle#update" />
+            <span>Annual</span>
+          </label>
+        </fieldset>
+      </div>
+
+      <!-- Pricing Cards -->
+      <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-3xl mx-auto">
+        <!-- Free Card -->
+        <div class="rounded-2xl p-8 ring-1 ring-[var(--color-overlay0)]">
+          <h3 class="text-lg font-semibold text-[var(--color-text)]">Free</h3>
+          <p class="mt-4 text-sm text-[var(--color-subtext)]">
+            Try it out, no credit card required.
+          </p>
+
+          <p class="mt-6">
+            <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$0</span>
+            <span class="text-sm text-[var(--color-subtext)]">/month</span>
+          </p>
+
+          <a href="#signup" class="mt-6 block rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-primary)] hover:bg-[var(--color-surface0)]">
+            Create my feed
+          </a>
+
+          <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Private podcast feed
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Paste links, text, or upload files
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Choose your voice
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              2 episodes per month
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Up to 15,000 characters
+            </li>
+          </ul>
+        </div>
+
+        <!-- Premium Card -->
+        <div class="rounded-2xl p-8 ring-2 ring-[var(--color-primary)]">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-[var(--color-primary)]">Premium</h3>
+            <span class="rounded-full bg-[var(--color-primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
+              Most popular
+            </span>
+          </div>
+
+          <p class="mt-4 text-sm text-[var(--color-subtext)]">
+            For serious readers and listeners.
+          </p>
+
+          <p class="mt-6" data-pricing-toggle-target="monthlyPrice">
+            <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$9</span>
+            <span class="text-sm text-[var(--color-subtext)]">/month</span>
+          </p>
+          <p class="mt-6 hidden" data-pricing-toggle-target="annualPrice">
+            <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$89</span>
+            <span class="text-sm text-[var(--color-subtext)]">/year</span>
+          </p>
+
+          <a href="#signup?plan=premium_monthly" data-pricing-toggle-target="premiumLink" class="mt-6 block rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)]">
+            Get Premium
+          </a>
+
+          <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Everything in Free, plus:
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Unlimited episodes
+            </li>
+            <li class="flex gap-x-3">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              Up to 50,000 characters
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Signup Section -->
   <div id="signup" class="bg-[var(--color-base)] py-16 sm:py-24 lg:py-32">
     <div class="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
