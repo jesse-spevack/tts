@@ -33,6 +33,6 @@ class CheckoutController < ApplicationController
   private
 
   def valid_price?(price_id)
-    [AppConfig::Stripe::PRICE_ID_MONTHLY, AppConfig::Stripe::PRICE_ID_ANNUAL].include?(price_id)
+    [ AppConfig::Stripe::PRICE_ID_MONTHLY, AppConfig::Stripe::PRICE_ID_ANNUAL ].include?(price_id)
   end
 end

@@ -97,7 +97,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
           status: status,
           current_period_end: current_period_end,
           items: {
-            data: [{ price: { id: price_id } }]
+            data: [ { price: { id: price_id } } ]
           }
         }.to_json
       )

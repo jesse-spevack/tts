@@ -34,7 +34,7 @@ class CreatesCheckoutSessionTest < ActiveSupport::TestCase
   test "reuses existing Stripe customer" do
     # Mock customer list (existing customer found)
     stub_request(:get, /api\.stripe\.com\/v1\/customers/)
-      .to_return(status: 200, body: { data: [{ id: "cus_existing", email: @user.email_address }] }.to_json)
+      .to_return(status: 200, body: { data: [ { id: "cus_existing", email: @user.email_address } ] }.to_json)
 
     # Mock checkout session create
     stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")

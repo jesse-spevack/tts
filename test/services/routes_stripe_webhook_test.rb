@@ -17,7 +17,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_test",
           status: "active",
           current_period_end: 1.month.from_now.to_i,
-          items: { data: [{ price: { id: "price_monthly" } }] }
+          items: { data: [ { price: { id: "price_monthly" } } ] }
         }.to_json
       )
 
@@ -57,7 +57,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_test",
           status: "past_due",
           current_period_end: 1.month.from_now.to_i,
-          items: { data: [{ price: { id: "price_monthly" } }] }
+          items: { data: [ { price: { id: "price_monthly" } } ] }
         }.to_json
       )
 
@@ -92,7 +92,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_del",
           status: "canceled",
           current_period_end: 1.day.ago.to_i,
-          items: { data: [{ price: { id: "price_monthly" } }] }
+          items: { data: [ { price: { id: "price_monthly" } } ] }
         }.to_json
       )
 
@@ -127,7 +127,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_fail",
           status: "past_due",
           current_period_end: 1.month.from_now.to_i,
-          items: { data: [{ price: { id: "price_monthly" } }] }
+          items: { data: [ { price: { id: "price_monthly" } } ] }
         }.to_json
       )
 

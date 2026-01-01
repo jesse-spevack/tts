@@ -36,7 +36,7 @@ class CreatesCheckoutSession
     Stripe::Checkout::Session.create(
       customer: customer.id,
       mode: "subscription",
-      line_items: [{ price: price_id, quantity: 1 }],
+      line_items: [ { price: price_id, quantity: 1 } ],
       success_url: success_url,
       cancel_url: cancel_url,
       metadata: { user_id: user.id }
