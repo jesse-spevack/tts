@@ -11,23 +11,27 @@ class SyncsSubscription
     stripe_subscription = Stripe::Subscription.retrieve(stripe_subscription_id)
     user = find_user(stripe_subscription.customer)
 
-    ensure_user_has_customer_id(user, stripe_subscription.customer)
+    ActiveRecord::Base.transaction do
+      ensure_user_has_customer_id(user, stripe_subscription.customer)
 
-    subscription = Subscription.find_or_initialize_by(
-      stripe_subscription_id: stripe_subscription.id
-    )
+      subscription = Subscription.find_or_initialize_by(
+        stripe_subscription_id: stripe_subscription.id
+      )
 
-    item = stripe_subscription.items.data.first
-    subscription.update!(
-      user: user,
-      status: map_status(stripe_subscription.status),
-      stripe_price_id: item.price.id,
-      current_period_end: Time.at(item.current_period_end)
-    )
+      item = stripe_subscription.items.data.first
+      subscription.update!(
+        user: user,
+        status: map_status(stripe_subscription.status),
+        stripe_price_id: item.price.id,
+        current_period_end: Time.at(item.current_period_end)
+      )
 
-    Result.success(subscription)
+      Result.success(subscription)
+    end
   rescue Stripe::StripeError => e
     Result.failure("Stripe API error: #{e.message}")
+  rescue ActiveRecord::RecordInvalid => e
+    Result.failure("Database error: #{e.message}")
   end
 
   private
