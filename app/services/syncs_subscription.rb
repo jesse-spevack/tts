@@ -23,7 +23,8 @@ class SyncsSubscription
         status: map_status(stripe_subscription.status),
         stripe_price_id: item.price.id,
         current_period_end: Time.at(item.current_period_end),
-        cancel_at_period_end: stripe_subscription.cancel_at_period_end
+        cancel_at_period_end: stripe_subscription.cancel_at_period_end,
+        cancel_at: derive_cancel_at(stripe_subscription, item)
       )
 
       Result.success(subscription)
@@ -50,6 +51,14 @@ class SyncsSubscription
       # Log unexpected statuses (unpaid, incomplete, incomplete_expired, paused)
       Rails.logger.warn("[SyncsSubscription] Unexpected subscription status '#{stripe_status}' mapped to :canceled")
       :canceled
+    end
+  end
+
+  def derive_cancel_at(stripe_subscription, item)
+    if stripe_subscription.cancel_at
+      Time.at(stripe_subscription.cancel_at)
+    elsif stripe_subscription.cancel_at_period_end
+      Time.at(item.current_period_end)
     end
   end
 end
