@@ -8,7 +8,9 @@ class CreatesSubscriptionFromCheckoutTest < ActiveSupport::TestCase
   end
 
   test "syncs subscription from checkout session" do
-    # Stub Stripe API calls that SyncsSubscription will make
+    # User has stripe_customer_id set before checkout completes
+    @user.update!(stripe_customer_id: "cus_checkout")
+
     stub_request(:get, "https://api.stripe.com/v1/subscriptions/sub_from_checkout")
       .to_return(
         status: 200,
@@ -18,12 +20,6 @@ class CreatesSubscriptionFromCheckoutTest < ActiveSupport::TestCase
           status: "active",
           items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
-      )
-
-    stub_request(:get, "https://api.stripe.com/v1/customers/cus_checkout")
-      .to_return(
-        status: 200,
-        body: { id: "cus_checkout", metadata: { user_id: @user.id.to_s } }.to_json
       )
 
     session = OpenStruct.new(subscription: "sub_from_checkout")

@@ -7,6 +7,8 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
   end
 
   test "creates new subscription for active Stripe subscription" do
+    @user.update!(stripe_customer_id: "cus_new")
+
     stub_stripe_subscription(
       id: "sub_new",
       customer: "cus_new",
@@ -15,15 +17,12 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       current_period_end: 1.month.from_now.to_i
     )
 
-    stub_stripe_customer(id: "cus_new", user_id: @user.id)
-
     result = SyncsSubscription.call(stripe_subscription_id: "sub_new")
 
     assert result.success?
     subscription = result.data
     assert_equal @user, subscription.user
     assert subscription.active?
-    assert_equal "cus_new", @user.reload.stripe_customer_id
   end
 
   test "updates existing subscription" do
@@ -52,6 +51,8 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
   end
 
   test "sets canceled status for canceled subscription" do
+    @user.update!(stripe_customer_id: "cus_canceled")
+
     stub_stripe_subscription(
       id: "sub_canceled",
       customer: "cus_canceled",
@@ -60,8 +61,6 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       current_period_end: 1.day.ago.to_i
     )
 
-    stub_stripe_customer(id: "cus_canceled", user_id: @user.id)
-
     result = SyncsSubscription.call(stripe_subscription_id: "sub_canceled")
 
     assert result.success?
@@ -69,6 +68,8 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
   end
 
   test "maps trialing status to active" do
+    @user.update!(stripe_customer_id: "cus_trial")
+
     stub_stripe_subscription(
       id: "sub_trial",
       customer: "cus_trial",
@@ -76,8 +77,6 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       price_id: "price_monthly",
       current_period_end: 1.month.from_now.to_i
     )
-
-    stub_stripe_customer(id: "cus_trial", user_id: @user.id)
 
     result = SyncsSubscription.call(stripe_subscription_id: "sub_trial")
 
@@ -98,17 +97,6 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
           items: {
             data: [ { price: { id: price_id }, current_period_end: current_period_end } ]
           }
-        }.to_json
-      )
-  end
-
-  def stub_stripe_customer(id:, user_id:)
-    stub_request(:get, "https://api.stripe.com/v1/customers/#{id}")
-      .to_return(
-        status: 200,
-        body: {
-          id: id,
-          metadata: { user_id: user_id.to_s }
         }.to_json
       )
   end

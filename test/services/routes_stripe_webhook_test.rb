@@ -8,7 +8,9 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
   end
 
   test "routes checkout.session.completed to CreatesSubscriptionFromCheckout" do
-    # Stub the Stripe API calls that will be made
+    # User has stripe_customer_id set before checkout completes
+    @user.update!(stripe_customer_id: "cus_test")
+
     stub_request(:get, "https://api.stripe.com/v1/subscriptions/sub_test")
       .to_return(
         status: 200,
@@ -18,12 +20,6 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           status: "active",
           items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
-      )
-
-    stub_request(:get, "https://api.stripe.com/v1/customers/cus_test")
-      .to_return(
-        status: 200,
-        body: { id: "cus_test", metadata: { user_id: @user.id.to_s } }.to_json
       )
 
     event = OpenStruct.new(
