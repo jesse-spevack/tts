@@ -43,18 +43,14 @@
     <% end %>
   <% end %>
 
+  <% premium_features = [
+    "Everything in Free, plus:",
+    "Unlimited episodes",
+    "Up to 50,000 characters"
+  ] %>
   <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
-    <li class="flex gap-x-3">
-      <%= render "shared/icons/check", css_class: "h-6 w-5 flex-none text-[var(--color-primary)]" %>
-      Everything in Free, plus:
-    </li>
-    <li class="flex gap-x-3">
-      <%= render "shared/icons/check", css_class: "h-6 w-5 flex-none text-[var(--color-primary)]" %>
-      Unlimited episodes
-    </li>
-    <li class="flex gap-x-3">
-      <%= render "shared/icons/check", css_class: "h-6 w-5 flex-none text-[var(--color-primary)]" %>
-      Up to 50,000 characters
-    </li>
+    <% premium_features.each do |feature| %>
+      <%= render "shared/feature_list_item", text: feature %>
+    <% end %>
   </ul>
 </div>

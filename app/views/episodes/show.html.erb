@@ -33,15 +33,13 @@
     <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>
 
     <div class="flex gap-4">
-      <button type="button"
-              data-controller="clipboard"
-              data-clipboard-content-value="<%= episode_url(@episode.prefix_id) %>"
-              data-action="click->clipboard#copy"
-              class="flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors">
-        <span data-clipboard-target="copyIcon"><%= render "shared/icons/share" %></span>
-        <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/check_circle" %></span>
-        <span>Share</span>
-      </button>
+      <%= render "shared/clipboard_button",
+        content: episode_url(@episode.prefix_id),
+        title: "Copy share link",
+        icon: "share",
+        button_class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors",
+        label: "Share"
+      %>
 
       <%= link_to episode_path(@episode.prefix_id, format: :mp3), class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
         <%= render "shared/icons/download" %>
