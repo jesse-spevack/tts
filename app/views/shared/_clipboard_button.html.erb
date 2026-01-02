@@ -1,4 +1,4 @@
-<%# locals: (content:, title: "Copy to clipboard", icon: "share", check_icon: nil, button_class: nil, label: nil) %>
+<%# locals: (content:, title: "Copy to clipboard", icon: "share", button_class: nil, label: nil) %>
 <button type="button"
         data-controller="clipboard"
         data-clipboard-content-value="<%= content %>"
@@ -7,7 +7,7 @@
         title="<%= title %>">
   <span data-clipboard-target="copyIcon"><%= render "shared/icons/#{icon}" %></span>
   <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]">
-    <%= render "shared/icons/#{check_icon || (icon == "copy" ? "document_check" : "check_circle")}" %>
+    <%= render "shared/icons/#{icon == "copy" ? "document_check" : "check_circle"}" %>
   </span>
   <% if label %>
     <span><%= label %></span>
