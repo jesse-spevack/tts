@@ -85,4 +85,22 @@ test.describe('Landing Page Signup Flows', () => {
     // Should show confirmation message
     await expect(page.locator('text=Check your email')).toBeVisible();
   });
+
+  test('existing user re-signup sends magic link (not error)', async ({ page }) => {
+    // Use an email that already exists in the database (from fixtures)
+    const existingEmail = 'free@example.com';
+
+    await page.click('button[data-plan="free"]');
+
+    await page.fill('input[type="email"]', existingEmail);
+    await page.click('input[type="submit"]');
+
+    // Should show same confirmation (magic link sent), not an error
+    // This ensures we don't leak information about existing accounts
+    await expect(page.locator('text=Check your email')).toBeVisible();
+
+    // Should NOT show any error message about existing account
+    await expect(page.locator('text=already exists')).not.toBeVisible();
+    await expect(page.locator('text=already registered')).not.toBeVisible();
+  });
 });

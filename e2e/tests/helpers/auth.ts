@@ -1,7 +1,5 @@
 // e2e/tests/helpers/auth.ts
-import { Page, expect } from '@playwright/test';
-
-const BASE_URL = 'http://localhost:3000';
+import { Page, APIRequestContext, expect } from '@playwright/test';
 
 /**
  * Test user emails matching fixtures in test/fixtures/users.yml
@@ -23,8 +21,8 @@ export const TEST_USERS = {
  * Only works in development/test environments.
  */
 export async function signInAs(page: Page, email: string, redirectTo: string = '/episodes') {
-  // Fetch a fresh token from the test endpoint
-  const response = await page.request.get(`${BASE_URL}/test/magic_link_token/${encodeURIComponent(email)}`);
+  // Fetch a fresh token from the test endpoint (uses baseURL from playwright config)
+  const response = await page.request.get(`/test/magic_link_token/${encodeURIComponent(email)}`);
 
   if (!response.ok()) {
     const body = await response.text();
@@ -106,4 +104,34 @@ export async function authenticateWithToken(page: Page, token: string, plan?: st
     ? `/auth?token=${token}&plan=${plan}`
     : `/auth?token=${token}`;
   await page.goto(url);
+}
+
+/**
+ * Creates a fresh test user and returns the auth token.
+ * Email must end with @test.example.com for cleanup via rake task.
+ */
+export async function createTestUser(request: APIRequestContext, email?: string): Promise<{ token: string; email: string }> {
+  const testEmail = email || `test-${Date.now()}@test.example.com`;
+
+  const response = await request.post('/test/create_user', {
+    data: { email: testEmail }
+  });
+
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(`Failed to create test user: ${response.status()} - ${body}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Creates a fresh test user and signs in.
+ * Returns the email for reference.
+ */
+export async function signInAsNewUser(page: Page, emailPrefix: string = 'test'): Promise<string> {
+  const email = `${emailPrefix}-${Date.now()}@test.example.com`;
+  const { token } = await createTestUser(page.request, email);
+  await page.goto(`/auth?token=${token}`);
+  return email;
 }

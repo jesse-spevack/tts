@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "playwright test",
+    "posttest": "echo '\n💡 To clean up test users: bin/rake test:purge_e2e_users'",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui"
   },

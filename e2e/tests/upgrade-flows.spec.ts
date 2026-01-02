@@ -1,34 +1,35 @@
 // e2e/tests/upgrade-flows.spec.ts
 import { test, expect } from '@playwright/test';
-import { signInAsFreeUser, signInAsPremiumUser } from './helpers/auth';
+import { signInAsNewUser, signInAsPremiumUser } from './helpers/auth';
 
+// Uses fresh test users for isolation. Clean up with: bin/rake test:purge_e2e_users
 test.describe('Upgrade Flows (Free User)', () => {
   test('free user sees Upgrade link in header', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await expect(page.locator('a:has-text("Upgrade")').first()).toBeVisible();
   });
 
   test('clicking Upgrade goes to /upgrade page', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.locator('a:has-text("Upgrade")').first().click();
     await expect(page).toHaveURL('/upgrade');
   });
 
   test('/billing redirects free user to /upgrade', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.goto('/billing');
     await expect(page).toHaveURL('/upgrade');
   });
 
   test('upgrade page shows pricing toggle with annual default', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.goto('/upgrade');
     await expect(page.locator('input[value="annual"]')).toBeChecked();
     await expect(page.locator('input[value="monthly"]')).not.toBeChecked();
   });
 
   test('upgrade page toggle switches price display', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.goto('/upgrade');
 
     // Annual price visible by default
@@ -44,13 +45,13 @@ test.describe('Upgrade Flows (Free User)', () => {
   });
 
   test('upgrade page shows free plan usage', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.goto('/upgrade');
     await expect(page.locator('text=Free Plan')).toBeVisible();
   });
 
   test('subscribe button redirects to Stripe checkout', async ({ page }) => {
-    await signInAsFreeUser(page);
+    await signInAsNewUser(page, 'free');
     await page.goto('/upgrade');
 
     // Click subscribe - will redirect to Stripe
