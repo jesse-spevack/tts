@@ -89,19 +89,4 @@
     }
   }
 
-  .text-rainbow {
-    background: linear-gradient(
-      to right,
-      var(--color-red),
-      var(--color-peach),
-      var(--color-yellow),
-      var(--color-green),
-      var(--color-teal),
-      var(--color-blue),
-      var(--color-lavender)
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
 }
