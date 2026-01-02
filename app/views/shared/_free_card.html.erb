@@ -1,0 +1,28 @@
+<%# locals: (mode:) %>
+<div class="rounded-2xl p-8 ring-1 ring-[var(--color-overlay0)]">
+  <h3 class="text-lg font-semibold text-[var(--color-text)]">Free</h3>
+  <p class="mt-4 text-sm text-[var(--color-subtext)]">
+    Try it out, no credit card required.
+  </p>
+
+  <p class="mt-6">
+    <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$0</span>
+    <span class="text-sm text-[var(--color-subtext)]">/month</span>
+  </p>
+
+  <%= render "shared/signup_cta_button",
+    text: "Create my feed",
+    plan: "free",
+    heading: "Start listening free",
+    subtext: "2 episodes/month, no credit card required",
+    style: :outline,
+    additional_classes: "mt-6" %>
+
+  <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+    <%= render "shared/feature_list_item", text: "Private podcast feed" %>
+    <%= render "shared/feature_list_item", text: "Paste links, text, or upload files" %>
+    <%= render "shared/feature_list_item", text: "Choose your voice" %>
+    <%= render "shared/feature_list_item", text: "2 episodes per month" %>
+    <%= render "shared/feature_list_item", text: "Up to 15,000 characters" %>
+  </ul>
+</div>

@@ -32,27 +32,7 @@
 
     <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>
 
-    <div class="flex gap-4">
-      <%= render "shared/clipboard_button",
-        content: episode_url(@episode.prefix_id),
-        title: "Copy share link",
-        icon: "share",
-        button_class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors",
-        label: "Share"
-      %>
-
-      <%= link_to episode_path(@episode.prefix_id, format: :mp3), class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
-        <%= render "shared/icons/download" %>
-        <span>Download MP3</span>
-      <% end %>
-
-      <% if @episode.url? %>
-        <%= link_to @episode.source_url, target: "_blank", rel: "noopener", class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
-          <%= render "shared/icons/external_link" %>
-          <span>View Original</span>
-        <% end %>
-      <% end %>
-    </div>
+    <%= render "episodes/episode_actions", episode: @episode, layout: :full %>
   <% end %>
 
   <% unless authenticated? %>

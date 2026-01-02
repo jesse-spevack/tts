@@ -4,31 +4,7 @@
       <div class="flex items-center gap-2">
         <%= status_badge(episode.status) %>
       </div>
-      <div class="flex items-center gap-3">
-        <% if episode.complete? %>
-          <%= render "shared/clipboard_button",
-            content: episode_url(episode.prefix_id),
-            title: "Copy share link",
-            icon: "share"
-          %>
-          <%= link_to episode_path(episode.prefix_id, format: :mp3), class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors", title: "Download MP3" do %>
-            <%= render "shared/icons/download" %>
-          <% end %>
-        <% end %>
-        <% if deletable?(episode) %>
-          <%= button_to episode_path(episode),
-              method: :delete,
-              form_class: "contents",
-              class: "text-[var(--color-subtext)] hover:text-[var(--color-red)] transition-colors cursor-pointer",
-              title: "Delete episode",
-              data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?", turbo_frame: "_top" } do %>
-            <%= render "shared/icons/trash" %>
-          <% end %>
-        <% end %>
-        <% if episode.duration_seconds %>
-          <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
-        <% end %>
-      </div>
+      <%= render "episodes/episode_actions", episode: episode, layout: :compact %>
     </div>
     <% if episode.failed? && episode.error_message.present? %>
       <p class="text-sm text-[var(--color-red)] mt-1"><%= episode.error_message %></p>

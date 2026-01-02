@@ -1,0 +1,56 @@
+<%# locals: (episode:, layout: :compact) %>
+<% if layout == :compact %>
+  <%# Compact layout for episode cards %>
+  <div class="flex items-center gap-3">
+    <% if episode.complete? %>
+      <%= render "shared/clipboard_button",
+        content: episode_url(episode.prefix_id),
+        title: "Copy share link",
+        icon: "share"
+      %>
+      <%= link_to episode_path(episode.prefix_id, format: :mp3),
+        class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors",
+        title: "Download MP3" do %>
+        <%= render "shared/icons/download" %>
+      <% end %>
+    <% end %>
+    <% if deletable?(episode) %>
+      <%= button_to episode_path(episode),
+        method: :delete,
+        form_class: "contents",
+        class: "text-[var(--color-subtext)] hover:text-[var(--color-red)] transition-colors cursor-pointer",
+        title: "Delete episode",
+        data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?", turbo_frame: "_top" } do %>
+        <%= render "shared/icons/trash" %>
+      <% end %>
+    <% end %>
+    <% if episode.duration_seconds %>
+      <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
+    <% end %>
+  </div>
+<% else %>
+  <%# Full layout for show page with labeled buttons %>
+  <div class="flex gap-4">
+    <%= render "shared/clipboard_button",
+      content: episode_url(episode.prefix_id),
+      title: "Copy share link",
+      icon: "share",
+      button_class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors",
+      label: "Share"
+    %>
+
+    <%= link_to episode_path(episode.prefix_id, format: :mp3),
+      class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
+      <%= render "shared/icons/download" %>
+      <span>Download MP3</span>
+    <% end %>
+
+    <% if episode.url? && episode.source_url.present? %>
+      <%= link_to episode.source_url, target: "_blank", rel: "noopener",
+        class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
+        <%= render "shared/icons/external_link" %>
+        <span>View Original</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,15 @@
+<%# locals: (title:, instructions: [], max_width: "sm") %>
+<%= render "shared/card", padding: "p-12" do %>
+  <div class="text-center">
+    <div class="max-w-<%= max_width %> mx-auto">
+      <p class="text-lg mb-4"><%= title %></p>
+      <% if instructions.any? %>
+        <ol class="text-left text-[var(--color-subtext)] space-y-2">
+          <% instructions.each do |instruction| %>
+            <li><%= instruction %></li>
+          <% end %>
+        </ol>
+      <% end %>
+    </div>
+  </div>
+<% end %>
