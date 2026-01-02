@@ -16,6 +16,7 @@ class SyncsSubscription
         stripe_subscription_id: stripe_subscription.id
       )
 
+      # Assumes single-item subscriptions (one price per subscription)
       item = stripe_subscription.items.data.first
       subscription.update!(
         user: user,
@@ -42,7 +43,11 @@ class SyncsSubscription
       :active
     when "past_due"
       :past_due
+    when "canceled"
+      :canceled
     else
+      # Log unexpected statuses (unpaid, incomplete, incomplete_expired, paused)
+      Rails.logger.warn("[SyncsSubscription] Unexpected subscription status '#{stripe_status}' mapped to :canceled")
       :canceled
     end
   end
