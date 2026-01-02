@@ -48,10 +48,9 @@
             </p>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
-            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
-            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
-          </div>
+          <%= render "shared/form_actions",
+            submit_text: "Create Episode",
+            cancel_path: episodes_path %>
         <% end %>
       </div>
 
@@ -70,10 +69,9 @@
             </p>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
-            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
-            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
-          </div>
+          <%= render "shared/form_actions",
+            submit_text: "Create Episode",
+            cancel_path: episodes_path %>
         <% end %>
       </div>
 
@@ -130,10 +128,9 @@
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
-            <%= f.submit "Create Episode", class: button_classes(type: :primary, full_width: false) + " sm:w-auto w-full" %>
-            <%= link_to "Cancel", episodes_path, class: button_classes(type: :text) + " text-center" %>
-          </div>
+          <%= render "shared/form_actions",
+            submit_text: "Create Episode",
+            cancel_path: episodes_path %>
         <% end %>
       </div>
     </div>

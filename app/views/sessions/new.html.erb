@@ -37,8 +37,7 @@
         </div>
 
         <p class="text-xs text-[var(--color-subtext)] text-center">
-          By signing up, you agree to our <%= link_to "Terms of Service", terms_path, class: "underline hover:text-[var(--color-text)]" %>
-          and <%= link_to "Privacy Policy", privacy_path, class: "underline hover:text-[var(--color-text)]" %>.
+          <%= render "shared/legal_links" %>
         </p>
       <% end %>
     </div>

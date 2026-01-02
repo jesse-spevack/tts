@@ -12,16 +12,12 @@
             Paste a URL, upload a file, or drop in text. We'll turn it into a podcast episode in your feed.
           </p>
           <div class="mt-10 flex items-center gap-x-6">
-            <button
-              type="button"
-              data-action="click->signup-modal#open"
-              data-plan="free"
-              data-heading="Start listening free"
-              data-subtext="2 episodes/month, no credit card required"
-              class="rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-            >
-              Start listening free
-            </button>
+            <%= render "shared/signup_cta_button",
+              text: "Start listening free",
+              plan: "free",
+              heading: "Start listening free",
+              subtext: "2 episodes/month, no credit card required",
+              style: :primary %>
             <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
               Hear a sample <span aria-hidden="true">&rarr;</span>
             <% end %>
@@ -163,16 +159,13 @@
             <span class="text-sm text-[var(--color-subtext)]">/month</span>
           </p>
 
-          <button
-            type="button"
-            data-action="click->signup-modal#open"
-            data-plan="free"
-            data-heading="Start listening free"
-            data-subtext="2 episodes/month, no credit card required"
-            class="mt-6 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-primary)] hover:bg-[var(--color-surface0)]"
-          >
-            Create my feed
-          </button>
+          <%= render "shared/signup_cta_button",
+            text: "Create my feed",
+            plan: "free",
+            heading: "Start listening free",
+            subtext: "2 episodes/month, no credit card required",
+            style: :outline,
+            additional_classes: "mt-6" %>
 
           <% free_features = [
             "Private podcast feed",
@@ -203,16 +196,13 @@
       <p class="mt-4 text-lg text-[var(--color-subtext)]">
         No credit card required. Start with 2 free episodes.
       </p>
-      <button
-        type="button"
-        data-action="click->signup-modal#open"
-        data-plan="free"
-        data-heading="Start listening free"
-        data-subtext="2 episodes/month, no credit card required"
-        class="mt-8 rounded-lg bg-[var(--color-primary)] px-6 py-3 text-base font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)]"
-      >
-        Create my free feed
-      </button>
+      <%= render "shared/signup_cta_button",
+        text: "Create my free feed",
+        plan: "free",
+        heading: "Start listening free",
+        subtext: "2 episodes/month, no credit card required",
+        style: :large,
+        additional_classes: "mt-8" %>
     </div>
   </div>
 <% end %>
