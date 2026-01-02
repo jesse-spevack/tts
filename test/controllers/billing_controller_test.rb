@@ -19,4 +19,19 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
     get billing_path
     assert_response :success
   end
+
+  test "show displays 'Ends on' for subscription pending cancellation" do
+    sign_in_as(users(:canceling_subscriber))
+    get billing_path
+    assert_response :success
+    assert_match "Ends on", response.body
+    refute_match "Renews on", response.body
+  end
+
+  test "show displays 'Renews on' for active renewing subscription" do
+    sign_in_as(users(:subscriber))
+    get billing_path
+    assert_response :success
+    assert_match "Renews on", response.body
+  end
 end
