@@ -6,4 +6,8 @@ class Subscription < ApplicationRecord
   validates :stripe_subscription_id, presence: true, uniqueness: true
   validates :stripe_price_id, presence: true
   validates :current_period_end, presence: true
+
+  def canceling?
+    cancel_at.present?
+  end
 end

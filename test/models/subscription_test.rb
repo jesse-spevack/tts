@@ -19,4 +19,14 @@ class SubscriptionTest < ActiveSupport::TestCase
     subscription = subscriptions(:canceled_subscription)
     refute subscription.active?
   end
+
+  test "canceling? returns true when cancel_at is present" do
+    subscription = Subscription.new(cancel_at: 1.month.from_now)
+    assert subscription.canceling?
+  end
+
+  test "canceling? returns false when cancel_at is nil" do
+    subscription = Subscription.new(cancel_at: nil)
+    refute subscription.canceling?
+  end
 end
