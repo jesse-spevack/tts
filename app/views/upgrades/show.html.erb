@@ -1,7 +1,5 @@
 <div class="max-w-2xl mx-auto px-4 py-8">
-  <%= link_to episodes_path, class: "text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)] mb-4 inline-flex items-center gap-1" do %>
-    <%= render "shared/icons/arrow_left" %> Back to Episodes
-  <% end %>
+  <%= render "shared/back_link", path: episodes_path, text: "Back to Episodes" %>
   <h1 class="text-3xl font-bold text-[var(--color-text)] mb-8">Upgrade</h1>
 
   <div class="border border-[var(--color-overlay0)] rounded-lg p-6 mb-6">

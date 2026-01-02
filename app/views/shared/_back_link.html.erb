@@ -1,0 +1,4 @@
+<%# locals: (path:, text: "Back") %>
+<%= link_to path, class: "text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)] mb-4 inline-flex items-center gap-1" do %>
+  <%= render "shared/icons/arrow_left" %> <%= text %>
+<% end %>

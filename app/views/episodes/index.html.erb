@@ -6,15 +6,12 @@
       <h1 class="text-2xl font-semibold mb-2">Episodes</h1>
       <p class="text-sm text-[var(--color-subtext)] flex items-center gap-2">
         RSS Feed: <%= link_to @podcast.feed_url, @podcast.feed_url, class: "text-[var(--color-primary)] hover:underline break-all", target: "_blank" %>
-        <button type="button"
-                data-controller="clipboard"
-                data-clipboard-content-value="<%= @podcast.feed_url %>"
-                data-action="click->clipboard#copy"
-                class="text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors cursor-pointer flex-shrink-0"
-                title="Copy RSS feed URL">
-          <span data-clipboard-target="copyIcon"><%= render "shared/icons/copy" %></span>
-          <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/document_check" %></span>
-        </button>
+        <%= render "shared/clipboard_button",
+          content: @podcast.feed_url,
+          title: "Copy RSS feed URL",
+          icon: "copy",
+          button_class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors cursor-pointer flex-shrink-0"
+        %>
       </p>
     </div>
     <%= link_to new_episode_path, class: "#{button_classes(type: :primary)} w-full md:w-auto text-center" do %>

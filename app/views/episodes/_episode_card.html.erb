@@ -6,15 +6,11 @@
       </div>
       <div class="flex items-center gap-3">
         <% if episode.complete? %>
-          <button type="button"
-                  data-controller="clipboard"
-                  data-clipboard-content-value="<%= episode_url(episode.prefix_id) %>"
-                  data-action="click->clipboard#copy"
-                  class="text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
-                  title="Copy share link">
-            <span data-clipboard-target="copyIcon"><%= render "shared/icons/share" %></span>
-            <span data-clipboard-target="checkIcon" class="hidden text-[var(--color-green)]"><%= render "shared/icons/check_circle" %></span>
-          </button>
+          <%= render "shared/clipboard_button",
+            content: episode_url(episode.prefix_id),
+            title: "Copy share link",
+            icon: "share"
+          %>
           <%= link_to episode_path(episode.prefix_id, format: :mp3), class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors", title: "Download MP3" do %>
             <%= render "shared/icons/download" %>
           <% end %>
