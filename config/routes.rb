@@ -31,7 +31,7 @@ Rails.application.routes.draw do
 
   # Billing
   get "pricing", to: redirect("/#pricing")
-  get "upgrade", to: "billing#upgrade", as: :upgrade
+  resource :upgrade, only: [ :show ], controller: "upgrades"
   resource :billing, only: [ :show ], controller: "billing"
   resource :portal_session, only: [ :create ]
   get "checkout", to: "checkout#show"
