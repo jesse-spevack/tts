@@ -1,13 +1,9 @@
 <div class="max-w-2xl mx-auto">
-  <h1 class="text-3xl font-semibold mb-8">How it sounds</h1>
+  <%= render "shared/page_header", title: "How it sounds", size: "3xl" %>
 
   <div class="space-y-6 mb-12">
     <%= render "shared/card", padding: "p-4 sm:p-6" do %>
-      <p class="text-sm font-medium mb-3">Sample audio</p>
-      <audio controls class="w-full">
-        <source src="/sample-standard-d.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-      </audio>
+      <%= render "shared/audio_player", source: "/sample-standard-d.mp3", label: "Sample audio" %>
     <% end %>
   </div>
 
