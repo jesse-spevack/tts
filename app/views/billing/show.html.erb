@@ -1,54 +1,48 @@
 <div class="max-w-2xl mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold text-[var(--color-text)] mb-8">Billing</h1>
+  <%= link_to episodes_path, class: "text-sm text-[var(--color-subtext)] hover:text-[var(--color-text)] mb-4 inline-flex items-center gap-1" do %>
+    <%= render "shared/icons/arrow_left" %> Back to Episodes
+  <% end %>
+  <h1 class="text-2xl font-semibold mb-8">Billing</h1>
 
   <% if Current.user.unlimited? %>
-    <div class="bg-[var(--color-primary)]/10 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Unlimited Plan</h2>
-      <p class="text-[var(--color-subtext)]">You have unlimited access with no restrictions.</p>
-    </div>
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Unlimited Plan</h2>
+      <p class="text-[var(--color-subtext)] text-sm">You have unlimited access with no restrictions.</p>
+    <% end %>
 
   <% elsif Current.user.complimentary? %>
-    <div class="bg-[var(--color-green)]/10 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Premium (Complimentary)</h2>
-      <p class="text-[var(--color-subtext)]">You have complimentary premium access.</p>
-    </div>
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Premium (Complimentary)</h2>
+      <p class="text-[var(--color-subtext)] text-sm">You have complimentary premium access.</p>
+    <% end %>
 
   <% elsif @subscription&.active? %>
-    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Premium Plan</h2>
-      <p class="text-[var(--color-subtext)] mb-4">
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Premium Plan</h2>
+      <p class="text-[var(--color-subtext)] text-sm mb-4">
         Renews on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>
       </p>
-      <%= button_to "Manage Subscription", portal_session_path,
-        class: "px-4 py-2 bg-[var(--color-surface1)] text-[var(--color-text)] rounded-lg hover:bg-[var(--color-surface2)]" %>
-    </div>
+      <%= button_to "Manage Subscription", portal_session_path, class: button_classes(type: :secondary), data: { turbo: false } %>
+    <% end %>
 
   <% elsif @subscription&.past_due? %>
-    <div class="bg-[var(--color-yellow)]/10 border border-[var(--color-yellow)]/30 rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Payment Failed</h2>
-      <p class="text-[var(--color-subtext)] mb-4">Please update your payment method to restore Premium access.</p>
+    <div class="bg-[var(--color-yellow)]/10 border border-[var(--color-yellow)]/30 rounded-lg p-4 sm:p-8">
+      <h2 class="text-lg font-medium mb-2">Payment Failed</h2>
+      <p class="text-[var(--color-subtext)] text-sm mb-4">Please update your payment method to restore Premium access.</p>
       <%= button_to "Fix Payment", portal_session_path,
-        class: "px-4 py-2 bg-[var(--color-yellow)] text-[var(--color-base)] rounded-lg hover:opacity-90" %>
+        class: "px-4 py-2 bg-[var(--color-yellow)] text-[var(--color-base)] rounded-lg hover:opacity-90",
+        data: { turbo: false } %>
     </div>
 
   <% elsif @subscription&.canceled? %>
-    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Subscription Ended</h2>
-      <p class="text-[var(--color-subtext)] mb-4">
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Subscription Ended</h2>
+      <p class="text-[var(--color-subtext)] text-sm">
         Your subscription ended on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>.
       </p>
+    <% end %>
+    <div class="mt-6">
+      <%= render "upgrade_options" %>
     </div>
-    <%= render "upgrade_options" %>
-
-  <% else %>
-    <div class="bg-[var(--color-surface0)] rounded-lg p-6 mb-6">
-      <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Free Plan</h2>
-      <% if @usage %>
-        <p class="text-[var(--color-subtext)] mb-4">
-          <%= @usage.episode_count %> of <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes used this month
-        </p>
-      <% end %>
-    </div>
-    <%= render "upgrade_options" %>
   <% end %>
 </div>

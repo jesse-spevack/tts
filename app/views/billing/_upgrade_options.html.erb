@@ -1,44 +1,9 @@
-<div class="bg-[var(--color-surface0)] rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-[var(--color-text)] mb-4">Upgrade to Premium</h2>
-
-  <div class="space-y-4 mb-6">
-    <div class="flex items-center justify-between p-4 border border-[var(--color-overlay0)] rounded-lg">
-      <div>
-        <p class="font-medium text-[var(--color-text)]">Monthly</p>
-        <p class="text-[var(--color-subtext)]">$9/month</p>
-      </div>
-      <%= button_to "Subscribe", checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY),
-        class: "px-4 py-2 bg-[var(--color-primary)] text-[var(--color-primary-text)] rounded-lg hover:bg-[var(--color-primary-hover)]" %>
-    </div>
-
-    <div class="flex items-center justify-between p-4 border-2 border-[var(--color-primary)] rounded-lg">
-      <div>
-        <p class="font-medium text-[var(--color-text)]">Annual <span class="text-[var(--color-green)] text-sm">(Save 17%)</span></p>
-        <p class="text-[var(--color-subtext)]">$89/year</p>
-      </div>
-      <%= button_to "Subscribe", checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL),
-        class: "px-4 py-2 bg-[var(--color-primary)] text-[var(--color-primary-text)] rounded-lg hover:bg-[var(--color-primary-hover)]" %>
-    </div>
+<div data-controller="pricing-toggle"
+     data-pricing-toggle-monthly-price-id-value="<%= AppConfig::Stripe::PRICE_ID_MONTHLY %>"
+     data-pricing-toggle-annual-price-id-value="<%= AppConfig::Stripe::PRICE_ID_ANNUAL %>">
+  <div class="mb-6">
+    <%= render "shared/pricing_toggle" %>
   </div>
 
-  <ul class="text-[var(--color-subtext)] space-y-2">
-    <li class="flex items-center">
-      <svg class="w-5 h-5 text-[var(--color-primary)] mr-2" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-      </svg>
-      Unlimited episodes
-    </li>
-    <li class="flex items-center">
-      <svg class="w-5 h-5 text-[var(--color-primary)] mr-2" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-      </svg>
-      50,000 characters per episode
-    </li>
-    <li class="flex items-center">
-      <svg class="w-5 h-5 text-[var(--color-primary)] mr-2" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-      </svg>
-      No attribution in audio
-    </li>
-  </ul>
+  <%= render "shared/premium_card", mode: :billing %>
 </div>
