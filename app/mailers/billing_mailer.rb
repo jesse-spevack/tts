@@ -5,7 +5,7 @@ class BillingMailer < ApplicationMailer
 
     mail(
       to: user.email_address,
-      subject: "Ready for more?"
+      subject: "We love your enthusiasm! 🎧"
     )
   end
 end
