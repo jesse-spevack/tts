@@ -1,0 +1,12 @@
+<div class="flex justify-center">
+  <fieldset aria-label="Payment frequency" class="grid grid-cols-2 gap-x-1 rounded-full p-1 text-center text-sm font-semibold bg-[var(--color-surface0)]">
+    <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+      <input type="radio" name="frequency" value="monthly" class="sr-only" data-action="change->pricing-toggle#update" />
+      <span>Monthly</span>
+    </label>
+    <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
+      <input type="radio" name="frequency" value="annual" checked class="sr-only" data-action="change->pricing-toggle#update" />
+      <span>Annual</span>
+    </label>
+  </fieldset>
+</div>

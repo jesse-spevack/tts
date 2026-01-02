@@ -149,17 +149,8 @@
       </p>
 
       <!-- Monthly/Annual Toggle -->
-      <div class="mt-8 flex justify-center">
-        <fieldset aria-label="Payment frequency" class="grid grid-cols-2 gap-x-1 rounded-full p-1 text-center text-sm font-semibold bg-[var(--color-surface0)]">
-          <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
-            <input type="radio" name="frequency" value="monthly" checked class="sr-only" data-action="change->pricing-toggle#update" />
-            <span>Monthly</span>
-          </label>
-          <label class="cursor-pointer rounded-full px-4 py-2 text-[var(--color-subtext)] has-[:checked]:bg-[var(--color-primary)] has-[:checked]:text-[var(--color-primary-text)]">
-            <input type="radio" name="frequency" value="annual" class="sr-only" data-action="change->pricing-toggle#update" />
-            <span>Annual</span>
-          </label>
-        </fieldset>
+      <div class="mt-8">
+        <%= render "shared/pricing_toggle" %>
       </div>
 
       <!-- Pricing Cards -->
@@ -222,60 +213,7 @@
         </div>
 
         <!-- Premium Card -->
-        <div class="rounded-2xl p-8 ring-2 ring-[var(--color-primary)]">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-[var(--color-primary)]">Premium</h3>
-            <span class="rounded-full bg-[var(--color-primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              Most popular
-            </span>
-          </div>
-
-          <p class="mt-4 text-sm text-[var(--color-subtext)]">
-            For serious readers and listeners.
-          </p>
-
-          <p class="mt-6" data-pricing-toggle-target="monthlyPrice">
-            <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$9</span>
-            <span class="text-sm text-[var(--color-subtext)]">/month</span>
-          </p>
-          <p class="mt-6 hidden" data-pricing-toggle-target="annualPrice">
-            <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$89</span>
-            <span class="text-sm text-[var(--color-subtext)]">/year</span>
-          </p>
-
-          <button
-            type="button"
-            data-action="click->signup-modal#open"
-            data-plan="premium_monthly"
-            data-heading="Go Premium"
-            data-subtext="$9/month · Unlimited episodes · Cancel anytime"
-            data-pricing-toggle-target="premiumLink"
-            class="mt-6 block w-full rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)]"
-          >
-            Get Premium
-          </button>
-
-          <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
-            <li class="flex gap-x-3">
-              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
-                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
-              </svg>
-              Everything in Free, plus:
-            </li>
-            <li class="flex gap-x-3">
-              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
-                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
-              </svg>
-              Unlimited episodes
-            </li>
-            <li class="flex gap-x-3">
-              <svg viewBox="0 0 20 20" fill="currentColor" class="h-6 w-5 flex-none text-[var(--color-primary)]">
-                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
-              </svg>
-              Up to 50,000 characters
-            </li>
-          </ul>
-        </div>
+        <%= render "shared/premium_card", mode: :landing %>
       </div>
     </div>
   </section>
