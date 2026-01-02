@@ -3,11 +3,11 @@
 require "test_helper"
 
 class BuildEpisodeWrapperTest < ActiveSupport::TestCase
-  test "wraps content with intro and outro for free tier" do
+  test "wraps content with intro and outro with attribution for free users" do
     result = BuildEpisodeWrapper.call(
       title: "Test Article",
       author: "Jane Doe",
-      tier: "free",
+      include_attribution: true,
       content: "This is the article body."
     )
 
@@ -20,28 +20,11 @@ class BuildEpisodeWrapperTest < ActiveSupport::TestCase
     EXPECTED
   end
 
-  test "wraps content with intro and outro for premium tier" do
+  test "wraps content with intro and outro without attribution for premium users" do
     result = BuildEpisodeWrapper.call(
       title: "Test Article",
       author: "Jane Doe",
-      tier: "premium",
-      content: "This is the article body."
-    )
-
-    assert_equal <<~EXPECTED.strip, result
-      Test Article; by Jane Doe.
-
-      This is the article body.
-
-      Thank you for listening to this Very Normal TTS generated audio.
-    EXPECTED
-  end
-
-  test "wraps content with intro and outro for unlimited tier" do
-    result = BuildEpisodeWrapper.call(
-      title: "Test Article",
-      author: "Jane Doe",
-      tier: "unlimited",
+      include_attribution: false,
       content: "This is the article body."
     )
 
@@ -60,7 +43,7 @@ class BuildEpisodeWrapperTest < ActiveSupport::TestCase
     result = BuildEpisodeWrapper.call(
       title: "Multi Para",
       author: "Author",
-      tier: "premium",
+      include_attribution: false,
       content: content
     )
 

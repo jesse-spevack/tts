@@ -7,7 +7,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
 
   setup do
     @user = users(:one)
-    @user.update!(tier: :unlimited)
+    @user.update!(account_type: :unlimited)
     sign_in_as(@user)
 
     Mocktail.replace(ProcessesWithLlm)

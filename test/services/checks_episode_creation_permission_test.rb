@@ -3,7 +3,7 @@ require "test_helper"
 class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
-    @premium_user = users(:premium_user)
+    @premium_user = users(:subscriber)
     @unlimited_user = users(:unlimited_user)
   end
 

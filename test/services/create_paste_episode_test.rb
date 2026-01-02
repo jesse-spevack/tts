@@ -96,7 +96,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
 
   test "fails when text exceeds max characters for user tier" do
     free_user = users(:free_user)
-    max_chars = AppConfig::Tiers.character_limit_for(free_user.tier)
+    max_chars = free_user.character_limit
     text_over_limit = "A" * (max_chars + 1)
 
     result = CreatePasteEpisode.call(
@@ -111,7 +111,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
 
   test "succeeds when text is at max characters for user tier" do
     free_user = users(:free_user)
-    max_chars = AppConfig::Tiers.character_limit_for(free_user.tier)
+    max_chars = free_user.character_limit
     text_at_limit = "A" * max_chars
 
     result = CreatePasteEpisode.call(

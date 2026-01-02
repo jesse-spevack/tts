@@ -80,4 +80,9 @@ class AppConfigTest < ActiveSupport::TestCase
   test "Network::DNS_TIMEOUT_SECONDS is 5" do
     assert_equal 5, AppConfig::Network::DNS_TIMEOUT_SECONDS
   end
+
+  test "Stripe module has price constants" do
+    assert_equal "test_price_monthly", AppConfig::Stripe::PRICE_ID_MONTHLY
+    assert_equal "test_price_annual", AppConfig::Stripe::PRICE_ID_ANNUAL
+  end
 end

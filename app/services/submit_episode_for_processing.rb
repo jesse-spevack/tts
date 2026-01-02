@@ -29,7 +29,7 @@ class SubmitEpisodeForProcessing
     BuildEpisodeWrapper.call(
       title: episode.title,
       author: episode.author,
-      tier: episode.user.tier,
+      include_attribution: episode.user.free?,
       content: content
     )
   end

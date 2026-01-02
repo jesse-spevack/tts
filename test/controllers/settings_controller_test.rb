@@ -5,7 +5,7 @@ require "test_helper"
 class SettingsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
-    @user.update!(tier: :free)
+    @user.update!(account_type: :standard)
     sign_in_as(@user)
     ENV["GOOGLE_CLOUD_BUCKET"] = "test-bucket"
   end
@@ -29,7 +29,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show displays all voices for unlimited tier" do
-    @user.update!(tier: :unlimited)
+    @user.update!(account_type: :unlimited)
     get settings_path
 
     assert_response :success
@@ -67,7 +67,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update allows chirp voice for unlimited tier" do
-    @user.update!(tier: :unlimited)
+    @user.update!(account_type: :unlimited)
     patch settings_path, params: { voice: "elara" }
 
     assert_redirected_to settings_path

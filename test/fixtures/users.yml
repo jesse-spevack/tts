@@ -1,25 +1,43 @@
 one:
   email_address: user1@example.com
+  account_type: 0
 
 two:
   email_address: user2@example.com
+  account_type: 0
 
 free_user:
   email_address: free@example.com
-  tier: 0  # free
+  account_type: 0
 
-premium_user:
-  email_address: premium@example.com
-  tier: 1  # premium
+complimentary_user:
+  email_address: complimentary@example.com
+  account_type: 1
 
 unlimited_user:
   email_address: unlimited@example.com
-  tier: 2  # unlimited
+  account_type: 2
 
 admin_user:
   email_address: admin@example.com
+  account_type: 0
   admin: true
 
 jesse:
   email_address: jesse@example.com
-  tier: 1
+  account_type: 0
+
+subscriber:
+  email_address: subscriber@example.com
+  account_type: 0
+  stripe_customer_id: cus_test_active
+
+canceled_subscriber:
+  email_address: canceled@example.com
+  account_type: 0
+  stripe_customer_id: cus_test_canceled
+
+past_due_subscriber:
+  email_address: pastdue@example.com
+  account_type: 0
+  stripe_customer_id: cus_test_past_due
