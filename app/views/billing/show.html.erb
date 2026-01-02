@@ -18,11 +18,7 @@
     <%= render "shared/card", padding: "p-4 sm:p-8" do %>
       <h2 class="text-lg font-medium mb-2">Premium Plan</h2>
       <p class="text-[var(--color-subtext)] text-sm mb-4">
-        <% if @subscription.cancel_at_period_end? %>
-          Ends on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>
-        <% else %>
-          Renews on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>
-        <% end %>
+        <%= @subscription.cancel_at_period_end? ? "Ends" : "Renews" %> on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>
       </p>
       <%= button_to "Manage Subscription", portal_session_path, class: button_classes(type: :secondary), data: { turbo: false } %>
     <% end %>
