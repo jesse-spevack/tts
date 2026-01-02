@@ -4,6 +4,7 @@
   <% end %>
   <h1 class="text-2xl font-semibold mb-8">Settings</h1>
 
+  <div class="space-y-6">
   <%= render "shared/card", padding: "p-4 sm:p-8" do %>
     <%= form_with url: settings_path, method: :patch, class: "space-y-6" do %>
       <h2 class="text-lg font-medium">Voice</h2>
@@ -49,4 +50,13 @@
       <%= submit_tag "Save Changes", class: button_classes(type: :primary) %>
     <% end %>
   <% end %>
+
+  <% if Current.user.premium? %>
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Billing</h2>
+      <p class="text-[var(--color-subtext)] text-sm mb-4">Manage your subscription and payment details.</p>
+      <%= link_to "Manage Billing", billing_path, class: button_classes(type: :secondary) %>
+    <% end %>
+  <% end %>
+  </div>
 </div>

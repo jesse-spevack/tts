@@ -8,10 +8,10 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "show renders for free user" do
+  test "show redirects free user to upgrade" do
     sign_in_as(users(:free_user))
     get billing_path
-    assert_response :success
+    assert_redirected_to upgrade_path
   end
 
   test "show renders for premium user" do

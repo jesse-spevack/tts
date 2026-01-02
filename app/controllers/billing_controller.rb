@@ -2,7 +2,7 @@ class BillingController < ApplicationController
   before_action :require_authentication
 
   def show
+    redirect_to upgrade_path and return if Current.user.free?
     @subscription = Current.user.subscription
-    @usage = EpisodeUsage.current_for(Current.user) if Current.user.free?
   end
 end

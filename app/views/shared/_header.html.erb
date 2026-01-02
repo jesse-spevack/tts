@@ -19,6 +19,9 @@
         </span>
       </button>
       <% if authenticated? %>
+        <% if Current.user.free? %>
+          <%= link_to "Upgrade", upgrade_path, class: "text-sm font-medium text-[var(--color-primary)] hover:opacity-80" %>
+        <% end %>
         <%= link_to "Settings", settings_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
         <% if Current.user_admin? %>
           <%= link_to "Analytics", admin_analytics_path, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)]" %>
@@ -65,6 +68,9 @@
       </button>
 
       <% if authenticated? %>
+        <% if Current.user.free? %>
+          <%= link_to "Upgrade", upgrade_path, data: { action: "click->mobile-menu#close" }, class: "text-sm font-medium text-[var(--color-primary)] hover:opacity-80 py-2" %>
+        <% end %>
         <%= link_to "Settings", settings_path, data: { action: "click->mobile-menu#close" }, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] py-2" %>
         <% if Current.user_admin? %>
           <%= link_to "Analytics", admin_analytics_path, data: { action: "click->mobile-menu#close" }, class: "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] py-2" %>
