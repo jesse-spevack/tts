@@ -23,7 +23,6 @@ class SyncsSubscription
         status: map_status(stripe_subscription.status),
         stripe_price_id: item.price.id,
         current_period_end: Time.at(item.current_period_end),
-        cancel_at_period_end: stripe_subscription.cancel_at_period_end,
         cancel_at: derive_cancel_at(stripe_subscription, item)
       )
 

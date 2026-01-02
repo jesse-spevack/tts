@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_02_220211) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_02_223455) do
   create_table "episode_usages", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "episode_count", default: 0, null: false
@@ -112,7 +112,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_02_220211) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.datetime "cancel_at"
-    t.boolean "cancel_at_period_end", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "current_period_end", null: false
     t.integer "status", default: 0, null: false

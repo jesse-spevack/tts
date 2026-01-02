@@ -84,42 +84,6 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     assert result.data.active?
   end
 
-  test "syncs cancel_at_period_end when true" do
-    @user.update!(stripe_customer_id: "cus_cancel_pending")
-
-    stub_stripe_subscription(
-      id: "sub_cancel_pending",
-      customer: "cus_cancel_pending",
-      status: "active",
-      price_id: "price_monthly",
-      current_period_end: 1.month.from_now.to_i,
-      cancel_at_period_end: true
-    )
-
-    result = SyncsSubscription.call(stripe_subscription_id: "sub_cancel_pending")
-
-    assert result.success?
-    assert result.data.cancel_at_period_end?
-  end
-
-  test "syncs cancel_at_period_end when false" do
-    @user.update!(stripe_customer_id: "cus_renewing")
-
-    stub_stripe_subscription(
-      id: "sub_renewing",
-      customer: "cus_renewing",
-      status: "active",
-      price_id: "price_monthly",
-      current_period_end: 1.month.from_now.to_i,
-      cancel_at_period_end: false
-    )
-
-    result = SyncsSubscription.call(stripe_subscription_id: "sub_renewing")
-
-    assert result.success?
-    refute result.data.cancel_at_period_end?
-  end
-
   test "syncs cancel_at when Stripe has cancel_at timestamp" do
     @user.update!(stripe_customer_id: "cus_cancel_at")
     cancel_timestamp = 1.month.from_now.to_i
