@@ -1,0 +1,7 @@
+<%# locals: (title:, subtitle: nil, size: "2xl") %>
+<div class="mb-8">
+  <h1 class="text-<%= size %> font-semibold<%= ' mb-2' if subtitle %>"><%= title %></h1>
+  <% if subtitle %>
+    <p class="text-sm text-[var(--color-subtext)]"><%= subtitle %></p>
+  <% end %>
+</div>

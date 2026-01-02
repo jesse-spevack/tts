@@ -27,10 +27,7 @@
     </p>
 
     <div class="mb-6">
-      <audio controls class="w-full" preload="metadata">
-        <source src="<%= @episode.audio_url %>" type="audio/mpeg">
-        Your browser does not support the audio element.
-      </audio>
+      <%= render "shared/audio_player", source: @episode.audio_url, preload: "metadata" %>
     </div>
 
     <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>

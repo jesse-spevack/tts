@@ -1,0 +1,8 @@
+<%# locals: (source:, label: nil, preload: "metadata") %>
+<% if label %>
+  <p class="text-sm font-medium mb-3"><%= label %></p>
+<% end %>
+<audio controls class="w-full"<% if preload %> preload="<%= preload %>"<% end %>>
+  <source src="<%= source %>" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
