@@ -88,6 +88,6 @@ group :test do
   gem "selenium-webdriver"
   gem "webmock"
   gem "mocktail"
-  # Pin minitest to 5.x until Rails 8 is compatible with minitest 6
-  gem "minitest", "~> 6.0"
+  # Pin minitest to 5.x until Rails 8.1.2+ is compatible with minitest 6
+  gem "minitest", "~> 5.0"
 end
