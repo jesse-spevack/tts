@@ -20,6 +20,12 @@
     --color-green: #40a02b;
     --color-red: #d20f39;
 
+    /* Rainbow Colors */
+    --color-peach: #fe640b;
+    --color-teal: #179299;
+    --color-blue: #1e66f5;
+    --color-lavender: #7287fd;
+
     /* Primary Action (Teal) */
     --color-primary: #179299;
     --color-primary-hover: #147f85;
@@ -44,6 +50,12 @@
     --color-yellow: #f9e2af;
     --color-green: #a6e3a1;
     --color-red: #f38ba8;
+
+    /* Rainbow Colors */
+    --color-peach: #fab387;
+    --color-teal: #94e2d5;
+    --color-blue: #89b4fa;
+    --color-lavender: #b4befe;
 
     /* Primary Action (Teal) */
     --color-primary: #94e2d5;
@@ -75,5 +87,21 @@
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  .text-rainbow {
+    background: linear-gradient(
+      to right,
+      var(--color-red),
+      var(--color-peach),
+      var(--color-yellow),
+      var(--color-green),
+      var(--color-teal),
+      var(--color-blue),
+      var(--color-lavender)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
