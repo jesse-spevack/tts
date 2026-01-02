@@ -26,3 +26,4 @@ canceling_subscription:
   status: 0
   current_period_end: <%= 1.month.from_now %>
   cancel_at_period_end: true
+  cancel_at: <%= 1.month.from_now %>
