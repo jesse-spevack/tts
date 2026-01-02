@@ -1,0 +1,5 @@
+<%# locals: (submit_text:, cancel_path:, submit_class: "") %>
+<div class="flex flex-col sm:flex-row sm:items-center gap-4 pt-4">
+  <%= submit_tag submit_text, class: "#{button_classes(type: :primary, full_width: false)} sm:w-auto w-full #{submit_class}" %>
+  <%= link_to "Cancel", cancel_path, class: "#{button_classes(type: :text)} text-center" %>
+</div>
