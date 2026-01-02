@@ -41,3 +41,8 @@ past_due_subscriber:
   email_address: pastdue@example.com
   account_type: 0
   stripe_customer_id: cus_test_past_due
+
+canceling_subscriber:
+  email_address: canceling@example.com
+  account_type: 0
+  stripe_customer_id: cus_test_canceling
