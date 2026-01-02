@@ -11,6 +11,7 @@ export const TEST_USERS = {
   pastDue: 'pastdue@example.com',
   complimentary: 'complimentary@example.com',
   unlimited: 'unlimited@example.com',
+  canceling: 'canceling@example.com',
 };
 
 /**
@@ -70,6 +71,13 @@ export async function signInAsCanceledUser(page: Page) {
  */
 export async function signInAsPastDueUser(page: Page) {
   await signInAs(page, TEST_USERS.pastDue);
+}
+
+/**
+ * Signs in as a subscriber with pending cancellation
+ */
+export async function signInAsCancelingUser(page: Page) {
+  await signInAs(page, TEST_USERS.canceling);
 }
 
 /**

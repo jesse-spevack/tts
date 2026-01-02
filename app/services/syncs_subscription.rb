@@ -22,7 +22,8 @@ class SyncsSubscription
         user: user,
         status: map_status(stripe_subscription.status),
         stripe_price_id: item.price.id,
-        current_period_end: Time.at(item.current_period_end)
+        current_period_end: Time.at(item.current_period_end),
+        cancel_at_period_end: stripe_subscription.cancel_at_period_end
       )
 
       Result.success(subscription)

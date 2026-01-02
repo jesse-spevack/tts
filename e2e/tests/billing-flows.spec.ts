@@ -1,6 +1,6 @@
 // e2e/tests/billing-flows.spec.ts
 import { test, expect } from '@playwright/test';
-import { signInAsPremiumUser, signInAsCanceledUser, signInAsPastDueUser } from './helpers/auth';
+import { signInAsPremiumUser, signInAsCanceledUser, signInAsPastDueUser, signInAsCancelingUser } from './helpers/auth';
 
 test.describe('Billing Flows (Premium User)', () => {
   test('billing page shows Premium Plan card', async ({ page }) => {
@@ -25,6 +25,13 @@ test.describe('Billing Flows (Premium User)', () => {
     await expect(page.locator('h2:has-text("Billing")')).toBeVisible();
     await page.click('a:has-text("Manage Billing")');
     await expect(page).toHaveURL('/billing');
+  });
+
+  test('subscription pending cancellation shows Ends on', async ({ page }) => {
+    await signInAsCancelingUser(page);
+    await page.goto('/billing');
+    await expect(page.locator('text=Premium Plan')).toBeVisible();
+    await expect(page.locator('text=Ends on')).toBeVisible();
   });
 });
 

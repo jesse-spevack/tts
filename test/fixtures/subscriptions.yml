@@ -18,3 +18,11 @@ past_due_subscription:
   stripe_price_id: price_monthly
   status: 1
   current_period_end: <%= 1.week.from_now %>
+
+canceling_subscription:
+  user: canceling_subscriber
+  stripe_subscription_id: sub_test_canceling
+  stripe_price_id: price_monthly
+  status: 0
+  current_period_end: <%= 1.month.from_now %>
+  cancel_at_period_end: true
