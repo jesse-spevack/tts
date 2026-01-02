@@ -84,45 +84,66 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     assert result.data.active?
   end
 
-  test "syncs cancel_at_period_end when true" do
-    @user.update!(stripe_customer_id: "cus_cancel_pending")
+  test "syncs cancel_at when Stripe has cancel_at timestamp" do
+    @user.update!(stripe_customer_id: "cus_cancel_at")
+    cancel_timestamp = 1.month.from_now.to_i
 
     stub_stripe_subscription(
-      id: "sub_cancel_pending",
-      customer: "cus_cancel_pending",
+      id: "sub_cancel_at",
+      customer: "cus_cancel_at",
       status: "active",
       price_id: "price_monthly",
       current_period_end: 1.month.from_now.to_i,
+      cancel_at: cancel_timestamp
+    )
+
+    result = SyncsSubscription.call(stripe_subscription_id: "sub_cancel_at")
+
+    assert result.success?
+    assert_in_delta Time.at(cancel_timestamp), result.data.cancel_at, 1.second
+  end
+
+  test "derives cancel_at from current_period_end when cancel_at_period_end is true" do
+    @user.update!(stripe_customer_id: "cus_period_end")
+    period_end = 1.month.from_now.to_i
+
+    stub_stripe_subscription(
+      id: "sub_period_end",
+      customer: "cus_period_end",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: period_end,
       cancel_at_period_end: true
     )
 
-    result = SyncsSubscription.call(stripe_subscription_id: "sub_cancel_pending")
+    result = SyncsSubscription.call(stripe_subscription_id: "sub_period_end")
 
     assert result.success?
-    assert result.data.cancel_at_period_end?
+    assert_in_delta Time.at(period_end), result.data.cancel_at, 1.second
   end
 
-  test "syncs cancel_at_period_end when false" do
-    @user.update!(stripe_customer_id: "cus_renewing")
+  test "sets cancel_at to nil when subscription is not canceling" do
+    @user.update!(stripe_customer_id: "cus_not_canceling")
 
     stub_stripe_subscription(
-      id: "sub_renewing",
-      customer: "cus_renewing",
+      id: "sub_not_canceling",
+      customer: "cus_not_canceling",
       status: "active",
       price_id: "price_monthly",
       current_period_end: 1.month.from_now.to_i,
-      cancel_at_period_end: false
+      cancel_at_period_end: false,
+      cancel_at: nil
     )
 
-    result = SyncsSubscription.call(stripe_subscription_id: "sub_renewing")
+    result = SyncsSubscription.call(stripe_subscription_id: "sub_not_canceling")
 
     assert result.success?
-    refute result.data.cancel_at_period_end?
+    assert_nil result.data.cancel_at
   end
 
   private
 
-  def stub_stripe_subscription(id:, customer:, status:, price_id:, current_period_end:, cancel_at_period_end: false)
+  def stub_stripe_subscription(id:, customer:, status:, price_id:, current_period_end:, cancel_at_period_end: false, cancel_at: nil)
     stub_request(:get, "https://api.stripe.com/v1/subscriptions/#{id}")
       .to_return(
         status: 200,
@@ -131,6 +152,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
           customer: customer,
           status: status,
           cancel_at_period_end: cancel_at_period_end,
+          cancel_at: cancel_at,
           items: {
             data: [ { price: { id: price_id }, current_period_end: current_period_end } ]
           }
