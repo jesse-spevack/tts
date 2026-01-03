@@ -59,6 +59,10 @@ class AppConfig
       "#{BASE_URL}/podcasts/#{podcast_id}/feed.xml"
     end
 
+    def self.public_feed_url(podcast_id)
+      "https://tts.verynormal.dev/feeds/#{podcast_id}.xml"
+    end
+
     def self.voice_sample_url(voice_key)
       "#{BASE_URL}/voices/#{voice_key}.mp3"
     end

@@ -51,7 +51,7 @@ class GenerateRssFeed
   end
 
   def feed_url
-    AppConfig::Storage.feed_url(@podcast.podcast_id)
+    AppConfig::Storage.public_feed_url(@podcast.podcast_id)
   end
 
   def episodes
