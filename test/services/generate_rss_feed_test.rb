@@ -64,4 +64,12 @@ class GenerateRssFeedTest < ActiveSupport::TestCase
     older_pos = result.index(older_episode.title)
     assert newer_pos < older_pos, "Newer episode should appear before older episode"
   end
+
+  test "atom:link self references public feed URL" do
+    result = GenerateRssFeed.call(podcast: @podcast)
+
+    expected_url = "https://tts.verynormal.dev/feeds/#{@podcast.podcast_id}.xml"
+    assert result.include?(%(href="#{expected_url}"))
+    assert result.include?('rel="self"')
+  end
 end
