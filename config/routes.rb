@@ -20,6 +20,9 @@ Rails.application.routes.draw do
   get "how-it-sounds", to: "pages#how_it_sounds"
   get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
 
+  # Feed proxy
+  get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
+
   namespace :api do
     namespace :internal do
       resources :episodes, only: [ :update ]

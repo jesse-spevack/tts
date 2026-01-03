@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class FeedsController < ApplicationController
+  allow_unauthenticated_access
+
   def show
     podcast_id = params[:podcast_id].delete_suffix(".xml")
     podcast = Podcast.find_by(podcast_id: podcast_id)
