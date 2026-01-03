@@ -21,6 +21,7 @@ class BuildsUrlProcessingPrompt
          - Remove "Subscribe to newsletter" type CTAs
          - Remove any image references or descriptions
          #{shared_cleaning_rules}
+
       #{json_output_format}
     PROMPT
   end
