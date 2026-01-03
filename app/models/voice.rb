@@ -24,4 +24,12 @@ class Voice
   def self.find(key)
     CATALOG[key]
   end
+
+  def self.google_voice_for(preference, is_unlimited:)
+    if preference.present?
+      voice_data = find(preference)
+      return voice_data[:google_voice] if voice_data
+    end
+    is_unlimited ? DEFAULT_CHIRP : DEFAULT_STANDARD
+  end
 end
