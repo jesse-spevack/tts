@@ -29,7 +29,7 @@ class PodcastTest < ActiveSupport::TestCase
   test "feed_url returns correct URL" do
     podcast = podcasts(:one)
 
-    expected_url = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/#{podcast.podcast_id}/feed.xml"
+    expected_url = "https://tts.verynormal.dev/feeds/#{podcast.podcast_id}.xml"
     assert_equal expected_url, podcast.feed_url
   end
 
