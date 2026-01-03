@@ -57,14 +57,8 @@ class Episode < ApplicationRecord
   private
 
   def content_within_tier_limit
-    max_chars = user.character_limit
-    return unless max_chars
-
-    if source_text.length > max_chars
-      errors.add(:source_text,
-        "exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \
-        "(#{source_text.length.to_fs(:delimited)} characters)")
-    end
+    result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
+    errors.add(:source_text, result.error) if result.failure?
   end
 
   def broadcast_status_change

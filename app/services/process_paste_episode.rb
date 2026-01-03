@@ -32,11 +32,18 @@ class ProcessPasteEpisode
   attr_reader :episode, :user
 
   def check_character_limit
-    max_chars = user.character_limit
-    return unless max_chars && episode.source_text.length > max_chars
+    result = ValidatesCharacterLimit.call(
+      user: user,
+      character_count: episode.source_text.length
+    )
 
-    log_warn "character_limit_exceeded", characters: episode.source_text.length, limit: max_chars
-    raise EpisodeErrorHandling::ProcessingError, "This content is too long for your account tier"
+    return if result.success?
+
+    log_warn "character_limit_exceeded",
+      characters: episode.source_text.length,
+      limit: user.character_limit
+
+    raise EpisodeErrorHandling::ProcessingError, result.error
   end
 
   def process_with_llm

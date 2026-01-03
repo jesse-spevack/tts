@@ -61,14 +61,18 @@ class ProcessUrlEpisode
   end
 
   def check_character_limit
-    max_chars = user.character_limit
-    return unless max_chars && @extract_result.data.character_count > max_chars
+    result = ValidatesCharacterLimit.call(
+      user: user,
+      character_count: @extract_result.data.character_count
+    )
 
-    log_warn "character_limit_exceeded", characters: @extract_result.data.character_count, limit: max_chars
+    return if result.success?
 
-    raise EpisodeErrorHandling::ProcessingError,
-      "Content exceeds your plan's #{max_chars.to_fs(:delimited)} character limit " \
-      "(#{@extract_result.data.character_count.to_fs(:delimited)} characters)"
+    log_warn "character_limit_exceeded",
+      characters: @extract_result.data.character_count,
+      limit: user.character_limit
+
+    raise EpisodeErrorHandling::ProcessingError, result.error
   end
 
   def process_with_llm
