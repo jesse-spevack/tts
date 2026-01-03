@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CreateUrlEpisode
+  UNSUPPORTED_HOSTS = %w[twitter.com x.com].freeze
+
   def self.call(podcast:, user:, url:)
     new(podcast: podcast, user: user, url: url).call
   end
@@ -13,6 +15,7 @@ class CreateUrlEpisode
 
   def call
     return Result.failure("Invalid URL") unless valid_url?
+    return Result.failure(unsupported_site_message) if unsupported_site?
 
     Rails.logger.info "event=url_normalization_started url=#{url}"
     normalize_result = NormalizesSubstackUrl.call(url: url)
@@ -36,6 +39,17 @@ class CreateUrlEpisode
 
   def valid_url?
     ValidatesUrl.valid?(url)
+  end
+
+  def unsupported_site?
+    host = URI.parse(url).host&.downcase
+    UNSUPPORTED_HOSTS.any? { |h| host == h || host&.end_with?(".#{h}") }
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def unsupported_site_message
+    "Twitter/X links aren't supported — copy and paste the tweet text instead"
   end
 
   def create_episode

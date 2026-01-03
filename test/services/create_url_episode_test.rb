@@ -125,4 +125,36 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
     assert result.success?
     assert_equal "https://author.substack.com/p/title", result.data.source_url
   end
+
+  test "fails on twitter.com URL with helpful message" do
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      url: "https://twitter.com/user/status/123456789"
+    )
+
+    assert result.failure?
+    assert_match(/Twitter\/X links aren't supported/, result.error)
+  end
+
+  test "fails on x.com URL with helpful message" do
+    result = CreateUrlEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      url: "https://x.com/user/status/123456789"
+    )
+
+    assert result.failure?
+    assert_match(/Twitter\/X links aren't supported/, result.error)
+  end
+
+  test "does not enqueue job for twitter URL" do
+    assert_no_enqueued_jobs do
+      CreateUrlEpisode.call(
+        podcast: @podcast,
+        user: @user,
+        url: "https://x.com/user/status/123456789"
+      )
+    end
+  end
 end
