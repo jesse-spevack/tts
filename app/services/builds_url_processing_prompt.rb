@@ -1,11 +1,7 @@
-class BuildsUrlProcessingPrompt
-  def self.call(text:)
-    new(text: text).call
-  end
+# frozen_string_literal: true
 
-  def initialize(text:)
-    @text = text
-  end
+class BuildsUrlProcessingPrompt
+  include BuildsProcessingPrompt
 
   def call
     <<~PROMPT
@@ -17,27 +13,15 @@ class BuildsUrlProcessingPrompt
       TASKS:
       1. Extract metadata:
          - title: The article's title
-         - author: The author's name (use "Unknown" if not found)
+         - author: #{author_instruction}
          - description: A single sentence summary
 
       2. Clean and optimize the content:
          - Remove any leftover navigation, ads, or boilerplate
          - Remove "Subscribe to newsletter" type CTAs
          - Remove any image references or descriptions
-         - Expand abbreviations (e.g., "govt" -> "government")
-         - Make lists sound natural when read aloud
-
-      OUTPUT FORMAT (JSON only, no markdown):
-      {
-        "title": "...",
-        "author": "...",
-        "description": "...",
-        "content": "..."
-      }
+         #{shared_cleaning_rules}
+      #{json_output_format}
     PROMPT
   end
-
-  private
-
-  attr_reader :text
 end
