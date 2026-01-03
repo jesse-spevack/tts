@@ -51,7 +51,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
 
     # Make episode update fail when trying to mark as complete
     @episode.define_singleton_method(:update!) do |**attrs|
-      if attrs[:status] == "complete"
+      if attrs[:status] == :complete
         raise ActiveRecord::RecordInvalid.new(self)
       end
       super(**attrs)

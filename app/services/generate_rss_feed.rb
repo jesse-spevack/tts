@@ -56,7 +56,7 @@ class GenerateRssFeed
 
   def episodes
     @episodes ||= @podcast.episodes
-                          .where(status: "complete")
+                          .where(status: :complete)
                           .where(deleted_at: nil)
                           .order(created_at: :desc)
   end

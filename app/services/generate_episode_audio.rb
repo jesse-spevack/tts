@@ -17,7 +17,7 @@ class GenerateEpisodeAudio
   def call
     Rails.logger.info "event=generate_episode_audio_started episode_id=#{@episode.id}"
 
-    @episode.update!(status: "processing")
+    @episode.update!(status: :processing)
 
     Rails.logger.info "event=synthesizing_audio episode_id=#{@episode.id} voice=#{voice_name} text_bytes=#{content_text.bytesize}"
     audio_content = synthesize_audio
@@ -31,7 +31,7 @@ class GenerateEpisodeAudio
 
     Rails.logger.info "event=updating_episode episode_id=#{@episode.id} duration_seconds=#{duration_seconds}"
     @episode.update!(
-      status: "complete",
+      status: :complete,
       gcs_episode_id: gcs_episode_id,
       audio_size_bytes: audio_content.bytesize,
       duration_seconds: duration_seconds
@@ -49,7 +49,7 @@ class GenerateEpisodeAudio
   rescue StandardError => e
     Rails.logger.error "event=generate_episode_audio_failed episode_id=#{@episode.id} error=#{e.class} message=#{e.message}"
     cleanup_orphaned_audio
-    @episode.update!(status: "failed", error_message: e.message)
+    @episode.update!(status: :failed, error_message: e.message)
   end
 
   private

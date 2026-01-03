@@ -13,7 +13,7 @@ class EpisodeTest < ActiveSupport::TestCase
       user: users(:one),
       source_type: :url,
       source_url: "https://example.com/test",
-      status: "pending"
+      status: :pending
     )
 
     episodes = Episode.newest_first
@@ -30,7 +30,7 @@ class EpisodeTest < ActiveSupport::TestCase
       user: users(:one),
       source_type: :url,
       source_url: "https://example.com/test",
-      status: "complete",
+      status: :complete,
       gcs_episode_id: "episode_123"
     )
 
@@ -45,7 +45,7 @@ class EpisodeTest < ActiveSupport::TestCase
       author: "Author",
       description: "Description",
       podcast: podcasts(:one),
-      status: "pending",
+      status: :pending,
       gcs_episode_id: "episode_123"
     )
 
@@ -58,7 +58,7 @@ class EpisodeTest < ActiveSupport::TestCase
       author: "Author",
       description: "Description",
       podcast: podcasts(:one),
-      status: "complete",
+      status: :complete,
       gcs_episode_id: nil
     )
 

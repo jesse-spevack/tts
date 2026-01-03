@@ -48,7 +48,7 @@ class PodcastTest < ActiveSupport::TestCase
       user: users(:one),
       source_type: :url,
       source_url: "https://example.com/test",
-      status: "pending"
+      status: :pending
     )
 
     episode_count = podcast.episodes.count

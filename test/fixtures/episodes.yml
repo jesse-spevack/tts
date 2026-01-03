@@ -206,7 +206,7 @@ complete:
   description: "A complete episode"
   source_type: url
   source_url: https://example.com/complete-article
-  status: "complete"
+  status: complete
   gcs_episode_id: "20251226-120000-complete-episode"
   audio_size_bytes: 1024000
   duration_seconds: 300
@@ -219,7 +219,7 @@ pending:
   description: "A pending episode"
   source_type: url
   source_url: https://example.com/pending-article
-  status: "pending"
+  status: pending
 
 failed:
   podcast: default
@@ -229,5 +229,5 @@ failed:
   description: "A failed episode"
   source_type: url
   source_url: https://example.com/failed-article
-  status: "failed"
+  status: failed
   error_message: "Something went wrong"

@@ -52,7 +52,7 @@ class GenerateRssFeedTest < ActiveSupport::TestCase
       description: "Older",
       source_type: :url,
       source_url: "https://example.com/older-article",
-      status: "complete",
+      status: :complete,
       gcs_episode_id: "older-episode",
       created_at: 1.day.ago
     )
