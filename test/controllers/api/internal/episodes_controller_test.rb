@@ -14,7 +14,7 @@ module Api
           user: @user,
           source_type: :url,
           source_url: "https://example.com/test-article",
-          status: "processing"
+          status: :processing
         )
         @secret = "test-callback-secret"
         ENV["GENERATOR_CALLBACK_SECRET"] = @secret
@@ -104,7 +104,7 @@ module Api
       end
 
       test "update is idempotent for duplicate completions" do
-        @episode.update!(status: "complete", gcs_episode_id: "episode_abc123")
+        @episode.update!(status: :complete, gcs_episode_id: "episode_abc123")
 
         patch api_internal_episode_url(@episode),
           params: {
@@ -187,7 +187,7 @@ module Api
       end
 
       test "calls NotifiesEpisodeCompletion when episode completes" do
-        @episode.update!(status: "pending")
+        @episode.update!(status: :pending)
 
         assert_emails 1 do
           patch api_internal_episode_url(@episode),
@@ -197,7 +197,7 @@ module Api
       end
 
       test "does not send email when episode fails" do
-        @episode.update!(status: "pending")
+        @episode.update!(status: :pending)
 
         assert_no_emails do
           patch api_internal_episode_url(@episode),
@@ -207,7 +207,7 @@ module Api
       end
 
       test "does not send duplicate emails on repeated completion updates" do
-        @episode.update!(status: "pending")
+        @episode.update!(status: :pending)
 
         # First completion - should send email
         assert_emails 1 do
