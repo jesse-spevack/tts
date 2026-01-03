@@ -12,7 +12,7 @@ class GeneratesPodcastFeedUrl
   def call
     return nil unless podcast.podcast_id.present?
 
-    AppConfig::Storage.feed_url(podcast.podcast_id)
+    AppConfig::Storage.public_feed_url(podcast.podcast_id)
   end
 
   private
