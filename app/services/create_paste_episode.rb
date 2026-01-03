@@ -14,9 +14,9 @@ class CreatePasteEpisode
   def call
     episode = podcast.episodes.create(
       user: user,
-      title: "Processing...",
-      author: "Processing...",
-      description: "Processing pasted text...",
+      title: EpisodePlaceholders::TITLE,
+      author: EpisodePlaceholders::AUTHOR,
+      description: EpisodePlaceholders.description_for(:paste),
       source_type: :paste,
       source_text: text,
       status: :processing

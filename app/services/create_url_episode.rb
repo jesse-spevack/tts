@@ -41,9 +41,9 @@ class CreateUrlEpisode
   def create_episode
     podcast.episodes.create(
       user: user,
-      title: "Processing...",
-      author: "Processing...",
-      description: "Processing article from URL...",
+      title: EpisodePlaceholders::TITLE,
+      author: EpisodePlaceholders::AUTHOR,
+      description: EpisodePlaceholders.description_for(:url),
       source_type: :url,
       source_url: @normalized_url,
       status: :processing
