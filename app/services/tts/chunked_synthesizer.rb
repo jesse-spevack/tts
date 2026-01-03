@@ -75,7 +75,7 @@ module Tts
     def handle_chunk_error(error:, chunk_num:, total:, skipped_chunks:)
       safe_message = error.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
 
-      if safe_message.include?(Tts::CONTENT_FILTER_ERROR)
+      if safe_message.include?(Tts::Constants::CONTENT_FILTER_ERROR)
         Rails.logger.warn "[TTS] Chunk #{chunk_num}/#{total}: SKIPPED - Content filter"
         skipped_chunks << chunk_num
       else
