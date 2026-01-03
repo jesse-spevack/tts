@@ -85,4 +85,17 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal "test_price_monthly", AppConfig::Stripe::PRICE_ID_MONTHLY
     assert_equal "test_price_annual", AppConfig::Stripe::PRICE_ID_ANNUAL
   end
+
+  test "Storage.public_feed_url returns branded URL" do
+    result = AppConfig::Storage.public_feed_url("podcast_abc123")
+
+    assert_equal "https://tts.verynormal.dev/feeds/podcast_abc123.xml", result
+  end
+
+  test "Storage.feed_url returns GCS URL" do
+    result = AppConfig::Storage.feed_url("podcast_abc123")
+
+    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/podcast_abc123/feed.xml"
+    assert_equal expected, result
+  end
 end
