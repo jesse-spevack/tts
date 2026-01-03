@@ -26,4 +26,33 @@ class VoiceTest < ActiveSupport::TestCase
     expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/voices/wren.mp3"
     assert_equal expected, Voice.sample_url("wren")
   end
+
+  test "google_voice_for returns google_voice for valid preference" do
+    assert_equal "en-GB-Standard-C", Voice.google_voice_for("wren", is_unlimited: false)
+    assert_equal "en-GB-Chirp3-HD-Gacrux", Voice.google_voice_for("elara", is_unlimited: true)
+  end
+
+  test "google_voice_for returns DEFAULT_STANDARD when preference is nil and not unlimited" do
+    assert_equal Voice::DEFAULT_STANDARD, Voice.google_voice_for(nil, is_unlimited: false)
+  end
+
+  test "google_voice_for returns DEFAULT_CHIRP when preference is nil and unlimited" do
+    assert_equal Voice::DEFAULT_CHIRP, Voice.google_voice_for(nil, is_unlimited: true)
+  end
+
+  test "google_voice_for returns DEFAULT_STANDARD when preference is empty string and not unlimited" do
+    assert_equal Voice::DEFAULT_STANDARD, Voice.google_voice_for("", is_unlimited: false)
+  end
+
+  test "google_voice_for returns DEFAULT_CHIRP when preference is empty string and unlimited" do
+    assert_equal Voice::DEFAULT_CHIRP, Voice.google_voice_for("", is_unlimited: true)
+  end
+
+  test "google_voice_for returns default when preference is invalid and not unlimited" do
+    assert_equal Voice::DEFAULT_STANDARD, Voice.google_voice_for("invalid_voice", is_unlimited: false)
+  end
+
+  test "google_voice_for returns default when preference is invalid and unlimited" do
+    assert_equal Voice::DEFAULT_CHIRP, Voice.google_voice_for("invalid_voice", is_unlimited: true)
+  end
 end
