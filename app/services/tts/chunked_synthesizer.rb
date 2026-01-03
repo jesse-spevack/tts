@@ -5,8 +5,6 @@ require "concurrent"
 module Tts
   # Handles concurrent synthesis of multiple text chunks.
   class ChunkedSynthesizer
-    CONTENT_FILTER_ERROR = "sensitive or harmful content"
-
     def initialize(api_client:, config:)
       @api_client = api_client
       @config = config
@@ -77,7 +75,7 @@ module Tts
     def handle_chunk_error(error:, chunk_num:, total:, skipped_chunks:)
       safe_message = error.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
 
-      if safe_message.include?(CONTENT_FILTER_ERROR)
+      if safe_message.include?(Tts::Constants::CONTENT_FILTER_ERROR)
         Rails.logger.warn "[TTS] Chunk #{chunk_num}/#{total}: SKIPPED - Content filter"
         skipped_chunks << chunk_num
       else

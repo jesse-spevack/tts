@@ -5,9 +5,6 @@ require "google/cloud/text_to_speech"
 module Tts
   # Handles communication with Google Cloud Text-to-Speech API.
   class ApiClient
-    CONTENT_FILTER_ERROR = "sensitive or harmful content"
-    DEADLINE_EXCEEDED_ERROR = "Deadline Exceeded"
-
     def initialize(config:)
       @config = config
       @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
@@ -31,7 +28,7 @@ module Tts
         retry
       rescue Google::Cloud::Error => e
         safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
-        raise unless retries < max_retries && safe_message.include?(DEADLINE_EXCEEDED_ERROR)
+        raise unless retries < max_retries && safe_message.include?(Tts::Constants::DEADLINE_EXCEEDED_ERROR)
 
         retries += 1
         Rails.logger.warn "[TTS] Timeout, retrying (#{retries}/#{max_retries})"
