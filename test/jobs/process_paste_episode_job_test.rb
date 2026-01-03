@@ -3,6 +3,8 @@
 require "test_helper"
 
 class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:one)
     @podcast = podcasts(:one)
@@ -24,10 +26,16 @@ class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
   test "calls ProcessPasteEpisode with episode" do
     stubs { |m| ProcessPasteEpisode.call(episode: m.any) }.with { true }
 
-    ProcessPasteEpisodeJob.perform_now(@episode.id)
+    ProcessPasteEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
 
     verify { ProcessPasteEpisode.call(episode: @episode) }
     assert true
+  end
+
+  test "can be enqueued" do
+    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+      ProcessPasteEpisodeJob.perform_later(episode_id: @episode.id, user_id: @user.id)
+    end
   end
 
   teardown do
