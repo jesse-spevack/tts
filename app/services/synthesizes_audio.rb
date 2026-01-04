@@ -30,16 +30,4 @@ class SynthesizesAudio
     log_info "tts_generation_completed", audio_bytes: audio_content.bytesize
     audio_content
   end
-
-  private
-
-  def format_size(bytes)
-    if bytes < 1024
-      "#{bytes} bytes"
-    elsif bytes < 1_048_576
-      "#{(bytes / 1024.0).round(1)} KB"
-    else
-      "#{(bytes / 1_048_576.0).round(1)} MB"
-    end
-  end
 end
