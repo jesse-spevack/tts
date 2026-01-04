@@ -6,6 +6,8 @@ require_relative "tts/text_chunker"
 require_relative "tts/chunked_synthesizer"
 
 class SynthesizesAudio
+  include StructuredLogging
+
   def initialize(config: Tts::Config.new)
     @config = config
     @api_client = Tts::ApiClient.new(config: config)
@@ -14,7 +16,7 @@ class SynthesizesAudio
   end
 
   def call(text:, voice: nil)
-    Rails.logger.info "[TTS] Generating audio..."
+    log_info "tts_generation_started"
     voice ||= @config.voice_name
 
     chunks = @text_chunker.chunk(text, @config.byte_limit)
@@ -25,7 +27,7 @@ class SynthesizesAudio
                       @chunked_synthesizer.synthesize(chunks, voice)
     end
 
-    Rails.logger.info "[TTS] Generated #{format_size(audio_content.bytesize)}"
+    log_info "tts_generation_completed", audio_bytes: audio_content.bytesize
     audio_content
   end
 

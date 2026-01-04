@@ -5,6 +5,8 @@ require "google/cloud/text_to_speech"
 module Tts
   # Handles communication with Google Cloud Text-to-Speech API.
   class ApiClient
+    include StructuredLogging
+
     def initialize(config:)
       @config = config
       @client = Google::Cloud::TextToSpeech.text_to_speech do |client_config|
@@ -23,7 +25,7 @@ module Tts
 
         retries += 1
         wait_time = 2**retries
-        Rails.logger.warn "[TTS] Rate limit hit, waiting #{wait_time}s (retry #{retries}/#{max_retries})"
+        log_warn "tts_rate_limit_hit", wait_seconds: wait_time, retry: retries, max_retries: max_retries
         sleep(wait_time)
         retry
       rescue Google::Cloud::Error => e
@@ -31,7 +33,7 @@ module Tts
         raise unless retries < max_retries && safe_message.include?(Tts::Constants::DEADLINE_EXCEEDED_ERROR)
 
         retries += 1
-        Rails.logger.warn "[TTS] Timeout, retrying (#{retries}/#{max_retries})"
+        log_warn "tts_timeout", retry: retries, max_retries: max_retries
         sleep(1)
         retry
       end
@@ -40,7 +42,7 @@ module Tts
     private
 
     def make_request(text:, voice:)
-      Rails.logger.info "[TTS] Making API call (#{text.bytesize} bytes) with voice: #{voice}..."
+      log_info "tts_api_call_started", bytes: text.bytesize, voice: voice
 
       response = @client.synthesize_speech(
         input: { text: text },
@@ -48,11 +50,11 @@ module Tts
         audio_config: build_audio_config
       )
 
-      Rails.logger.info "[TTS] API call successful (#{response.audio_content.bytesize} bytes audio)"
+      log_info "tts_api_call_completed", audio_bytes: response.audio_content.bytesize
       response.audio_content
     rescue StandardError => e
       safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
-      Rails.logger.error "[TTS] API call failed: #{safe_message}"
+      log_error "tts_api_call_failed", error: safe_message
       raise
     end
 
