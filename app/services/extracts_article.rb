@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ExtractsArticle
+  include StructuredLogging
+
   REMOVE_TAGS = %w[script style nav footer header aside form noscript iframe].freeze
   CONTENT_SELECTORS = %w[article main body].freeze
 
@@ -20,10 +22,10 @@ class ExtractsArticle
 
   def call
     html_size = html.bytesize
-    Rails.logger.info "event=article_extraction_request html_bytes=#{html_size}"
+    log_info "article_extraction_request", html_bytes: html_size
 
     if html_size > AppConfig::Content::MAX_FETCH_BYTES
-      Rails.logger.warn "event=article_extraction_too_large html_bytes=#{html_size} max_bytes=#{AppConfig::Content::MAX_FETCH_BYTES}"
+      log_warn "article_extraction_too_large", html_bytes: html_size, max_bytes: AppConfig::Content::MAX_FETCH_BYTES
       return Result.failure("Article content too large")
     end
 
@@ -32,11 +34,11 @@ class ExtractsArticle
     text = extract_content(doc)
 
     if text.length < AppConfig::Content::MIN_LENGTH
-      Rails.logger.warn "event=article_extraction_insufficient_content extracted_chars=#{text.length} min_required=#{AppConfig::Content::MIN_LENGTH}"
+      log_warn "article_extraction_insufficient_content", extracted_chars: text.length, min_required: AppConfig::Content::MIN_LENGTH
       return Result.failure("Could not extract article content")
     end
 
-    Rails.logger.info "event=article_extraction_success extracted_chars=#{text.length}"
+    log_info "article_extraction_success", extracted_chars: text.length
     Result.success(ArticleData.new(text: text, title: extract_title(doc), author: extract_author(doc)))
   end
 

@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class InvalidateAuthToken
+  include StructuredLogging
+
   def self.call(user:)
     new(user: user).call
   end
@@ -10,7 +14,7 @@ class InvalidateAuthToken
   def call
     @user.update!(auth_token: nil, auth_token_expires_at: nil)
 
-    Rails.logger.info "event=auth_token_invalidated user_id=#{@user.id}"
+    log_info "auth_token_invalidated", user_id: @user.id
 
     @user
   end

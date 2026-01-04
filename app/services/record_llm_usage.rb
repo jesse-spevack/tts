@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class RecordLlmUsage
+  include EpisodeLogging
+
   def self.call(episode:, response:)
     new(episode: episode, response: response).call
   end
@@ -26,7 +28,7 @@ class RecordLlmUsage
       cost_cents: total_cost_cents
     )
 
-    Rails.logger.info "event=llm_usage_recorded llm_usage_id=#{usage.id} episode_id=#{episode.id} model=#{response.model_id} cost_cents=#{total_cost_cents.round(4)}"
+    log_info "llm_usage_recorded", llm_usage_id: usage.id, model: response.model_id, cost_cents: total_cost_cents.round(4)
 
     usage
   end

@@ -3,6 +3,8 @@
 module Tts
   # Splits text into chunks that fit within a byte limit.
   class TextChunker
+    include StructuredLogging
+
     def initialize; end
 
     def chunk(text, max_bytes)
@@ -71,7 +73,7 @@ module Tts
       words.each do |word|
         if word.bytesize > max_bytes
           chunks << current_chunk unless current_chunk.empty?
-          Rails.logger.warn "[TTS] Single word exceeds max_bytes: #{word[0..20]}... (#{word.bytesize} bytes)"
+          log_warn "tts_word_exceeds_max_bytes", word_preview: word[0..20], bytes: word.bytesize
           chunks << word
           current_chunk = ""
         else
