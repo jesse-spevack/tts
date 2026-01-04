@@ -13,7 +13,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
 
   test "synthesizes audio and updates episode" do
     mock_synthesizer = Mocktail.of(SynthesizesAudio)
-    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { "fake audio content" }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     mock_gcs = Mocktail.of(CloudStorage)
@@ -29,7 +29,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
 
   test "marks episode as failed on error" do
     mock_synthesizer = Mocktail.of(SynthesizesAudio)
-    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     GenerateEpisodeAudio.call(episode: @episode)
@@ -41,7 +41,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
 
   test "cleans up uploaded audio if episode update fails" do
     mock_synthesizer = Mocktail.of(SynthesizesAudio)
-    stubs { |m| mock_synthesizer.call(m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { "fake audio content" }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
     mock_gcs = Mocktail.of(CloudStorage)
