@@ -24,7 +24,7 @@ class CreatePasteEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id)
+    ProcessPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
     Rails.logger.info "event=paste_episode_created episode_id=#{episode.id} text_length=#{text.length}"
 
     Result.success(episode)

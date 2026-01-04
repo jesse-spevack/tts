@@ -33,7 +33,7 @@ class EpisodesController < ApplicationController
 
   def destroy
     @episode = Current.user.episodes.find_by_prefix_id!(params[:id])
-    DeleteEpisodeJob.perform_later(@episode)
+    DeleteEpisodeJob.perform_later(episode: @episode, action_id: Current.action_id)
     redirect_to episodes_path, notice: "Episode deleted."
   end
 
