@@ -6,7 +6,7 @@ module EpisodeJobLogging
   private
 
   def with_episode_logging(episode_id:, user_id:, action_id: nil)
-    Current.action_id = action_id || SecureRandom.uuid
+    Current.action_id = action_id
     log_event("started", episode_id: episode_id, user_id: user_id)
     yield
     log_event("completed", episode_id: episode_id)
