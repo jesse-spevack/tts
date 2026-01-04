@@ -1,4 +1,4 @@
-class CreateDefaultPodcast
+class CreatesDefaultPodcast
   def self.call(user:)
     new(user: user).call
   end

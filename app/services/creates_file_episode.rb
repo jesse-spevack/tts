@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateFileEpisode
+class CreatesFileEpisode
   include StructuredLogging
 
   def self.call(podcast:, user:, title:, author:, description:, content:)

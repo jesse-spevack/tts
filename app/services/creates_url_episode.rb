@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateUrlEpisode
+class CreatesUrlEpisode
   include StructuredLogging
 
   UNSUPPORTED_HOSTS = %w[twitter.com x.com].freeze

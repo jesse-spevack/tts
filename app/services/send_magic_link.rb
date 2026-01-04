@@ -12,7 +12,7 @@ class SendMagicLink
     user = User.find_by(email_address: @email_address)
 
     if user.nil?
-      result = CreateUser.call(email_address: @email_address)
+      result = CreatesUser.call(email_address: @email_address)
       return Result.failure("Could not create user") unless result.success?
       user = result.data[:user]
     end

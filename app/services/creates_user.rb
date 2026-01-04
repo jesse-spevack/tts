@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateUser
+class CreatesUser
   include StructuredLogging
 
   def self.call(email_address:)
@@ -17,7 +17,7 @@ class CreateUser
 
     ActiveRecord::Base.transaction do
       user = User.create!(email_address: @email_address)
-      podcast = CreateDefaultPodcast.call(user: user)
+      podcast = CreatesDefaultPodcast.call(user: user)
     end
 
     log_info "user_created", user_id: user.id, email: LoggingHelper.mask_email(user.email_address), podcast_id: podcast&.podcast_id

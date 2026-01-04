@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CreateFileEpisodeTest < ActiveSupport::TestCase
+class CreatesFileEpisodeTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
@@ -13,7 +13,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   test "creates episode with markdown source type" do
     long_content = "# Markdown content\n\n" + ("This is test content. " * 10)
 
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test Title",
@@ -33,7 +33,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   test "sets episode status to processing" do
     long_content = "A" * 150
 
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -49,7 +49,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     long_content = "A" * 150
 
     assert_enqueued_with(job: ProcessFileEpisodeJob) do
-      CreateFileEpisode.call(
+      CreatesFileEpisode.call(
         podcast: @podcast,
         user: @user,
         title: "Test",
@@ -61,7 +61,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns failure when content is blank" do
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -75,7 +75,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   end
 
   test "returns failure when content is under 100 characters" do
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -93,7 +93,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
     max_chars = @user.character_limit
     long_content = "a" * (max_chars + 1)
 
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",
@@ -109,7 +109,7 @@ class CreateFileEpisodeTest < ActiveSupport::TestCase
   test "sets content preview" do
     long_content = "# Header\n\n" + ("Some markdown content here. " * 10)
 
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: @user,
       title: "Test",

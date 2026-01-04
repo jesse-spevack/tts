@@ -1,10 +1,10 @@
 require "test_helper"
 
-class CreateDefaultPodcastTest < ActiveSupport::TestCase
+class CreatesDefaultPodcastTest < ActiveSupport::TestCase
   test "creates a podcast for the user" do
     user = User.create!(email_address: "test@example.com")
 
-    podcast = CreateDefaultPodcast.call(user: user)
+    podcast = CreatesDefaultPodcast.call(user: user)
 
     assert_not_nil podcast
     assert_equal "test@example.com's Very Normal Podcast", podcast.title
@@ -15,7 +15,7 @@ class CreateDefaultPodcastTest < ActiveSupport::TestCase
   test "creates a podcast membership for the user" do
     user = User.create!(email_address: "test@example.com")
 
-    podcast = CreateDefaultPodcast.call(user: user)
+    podcast = CreatesDefaultPodcast.call(user: user)
 
     assert_equal 1, user.podcasts.count
     assert_equal podcast, user.podcasts.first
@@ -24,7 +24,7 @@ class CreateDefaultPodcastTest < ActiveSupport::TestCase
   test "podcast membership is created with user and podcast" do
     user = User.create!(email_address: "test@example.com")
 
-    podcast = CreateDefaultPodcast.call(user: user)
+    podcast = CreatesDefaultPodcast.call(user: user)
 
     membership = PodcastMembership.find_by(user: user, podcast: podcast)
     assert_not_nil membership

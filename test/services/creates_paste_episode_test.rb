@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CreatePasteEpisodeTest < ActiveSupport::TestCase
+class CreatesPasteEpisodeTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
@@ -14,7 +14,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   test "creates episode with processing status" do
     result = nil
     assert_enqueued_with(job: ProcessPasteEpisodeJob) do
-      result = CreatePasteEpisode.call(
+      result = CreatesPasteEpisode.call(
         podcast: @podcast,
         user: @user,
         text: @valid_text
@@ -29,7 +29,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "creates episode with placeholder metadata" do
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
       text: @valid_text
@@ -41,7 +41,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on empty text" do
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
       text: ""
@@ -53,7 +53,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on nil text" do
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
       text: nil
@@ -64,7 +64,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on text under 100 characters" do
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
       text: "A" * 99
@@ -75,7 +75,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "succeeds on text exactly 100 characters" do
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
       text: "A" * 100
@@ -86,7 +86,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
 
   test "enqueues ProcessPasteEpisodeJob" do
     assert_enqueued_with(job: ProcessPasteEpisodeJob) do
-      CreatePasteEpisode.call(
+      CreatesPasteEpisode.call(
         podcast: @podcast,
         user: @user,
         text: @valid_text
@@ -99,7 +99,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     max_chars = free_user.character_limit
     text_over_limit = "A" * (max_chars + 1)
 
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: free_user,
       text: text_over_limit
@@ -114,7 +114,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     max_chars = free_user.character_limit
     text_at_limit = "A" * max_chars
 
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: free_user,
       text: text_at_limit
@@ -127,7 +127,7 @@ class CreatePasteEpisodeTest < ActiveSupport::TestCase
     unlimited_user = users(:unlimited_user)
     very_long_text = "A" * 100_000
 
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: unlimited_user,
       text: very_long_text

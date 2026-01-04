@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreatePasteEpisode
+class CreatesPasteEpisode
   include StructuredLogging
 
   def self.call(podcast:, user:, text:)

@@ -40,7 +40,7 @@ class EpisodesController < ApplicationController
   private
 
   def create_from_url
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: Current.user,
       url: params[:url]
@@ -49,7 +49,7 @@ class EpisodesController < ApplicationController
   end
 
   def create_from_paste
-    result = CreatePasteEpisode.call(
+    result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: Current.user,
       text: params[:text]
@@ -58,7 +58,7 @@ class EpisodesController < ApplicationController
   end
 
   def create_from_file
-    result = CreateFileEpisode.call(
+    result = CreatesFileEpisode.call(
       podcast: @podcast,
       user: Current.user,
       title: episode_params[:title],
@@ -97,7 +97,7 @@ class EpisodesController < ApplicationController
 
   def load_podcast
     @podcast = Current.user.podcasts.first
-    @podcast ||= CreateDefaultPodcast.call(user: Current.user)
+    @podcast ||= CreatesDefaultPodcast.call(user: Current.user)
   end
 
   def episode_params

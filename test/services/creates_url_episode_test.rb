@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class CreateUrlEpisodeTest < ActiveSupport::TestCase
+class CreatesUrlEpisodeTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
@@ -13,7 +13,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   test "creates episode with processing status" do
     result = nil
     assert_enqueued_with(job: ProcessUrlEpisodeJob) do
-      result = CreateUrlEpisode.call(
+      result = CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
         url: "https://example.com/article"
@@ -28,7 +28,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "creates episode with placeholder metadata" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://example.com/article"
@@ -40,7 +40,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on invalid URL format" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "not-a-valid-url"
@@ -52,7 +52,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on empty URL" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: ""
@@ -64,7 +64,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
 
   test "enqueues ProcessUrlEpisodeJob" do
     assert_enqueued_with(job: ProcessUrlEpisodeJob) do
-      CreateUrlEpisode.call(
+      CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
         url: "https://example.com/article"
@@ -74,7 +74,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
 
   test "returns failure when episode validation fails" do
     # Pass nil user to trigger validation failure
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: nil,
       url: "https://example.com/article"
@@ -86,7 +86,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
 
   test "does not enqueue job when validation fails" do
     assert_no_enqueued_jobs do
-      CreateUrlEpisode.call(
+      CreatesUrlEpisode.call(
         podcast: @podcast,
         user: nil,
         url: "https://example.com/article"
@@ -95,7 +95,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on substack inbox URL" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://substack.com/inbox/post/182789127"
@@ -107,7 +107,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
 
   test "does not enqueue job for substack inbox URL" do
     assert_no_enqueued_jobs do
-      CreateUrlEpisode.call(
+      CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
         url: "https://substack.com/inbox/post/182789127"
@@ -116,7 +116,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "normalizes substack URL before storing" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://open.substack.com/pub/author/p/title?utm_campaign=post"
@@ -127,7 +127,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on twitter.com URL with helpful message" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://twitter.com/user/status/123456789"
@@ -138,7 +138,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "fails on x.com URL with helpful message" do
-    result = CreateUrlEpisode.call(
+    result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://x.com/user/status/123456789"
@@ -150,7 +150,7 @@ class CreateUrlEpisodeTest < ActiveSupport::TestCase
 
   test "does not enqueue job for twitter URL" do
     assert_no_enqueued_jobs do
-      CreateUrlEpisode.call(
+      CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
         url: "https://x.com/user/status/123456789"
