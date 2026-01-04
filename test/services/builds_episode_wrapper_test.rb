@@ -2,9 +2,9 @@
 
 require "test_helper"
 
-class BuildEpisodeWrapperTest < ActiveSupport::TestCase
+class BuildsEpisodeWrapperTest < ActiveSupport::TestCase
   test "wraps content with intro and outro with attribution for free users" do
-    result = BuildEpisodeWrapper.call(
+    result = BuildsEpisodeWrapper.call(
       title: "Test Article",
       author: "Jane Doe",
       include_attribution: true,
@@ -21,7 +21,7 @@ class BuildEpisodeWrapperTest < ActiveSupport::TestCase
   end
 
   test "wraps content with intro and outro without attribution for premium users" do
-    result = BuildEpisodeWrapper.call(
+    result = BuildsEpisodeWrapper.call(
       title: "Test Article",
       author: "Jane Doe",
       include_attribution: false,
@@ -40,7 +40,7 @@ class BuildEpisodeWrapperTest < ActiveSupport::TestCase
   test "handles multiline content" do
     content = "First paragraph.\n\nSecond paragraph."
 
-    result = BuildEpisodeWrapper.call(
+    result = BuildsEpisodeWrapper.call(
       title: "Multi Para",
       author: "Author",
       include_attribution: false,

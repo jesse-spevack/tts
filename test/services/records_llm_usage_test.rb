@@ -3,7 +3,7 @@
 require "test_helper"
 require "ostruct"
 
-class RecordLlmUsageTest < ActiveSupport::TestCase
+class RecordsLlmUsageTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @response = OpenStruct.new(
@@ -19,7 +19,7 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
     stub_llm_client
 
     assert_difference -> { LlmUsage.count }, 1 do
-      RecordLlmUsage.call(episode: @episode, response: @response)
+      RecordsLlmUsage.call(episode: @episode, response: @response)
     end
 
     usage = LlmUsage.last
@@ -33,7 +33,7 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
   test "calculates cost correctly" do
     stub_llm_client(input_price: 0.25, output_price: 1.25)
 
-    RecordLlmUsage.call(episode: @episode, response: @response)
+    RecordsLlmUsage.call(episode: @episode, response: @response)
 
     usage = LlmUsage.last
     # Input: 1000 tokens * 0.25 / 1_000_000 = 0.00025
@@ -45,7 +45,7 @@ class RecordLlmUsageTest < ActiveSupport::TestCase
   test "returns the created usage record" do
     stub_llm_client
 
-    result = RecordLlmUsage.call(episode: @episode, response: @response)
+    result = RecordsLlmUsage.call(episode: @episode, response: @response)
 
     assert_instance_of LlmUsage, result
     assert_equal @episode, result.episode

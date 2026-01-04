@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class DeleteEpisodeTest < ActiveSupport::TestCase
+class DeletesEpisodeTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:complete)
     Mocktail.replace(CloudStorage)
@@ -16,7 +16,7 @@ class DeleteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| mock_storage.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GeneratesRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
-    DeleteEpisode.call(episode: @episode)
+    DeletesEpisode.call(episode: @episode)
 
     assert_equal 1, Mocktail.calls(mock_storage, :delete_file).size
   end
@@ -28,7 +28,7 @@ class DeleteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| mock_storage.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GeneratesRssFeed.call(podcast: m.any) }.with { "<rss>feed content</rss>" }
 
-    DeleteEpisode.call(episode: @episode)
+    DeletesEpisode.call(episode: @episode)
 
     assert_equal 1, Mocktail.calls(GeneratesRssFeed, :call).size
     assert_equal 1, Mocktail.calls(mock_storage, :upload_content).size
@@ -42,7 +42,7 @@ class DeleteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| mock_storage.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GeneratesRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
-    DeleteEpisode.call(episode: @episode)
+    DeletesEpisode.call(episode: @episode)
 
     assert_equal 0, Mocktail.calls(mock_storage, :delete_file).size
   end
@@ -57,7 +57,7 @@ class DeleteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| mock_storage.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| GeneratesRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
-    DeleteEpisode.call(episode: @episode)
+    DeletesEpisode.call(episode: @episode)
 
     assert_not_nil Episode.unscoped.find(@episode.id).deleted_at
   end

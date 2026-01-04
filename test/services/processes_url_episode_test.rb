@@ -20,7 +20,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
 
     Mocktail.replace(FetchesUrl)
     Mocktail.replace(ProcessesWithLlm)
-    Mocktail.replace(SubmitEpisodeForProcessing)
+    Mocktail.replace(SubmitsEpisodeForProcessing)
   end
 
   test "processes URL and updates episode" do
@@ -149,6 +149,6 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
   private
 
   def stub_gcs_and_tasks
-    stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
   end
 end

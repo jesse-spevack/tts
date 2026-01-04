@@ -1,4 +1,4 @@
-class RecordEpisodeUsage
+class RecordsEpisodeUsage
   def self.call(user:)
     new(user: user).call
   end

@@ -71,7 +71,7 @@ class EpisodesController < ApplicationController
 
   def handle_create_result(result, success_notice)
     if result.success?
-      RecordEpisodeUsage.call(user: Current.user)
+      RecordsEpisodeUsage.call(user: Current.user)
       redirect_to episodes_path, notice: success_notice
     else
       flash.now[:alert] = result.error

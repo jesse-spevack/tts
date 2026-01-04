@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class RecordLlmUsage
+class RecordsLlmUsage
   include EpisodeLogging
 
   def self.call(episode:, response:)

@@ -1,4 +1,4 @@
-class ValidateAuthToken
+class ValidatesAuthToken
   def self.call(user:)
     new(user: user).call
   end

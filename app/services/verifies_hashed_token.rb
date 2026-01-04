@@ -1,4 +1,4 @@
-class VerifyHashedToken
+class VerifiesHashedToken
   def self.call(hashed_token:, raw_token:)
     new(hashed_token: hashed_token, raw_token: raw_token).call
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class BuildEpisodeWrapper
+class BuildsEpisodeWrapper
   def self.call(title:, author:, include_attribution:, content:)
     new(title: title, author: author, include_attribution: include_attribution, content: content).call
   end

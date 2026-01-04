@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class SubmitEpisodeForProcessing
+class SubmitsEpisodeForProcessing
   include EpisodeLogging
 
   def self.call(episode:, content:)
@@ -28,7 +28,7 @@ class SubmitEpisodeForProcessing
   attr_reader :episode, :content
 
   def wrap_content
-    BuildEpisodeWrapper.call(
+    BuildsEpisodeWrapper.call(
       title: episode.title,
       author: episode.author,
       include_attribution: episode.user.free?,

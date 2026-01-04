@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AuthenticateMagicLink
+class AuthenticatesMagicLink
   include StructuredLogging
 
   def self.call(token:)
@@ -18,11 +18,11 @@ class AuthenticateMagicLink
     users = User.with_valid_auth_token
 
     user = users.find do |u|
-      VerifyHashedToken.call(hashed_token: u.auth_token, raw_token: @token)
+      VerifiesHashedToken.call(hashed_token: u.auth_token, raw_token: @token)
     end
 
     if user
-      InvalidateAuthToken.call(user: user)
+      InvalidatesAuthToken.call(user: user)
 
       log_info "user_authenticated", user_id: user.id, email: LoggingHelper.mask_email(user.email_address)
 

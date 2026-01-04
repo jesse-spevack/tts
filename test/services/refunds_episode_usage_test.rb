@@ -1,6 +1,6 @@
 require "test_helper"
 
-class RefundEpisodeUsageTest < ActiveSupport::TestCase
+class RefundsEpisodeUsageTest < ActiveSupport::TestCase
   setup do
     @free_user = users(:free_user)
     @premium_user = users(:subscriber)
@@ -13,7 +13,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
       episode_count: 2
     )
 
-    RefundEpisodeUsage.call(user: @free_user)
+    RefundsEpisodeUsage.call(user: @free_user)
 
     usage = EpisodeUsage.current_for(@free_user)
     assert_equal 1, usage.episode_count
@@ -26,7 +26,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
       episode_count: 0
     )
 
-    RefundEpisodeUsage.call(user: @free_user)
+    RefundsEpisodeUsage.call(user: @free_user)
 
     usage = EpisodeUsage.current_for(@free_user)
     assert_equal 0, usage.episode_count
@@ -34,7 +34,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
 
   test "does nothing if no usage record exists" do
     assert_no_difference "EpisodeUsage.count" do
-      RefundEpisodeUsage.call(user: @free_user)
+      RefundsEpisodeUsage.call(user: @free_user)
     end
   end
 
@@ -45,7 +45,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
       episode_count: 2
     )
 
-    RefundEpisodeUsage.call(user: @premium_user)
+    RefundsEpisodeUsage.call(user: @premium_user)
 
     # Free user's count should be unchanged
     usage = EpisodeUsage.current_for(@free_user)
@@ -56,7 +56,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
     unlimited_user = users(:unlimited_user)
 
     assert_no_difference "EpisodeUsage.count" do
-      RefundEpisodeUsage.call(user: unlimited_user)
+      RefundsEpisodeUsage.call(user: unlimited_user)
     end
   end
 
@@ -70,7 +70,7 @@ class RefundEpisodeUsageTest < ActiveSupport::TestCase
     )
 
     # Episode fails this month - no current month usage record exists
-    RefundEpisodeUsage.call(user: @free_user)
+    RefundsEpisodeUsage.call(user: @free_user)
 
     # Last month's usage should be unchanged (user loses that slot)
     last_month_usage = EpisodeUsage.find_by(user: @free_user, period_start: last_month)

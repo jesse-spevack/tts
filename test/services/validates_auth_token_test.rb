@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ValidateAuthTokenTest < ActiveSupport::TestCase
+class ValidatesAuthTokenTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
   end
@@ -11,25 +11,25 @@ class ValidateAuthTokenTest < ActiveSupport::TestCase
       auth_token_expires_at: 30.minutes.from_now
     )
 
-    assert ValidateAuthToken.call(user: @user)
+    assert ValidatesAuthToken.call(user: @user)
   end
 
   test "call returns false when token is nil" do
     @user.update!(auth_token: nil, auth_token_expires_at: 30.minutes.from_now)
 
-    assert_not ValidateAuthToken.call(user: @user)
+    assert_not ValidatesAuthToken.call(user: @user)
   end
 
   test "call returns false when token is blank" do
     @user.update!(auth_token: "", auth_token_expires_at: 30.minutes.from_now)
 
-    assert_not ValidateAuthToken.call(user: @user)
+    assert_not ValidatesAuthToken.call(user: @user)
   end
 
   test "call returns false when expiration is nil" do
     @user.update!(auth_token: "valid_token", auth_token_expires_at: nil)
 
-    assert_not ValidateAuthToken.call(user: @user)
+    assert_not ValidatesAuthToken.call(user: @user)
   end
 
   test "call returns false when token is expired" do
@@ -38,7 +38,7 @@ class ValidateAuthTokenTest < ActiveSupport::TestCase
       auth_token_expires_at: 1.hour.ago
     )
 
-    assert_not ValidateAuthToken.call(user: @user)
+    assert_not ValidatesAuthToken.call(user: @user)
   end
 
   test "call returns false when token expires exactly now" do
@@ -48,7 +48,7 @@ class ValidateAuthTokenTest < ActiveSupport::TestCase
         auth_token_expires_at: Time.current
       )
 
-      assert_not ValidateAuthToken.call(user: @user)
+      assert_not ValidatesAuthToken.call(user: @user)
     end
   end
 
@@ -58,6 +58,6 @@ class ValidateAuthTokenTest < ActiveSupport::TestCase
       auth_token_expires_at: 1.second.from_now
     )
 
-    assert ValidateAuthToken.call(user: @user)
+    assert ValidatesAuthToken.call(user: @user)
   end
 end

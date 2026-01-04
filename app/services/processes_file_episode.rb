@@ -32,6 +32,6 @@ class ProcessesFileEpisode
   end
 
   def submit_for_processing(content)
-    SubmitEpisodeForProcessing.call(episode: episode, content: content)
+    SubmitsEpisodeForProcessing.call(episode: episode, content: content)
   end
 end

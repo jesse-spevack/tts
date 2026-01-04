@@ -1,4 +1,4 @@
-class RecordSentMessage
+class RecordsSentMessage
   def self.call(user:, message_type:)
     new(user:, message_type:).call
   end

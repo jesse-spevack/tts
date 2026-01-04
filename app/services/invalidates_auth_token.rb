@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InvalidateAuthToken
+class InvalidatesAuthToken
   include StructuredLogging
 
   def self.call(user:)

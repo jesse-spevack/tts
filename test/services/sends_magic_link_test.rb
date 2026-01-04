@@ -1,13 +1,13 @@
 require "test_helper"
 
-class SendMagicLinkTest < ActiveSupport::TestCase
+class SendsMagicLinkTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
   test "call with new email creates user and sends email" do
     email = "newuser@example.com"
 
     assert_difference "User.count", 1 do
       assert_emails 1 do
-        result = SendMagicLink.call(email_address: email)
+        result = SendsMagicLink.call(email_address: email)
 
         assert result.success?
         assert_equal email, result.data.email_address
@@ -23,7 +23,7 @@ class SendMagicLinkTest < ActiveSupport::TestCase
 
     assert_no_difference "User.count" do
       assert_emails 1 do
-        result = SendMagicLink.call(email_address: email)
+        result = SendsMagicLink.call(email_address: email)
 
         assert result.success?
         assert_equal user.id, result.data.id
@@ -36,7 +36,7 @@ class SendMagicLinkTest < ActiveSupport::TestCase
     GeneratesAuthToken.call(user: user)
     old_token = user.reload.auth_token
 
-    result = SendMagicLink.call(email_address: user.email_address)
+    result = SendsMagicLink.call(email_address: user.email_address)
 
     assert result.success?
     user.reload
@@ -44,21 +44,21 @@ class SendMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call normalizes email address" do
-    result = SendMagicLink.call(email_address: "  NewUser@EXAMPLE.com  ")
+    result = SendsMagicLink.call(email_address: "  NewUser@EXAMPLE.com  ")
 
     assert result.success?
     assert_equal "newuser@example.com", result.data.email_address
   end
 
   test "call with invalid email returns failure" do
-    result = SendMagicLink.call(email_address: "not-an-email")
+    result = SendsMagicLink.call(email_address: "not-an-email")
 
     assert_not result.success?
     assert_nil result.data
   end
 
   test "call with blank email returns failure" do
-    result = SendMagicLink.call(email_address: "")
+    result = SendsMagicLink.call(email_address: "")
 
     assert_not result.success?
     assert_nil result.data
@@ -68,13 +68,13 @@ class SendMagicLinkTest < ActiveSupport::TestCase
     email = "test@example.com"
 
     assert_enqueued_emails 1 do
-      result = SendMagicLink.call(email_address: email)
+      result = SendsMagicLink.call(email_address: email)
       assert result.success?
     end
   end
 
   test "call sets token expiration to 30 minutes from now" do
-    result = SendMagicLink.call(email_address: "test@example.com")
+    result = SendsMagicLink.call(email_address: "test@example.com")
 
     user = result.data
     expected_expiration = 30.minutes.from_now

@@ -1,4 +1,4 @@
-class SendMagicLink
+class SendsMagicLink
   def self.call(email_address:, plan: nil)
     new(email_address: email_address, plan: plan).call
   end

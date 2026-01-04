@@ -101,7 +101,7 @@ class ProcessesUrlEpisode
 
       log_info "episode_metadata_updated"
 
-      SubmitEpisodeForProcessing.call(episode: episode, content: content)
+      SubmitsEpisodeForProcessing.call(episode: episode, content: content)
     end
   end
 end

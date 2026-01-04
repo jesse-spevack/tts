@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DeleteEpisode
+class DeletesEpisode
   include EpisodeLogging
 
   def self.call(episode:)

@@ -1,6 +1,6 @@
 require "test_helper"
 
-class RecordEpisodeUsageTest < ActiveSupport::TestCase
+class RecordsEpisodeUsageTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
   setup do
@@ -10,7 +10,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
 
   test "creates usage record and increments for free user" do
     assert_difference "EpisodeUsage.count", 1 do
-      RecordEpisodeUsage.call(user: @free_user)
+      RecordsEpisodeUsage.call(user: @free_user)
     end
 
     usage = EpisodeUsage.current_for(@free_user)
@@ -25,7 +25,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
     )
 
     assert_no_difference "EpisodeUsage.count" do
-      RecordEpisodeUsage.call(user: @free_user)
+      RecordsEpisodeUsage.call(user: @free_user)
     end
 
     usage = EpisodeUsage.current_for(@free_user)
@@ -34,7 +34,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
 
   test "does nothing for premium user" do
     assert_no_difference "EpisodeUsage.count" do
-      RecordEpisodeUsage.call(user: @premium_user)
+      RecordsEpisodeUsage.call(user: @premium_user)
     end
   end
 
@@ -42,7 +42,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
     unlimited_user = users(:unlimited_user)
 
     assert_no_difference "EpisodeUsage.count" do
-      RecordEpisodeUsage.call(user: unlimited_user)
+      RecordsEpisodeUsage.call(user: unlimited_user)
     end
   end
 
@@ -54,7 +54,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
     )
 
     assert_enqueued_emails 1 do
-      RecordEpisodeUsage.call(user: @free_user)
+      RecordsEpisodeUsage.call(user: @free_user)
     end
 
     usage = EpisodeUsage.current_for(@free_user)
@@ -69,7 +69,7 @@ class RecordEpisodeUsageTest < ActiveSupport::TestCase
     )
 
     assert_no_enqueued_emails do
-      RecordEpisodeUsage.call(user: @free_user)
+      RecordsEpisodeUsage.call(user: @free_user)
     end
   end
 end
