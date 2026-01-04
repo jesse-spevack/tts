@@ -26,7 +26,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessFileEpisodeJob) do
+    assert_enqueued_with(job: ProcessesFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -83,7 +83,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessFileEpisodeJob) do
+    assert_enqueued_with(job: ProcessesFileEpisodeJob) do
       post episodes_url, params: {
         episode: {
           title: "Test Episode",
@@ -132,7 +132,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       original_filename: "test.md"
     )
 
-    assert_enqueued_with(job: ProcessFileEpisodeJob) do
+    assert_enqueued_with(job: ProcessesFileEpisodeJob) do
       post episodes_url, params: {
         episode: { title: "Test", author: "A", description: "D", content: file }
       }
@@ -207,7 +207,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   # URL-based episode creation tests
 
   test "create with url param creates URL episode and redirects" do
-    assert_enqueued_with(job: ProcessUrlEpisodeJob) do
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
       post episodes_url, params: { url: "https://example.com/article" }
     end
 
@@ -250,7 +250,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   # Paste text episode creation tests
 
   test "create with text param creates paste episode and redirects" do
-    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
       post episodes_url, params: { text: "A" * 150 }
     end
 
@@ -452,13 +452,13 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy soft-deletes the episode" do
     Mocktail.replace(CloudStorage)
-    Mocktail.replace(GenerateRssFeed)
+    Mocktail.replace(GeneratesRssFeed)
 
     mock_gcs = Mocktail.of(CloudStorage)
     stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
     stubs { |m| mock_gcs.delete_file(remote_path: m.any) }.with { true }
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
-    stubs { |m| GenerateRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
+    stubs { |m| GeneratesRssFeed.call(podcast: m.any) }.with { "<rss></rss>" }
 
     episode = episodes(:one)
 

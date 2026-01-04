@@ -29,7 +29,7 @@ class ProcessesWithLlm
 
     parsed = parse_response(response.content)
     validated = validate_and_sanitize(parsed)
-    RecordLlmUsage.call(episode: episode, response: response)
+    RecordsLlmUsage.call(episode: episode, response: response)
 
     log_info "llm_request_completed", extracted_title: validated[:title]
 

@@ -104,14 +104,14 @@ All service objects are in `app/services/`. Follow these conventions:
 
 | Pattern | Convention | Example |
 |---------|------------|---------|
-| Creates something | `Create*` | `CreateUrlEpisode`, `CreateUser` |
-| Processes something | `Process*` | `ProcessUrlEpisode`, `ProcessPasteEpisode` |
+| Creates something | `Creates*` | `CreatesUrlEpisode`, `CreatesUser` |
+| Processes something | `Processes*` | `ProcessesUrlEpisode`, `ProcessesPasteEpisode` |
 | Validates | `Validates*` | `ValidatesUrl`, `ValidatesEpisodeSubmission` |
-| Generates | `Generate*` or `Generates*` | `GenerateEpisodeAudio`, `GeneratesContentPreview` |
-| Builds | `Build*` or `Builds*` | `BuildEpisodeWrapper`, `BuildsUrlProcessingPrompt` |
+| Generates | `Generates*` | `GeneratesEpisodeAudio`, `GeneratesContentPreview` |
+| Builds | `Builds*` | `BuildsEpisodeWrapper`, `BuildsUrlProcessingPrompt` |
 | Checks permission | `Checks*` | `ChecksEpisodeCreationPermission` |
 | Calculates | `Calculates*` | `CalculatesMaxCharactersForUser` |
-| Records | `Record*` | `RecordEpisodeUsage`, `RecordLlmUsage` |
+| Records | `Records*` | `RecordsEpisodeUsage`, `RecordsLlmUsage` |
 | Other verbs | `Verb*` | `FetchesUrl`, `ExtractsArticle`, `StripsMarkdown` |
 
 ### Service Object Structure
@@ -150,7 +150,7 @@ Result.success(episode)      # Success with data
 Result.failure("Error msg")  # Failure with error string
 
 # Calling code
-result = CreateUrlEpisode.call(podcast: podcast, user: user, url: url)
+result = CreatesUrlEpisode.call(podcast: podcast, user: user, url: url)
 if result.success?
   episode = result.data
 else
@@ -227,20 +227,20 @@ end
 `app/jobs/`
 
 ### Job Naming
-- `Process*EpisodeJob` - Processes episode content and generates audio
+- `Processes*EpisodeJob` - Processes episode content and generates audio
 - `DeleteEpisodeJob` - Soft deletes episode and cleans up GCS files
 
 ### Job Structure
 
 ```ruby
-class ProcessUrlEpisodeJob < ApplicationJob
+class ProcessesUrlEpisodeJob < ApplicationJob
   queue_as :default
 
   def perform(episode_id)
-    Rails.logger.info "event=process_url_episode_job_started episode_id=#{episode_id}"
+    Rails.logger.info "event=processes_url_episode_job_started episode_id=#{episode_id}"
 
     episode = Episode.find(episode_id)
-    ProcessUrlEpisode.call(episode: episode)
+    ProcessesUrlEpisode.call(episode: episode)
 
     Rails.logger.info "event=process_url_episode_job_completed episode_id=#{episode_id}"
   rescue StandardError => e

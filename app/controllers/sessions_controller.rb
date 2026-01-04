@@ -13,7 +13,7 @@ class SessionsController < ApplicationController
   end
 
   def create
-    result = SendMagicLink.call(email_address: params[:email_address], plan: params[:plan])
+    result = SendsMagicLink.call(email_address: params[:email_address], plan: params[:plan])
 
     if result.success?
       redirect_to root_path, notice: "Check your email for a login link!"
@@ -30,7 +30,7 @@ class SessionsController < ApplicationController
   private
 
   def authenticate_with_token
-    result = AuthenticateMagicLink.call(token: params[:token])
+    result = AuthenticatesMagicLink.call(token: params[:token])
 
     if result.success?
       start_new_session_for result.data

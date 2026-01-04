@@ -5,7 +5,7 @@ module Api
 
       def update
         if @episode.update(episode_params)
-          RefundEpisodeUsage.call(user: @episode.user) if @episode.failed?
+          RefundsEpisodeUsage.call(user: @episode.user) if @episode.failed?
           notify_completion if @episode.complete?
           Rails.logger.info "event=episode_callback_received episode_id=#{@episode.id} status=#{@episode.status}"
           render json: { status: "success" }

@@ -19,7 +19,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with token authenticates user" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     get auth_url, params: { token: token }
 
@@ -36,7 +36,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy session" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
     get auth_url, params: { token: token }
 
     delete session_url
@@ -45,7 +45,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "verify with premium_monthly plan redirects to checkout without flash" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     get auth_url, params: { token: token, plan: "premium_monthly" }
 
@@ -54,7 +54,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "verify with premium_annual plan redirects to checkout without flash" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     get auth_url, params: { token: token, plan: "premium_annual" }
 
@@ -63,7 +63,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "verify without plan redirects to episodes" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     get auth_url, params: { token: token }
 

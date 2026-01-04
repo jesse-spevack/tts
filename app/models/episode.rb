@@ -51,7 +51,7 @@ class Episode < ApplicationRecord
   end
 
   def download_url
-    GenerateEpisodeDownloadUrl.call(self)
+    GeneratesEpisodeDownloadUrl.call(self)
   end
 
   private

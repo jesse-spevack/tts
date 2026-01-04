@@ -160,7 +160,7 @@ User submits URL/Text/File
          │
          ▼
 ┌─────────────────────┐
-│ GenerateEpisodeAudio│  Google Cloud TTS synthesis
+│ GeneratesEpisodeAudio│  Google Cloud TTS synthesis
 └─────────────────────┘
          │
          ▼
@@ -192,11 +192,11 @@ Email notification (first episode only)
 
 The application uses service objects extensively for business logic:
 
-- **Episode Creation**: `CreateUrlEpisode`, `CreatePasteEpisode`, `CreateFileEpisode`
-- **Episode Processing**: `ProcessUrlEpisode`, `ProcessPasteEpisode`, `ProcessFileEpisode`
+- **Episode Creation**: `CreatesUrlEpisode`, `CreatesPasteEpisode`, `CreatesFileEpisode`
+- **Episode Processing**: `ProcessesUrlEpisode`, `ProcessesPasteEpisode`, `ProcessesFileEpisode`
 - **Audio Generation**: `SynthesizesAudio`, `Tts::ApiClient`, `Tts::ChunkedSynthesizer`
 - **Content Processing**: `FetchesUrl`, `ExtractsArticle`, `ProcessesWithLlm`, `StripsMarkdown`
-- **Authentication**: `SendMagicLink`, `AuthenticateMagicLink`, `GenerateAuthToken`, `VerifyHashedToken`
+- **Authentication**: `SendsMagicLink`, `AuthenticatesMagicLink`, `GeneratesAuthToken`, `VerifiesHashedToken`
 - **Permissions**: `ChecksEpisodeCreationPermission`, `CalculatesMaxCharactersForUser`
 
 ### Result Pattern
@@ -205,7 +205,7 @@ Services return `Result` or `Outcome` objects:
 
 ```ruby
 # Result: for data-returning operations
-result = CreateUrlEpisode.call(podcast: podcast, user: user, url: url)
+result = CreatesUrlEpisode.call(podcast: podcast, user: user, url: url)
 if result.success?
   episode = result.data
 else

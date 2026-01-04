@@ -23,7 +23,7 @@ class TrackableTest < ActionDispatch::IntegrationTest
 
   test "does not track logged in users" do
     user = users(:one)
-    token = GenerateAuthToken.call(user: user)
+    token = GeneratesAuthToken.call(user: user)
     get auth_url, params: { token: token }
 
     assert_no_difference "PageView.count" do

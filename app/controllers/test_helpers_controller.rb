@@ -10,7 +10,7 @@ class TestHelpersController < ApplicationController
   # The token still needs to go through normal auth flow.
   def magic_link_token
     user = User.find_by!(email_address: params[:email])
-    token = GenerateAuthToken.call(user: user)
+    token = GeneratesAuthToken.call(user: user)
     render json: { token: token, email: params[:email] }
   end
 
@@ -25,7 +25,7 @@ class TestHelpersController < ApplicationController
     end
 
     user = User.find_or_create_by!(email_address: email)
-    token = GenerateAuthToken.call(user: user)
+    token = GeneratesAuthToken.call(user: user)
     render json: { token: token, email: email, user_id: user.id }
   end
 

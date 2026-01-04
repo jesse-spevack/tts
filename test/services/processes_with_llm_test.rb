@@ -9,7 +9,7 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     @text = "This is some article content about technology trends."
 
     Mocktail.replace(AsksLlm)
-    Mocktail.replace(RecordLlmUsage)
+    Mocktail.replace(RecordsLlmUsage)
   end
 
   test "processes text and returns structured result" do
@@ -213,6 +213,6 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
   end
 
   def stub_record_usage
-    stubs { |m| RecordLlmUsage.call(episode: m.any, response: m.any) }.with { LlmUsage.new }
+    stubs { |m| RecordsLlmUsage.call(episode: m.any, response: m.any) }.with { LlmUsage.new }
   end
 end
