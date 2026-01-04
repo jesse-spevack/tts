@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 class ValidatesUrl
-  def self.valid?(url)
-    new(url).valid?
+  def self.call(url)
+    new(url).call
   end
 
   def initialize(url)
     @url = url
   end
 
-  def valid?
+  def call
     return false if url.blank?
 
     uri = URI.parse(url)

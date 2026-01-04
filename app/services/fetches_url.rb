@@ -71,7 +71,7 @@ class FetchesUrl
   attr_reader :url
 
   def valid_url?
-    ValidatesUrl.valid?(url)
+    ValidatesUrl.call(url)
   end
 
   def safe_host?
