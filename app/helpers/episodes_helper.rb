@@ -27,11 +27,7 @@ module EpisodesHelper
   end
 
   def format_duration(duration_seconds)
-    return nil unless duration_seconds
-
-    minutes = duration_seconds / 60
-    seconds = duration_seconds % 60
-    format("%d:%02d", minutes, seconds)
+    FormatsDuration.call(duration_seconds)
   end
 
   def deletable?(episode)

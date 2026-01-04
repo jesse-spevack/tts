@@ -104,10 +104,7 @@ class GenerateRssFeed
   end
 
   def add_duration(xml, duration_seconds)
-    return unless duration_seconds
-
-    minutes = duration_seconds / 60
-    seconds = duration_seconds % 60
-    xml.tag! "itunes:duration", format("%<min>d:%<sec>02d", min: minutes, sec: seconds)
+    formatted = FormatsDuration.call(duration_seconds)
+    xml.tag!("itunes:duration", formatted) if formatted
   end
 end
