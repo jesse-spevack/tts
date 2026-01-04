@@ -30,7 +30,7 @@ class GenerateEpisodeDownloadUrl
 
     file.signed_url(
       method: "GET",
-      expires: 300,
+      expires: AppConfig::Storage::SIGNED_URL_EXPIRY_SECONDS,
       query: {
         "response-content-disposition" => "attachment; filename=\"#{filename}\""
       },
