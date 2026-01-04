@@ -1,5 +1,5 @@
 class Current < ActiveSupport::CurrentAttributes
-  attribute :session
+  attribute :session, :action_id
   delegate :user, to: :session, allow_nil: true
 
   def self.user_admin?
