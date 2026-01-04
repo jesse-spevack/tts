@@ -9,15 +9,11 @@ class FeedsController < ApplicationController
 
     return head :not_found unless podcast
 
-    gcs_url = AppConfig::Storage.feed_url(podcast_id)
-    uri = URI(gcs_url)
-    response = Net::HTTP.get_response(uri)
-
-    if response.is_a?(Net::HTTPSuccess)
-      expires_in 5.minutes, public: true
-      render xml: response.body, status: :ok
-    else
-      head :not_found
-    end
+    feed_content = CloudStorage.new(podcast_id: podcast_id).download_file(remote_path: "feed.xml")
+    expires_in 5.minutes, public: true
+    render xml: feed_content, status: :ok
+  rescue StandardError => e
+    Rails.logger.warn("Feed fetch failed for podcast #{podcast_id}: #{e.message}")
+    head :not_found
   end
 end
