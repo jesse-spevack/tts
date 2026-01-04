@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AsksLlm
+  include StructuredLogging
+
   # NOTE: The structured output config below (generationConfig with responseSchema)
   # is Gemini-specific. If switching to a different provider, update the ask method.
   DEFAULT_MODEL = "gemini-2.5-flash"
@@ -23,7 +25,7 @@ class AsksLlm
   end
 
   def ask(prompt)
-    Rails.logger.info "event=asks_llm model=#{model} provider=#{PROVIDER}"
+    log_info "asks_llm", model: model, provider: PROVIDER
 
     RubyLLM.chat(model: model, provider: PROVIDER)
       .with_params(generationConfig: {

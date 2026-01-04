@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CreateFileEpisode
+  include StructuredLogging
+
   def self.call(podcast:, user:, title:, author:, description:, content:)
     new(podcast: podcast, user: user, title: title, author: author, description: description, content: content).call
   end
@@ -31,7 +33,7 @@ class CreateFileEpisode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
     ProcessFileEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
-    Rails.logger.info "event=file_episode_created episode_id=#{episode.id} content_length=#{content.length}"
+    log_info "file_episode_created", episode_id: episode.id, content_length: content.length
 
     Result.success(episode)
   end

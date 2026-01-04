@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ProcessesWithLlm
+  include EpisodeLogging
+
   LlmData = Struct.new(:title, :author, :description, :content, keyword_init: true)
 
   def self.call(text:, episode:)
@@ -13,35 +15,35 @@ class ProcessesWithLlm
   end
 
   def call
-    Rails.logger.info "event=llm_request_started episode_id=#{episode.id} input_chars=#{text.length}"
+    log_info "llm_request_started", input_chars: text.length
 
     if text.length > AppConfig::Llm::MAX_INPUT_CHARS
-      Rails.logger.warn "event=llm_input_too_large episode_id=#{episode.id} input_chars=#{text.length} max_chars=#{AppConfig::Llm::MAX_INPUT_CHARS}"
+      log_warn "llm_input_too_large", input_chars: text.length, max_chars: AppConfig::Llm::MAX_INPUT_CHARS
       return Result.failure("Article content too large for processing")
     end
 
     prompt = build_prompt
     response = llm_client.ask(prompt)
 
-    Rails.logger.info "event=llm_response_received episode_id=#{episode.id} input_tokens=#{response.input_tokens} output_tokens=#{response.output_tokens}"
+    log_info "llm_response_received", input_tokens: response.input_tokens, output_tokens: response.output_tokens
 
     parsed = parse_response(response.content)
     validated = validate_and_sanitize(parsed)
     RecordLlmUsage.call(episode: episode, response: response)
 
-    Rails.logger.info "event=llm_request_completed episode_id=#{episode.id} extracted_title=#{validated[:title]}"
+    log_info "llm_request_completed", extracted_title: validated[:title]
 
     Result.success(LlmData.new(**validated))
   rescue RubyLLM::Error => e
-    Rails.logger.error "event=llm_api_error episode_id=#{episode.id} error=#{e.class} message=#{e.message}"
+    log_error "llm_api_error", error: e.class, message: e.message
 
     Result.failure("Failed to process content")
   rescue JSON::ParserError => e
-    Rails.logger.error "event=llm_json_parse_error episode_id=#{episode.id} error=#{e.message}"
+    log_error "llm_json_parse_error", error: e.message
 
     Result.failure("Failed to process content")
   rescue ValidationError => e
-    Rails.logger.error "event=llm_validation_error episode_id=#{episode.id} error=#{e.message}"
+    log_error "llm_validation_error", error: e.message
 
     Result.failure("Failed to process content")
   end

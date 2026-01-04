@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CreatePasteEpisode
+  include StructuredLogging
+
   def self.call(podcast:, user:, text:)
     new(podcast: podcast, user: user, text: text).call
   end
@@ -25,7 +27,7 @@ class CreatePasteEpisode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
     ProcessPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
-    Rails.logger.info "event=paste_episode_created episode_id=#{episode.id} text_length=#{text.length}"
+    log_info "paste_episode_created", episode_id: episode.id, text_length: text.length
 
     Result.success(episode)
   end

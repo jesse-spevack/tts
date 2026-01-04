@@ -23,7 +23,7 @@ module StructuredLogging
 
   def build_log_message(event, attrs)
     context = default_log_context.merge(attrs)
-    parts = ["event=#{event}"]
+    parts = [ "event=#{event}" ]
     context.each { |k, v| parts << "#{k}=#{v}" if v.present? }
     parts.join(" ")
   end
