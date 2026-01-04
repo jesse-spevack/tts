@@ -4,6 +4,8 @@ require "tempfile"
 require "mp3info"
 
 class GenerateEpisodeAudio
+  include EpisodeLogging
+
   def self.call(episode:, skip_feed_upload: false)
     new(episode: episode, skip_feed_upload: skip_feed_upload).call
   end
@@ -15,21 +17,21 @@ class GenerateEpisodeAudio
   end
 
   def call
-    Rails.logger.info "event=generate_episode_audio_started episode_id=#{@episode.id}"
+    log_info "generate_episode_audio_started"
 
     @episode.update!(status: :processing)
 
-    Rails.logger.info "event=synthesizing_audio episode_id=#{@episode.id} voice=#{voice_name} text_bytes=#{content_text.bytesize}"
+    log_info "synthesizing_audio", voice: voice_name, text_bytes: content_text.bytesize
     audio_content = synthesize_audio
 
     gcs_episode_id = generate_episode_id
-    Rails.logger.info "event=uploading_audio episode_id=#{@episode.id} gcs_episode_id=#{gcs_episode_id} audio_bytes=#{audio_content.bytesize}"
+    log_info "uploading_audio", gcs_episode_id: gcs_episode_id, audio_bytes: audio_content.bytesize
     upload_audio(audio_content, gcs_episode_id)
 
-    Rails.logger.info "event=calculating_duration episode_id=#{@episode.id}"
+    log_info "calculating_duration"
     duration_seconds = calculate_duration(audio_content)
 
-    Rails.logger.info "event=updating_episode episode_id=#{@episode.id} duration_seconds=#{duration_seconds}"
+    log_info "updating_episode", duration_seconds: duration_seconds
     @episode.update!(
       status: :complete,
       gcs_episode_id: gcs_episode_id,
@@ -38,21 +40,23 @@ class GenerateEpisodeAudio
     )
 
     unless @skip_feed_upload
-      Rails.logger.info "event=uploading_feed episode_id=#{@episode.id}"
+      log_info "uploading_feed"
       upload_feed
     end
 
-    Rails.logger.info "event=generate_episode_audio_completed episode_id=#{@episode.id} gcs_episode_id=#{gcs_episode_id}"
+    log_info "generate_episode_audio_completed", gcs_episode_id: gcs_episode_id
 
-    Rails.logger.info "event=notifying_user episode_id=#{@episode.id}"
+    log_info "notifying_user"
     notify_user
   rescue StandardError => e
-    Rails.logger.error "event=generate_episode_audio_failed episode_id=#{@episode.id} error=#{e.class} message=#{e.message}"
+    log_error "generate_episode_audio_failed", error: e.class, message: e.message
     cleanup_orphaned_audio
     @episode.update!(status: :failed, error_message: e.message)
   end
 
   private
+
+  attr_reader :episode
 
   def synthesize_audio
     config = Tts::Config.new(voice_name: voice_name)
@@ -94,7 +98,7 @@ class GenerateEpisodeAudio
       Mp3Info.open(temp_file.path) { |mp3| mp3.length.round }
     end
   rescue StandardError => e
-    Rails.logger.warn "event=duration_calculation_failed error=#{e.message}"
+    log_warn "duration_calculation_failed", error: e.message
     nil
   end
 
@@ -110,15 +114,15 @@ class GenerateEpisodeAudio
   def notify_user
     NotifiesEpisodeCompletion.call(episode: @episode) if @episode.user&.email_address.present?
   rescue StandardError => e
-    Rails.logger.warn "event=notification_failed episode_id=#{@episode.id} error=#{e.message}"
+    log_warn "notification_failed", error: e.message
   end
 
   def cleanup_orphaned_audio
     return unless @uploaded_audio_path
 
-    Rails.logger.info "event=cleaning_up_orphaned_audio episode_id=#{@episode.id} path=#{@uploaded_audio_path}"
+    log_info "cleaning_up_orphaned_audio", path: @uploaded_audio_path
     cloud_storage.delete_file(remote_path: @uploaded_audio_path)
   rescue StandardError => e
-    Rails.logger.warn "event=cleanup_failed episode_id=#{@episode.id} error=#{e.message}"
+    log_warn "cleanup_failed", error: e.message
   end
 end
