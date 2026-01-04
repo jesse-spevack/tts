@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class CreateUser
+  include StructuredLogging
+
   def self.call(email_address:)
     new(email_address: email_address).call
   end
@@ -16,7 +20,7 @@ class CreateUser
       podcast = CreateDefaultPodcast.call(user: user)
     end
 
-    Rails.logger.info "event=user_created user_id=#{user.id} email=#{LoggingHelper.mask_email(user.email_address)} podcast_id=#{podcast&.podcast_id}"
+    log_info "user_created", user_id: user.id, email: LoggingHelper.mask_email(user.email_address), podcast_id: podcast&.podcast_id
 
     Result.success(user: user, podcast: podcast)
   rescue ActiveRecord::RecordInvalid

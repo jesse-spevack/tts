@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class SubmitEpisodeForProcessing
+  include EpisodeLogging
+
   def self.call(episode:, content:)
     new(episode: episode, content: content).call
   end
@@ -11,14 +13,14 @@ class SubmitEpisodeForProcessing
   end
 
   def call
-    Rails.logger.info "event=submit_episode_for_processing episode_id=#{episode.id} podcast_id=#{episode.podcast.podcast_id}"
+    log_info "submit_episode_for_processing", podcast_id: episode.podcast.podcast_id
 
     wrapped = wrap_content
     episode.update!(source_text: wrapped)
 
     GenerateEpisodeAudio.call(episode: episode)
 
-    Rails.logger.info "event=processing_completed episode_id=#{episode.id}"
+    log_info "processing_completed"
   end
 
   private
