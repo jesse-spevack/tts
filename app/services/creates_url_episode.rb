@@ -28,7 +28,7 @@ class CreatesUrlEpisode
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
 
     log_info "url_episode_created", episode_id: episode.id, url: @normalized_url
 

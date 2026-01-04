@@ -45,10 +45,10 @@ class CreatesFileEpisodeTest < ActiveSupport::TestCase
     assert_equal "processing", result.data.status
   end
 
-  test "enqueues ProcessFileEpisodeJob" do
+  test "enqueues ProcessesFileEpisodeJob" do
     long_content = "A" * 150
 
-    assert_enqueued_with(job: ProcessFileEpisodeJob) do
+    assert_enqueued_with(job: ProcessesFileEpisodeJob) do
       CreatesFileEpisode.call(
         podcast: @podcast,
         user: @user,

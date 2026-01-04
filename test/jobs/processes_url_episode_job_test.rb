@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
+class ProcessesUrlEpisodeJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
   include Mocktail::DSL
 
@@ -26,8 +26,8 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
   end
 
   test "can be enqueued" do
-    assert_enqueued_with(job: ProcessUrlEpisodeJob) do
-      ProcessUrlEpisodeJob.perform_later(episode_id: @episode.id, user_id: @user.id)
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
+      ProcessesUrlEpisodeJob.perform_later(episode_id: @episode.id, user_id: @user.id)
     end
   end
 
@@ -36,7 +36,7 @@ class ProcessUrlEpisodeJobTest < ActiveSupport::TestCase
     stubs { |m| FetchesUrl.call(url: m.any) }.with { FetchesUrl::Result.failure("Could not fetch URL") }
 
     # Job should run without error (episode will fail due to fetch error, but that's expected)
-    ProcessUrlEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
+    ProcessesUrlEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
 
     @episode.reload
     assert_equal "failed", @episode.status

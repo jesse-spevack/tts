@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ProcessFileEpisodeTest < ActiveSupport::TestCase
+class ProcessesFileEpisodeTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:one)
     @long_content = "# Test Header\n\n" + ("Some **bold** content here. " * 9) + "Some **bold** content here."
@@ -19,7 +19,7 @@ class ProcessFileEpisodeTest < ActiveSupport::TestCase
   test "strips markdown and submits for processing" do
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { nil }
 
-    ProcessFileEpisode.call(episode: @episode)
+    ProcessesFileEpisode.call(episode: @episode)
 
     calls = Mocktail.calls(SubmitEpisodeForProcessing, :call)
     assert_equal 1, calls.size
@@ -30,7 +30,7 @@ class ProcessFileEpisodeTest < ActiveSupport::TestCase
   test "marks episode as failed on error" do
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { raise StandardError, "Upload failed" }
 
-    ProcessFileEpisode.call(episode: @episode)
+    ProcessesFileEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status

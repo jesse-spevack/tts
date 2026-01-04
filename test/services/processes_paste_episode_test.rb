@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ProcessPasteEpisodeTest < ActiveSupport::TestCase
+class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
     @podcast = podcasts(:one)
@@ -33,7 +33,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
-    ProcessPasteEpisode.call(episode: @episode)
+    ProcessesPasteEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "Extracted Title", @episode.title
@@ -53,7 +53,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
-    ProcessPasteEpisode.call(episode: @episode)
+    ProcessesPasteEpisode.call(episode: @episode)
 
     @episode.reload
     assert_not_nil @episode.content_preview
@@ -62,7 +62,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
   test "marks episode as failed when content too long for tier" do
     @episode.update!(source_text: "x" * 20_000)
 
-    ProcessPasteEpisode.call(episode: @episode)
+    ProcessesPasteEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -74,7 +74,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
 
-    ProcessPasteEpisode.call(episode: @episode)
+    ProcessesPasteEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -93,7 +93,7 @@ class ProcessPasteEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stubs { |m| SubmitEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
 
-    ProcessPasteEpisode.call(episode: @episode)
+    ProcessesPasteEpisode.call(episode: @episode)
 
     verify { |m| SubmitEpisodeForProcessing.call(episode: @episode, content: cleaned_content) }
     assert true

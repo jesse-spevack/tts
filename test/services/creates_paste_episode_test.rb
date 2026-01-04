@@ -13,7 +13,7 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
 
   test "creates episode with processing status" do
     result = nil
-    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
       result = CreatesPasteEpisode.call(
         podcast: @podcast,
         user: @user,
@@ -84,8 +84,8 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
     assert result.success?
   end
 
-  test "enqueues ProcessPasteEpisodeJob" do
-    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+  test "enqueues ProcessesPasteEpisodeJob" do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
       CreatesPasteEpisode.call(
         podcast: @podcast,
         user: @user,

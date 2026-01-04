@@ -26,7 +26,7 @@ class CreatesPasteEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
     log_info "paste_episode_created", episode_id: episode.id, text_length: text.length
 
     Result.success(episode)

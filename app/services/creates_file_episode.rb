@@ -32,7 +32,7 @@ class CreatesFileEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessFileEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesFileEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
     log_info "file_episode_created", episode_id: episode.id, content_length: content.length
 
     Result.success(episode)

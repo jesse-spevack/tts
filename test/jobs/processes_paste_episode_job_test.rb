@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
+class ProcessesPasteEpisodeJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
@@ -20,21 +20,21 @@ class ProcessPasteEpisodeJobTest < ActiveSupport::TestCase
       status: :processing
     )
 
-    Mocktail.replace(ProcessPasteEpisode)
+    Mocktail.replace(ProcessesPasteEpisode)
   end
 
-  test "calls ProcessPasteEpisode with episode" do
-    stubs { |m| ProcessPasteEpisode.call(episode: m.any) }.with { true }
+  test "calls ProcessesPasteEpisode with episode" do
+    stubs { |m| ProcessesPasteEpisode.call(episode: m.any) }.with { true }
 
-    ProcessPasteEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
+    ProcessesPasteEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
 
-    verify { ProcessPasteEpisode.call(episode: @episode) }
+    verify { ProcessesPasteEpisode.call(episode: @episode) }
     assert true
   end
 
   test "can be enqueued" do
-    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
-      ProcessPasteEpisodeJob.perform_later(episode_id: @episode.id, user_id: @user.id)
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
+      ProcessesPasteEpisodeJob.perform_later(episode_id: @episode.id, user_id: @user.id)
     end
   end
 

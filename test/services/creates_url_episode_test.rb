@@ -12,7 +12,7 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
 
   test "creates episode with processing status" do
     result = nil
-    assert_enqueued_with(job: ProcessUrlEpisodeJob) do
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
       result = CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
@@ -62,8 +62,8 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "Invalid URL", result.error
   end
 
-  test "enqueues ProcessUrlEpisodeJob" do
-    assert_enqueued_with(job: ProcessUrlEpisodeJob) do
+  test "enqueues ProcessesUrlEpisodeJob" do
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
       CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,

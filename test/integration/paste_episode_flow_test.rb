@@ -18,7 +18,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     text = "A" * 200
 
     # Submit the form
-    assert_enqueued_with(job: ProcessPasteEpisodeJob) do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
       post episodes_url, params: { text: text }
     end
 

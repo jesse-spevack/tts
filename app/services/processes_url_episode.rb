@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ProcessUrlEpisode
+class ProcessesUrlEpisode
   include EpisodeErrorHandling
 
   def self.call(episode:)

@@ -3,7 +3,7 @@
 require "test_helper"
 require "ostruct"
 
-class ProcessUrlEpisodeTest < ActiveSupport::TestCase
+class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
     @podcast = podcasts(:one)
@@ -38,7 +38,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "Real Title", @episode.title
@@ -49,7 +49,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
   test "marks episode as failed on fetch error" do
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.failure("Could not fetch URL") }
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -62,7 +62,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -74,7 +74,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
 
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -108,7 +108,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "HTML Title", @episode.title
@@ -133,7 +133,7 @@ class ProcessUrlEpisodeTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
     stub_gcs_and_tasks
 
-    ProcessUrlEpisode.call(episode: @episode)
+    ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_not_nil @episode.content_preview, "content_preview should be set; episode status: #{@episode.status}, error: #{@episode.error_message}"
