@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class SyncsSubscription
+  include StructuredLogging
+
   def self.call(stripe_subscription_id:)
     new(stripe_subscription_id:).call
   end
@@ -48,7 +52,7 @@ class SyncsSubscription
       :canceled
     else
       # Log unexpected statuses (unpaid, incomplete, incomplete_expired, paused)
-      Rails.logger.warn("[SyncsSubscription] Unexpected subscription status '#{stripe_status}' mapped to :canceled")
+      log_warn "unexpected_subscription_status", status: stripe_status, mapped_to: "canceled"
       :canceled
     end
   end

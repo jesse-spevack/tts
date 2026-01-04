@@ -1,4 +1,8 @@
+# frozen_string_literal: true
+
 class AuthenticateMagicLink
+  include StructuredLogging
+
   def self.call(token:)
     new(token: token).call
   end
@@ -20,7 +24,7 @@ class AuthenticateMagicLink
     if user
       InvalidateAuthToken.call(user: user)
 
-      Rails.logger.info "event=user_authenticated user_id=#{user.id} email=#{LoggingHelper.mask_email(user.email_address)}"
+      log_info "user_authenticated", user_id: user.id, email: LoggingHelper.mask_email(user.email_address)
 
       Result.success(user)
     else
