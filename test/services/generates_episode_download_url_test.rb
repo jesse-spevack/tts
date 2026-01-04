@@ -1,7 +1,7 @@
 require "test_helper"
 require "google/cloud/storage"
 
-class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
+class GeneratesEpisodeDownloadUrlTest < ActiveSupport::TestCase
   setup do
     Mocktail.replace(Google::Cloud::Storage)
     ENV["SERVICE_ACCOUNT_EMAIL"] = "test@example.iam.gserviceaccount.com"
@@ -13,13 +13,13 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
 
   test "returns nil for incomplete episode" do
     episode = episodes(:one) # pending status
-    assert_nil GenerateEpisodeDownloadUrl.call(episode)
+    assert_nil GeneratesEpisodeDownloadUrl.call(episode)
   end
 
   test "returns nil for episode without gcs_episode_id" do
     episode = episodes(:two)
     episode.gcs_episode_id = nil
-    assert_nil GenerateEpisodeDownloadUrl.call(episode)
+    assert_nil GeneratesEpisodeDownloadUrl.call(episode)
   end
 
   test "generates signed URL for complete episode" do
@@ -37,7 +37,7 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
 
     stubs { |m| Google::Cloud::Storage.new(project_id: m.any) }.with { mock_storage }
 
-    assert_equal signed_url, GenerateEpisodeDownloadUrl.call(episode)
+    assert_equal signed_url, GeneratesEpisodeDownloadUrl.call(episode)
   end
 
   test "uses IAM signer with service account email" do
@@ -60,7 +60,7 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
 
     stubs { |m| Google::Cloud::Storage.new(project_id: m.any) }.with { mock_storage }
 
-    GenerateEpisodeDownloadUrl.call(episode)
+    GeneratesEpisodeDownloadUrl.call(episode)
 
     assert_equal "test@example.iam.gserviceaccount.com", captured_issuer
     assert captured_signer.respond_to?(:call)
@@ -85,7 +85,7 @@ class GenerateEpisodeDownloadUrlTest < ActiveSupport::TestCase
 
     stubs { |m| Google::Cloud::Storage.new(project_id: m.any) }.with { mock_storage }
 
-    GenerateEpisodeDownloadUrl.call(episode)
+    GeneratesEpisodeDownloadUrl.call(episode)
 
     assert_equal 'attachment; filename="my-great-episode.mp3"',
                  captured_query["response-content-disposition"]

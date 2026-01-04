@@ -1,12 +1,12 @@
 require "test_helper"
 
-class GenerateAuthTokenTest < ActiveSupport::TestCase
+class GeneratesAuthTokenTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
   end
 
   test "call generates new token" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     @user.reload
     assert @user.auth_token.present?
@@ -16,7 +16,7 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
 
   test "call sets expiration to 30 minutes from now" do
     freeze_time do
-      GenerateAuthToken.call(user: @user)
+      GeneratesAuthToken.call(user: @user)
 
       @user.reload
       expected_expiration = 30.minutes.from_now
@@ -27,7 +27,7 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
   test "call replaces existing token" do
     @user.update!(auth_token: "old_token", auth_token_expires_at: 1.hour.from_now)
 
-    GenerateAuthToken.call(user: @user)
+    GeneratesAuthToken.call(user: @user)
 
     @user.reload
     assert_not_equal "old_token", @user.auth_token
@@ -36,8 +36,8 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
   test "call generates unique tokens" do
     user2 = users(:two)
 
-    GenerateAuthToken.call(user: @user)
-    GenerateAuthToken.call(user: user2)
+    GeneratesAuthToken.call(user: @user)
+    GeneratesAuthToken.call(user: user2)
 
     @user.reload
     user2.reload
@@ -46,7 +46,7 @@ class GenerateAuthTokenTest < ActiveSupport::TestCase
   end
 
   test "call persists token to database" do
-    GenerateAuthToken.call(user: @user)
+    GeneratesAuthToken.call(user: @user)
 
     # Verify it's actually in the database, not just in memory
     user_from_db = User.find(@user.id)

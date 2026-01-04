@@ -18,7 +18,7 @@ class SubmitEpisodeForProcessing
     wrapped = wrap_content
     episode.update!(source_text: wrapped)
 
-    GenerateEpisodeAudio.call(episode: episode)
+    GeneratesEpisodeAudio.call(episode: episode)
 
     log_info "processing_completed"
   end

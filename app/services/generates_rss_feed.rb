@@ -2,7 +2,7 @@
 
 require "builder"
 
-class GenerateRssFeed
+class GeneratesRssFeed
   PODCAST_DEFAULTS = {
     "title" => "Very normal podcast",
     "description" => "Readings turned to audio by text to speech app.",

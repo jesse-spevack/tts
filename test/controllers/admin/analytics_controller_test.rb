@@ -12,7 +12,7 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns not found for non-admin users" do
-    token = GenerateAuthToken.call(user: @regular_user)
+    token = GeneratesAuthToken.call(user: @regular_user)
     get auth_url, params: { token: token }
 
     get admin_analytics_url
@@ -20,7 +20,7 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "allows admin users to view analytics" do
-    token = GenerateAuthToken.call(user: @admin)
+    token = GeneratesAuthToken.call(user: @admin)
     get auth_url, params: { token: token }
 
     get admin_analytics_url
@@ -32,7 +32,7 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
     PageView.create!(path: "/", visitor_hash: "def", user_agent: "test")
     PageView.create!(path: "/how-it-sounds", visitor_hash: "abc", user_agent: "test")
 
-    token = GenerateAuthToken.call(user: @admin)
+    token = GeneratesAuthToken.call(user: @admin)
     get auth_url, params: { token: token }
 
     get admin_analytics_url
@@ -45,7 +45,7 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
     PageView.create!(path: "/", visitor_hash: "abc", user_agent: "test")
     PageView.create!(path: "/", visitor_hash: "def", user_agent: "test")
 
-    token = GenerateAuthToken.call(user: @admin)
+    token = GeneratesAuthToken.call(user: @admin)
     get auth_url, params: { token: token }
 
     get admin_analytics_url

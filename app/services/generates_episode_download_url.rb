@@ -16,7 +16,7 @@ require "googleauth"
 #     --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
 #     --role="roles/iam.serviceAccountTokenCreator"
 #
-class GenerateEpisodeDownloadUrl
+class GeneratesEpisodeDownloadUrl
   def self.call(episode)
     new(episode).call
   end

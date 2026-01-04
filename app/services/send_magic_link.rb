@@ -17,7 +17,7 @@ class SendMagicLink
       user = result.data[:user]
     end
 
-    token = GenerateAuthToken.call(user: user)
+    token = GeneratesAuthToken.call(user: user)
     SessionsMailer.magic_link(user: user, token: token, plan: @plan).deliver_later
     Result.success(user)
   end

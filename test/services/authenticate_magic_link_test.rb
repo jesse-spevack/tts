@@ -6,7 +6,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call with valid token returns success and user" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     result = AuthenticateMagicLink.call(token: token)
 
@@ -15,7 +15,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "call invalidates token after successful authentication" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     AuthenticateMagicLink.call(token: token)
 
@@ -54,7 +54,7 @@ class AuthenticateMagicLinkTest < ActiveSupport::TestCase
   end
 
   test "token cannot be reused after successful authentication" do
-    token = GenerateAuthToken.call(user: @user)
+    token = GeneratesAuthToken.call(user: @user)
 
     # First authentication succeeds
     first_result = AuthenticateMagicLink.call(token: token)

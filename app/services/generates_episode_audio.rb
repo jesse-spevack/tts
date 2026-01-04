@@ -3,7 +3,7 @@
 require "tempfile"
 require "mp3info"
 
-class GenerateEpisodeAudio
+class GeneratesEpisodeAudio
   include EpisodeLogging
 
   def self.call(episode:, skip_feed_upload: false)
@@ -103,7 +103,7 @@ class GenerateEpisodeAudio
   end
 
   def upload_feed
-    feed_xml = GenerateRssFeed.call(podcast: @episode.podcast)
+    feed_xml = GeneratesRssFeed.call(podcast: @episode.podcast)
     cloud_storage.upload_content(content: feed_xml, remote_path: "feed.xml")
   end
 

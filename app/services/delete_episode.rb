@@ -40,7 +40,7 @@ class DeleteEpisode
   end
 
   def regenerate_feed
-    feed_xml = GenerateRssFeed.call(podcast: @episode.podcast)
+    feed_xml = GeneratesRssFeed.call(podcast: @episode.podcast)
     cloud_storage.upload_content(content: feed_xml, remote_path: "feed.xml")
     log_info "feed_regenerated", podcast_id: @episode.podcast.podcast_id
   end

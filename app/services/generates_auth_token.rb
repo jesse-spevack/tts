@@ -1,4 +1,4 @@
-class GenerateAuthToken
+class GeneratesAuthToken
   TOKEN_EXPIRATION = 30.minutes
 
   def self.call(user:)

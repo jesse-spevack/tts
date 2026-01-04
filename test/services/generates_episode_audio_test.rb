@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class GenerateEpisodeAudioTest < ActiveSupport::TestCase
+class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
   setup do
     @episode = episodes(:pending)
     @episode.update!(source_text: "Hello, this is a test episode.")
@@ -20,7 +20,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
 
-    GenerateEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
 
     @episode.reload
     assert_equal "complete", @episode.status
@@ -32,7 +32,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
     stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
 
-    GenerateEpisodeAudio.call(episode: @episode)
+    GeneratesEpisodeAudio.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
@@ -57,7 +57,7 @@ class GenerateEpisodeAudioTest < ActiveSupport::TestCase
       super(**attrs)
     end
 
-    GenerateEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
 
     # Verify cleanup was attempted - delete_file should have been called
     delete_calls = Mocktail.calls(mock_gcs, :delete_file)
