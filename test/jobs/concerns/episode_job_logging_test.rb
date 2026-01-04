@@ -19,8 +19,8 @@ class EpisodeJobLoggingTest < ActiveSupport::TestCase
       TestJob.perform_now(episode_id: 1, user_id: 2)
     end
 
-    assert_match(/event=episode_job_logging_test\/test_job_started action_id=\S+ episode_id=1 user_id=2/, logs)
-    assert_match(/event=episode_job_logging_test\/test_job_completed action_id=\S+ episode_id=1/, logs)
+    assert_match(/event=episode_job_logging_test\/test_job_started episode_id=1 user_id=2/, logs)
+    assert_match(/event=episode_job_logging_test\/test_job_completed episode_id=1/, logs)
   end
 
   test "logs started and failed events on error" do
@@ -30,8 +30,8 @@ class EpisodeJobLoggingTest < ActiveSupport::TestCase
       end
     end
 
-    assert_match(/event=episode_job_logging_test\/test_job_started action_id=\S+ episode_id=1 user_id=2/, logs)
-    assert_match(/event=episode_job_logging_test\/test_job_failed action_id=\S+ episode_id=1 error=StandardError message=Test error/, logs)
+    assert_match(/event=episode_job_logging_test\/test_job_started episode_id=1 user_id=2/, logs)
+    assert_match(/event=episode_job_logging_test\/test_job_failed episode_id=1 error=StandardError message=Test error/, logs)
   end
 
   private
