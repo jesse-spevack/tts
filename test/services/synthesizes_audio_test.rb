@@ -16,7 +16,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
 
     synthesizer = SynthesizesAudio.new(config: config)
 
-    result = synthesizer.call("Short text.")
+    result = synthesizer.call(text: "Short text.")
     assert_equal "audio data", result
   end
 
@@ -33,7 +33,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
     mock_chunked.define_singleton_method(:synthesize) { |chunks, voice| "chunked audio" }
     synthesizer.instance_variable_set(:@chunked_synthesizer, mock_chunked)
 
-    result = synthesizer.call("This is a longer text that will be chunked.")
+    result = synthesizer.call(text: "This is a longer text that will be chunked.")
     assert_equal "chunked audio", result
   end
 
@@ -45,7 +45,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = SynthesizesAudio.new(config: config)
-    synthesizer.call("Hello", voice: "custom-voice")
+    synthesizer.call(text: "Hello", voice: "custom-voice")
 
     calls = Mocktail.calls(mock_api_client, :call)
     assert_equal 1, calls.size
@@ -60,7 +60,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
     stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
 
     synthesizer = SynthesizesAudio.new(config: config)
-    synthesizer.call("Hello")
+    synthesizer.call(text: "Hello")
 
     calls = Mocktail.calls(mock_api_client, :call)
     assert_equal 1, calls.size

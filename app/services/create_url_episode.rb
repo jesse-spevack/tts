@@ -38,7 +38,7 @@ class CreateUrlEpisode
   attr_reader :podcast, :user, :url
 
   def valid_url?
-    ValidatesUrl.valid?(url)
+    ValidatesUrl.call(url)
   end
 
   def unsupported_site?

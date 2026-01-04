@@ -13,7 +13,7 @@ class SynthesizesAudio
     @chunked_synthesizer = Tts::ChunkedSynthesizer.new(api_client: @api_client, config: config)
   end
 
-  def call(text, voice: nil)
+  def call(text:, voice: nil)
     Rails.logger.info "[TTS] Generating audio..."
     voice ||= @config.voice_name
 
