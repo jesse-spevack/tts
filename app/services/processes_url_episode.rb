@@ -91,17 +91,15 @@ class ProcessesUrlEpisode
   def update_and_enqueue
     content = @llm_result.data.content
 
-    Episode.transaction do
-      episode.update!(
-        title: @extract_result.data.title || @llm_result.data.title,
-        author: @extract_result.data.author || @llm_result.data.author,
-        description: @llm_result.data.description,
-        content_preview: GeneratesContentPreview.call(content)
-      )
+    episode.update!(
+      title: @extract_result.data.title || @llm_result.data.title,
+      author: @extract_result.data.author || @llm_result.data.author,
+      description: @llm_result.data.description,
+      content_preview: GeneratesContentPreview.call(content)
+    )
 
-      log_info "episode_metadata_updated"
+    log_info "episode_metadata_updated"
 
-      SubmitsEpisodeForProcessing.call(episode: episode, content: content)
-    end
+    SubmitsEpisodeForProcessing.call(episode: episode, content: content)
   end
 end
