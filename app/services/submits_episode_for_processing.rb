@@ -18,9 +18,9 @@ class SubmitsEpisodeForProcessing
     wrapped = wrap_content
     episode.update!(source_text: wrapped)
 
-    GeneratesEpisodeAudio.call(episode: episode)
+    GeneratesEpisodeAudioJob.perform_later(episode_id: episode.id, action_id: Current.action_id)
 
-    log_info "processing_completed"
+    log_info "audio_generation_enqueued"
   end
 
   private
