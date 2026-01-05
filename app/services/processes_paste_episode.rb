@@ -61,17 +61,15 @@ class ProcessesPasteEpisode
   def update_and_enqueue
     content = @llm_result.data.content
 
-    Episode.transaction do
-      episode.update!(
-        title: @llm_result.data.title,
-        author: @llm_result.data.author,
-        description: @llm_result.data.description,
-        content_preview: GeneratesContentPreview.call(content)
-      )
+    episode.update!(
+      title: @llm_result.data.title,
+      author: @llm_result.data.author,
+      description: @llm_result.data.description,
+      content_preview: GeneratesContentPreview.call(content)
+    )
 
-      log_info "episode_metadata_updated"
+    log_info "episode_metadata_updated"
 
-      SubmitsEpisodeForProcessing.call(episode: episode, content: content)
-    end
+    SubmitsEpisodeForProcessing.call(episode: episode, content: content)
   end
 end
