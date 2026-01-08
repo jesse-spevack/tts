@@ -1,2 +1,2 @@
-<%= turbo_stream.remove dom_id(@episode) %>
+<%= turbo_stream.update "episodes_list", partial: "episodes/episodes_list" %>
 <%= turbo_stream.update "flash-messages", partial: "shared/flash" %>

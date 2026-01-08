@@ -15,7 +15,7 @@
       <% end %>
     <% end %>
     <% if deletable?(episode) %>
-      <%= button_to episode_path(episode),
+      <%= button_to episode_path(episode, page: params[:page]),
         method: :delete,
         form_class: "contents",
         class: "text-[var(--color-subtext)] hover:text-[var(--color-red)] transition-colors cursor-pointer",
