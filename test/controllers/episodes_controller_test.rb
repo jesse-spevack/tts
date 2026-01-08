@@ -486,13 +486,13 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to episodes_path
   end
 
-  test "destroy returns turbo stream that removes episode" do
+  test "destroy returns turbo stream that updates episodes list" do
     episode = episodes(:one)
 
     delete episode_url(episode), as: :turbo_stream
 
     assert_response :success
-    assert_includes response.body, %(turbo-stream action="remove" target="episode_#{episode.id}")
+    assert_includes response.body, %(turbo-stream action="update" target="episodes_list")
     assert_includes response.body, %(turbo-stream action="update" target="flash-messages")
   end
 

@@ -1,0 +1,18 @@
+<% if @episodes.any? %>
+  <div class="flex flex-col gap-3">
+    <% @episodes.each do |episode| %>
+      <%= render "episode_card", episode: episode %>
+    <% end %>
+  </div>
+
+  <%= render "pagination", pagy: @pagy %>
+<% else %>
+  <%= render "shared/empty_state",
+    title: "No episodes yet",
+    instructions: [
+      "1. Click <strong>+ New Episode</strong> above".html_safe,
+      "2. Paste a URL, enter text, or upload a file",
+      "3. Listen in your personal feed linked above"
+    ]
+  %>
+<% end %>
