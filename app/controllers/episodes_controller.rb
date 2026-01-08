@@ -116,8 +116,8 @@ class EpisodesController < ApplicationController
     return nil if page <= 1
 
     remaining = @podcast.episodes.count
-    max_page = [(remaining.to_f / Pagy::DEFAULT[:limit]).ceil, 1].max
+    max_page = [ (remaining.to_f / Pagy::DEFAULT[:limit]).ceil, 1 ].max
 
-    [page, max_page].min
+    [ page, max_page ].min
   end
 end
