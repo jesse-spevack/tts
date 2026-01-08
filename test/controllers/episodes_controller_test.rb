@@ -478,12 +478,22 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "destroy redirects to episodes index" do
+  test "destroy redirects to episodes index for html requests" do
     episode = episodes(:one)
 
     delete episode_url(episode)
 
     assert_redirected_to episodes_path
+  end
+
+  test "destroy returns turbo stream that removes episode" do
+    episode = episodes(:one)
+
+    delete episode_url(episode), as: :turbo_stream
+
+    assert_response :success
+    assert_includes response.body, %(turbo-stream action="remove" target="episode_#{episode.id}")
+    assert_includes response.body, %(turbo-stream action="update" target="flash-messages")
   end
 
   test "deleted episodes do not appear in index" do

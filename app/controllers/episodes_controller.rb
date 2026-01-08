@@ -34,7 +34,11 @@ class EpisodesController < ApplicationController
   def destroy
     @episode = Current.user.episodes.find_by_prefix_id!(params[:id])
     DeleteEpisodeJob.perform_later(episode_id: @episode.id, action_id: Current.action_id)
-    redirect_to episodes_path, notice: "Episode deleted."
+
+    respond_to do |format|
+      format.turbo_stream { flash.now[:notice] = "Episode deleted." }
+      format.html { redirect_to episodes_path, notice: "Episode deleted." }
+    end
   end
 
   private
