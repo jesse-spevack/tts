@@ -19,6 +19,6 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_to_last_page(exception)
-    redirect_to url_for(page: exception.pagy.last)
+    redirect_to url_for(action: :index, page: exception.pagy.last)
   end
 end
