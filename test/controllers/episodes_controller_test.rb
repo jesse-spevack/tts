@@ -315,12 +315,9 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-testid='episode-card']", count: 4
   end
 
-  test "index handles page beyond max by showing empty page" do
+  test "index handles page beyond max by redirecting to last page" do
     get episodes_url, params: { page: 999 }
-    assert_response :success
-
-    # Pagy 43 returns empty page for out-of-range requests (no error, no episodes)
-    assert_select "[data-testid='episode-card']", count: 0
+    assert_redirected_to episodes_url(page: 2)
   end
 
   test "index renders turbo frame for episodes list" do
@@ -486,13 +483,13 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to episodes_path
   end
 
-  test "destroy returns turbo stream that removes episode" do
+  test "destroy returns turbo stream that updates episodes list" do
     episode = episodes(:one)
 
     delete episode_url(episode), as: :turbo_stream
 
     assert_response :success
-    assert_includes response.body, %(turbo-stream action="remove" target="episode_#{episode.id}")
+    assert_includes response.body, %(turbo-stream action="update" target="episodes_list")
     assert_includes response.body, %(turbo-stream action="update" target="flash-messages")
   end
 
