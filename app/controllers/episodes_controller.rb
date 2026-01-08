@@ -37,10 +37,10 @@ class EpisodesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first, page: safe_page)
+        @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first, page: params[:page])
         flash.now[:notice] = "Episode deleted."
       end
-      format.html { redirect_to episodes_path(page: safe_page), notice: "Episode deleted." }
+      format.html { redirect_to episodes_path(page: params[:page]), notice: "Episode deleted." }
     end
   end
 
@@ -109,15 +109,5 @@ class EpisodesController < ApplicationController
 
   def episode_params
     params.require(:episode).permit(:title, :author, :description, :content)
-  end
-
-  def safe_page
-    page = params[:page].to_i
-    return nil if page <= 1
-
-    remaining = @podcast.episodes.count
-    max_page = [ (remaining.to_f / Pagy::DEFAULT[:limit]).ceil, 1 ].max
-
-    [ page, max_page ].min
   end
 end
