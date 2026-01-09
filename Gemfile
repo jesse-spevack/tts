@@ -89,5 +89,5 @@ group :test do
   gem "webmock"
   gem "mocktail"
   # Pin minitest to 5.x until Rails 8.1.2+ is compatible with minitest 6
-  gem "minitest", "~> 5.0"
+  gem "minitest", "~> 6.0"
 end
