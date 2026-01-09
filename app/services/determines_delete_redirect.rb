@@ -30,6 +30,6 @@ class DeterminesDeleteRedirect
   attr_reader :podcast, :episode, :current_page
 
   def items_per_page
-    Pagy::DEFAULT[:limit]
+    Pagy.options[:limit]
   end
 end
