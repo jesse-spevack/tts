@@ -37,8 +37,17 @@ class EpisodesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first, page: params[:page])
-        flash.now[:notice] = "Episode deleted."
+        result = DeterminesDeleteRedirect.call(
+          podcast: @podcast,
+          episode: @episode,
+          current_page: params[:page]
+        )
+
+        if result.data[:redirect_needed]
+          redirect_to episodes_path(page: result.data[:redirect_page]), notice: "Episode deleted."
+        else
+          flash.now[:notice] = "Episode deleted."
+        end
       end
       format.html { redirect_to episodes_path(page: params[:page]), notice: "Episode deleted." }
     end
