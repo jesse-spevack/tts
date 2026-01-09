@@ -36,10 +36,7 @@ class EpisodesController < ApplicationController
     DeleteEpisodeJob.perform_later(episode_id: @episode.id, action_id: Current.action_id)
 
     respond_to do |format|
-      format.turbo_stream do
-        @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first, page: params[:page])
-        flash.now[:notice] = "Episode deleted."
-      end
+      format.turbo_stream { flash.now[:notice] = "Episode deleted." }
       format.html { redirect_to episodes_path(page: params[:page]), notice: "Episode deleted." }
     end
   end
