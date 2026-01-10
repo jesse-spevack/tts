@@ -1,5 +1,4 @@
 require "test_helper"
-require "minitest/mock"
 
 class EpisodesControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -411,14 +410,12 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
   test "show with mp3 format redirects to signed GCS URL" do
     episode = episodes(:two)
-
-    # Stub the download_url method on the specific episode instance
     signed_url = "https://storage.googleapis.com/test-bucket/test.mp3?signature=abc"
-    episode.define_singleton_method(:download_url) { signed_url }
 
-    Episode.stub(:find_by_prefix_id!, episode) do
-      get episode_url(episode.prefix_id, format: :mp3)
-    end
+    Mocktail.replace(GeneratesEpisodeDownloadUrl)
+    stubs { |m| GeneratesEpisodeDownloadUrl.call(m.any) }.with { signed_url }
+
+    get episode_url(episode.prefix_id, format: :mp3)
 
     assert_redirected_to signed_url
   end
@@ -434,13 +431,12 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
   test "show with mp3 format works without authentication" do
     sign_out
     episode = episodes(:two)
-
     signed_url = "https://storage.googleapis.com/test-bucket/test.mp3?signature=abc"
-    episode.define_singleton_method(:download_url) { signed_url }
 
-    Episode.stub(:find_by_prefix_id!, episode) do
-      get episode_url(episode.prefix_id, format: :mp3)
-    end
+    Mocktail.replace(GeneratesEpisodeDownloadUrl)
+    stubs { |m| GeneratesEpisodeDownloadUrl.call(m.any) }.with { signed_url }
+
+    get episode_url(episode.prefix_id, format: :mp3)
 
     assert_redirected_to signed_url
   end
