@@ -44,7 +44,7 @@ gem "bcrypt"
 gem "stripe"
 
 # Google Cloud services
-gem "google-cloud-storage", "~> 1.47"
+gem "google-cloud-storage", "~> 1.58"
 gem "google-cloud-text_to_speech", "~> 2.0"
 
 # Audio processing
