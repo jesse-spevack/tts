@@ -57,10 +57,6 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 10 * 1024 * 1024, AppConfig::Content::MAX_FETCH_BYTES
   end
 
-  test "Llm::MAX_INPUT_CHARS is 100000" do
-    assert_equal 100_000, AppConfig::Llm::MAX_INPUT_CHARS
-  end
-
   test "Llm::MAX_TITLE_LENGTH is 255" do
     assert_equal 255, AppConfig::Llm::MAX_TITLE_LENGTH
   end

@@ -32,7 +32,6 @@ class AppConfig
   end
 
   module Llm
-    MAX_INPUT_CHARS = 100_000
     MAX_TITLE_LENGTH = 255
     MAX_AUTHOR_LENGTH = 255
     MAX_DESCRIPTION_LENGTH = 1000

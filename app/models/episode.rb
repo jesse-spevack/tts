@@ -54,13 +54,6 @@ class Episode < ApplicationRecord
     GeneratesEpisodeDownloadUrl.call(self)
   end
 
-  private
-
-  def content_within_tier_limit
-    result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
-    errors.add(:source_text, result.error) if result.failure?
-  end
-
   def broadcast_status_change
     broadcast_replace_to(
       "podcast_#{podcast_id}_episodes",
@@ -68,5 +61,12 @@ class Episode < ApplicationRecord
       partial: "episodes/episode_card",
       locals: { episode: self }
     )
+  end
+
+  private
+
+  def content_within_tier_limit
+    result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
+    errors.add(:source_text, result.error) if result.failure?
   end
 end

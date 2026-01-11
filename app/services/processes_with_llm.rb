@@ -17,11 +17,6 @@ class ProcessesWithLlm
   def call
     log_info "llm_request_started", input_chars: text.length
 
-    if text.length > AppConfig::Llm::MAX_INPUT_CHARS
-      log_warn "llm_input_too_large", input_chars: text.length, max_chars: AppConfig::Llm::MAX_INPUT_CHARS
-      return Result.failure("Article content too large for processing")
-    end
-
     prompt = build_prompt
     response = llm_client.ask(prompt)
 
