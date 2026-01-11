@@ -14,6 +14,7 @@ class FindsRecentlyChangedEpisodes
 
   def call
     podcast.episodes
+      .includes(:podcast)
       .where(status: [ :pending, :processing ])
       .or(podcast.episodes.where(updated_at: window.ago..))
   end

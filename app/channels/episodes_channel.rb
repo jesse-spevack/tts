@@ -3,10 +3,13 @@
 class EpisodesChannel < ApplicationCable::Channel
   def subscribed
     podcast = current_user.podcasts.find_by(id: params[:podcast_id])
-    reject unless podcast
 
-    stream_from stream_name
-    broadcast_recently_changed_episodes(podcast)
+    if podcast
+      stream_from stream_name
+      broadcast_recently_changed_episodes(podcast)
+    else
+      reject
+    end
   end
 
   private
