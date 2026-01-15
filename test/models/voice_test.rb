@@ -3,8 +3,8 @@
 require "test_helper"
 
 class VoiceTest < ActiveSupport::TestCase
-  test "ALL contains all eight voices from CATALOG" do
-    assert_equal 8, Voice::ALL.length
+  test "ALL contains all twelve voices from CATALOG" do
+    assert_equal 12, Voice::ALL.length
     assert_includes Voice::ALL, "wren"
     assert_includes Voice::ALL, "elara"
   end

@@ -6,7 +6,7 @@ class AppConfig
     PREMIUM_CHARACTER_LIMIT = 50_000
     FREE_MONTHLY_EPISODES = 2
 
-    FREE_VOICES = %w[wren felix sloane archer].freeze
+    FREE_VOICES = %w[wren felix sloane archer gemma hugo quinn theo].freeze
     PREMIUM_VOICES = FREE_VOICES
     UNLIMITED_VOICES = (FREE_VOICES + %w[elara callum lark nash]).freeze
 

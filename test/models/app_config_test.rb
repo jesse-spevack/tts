@@ -27,12 +27,12 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_nil AppConfig::Tiers.character_limit_for("unlimited")
   end
 
-  test "FREE_VOICES contains four standard voices" do
-    assert_equal %w[wren felix sloane archer], AppConfig::Tiers::FREE_VOICES
+  test "FREE_VOICES contains eight standard voices" do
+    assert_equal %w[wren felix sloane archer gemma hugo quinn theo], AppConfig::Tiers::FREE_VOICES
   end
 
-  test "UNLIMITED_VOICES contains all eight voices" do
-    assert_equal 8, AppConfig::Tiers::UNLIMITED_VOICES.length
+  test "UNLIMITED_VOICES contains all twelve voices" do
+    assert_equal 12, AppConfig::Tiers::UNLIMITED_VOICES.length
     assert_includes AppConfig::Tiers::UNLIMITED_VOICES, "wren"
     assert_includes AppConfig::Tiers::UNLIMITED_VOICES, "elara"
   end
