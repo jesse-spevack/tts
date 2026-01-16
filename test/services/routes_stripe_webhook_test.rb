@@ -2,6 +2,8 @@ require "test_helper"
 require "ostruct"
 
 class RoutesStripeWebhookTest < ActiveSupport::TestCase
+  include ActionMailer::TestHelper
+
   setup do
     @user = users(:free_user)
     Stripe.api_key = "sk_test_fake"
@@ -157,5 +159,71 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
 
     result = RoutesStripeWebhook.call(event: event)
     assert result.success?
+  end
+
+  test "checkout.session.completed sends welcome email" do
+    @user.update!(stripe_customer_id: "cus_welcome")
+
+    stub_request(:get, "https://api.stripe.com/v1/subscriptions/sub_welcome")
+      .to_return(
+        status: 200,
+        body: {
+          id: "sub_welcome",
+          customer: "cus_welcome",
+          status: "active",
+          cancel_at_period_end: false,
+          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+        }.to_json
+      )
+
+    event = OpenStruct.new(
+      type: "checkout.session.completed",
+      data: OpenStruct.new(object: OpenStruct.new(id: "cs_welcome", subscription: "sub_welcome"))
+    )
+
+    assert_enqueued_emails 1 do
+      RoutesStripeWebhook.call(event: event)
+    end
+  end
+
+  test "customer.subscription.updated sends cancellation email when cancel_at_period_end becomes true" do
+    @user.update!(stripe_customer_id: "cus_cancel")
+    subscription = Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_cancel",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now
+    )
+
+    stub_request(:get, "https://api.stripe.com/v1/subscriptions/sub_cancel")
+      .to_return(
+        status: 200,
+        body: {
+          id: "sub_cancel",
+          customer: "cus_cancel",
+          status: "active",
+          cancel_at_period_end: true,
+          current_period_end: 1.month.from_now.to_i,
+          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+        }.to_json
+      )
+
+    event = OpenStruct.new(
+      type: "customer.subscription.updated",
+      data: OpenStruct.new(
+        object: OpenStruct.new(
+          id: "sub_cancel",
+          customer: "cus_cancel",
+          cancel_at_period_end: true,
+          current_period_end: 1.month.from_now.to_i
+        ),
+        previous_attributes: { "cancel_at_period_end" => false }
+      )
+    )
+
+    assert_enqueued_emails 1 do
+      RoutesStripeWebhook.call(event: event)
+    end
   end
 end
