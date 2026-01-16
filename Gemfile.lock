@@ -346,7 +346,7 @@ GEM
       racc (~> 1.4)
     os (1.1.4)
     ostruct (0.6.3)
-    pagy (43.2.2)
+    pagy (43.2.6)
       json
       yaml
     parallel (1.27.0)
@@ -596,7 +596,7 @@ DEPENDENCIES
   letter_opener
   minitest (~> 6.0)
   mocktail
-  pagy (~> 43.0)
+  pagy (~> 43.2)
   prefixed_ids
   propshaft
   puma (>= 5.0)
