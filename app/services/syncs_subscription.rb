@@ -20,15 +20,24 @@ class SyncsSubscription
         stripe_subscription_id: stripe_subscription.id
       )
 
+      was_not_canceling = subscription.cancel_at.nil?
+
       # Assumes single-item subscriptions (one price per subscription)
       item = stripe_subscription.items.data.first
+      new_cancel_at = derive_cancel_at(stripe_subscription, item)
+
       subscription.update!(
         user: user,
         status: map_status(stripe_subscription.status),
         stripe_price_id: item.price.id,
         current_period_end: Time.at(item.current_period_end),
-        cancel_at: derive_cancel_at(stripe_subscription, item)
+        cancel_at: new_cancel_at
       )
+
+      # Send cancellation email when subscription transitions to pending cancellation
+      if was_not_canceling && new_cancel_at.present?
+        SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at)
+      end
 
       Result.success(subscription)
     end
