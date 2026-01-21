@@ -10,8 +10,15 @@ class RoutesStripeWebhook
   def call
     case event.type
     when "checkout.session.completed"
-      CreatesSubscriptionFromCheckout.call(session: event.data.object)
-    when "customer.subscription.updated", "customer.subscription.deleted"
+      result = CreatesSubscriptionFromCheckout.call(session: event.data.object)
+      if result.success?
+        subscription = result.data
+        SendsWelcomeEmail.call(user: subscription.user, subscription: subscription)
+      end
+      result
+    when "customer.subscription.updated"
+      SyncsSubscription.call(stripe_subscription_id: event.data.object.id)
+    when "customer.subscription.deleted"
       SyncsSubscription.call(stripe_subscription_id: event.data.object.id)
     when "invoice.payment_failed"
       subscription_id = event.data.object.subscription

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class SyncsSubscriptionTest < ActiveSupport::TestCase
+  include ActionMailer::TestHelper
+
   setup do
     @user = users(:free_user)
     Stripe.api_key = "sk_test_fake"
@@ -139,6 +141,73 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_nil result.data.cancel_at
+  end
+
+  test "sends cancellation email when subscription transitions to canceling" do
+    @user.update!(stripe_customer_id: "cus_cancel_email")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_cancel_email",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now,
+      cancel_at: nil
+    )
+
+    stub_stripe_subscription(
+      id: "sub_cancel_email",
+      customer: "cus_cancel_email",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i,
+      cancel_at_period_end: true
+    )
+
+    assert_enqueued_emails 1 do
+      SyncsSubscription.call(stripe_subscription_id: "sub_cancel_email")
+    end
+  end
+
+  test "does not send cancellation email when subscription was already canceling" do
+    @user.update!(stripe_customer_id: "cus_already_canceling")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_already_canceling",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now,
+      cancel_at: 1.month.from_now
+    )
+
+    stub_stripe_subscription(
+      id: "sub_already_canceling",
+      customer: "cus_already_canceling",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i,
+      cancel_at_period_end: true
+    )
+
+    assert_no_enqueued_emails do
+      SyncsSubscription.call(stripe_subscription_id: "sub_already_canceling")
+    end
+  end
+
+  test "does not send cancellation email for new subscription that is not canceling" do
+    @user.update!(stripe_customer_id: "cus_new_active")
+
+    stub_stripe_subscription(
+      id: "sub_new_active",
+      customer: "cus_new_active",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i,
+      cancel_at_period_end: false
+    )
+
+    assert_no_enqueued_emails do
+      SyncsSubscription.call(stripe_subscription_id: "sub_new_active")
+    end
   end
 
   private
