@@ -43,7 +43,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     @episode.reload
     assert_equal "Real Title", @episode.title
     assert_equal "John Doe", @episode.author
-    assert_equal "A great article.", @episode.description
+    assert_equal "A great article.\n\nOriginal URL: https://example.com/article", @episode.description
   end
 
   test "marks episode as failed on fetch error" do
@@ -113,7 +113,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     @episode.reload
     assert_equal "HTML Title", @episode.title
     assert_equal "HTML Author", @episode.author
-    assert_equal "LLM description.", @episode.description
+    assert_equal "LLM description.\n\nOriginal URL: https://example.com/article", @episode.description
   end
 
   test "sets content_preview on episode from LLM content" do

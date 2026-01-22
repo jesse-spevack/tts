@@ -90,11 +90,15 @@ class ProcessesUrlEpisode
 
   def update_and_enqueue
     content = @llm_result.data.content
+    description = FormatsEpisodeDescription.call(
+      description: @llm_result.data.description,
+      source_url: episode.source_url
+    )
 
     episode.update!(
       title: @extract_result.data.title || @llm_result.data.title,
       author: @extract_result.data.author || @llm_result.data.author,
-      description: @llm_result.data.description,
+      description: description,
       content_preview: GeneratesContentPreview.call(content)
     )
 
