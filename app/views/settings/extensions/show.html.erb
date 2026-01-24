@@ -32,6 +32,16 @@
             <dd><%= @api_token.created_at.strftime("%B %d, %Y") %></dd>
           </div>
         </dl>
+
+        <div class="mt-6 pt-6 border-t border-[var(--color-overlay0)]">
+          <%= button_to "Disconnect Extension",
+                        settings_extensions_path,
+                        method: :delete,
+                        class: "text-sm text-[var(--color-red)] hover:underline",
+                        data: {
+                          turbo_confirm: "Are you sure you want to disconnect the extension? You'll need to reconnect from the extension to use it again."
+                        } %>
+        </div>
       <% else %>
         <div class="flex items-center gap-2 mb-4">
           <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-overlay1)]"></span>
