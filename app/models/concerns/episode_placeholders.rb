@@ -7,7 +7,8 @@ module EpisodePlaceholders
   DESCRIPTIONS = {
     url: "Processing article from URL...",
     paste: "Processing pasted text...",
-    file: "Processing uploaded file..."
+    file: "Processing uploaded file...",
+    email: "Processing email content..."
   }.freeze
 
   def self.description_for(source_type)
