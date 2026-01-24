@@ -346,7 +346,7 @@ GEM
       racc (~> 1.4)
     os (1.1.4)
     ostruct (0.6.3)
-    pagy (43.2.6)
+    pagy (43.2.7)
       json
       yaml
     parallel (1.27.0)
