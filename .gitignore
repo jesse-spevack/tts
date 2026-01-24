@@ -51,3 +51,8 @@
 
 # Braindump notes
 braindump.md
+
+# Browser extension
+browser_extension/dist/
+browser_extension/node_modules/
+browser_extension/coverage/
