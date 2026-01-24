@@ -3,33 +3,38 @@
  * Controls the extension icon appearance based on current state
  */
 
-export type IconState = 'neutral' | 'loading' | 'success' | 'error' | 'offline';
+export type IconState = 'neutral' | 'loading' | 'success' | 'error' | 'offline' | 'rate_limited';
 
 interface IconConfig {
   badgeText: string;
   badgeColor: string;
 }
 
+// Catppuccin Latte colors for badge visibility
 const ICON_CONFIGS: Record<IconState, IconConfig> = {
   neutral: {
     badgeText: '',
-    badgeColor: '#666666',
+    badgeColor: '#8c8fa1', // Catppuccin overlay1
   },
   loading: {
     badgeText: '...',
-    badgeColor: '#2196F3', // Blue
+    badgeColor: '#1e66f5', // Catppuccin blue
   },
   success: {
     badgeText: '✓',
-    badgeColor: '#4CAF50', // Green
+    badgeColor: '#40a02b', // Catppuccin green
   },
   error: {
     badgeText: '!',
-    badgeColor: '#F44336', // Red
+    badgeColor: '#d20f39', // Catppuccin red
   },
   offline: {
     badgeText: '○',
-    badgeColor: '#9E9E9E', // Gray
+    badgeColor: '#8c8fa1', // Catppuccin overlay1
+  },
+  rate_limited: {
+    badgeText: '⏳',
+    badgeColor: '#df8e1d', // Catppuccin yellow
   },
 };
 
@@ -57,8 +62,8 @@ export async function setIconState(state: IconState): Promise<void> {
     setBadgeBackgroundColor(config.badgeColor),
   ]);
 
-  // Auto-revert success and error states
-  if (state === 'success' || state === 'error') {
+  // Auto-revert success, error, and rate_limited states
+  if (state === 'success' || state === 'error' || state === 'rate_limited') {
     revertTimeout = setTimeout(() => {
       setIconState('neutral');
     }, AUTO_REVERT_DELAY);

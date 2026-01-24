@@ -3,7 +3,7 @@
  * Handles icon clicks and coordinates the extraction/send flow
  */
 
-import { getToken, isConnected } from './auth';
+import { getToken, isConnected, clearToken } from './auth';
 import { setIconState } from './icons';
 import { createEpisode, logExtensionFailure } from './api';
 import { shouldDebounce, recordSuccessfulSend } from './debounce';
@@ -104,22 +104,19 @@ chrome.action.onClicked.addListener(async (tab) => {
       recordSuccessfulSend(tab.url);
       await setIconState('success');
     } else {
-      await setIconState('error');
-
-      // Log failure to backend if it's not a rate limit
-      if (result.status !== 429) {
-        await logExtensionFailure(token, {
-          url: tab.url,
-          error_type: 'API_ERROR',
-          error_message: result.error,
-        });
-      }
+      await handleApiError(result.status, result.error, tab.url, token);
     }
   } catch (error) {
     console.error('Error processing article:', error);
-    await setIconState('error');
 
-    // Try to log the error
+    // Check if it's a network error (offline)
+    if (error instanceof Error && isNetworkError(error)) {
+      await setIconState('offline');
+    } else {
+      await setIconState('error');
+    }
+
+    // Try to log the error (only if we might be online)
     try {
       const token = await getToken();
       if (token && tab.url) {
@@ -134,6 +131,66 @@ chrome.action.onClicked.addListener(async (tab) => {
     }
   }
 });
+
+/**
+ * Handle API errors based on status code
+ */
+async function handleApiError(
+  status: number,
+  error: string,
+  url: string,
+  token: string
+): Promise<void> {
+  switch (status) {
+    case 401:
+      // Unauthorized - token is invalid or revoked
+      await clearToken();
+      await setIconState('error');
+      // Don't log - token is already invalid
+      break;
+
+    case 429:
+      // Rate limited
+      await setIconState('rate_limited');
+      // Don't log rate limits
+      break;
+
+    case 0:
+      // Network error (fetch failed)
+      await setIconState('offline');
+      break;
+
+    default:
+      // All other errors (including 5xx)
+      await setIconState('error');
+      // Log the error for debugging
+      try {
+        await logExtensionFailure(token, {
+          url,
+          error_type: status >= 500 ? 'SERVER_ERROR' : 'API_ERROR',
+          error_message: error,
+        });
+      } catch {
+        // Ignore logging failures
+      }
+  }
+}
+
+/**
+ * Check if an error is likely a network connectivity issue
+ */
+function isNetworkError(error: Error): boolean {
+  const networkErrorMessages = [
+    'Failed to fetch',
+    'NetworkError',
+    'Network request failed',
+    'net::ERR_',
+    'TypeError: Failed to fetch',
+  ];
+  return networkErrorMessages.some(msg =>
+    error.message.includes(msg) || error.name.includes(msg)
+  );
+}
 
 /**
  * Handle extraction errors

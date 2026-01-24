@@ -20,25 +20,31 @@ describe('icons', () => {
     it('returns config for loading state', () => {
       const config = getIconConfig('loading');
       expect(config.badgeText).toBe('...');
-      expect(config.badgeColor).toBe('#2196F3');
+      expect(config.badgeColor).toBe('#1e66f5'); // Catppuccin blue
     });
 
     it('returns config for success state', () => {
       const config = getIconConfig('success');
       expect(config.badgeText).toBe('✓');
-      expect(config.badgeColor).toBe('#4CAF50');
+      expect(config.badgeColor).toBe('#40a02b'); // Catppuccin green
     });
 
     it('returns config for error state', () => {
       const config = getIconConfig('error');
       expect(config.badgeText).toBe('!');
-      expect(config.badgeColor).toBe('#F44336');
+      expect(config.badgeColor).toBe('#d20f39'); // Catppuccin red
     });
 
     it('returns config for offline state', () => {
       const config = getIconConfig('offline');
       expect(config.badgeText).toBe('○');
-      expect(config.badgeColor).toBe('#9E9E9E');
+      expect(config.badgeColor).toBe('#8c8fa1'); // Catppuccin overlay1
+    });
+
+    it('returns config for rate_limited state', () => {
+      const config = getIconConfig('rate_limited');
+      expect(config.badgeText).toBe('⏳');
+      expect(config.badgeColor).toBe('#df8e1d'); // Catppuccin yellow
     });
   });
 
@@ -60,7 +66,7 @@ describe('icons', () => {
         expect.any(Function)
       );
       expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith(
-        { color: '#666666' },
+        { color: '#8c8fa1' }, // Catppuccin overlay1
         expect.any(Function)
       );
     });
@@ -73,7 +79,7 @@ describe('icons', () => {
         expect.any(Function)
       );
       expect(chrome.action.setBadgeBackgroundColor).toHaveBeenCalledWith(
-        { color: '#2196F3' },
+        { color: '#1e66f5' }, // Catppuccin blue
         expect.any(Function)
       );
     });
