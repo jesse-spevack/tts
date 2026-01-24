@@ -6,6 +6,7 @@
 import { getToken, isConnected } from './auth';
 import { setIconState } from './icons';
 import { createEpisode, logExtensionFailure } from './api';
+import { shouldDebounce, recordSuccessfulSend } from './debounce';
 
 // Message types for communication with content script
 export interface ExtractRequest {
@@ -59,6 +60,13 @@ chrome.action.onClicked.addListener(async (tab) => {
       return;
     }
 
+    // Check for double-click debounce (same URL within 5 seconds)
+    if (shouldDebounce(tab.url)) {
+      // Silently succeed without making API call
+      await setIconState('success');
+      return;
+    }
+
     // Show loading state
     await setIconState('loading');
 
@@ -93,6 +101,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     });
 
     if (result.success) {
+      recordSuccessfulSend(tab.url);
       await setIconState('success');
     } else {
       await setIconState('error');
