@@ -113,6 +113,9 @@ async function handleDisconnect(): Promise<void> {
 
   await clearToken();
 
+  // Notify background script to update popup state
+  chrome.runtime.sendMessage({ type: 'CONNECTION_CHANGED' });
+
   const app = document.getElementById('app');
   if (app) {
     renderDisconnectedState(app);
