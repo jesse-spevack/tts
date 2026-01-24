@@ -27,6 +27,10 @@ Rails.application.routes.draw do
     namespace :internal do
       resources :episodes, only: [ :update ]
     end
+
+    namespace :v1 do
+      resource :extension_token, only: [ :create ]
+    end
   end
 
   resource :session
