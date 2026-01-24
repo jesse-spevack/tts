@@ -4,6 +4,7 @@ class User < ApplicationRecord
   has_many :podcasts, through: :podcast_memberships
   has_many :episodes, dependent: :destroy
   has_many :sent_messages, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
   has_one :subscription, dependent: :destroy
 
   enum :account_type, { standard: 0, complimentary: 1, unlimited: 2 }, default: :standard
