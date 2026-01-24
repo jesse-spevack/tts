@@ -30,6 +30,7 @@ Rails.application.routes.draw do
 
     namespace :v1 do
       resource :extension_token, only: [ :create ]
+      resources :episodes, only: [ :create ]
     end
   end
 
