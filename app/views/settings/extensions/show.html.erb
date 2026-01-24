@@ -1,0 +1,57 @@
+<div class="max-w-2xl mx-auto">
+  <%= render "shared/back_link", path: settings_path, text: "Back to Settings" %>
+  <%= render "shared/page_header", title: "Browser Extension" %>
+
+  <div class="space-y-6">
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Connection Status</h2>
+
+      <% if @api_token %>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-green)]"></span>
+          <span class="text-[var(--color-text)]">Connected</span>
+        </div>
+
+        <dl class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-[var(--color-subtext)]">Token</dt>
+            <dd class="font-mono"><%= @api_token.token_prefix %>...</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-[var(--color-subtext)]">Last used</dt>
+            <dd>
+              <% if @api_token.last_used_at %>
+                <%= time_ago_in_words(@api_token.last_used_at) %> ago
+              <% else %>
+                Never
+              <% end %>
+            </dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-[var(--color-subtext)]">Connected since</dt>
+            <dd><%= @api_token.created_at.strftime("%B %d, %Y") %></dd>
+          </div>
+        </dl>
+      <% else %>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-overlay1)]"></span>
+          <span class="text-[var(--color-subtext)]">Not connected</span>
+        </div>
+
+        <p class="text-sm text-[var(--color-subtext)]">
+          Install the Chrome extension and click the icon while logged in to connect.
+        </p>
+      <% end %>
+    <% end %>
+
+    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+      <h2 class="text-lg font-medium mb-2">Get the Extension</h2>
+      <p class="text-[var(--color-subtext)] text-sm mb-4">
+        Send any article to your TTS podcast with one click.
+      </p>
+      <p class="text-[var(--color-subtext)] text-sm">
+        Chrome Web Store link coming soon.
+      </p>
+    <% end %>
+  </div>
+</div>

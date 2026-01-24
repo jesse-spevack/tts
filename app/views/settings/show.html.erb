@@ -56,5 +56,11 @@
       <%= link_to "Manage Billing", billing_path, class: button_classes(type: :secondary) %>
     <% end %>
   <% end %>
+
+  <%= render "shared/card", padding: "p-4 sm:p-8" do %>
+    <h2 class="text-lg font-medium mb-2">Browser Extension</h2>
+    <p class="text-[var(--color-subtext)] text-sm mb-4">Send articles to your podcast from any webpage.</p>
+    <%= link_to "Manage Extension", settings_extensions_path, class: button_classes(type: :secondary) %>
+  <% end %>
   </div>
 </div>

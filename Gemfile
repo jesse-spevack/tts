@@ -55,6 +55,9 @@ gem "ruby_llm"
 gem "faraday"
 gem "faraday-follow_redirects"
 
+# API rate limiting
+gem "rack-attack"
+
 # Pagination
 gem "pagy", "~> 43.2"
 

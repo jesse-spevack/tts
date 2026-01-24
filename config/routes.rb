@@ -37,6 +37,10 @@ Rails.application.routes.draw do
   resource :session
   resource :settings, only: [ :show, :update ]
 
+  namespace :settings do
+    resource :extensions, only: [ :show ]
+  end
+
   # Billing
   get "pricing", to: redirect("/#pricing")
   resource :upgrade, only: [ :show ], controller: "upgrades"
