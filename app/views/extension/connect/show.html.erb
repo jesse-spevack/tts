@@ -1,67 +1,47 @@
-<% content_for :title, "Connect Extension" %>
+<% content_for :title, "Extension Connected" %>
 
-<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-  <div class="sm:mx-auto sm:w-full sm:max-w-md">
-    <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-      <div class="text-center">
-        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Extension Connected!</h2>
-        <p class="text-gray-600 mb-6">Your TTS browser extension is now connected to your account.</p>
-      </div>
-
-      <div class="bg-gray-50 rounded-lg p-4 mb-6">
-        <p class="text-sm text-gray-500 mb-2">Your extension token:</p>
-        <code id="token-display" class="block text-xs break-all bg-white p-2 rounded border border-gray-200 text-gray-700">
-          <%= @api_token.plain_token %>
-        </code>
-      </div>
-
-      <p id="status-message" class="text-center text-sm text-gray-600 mb-4">
-        Sending token to extension...
-      </p>
-
-      <div class="text-center">
-        <a href="<%= root_path %>" class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
-          Return to TTS
-        </a>
-      </div>
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+  <div class="w-full max-w-md text-center">
+    <!-- Success Icon -->
+    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--color-green)]/10">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-[var(--color-green)]">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
     </div>
+
+    <!-- Heading -->
+    <h1 class="mt-4 text-xl font-semibold text-[var(--color-text)]">Extension Connected</h1>
+
+    <!-- Status Message -->
+    <p id="status-message" class="mt-2 text-sm text-[var(--color-subtext)]">
+      Connecting to extension...
+    </p>
+
+    <!-- Link back -->
+    <p class="mt-6">
+      <%= link_to "Return to TTS", root_path, class: "text-sm text-[var(--color-primary)] hover:underline" %>
+    </p>
   </div>
 </div>
 
+<!-- Hidden token for extension to read (not visible to user) -->
 <script>
   (function() {
     const token = "<%= @api_token.plain_token %>";
     const statusEl = document.getElementById('status-message');
 
-    // Try to communicate with the extension via storage event
-    // The extension listens for storage changes
-    function notifyExtension() {
-      // Method 1: Try to send message directly to extension (if extension ID is known)
-      // This requires the extension to declare externally_connectable in manifest
+    // Set data attribute for extension content script to read
+    document.body.setAttribute('data-tts-token', token);
+    document.body.setAttribute('data-tts-connect-status', 'ready');
 
-      // Method 2: The extension can poll/watch for this page and read the token
-      // We'll set a data attribute the extension's content script can read
-      document.body.setAttribute('data-tts-token', token);
-      document.body.setAttribute('data-tts-connect-status', 'ready');
+    // Dispatch custom event for extension
+    window.dispatchEvent(new CustomEvent('tts-extension-token', {
+      detail: { token: token }
+    }));
 
-      // Dispatch a custom event that the content script can listen for
-      window.dispatchEvent(new CustomEvent('tts-extension-token', {
-        detail: { token: token }
-      }));
-
-      // Update status after a moment
-      setTimeout(function() {
-        statusEl.textContent = 'Token ready! The extension should now be connected.';
-        statusEl.classList.remove('text-gray-600');
-        statusEl.classList.add('text-green-600');
-      }, 500);
-    }
-
-    notifyExtension();
+    // Update status
+    setTimeout(function() {
+      statusEl.textContent = 'Your extension is now connected.';
+    }, 500);
   })();
 </script>
