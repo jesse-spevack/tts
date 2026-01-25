@@ -10,6 +10,9 @@ Rails.application.routes.draw do
   # Magic link authentication
   get "auth", to: "sessions#new", as: :auth
 
+  # Login page
+  get "login", to: "logins#new", as: :login
+
   # Redirect old sign-in path to root
   get "session/new", to: redirect("/")
   get "sign_in", to: redirect("/")
