@@ -37,6 +37,11 @@ Rails.application.routes.draw do
   resource :session
   resource :settings, only: [ :show, :update ]
 
+  # Browser extension auth callback
+  namespace :extension do
+    resource :connect, only: [ :show ], controller: "connect"
+  end
+
   namespace :settings do
     resource :extensions, only: [ :show, :destroy ]
   end

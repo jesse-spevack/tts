@@ -5,7 +5,7 @@
 
 import { isConnected, clearToken } from './auth';
 
-const TTS_AUTH_URL = 'https://www.verynormal.fyi/api/v1/extension_token';
+const TTS_AUTH_URL = 'https://www.verynormal.fyi/extension/connect';
 
 /**
  * Initialize the popup
@@ -112,9 +112,6 @@ async function handleDisconnect(): Promise<void> {
   if (!confirmDisconnect) return;
 
   await clearToken();
-
-  // Notify background script to update popup state
-  chrome.runtime.sendMessage({ type: 'CONNECTION_CHANGED' });
 
   const app = document.getElementById('app');
   if (app) {

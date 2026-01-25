@@ -53,10 +53,8 @@ chrome.action.onClicked.addListener(async (tab) => {
     // Check if connected
     const connected = await isConnected();
     if (!connected) {
-      // Open popup for connect flow
-      // Note: In Manifest V3, we can't programmatically open the popup
-      // So we'll open the TTS auth page directly
-      chrome.tabs.create({ url: 'https://www.verynormal.fyi/api/v1/extension_token' });
+      // Not connected - open auth page directly
+      chrome.tabs.create({ url: 'https://www.verynormal.fyi/extension/connect' });
       return;
     }
 
@@ -217,41 +215,7 @@ async function handleExtractionError(
   }
 }
 
-/**
- * Update popup state based on connection status
- * When connected: disable popup so onClicked fires for direct extraction
- * When disconnected: enable popup for connect flow
- */
-async function updatePopupState(): Promise<void> {
-  const connected = await isConnected();
-  // Empty string disables popup, allowing onClicked to fire
-  const popup = connected ? '' : 'popup.html';
-  await chrome.action.setPopup({ popup });
-}
-
-// Listen for installation to set up initial state
-chrome.runtime.onInstalled.addListener(async () => {
+// Listen for installation
+chrome.runtime.onInstalled.addListener(() => {
   console.log('TTS Extension installed');
-  await updatePopupState();
-});
-
-// Also check on startup
-chrome.runtime.onStartup.addListener(async () => {
-  await updatePopupState();
-});
-
-// Listen for messages from popup about connection changes
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.type === 'CONNECTION_CHANGED') {
-    updatePopupState().then(() => sendResponse({ success: true }));
-    return true; // Keep channel open for async response
-  }
-  return false;
-});
-
-// Listen for storage changes (token added/removed)
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'sync' && changes.tts_api_token) {
-    updatePopupState();
-  }
 });
