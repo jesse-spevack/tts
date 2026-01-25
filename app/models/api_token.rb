@@ -8,11 +8,6 @@ class ApiToken < ApplicationRecord
   # Virtual attribute to hold the plain token temporarily after generation
   attr_accessor :plain_token
 
-  # Revoke this token
-  def revoke!
-    update!(revoked_at: Time.current)
-  end
-
   # Check if this token is revoked
   def revoked?
     revoked_at.present?
