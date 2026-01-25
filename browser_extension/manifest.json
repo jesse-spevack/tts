@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "TTS Podcast",
+  "version": "0.1.0",
+  "description": "Send any article to your TTS podcast feed with one click",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.verynormal.fyi/*",
+    "https://*.verynormal.dev/*"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.verynormal.fyi/*",
+        "*://*.verynormal.dev/*",
+        "*://localhost/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

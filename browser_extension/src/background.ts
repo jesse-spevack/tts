@@ -24,10 +24,43 @@ import {
   handleExtractionError,
   handleExtensionError,
 } from './errorHandling';
+import { TRUSTED_DOMAINS } from './content';
 import type { ExtractRequest, ExtractResponse } from './messages';
 
 // Re-export message types for consumers (e.g., content.ts)
 export type { ExtractRequest, ExtractResponse, ExtractedArticle } from './messages';
+
+/**
+ * Check if a URL is on a trusted domain (content script auto-injected)
+ */
+function isTrustedUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return TRUSTED_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensure content script is available on the tab
+ * For trusted domains, it's auto-injected via manifest.
+ * For other domains, we inject it programmatically.
+ */
+async function ensureContentScriptLoaded(tabId: number, url: string): Promise<void> {
+  // Content script is already loaded on trusted domains via manifest
+  if (isTrustedUrl(url)) {
+    return;
+  }
+
+  // Programmatically inject content script on untrusted domains
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['content.js'],
+  });
+}
 
 /**
  * Handle extension icon click
@@ -63,6 +96,9 @@ chrome.action.onClicked.addListener(async (tab) => {
 
     // Show loading state
     await setIconState('loading');
+
+    // Ensure content script is loaded (auto-injected on trusted domains, programmatic otherwise)
+    await ensureContentScriptLoaded(tab.id, tab.url);
 
     // Send message to content script to extract article
     const response = await chrome.tabs.sendMessage<ExtractRequest, ExtractResponse>(
