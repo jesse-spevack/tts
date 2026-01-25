@@ -35,7 +35,7 @@ module Extension
       assert token_match, "Expected to find token in response"
 
       token = token_match[0]
-      api_token = FindsApiToken.call(plain_token:token)
+      api_token = FindsApiToken.call(plain_token: token)
       assert_not_nil api_token
       assert_equal @user, api_token.user
       assert api_token.active?
@@ -47,7 +47,7 @@ module Extension
       # Generate first token
       get extension_connect_path
       first_token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
-      first_api_token = FindsApiToken.call(plain_token:first_token_match[0])
+      first_api_token = FindsApiToken.call(plain_token: first_token_match[0])
       assert first_api_token.active?
 
       # Generate second token
@@ -59,7 +59,7 @@ module Extension
       assert first_api_token.revoked?
 
       # Second token should be active
-      second_api_token = FindsApiToken.call(plain_token:second_token_match[0])
+      second_api_token = FindsApiToken.call(plain_token: second_token_match[0])
       assert second_api_token.active?
     end
 

@@ -25,7 +25,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/article")
       .to_return(status: 200, body: "<html><body>Hello</body></html>", headers: { "Content-Type" => "text/html" })
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/article")
 
       assert result.success?
@@ -44,7 +44,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:head, "https://example.com/slow")
       .to_timeout
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/slow")
 
       assert result.failure?
@@ -58,7 +58,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/missing")
       .to_return(status: 404)
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/missing")
 
       assert result.failure?
@@ -72,7 +72,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/error")
       .to_return(status: 500)
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/error")
 
       assert result.failure?
@@ -90,7 +90,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/new")
       .to_return(status: 200, body: "<html><body>New page</body></html>")
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/old")
 
       assert result.success?
@@ -102,7 +102,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:head, "https://example.com/large")
       .to_return(status: 200, headers: { "Content-Length" => "20000000" })
 
-    with_dns_stub([EXAMPLE_COM_IP]) do
+    with_dns_stub([ EXAMPLE_COM_IP ]) do
       result = FetchesUrl.call(url: "https://example.com/large")
 
       assert result.failure?
@@ -116,7 +116,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
     # Simulate redirect to localhost - stub DNS to return localhost IP
     new_env = { url: URI.parse("http://localhost/secret") }
 
-    with_dns_stub(["127.0.0.1"]) do
+    with_dns_stub([ "127.0.0.1" ]) do
       assert_raises(Faraday::ConnectionFailed) do
         fetcher.send(:validate_redirect_target, {}, new_env)
       end
@@ -128,7 +128,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
 
     new_env = { url: URI.parse("http://192.168.1.1/admin") }
 
-    with_dns_stub(["192.168.1.1"]) do
+    with_dns_stub([ "192.168.1.1" ]) do
       assert_raises(Faraday::ConnectionFailed) do
         fetcher.send(:validate_redirect_target, {}, new_env)
       end
@@ -140,7 +140,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
 
     new_env = { url: URI.parse("http://169.254.169.254/latest/meta-data/") }
 
-    with_dns_stub(["169.254.169.254"]) do
+    with_dns_stub([ "169.254.169.254" ]) do
       assert_raises(Faraday::ConnectionFailed) do
         fetcher.send(:validate_redirect_target, {}, new_env)
       end
@@ -202,21 +202,21 @@ class FetchesUrlTest < ActiveSupport::TestCase
   end
 
   test "safe_host? integration with actual localhost" do
-    with_dns_stub(["127.0.0.1"]) do
+    with_dns_stub([ "127.0.0.1" ]) do
       fetcher = FetchesUrl.new(url: "http://localhost/admin")
       assert_not fetcher.send(:safe_host?)
     end
   end
 
   test "safe_host? integration with 127.0.0.1" do
-    with_dns_stub(["127.0.0.1"]) do
+    with_dns_stub([ "127.0.0.1" ]) do
       fetcher = FetchesUrl.new(url: "http://127.0.0.1/admin")
       assert_not fetcher.send(:safe_host?)
     end
   end
 
   test "blocks localhost URL via call" do
-    with_dns_stub(["127.0.0.1"]) do
+    with_dns_stub([ "127.0.0.1" ]) do
       result = FetchesUrl.call(url: "http://localhost/admin")
       assert result.failure?
       assert_equal "URL not allowed", result.error
@@ -224,7 +224,7 @@ class FetchesUrlTest < ActiveSupport::TestCase
   end
 
   test "blocks 127.0.0.1 URL via call" do
-    with_dns_stub(["127.0.0.1"]) do
+    with_dns_stub([ "127.0.0.1" ]) do
       result = FetchesUrl.call(url: "http://127.0.0.1/secret")
       assert result.failure?
       assert_equal "URL not allowed", result.error

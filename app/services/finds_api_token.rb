@@ -19,6 +19,6 @@ class FindsApiToken
   private
 
   def hash_token(plain_token)
-    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.credentials.secret_key_base, plain_token)
+    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, plain_token)
   end
 end

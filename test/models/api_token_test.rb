@@ -83,7 +83,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     plain_token = token.plain_token
 
     # Verify the digest is an HMAC-SHA256 hash of the plain token
-    expected_digest = OpenSSL::HMAC.hexdigest("SHA256", Rails.application.credentials.secret_key_base, plain_token)
+    expected_digest = OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, plain_token)
     assert_equal expected_digest, token.token_digest
   end
 
