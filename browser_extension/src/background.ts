@@ -4,6 +4,7 @@
  */
 
 import { getToken, isConnected, clearToken } from './auth';
+import { BASE_URL } from './config';
 import { setIconState } from './icons';
 import { createEpisode, logExtensionFailure } from './api';
 import { shouldDebounce, recordSuccessfulSend } from './debounce';
@@ -54,7 +55,7 @@ chrome.action.onClicked.addListener(async (tab) => {
     const connected = await isConnected();
     if (!connected) {
       // Not connected - open auth page directly
-      chrome.tabs.create({ url: 'https://www.verynormal.fyi/extension/connect' });
+      chrome.tabs.create({ url: `${BASE_URL}/extension/connect` });
       return;
     }
 

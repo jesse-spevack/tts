@@ -3,7 +3,7 @@
  * Communicates with the TTS Rails backend
  */
 
-const API_BASE_URL = 'https://www.verynormal.fyi';
+import { BASE_URL } from './config';
 
 export interface CreateEpisodeRequest {
   title: string;
@@ -43,7 +43,7 @@ export async function createEpisode(
   request: CreateEpisodeRequest
 ): Promise<ApiResult<CreateEpisodeResponse>> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/episodes`, {
+    const response = await fetch(`${BASE_URL}/api/v1/episodes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export async function logExtensionFailure(
   request: LogExtensionFailureRequest
 ): Promise<ApiResult<LogExtensionFailureResponse>> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/extension_logs`, {
+    const response = await fetch(`${BASE_URL}/api/v1/extension_logs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

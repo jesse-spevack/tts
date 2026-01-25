@@ -1,4 +1,5 @@
 import { createEpisode, CreateEpisodeRequest, logExtensionFailure, LogExtensionFailureRequest } from './api';
+import { BASE_URL } from './config';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -27,7 +28,7 @@ describe('api', () => {
       const result = await createEpisode('test-token', validRequest);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://www.verynormal.fyi/api/v1/episodes',
+        `${BASE_URL}/api/v1/episodes`,
         {
           method: 'POST',
           headers: {
@@ -168,7 +169,7 @@ describe('api', () => {
       const result = await logExtensionFailure('test-token', validRequest);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://www.verynormal.fyi/api/v1/extension_logs',
+        `${BASE_URL}/api/v1/extension_logs`,
         {
           method: 'POST',
           headers: {

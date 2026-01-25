@@ -4,8 +4,9 @@
  */
 
 import { isConnected, clearToken } from './auth';
+import { BASE_URL } from './config';
 
-const TTS_AUTH_URL = 'https://www.verynormal.fyi/extension/connect';
+const TTS_AUTH_URL = `${BASE_URL}/extension/connect`;
 
 /**
  * Initialize the popup
