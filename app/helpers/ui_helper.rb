@@ -11,6 +11,8 @@ module UiHelper
       "text-[var(--color-subtext)] hover:text-[var(--color-text)]"
     when :link
       "text-sm text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer"
+    when :danger
+      "#{width_class}border border-[var(--color-red)]/50 text-[var(--color-red)] font-medium py-2 px-4 rounded-lg hover:bg-[var(--color-red)]/10 cursor-pointer"
     else
       ""
     end.strip

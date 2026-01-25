@@ -10,6 +10,9 @@ Rails.application.routes.draw do
   # Magic link authentication
   get "auth", to: "sessions#new", as: :auth
 
+  # Login page
+  get "login", to: "logins#new", as: :login
+
   # Redirect old sign-in path to root
   get "session/new", to: redirect("/")
   get "sign_in", to: redirect("/")
@@ -27,10 +30,25 @@ Rails.application.routes.draw do
     namespace :internal do
       resources :episodes, only: [ :update ]
     end
+
+    namespace :v1 do
+      resource :extension_token, only: [ :create ]
+      resources :episodes, only: [ :create ]
+      resources :extension_logs, only: [ :create ]
+    end
   end
 
   resource :session
   resource :settings, only: [ :show, :update ]
+
+  # Browser extension auth callback
+  namespace :extension do
+    resource :connect, only: [ :show ], controller: "connect"
+  end
+
+  namespace :settings do
+    resource :extensions, only: [ :show, :destroy ]
+  end
 
   # Billing
   get "pricing", to: redirect("/#pricing")

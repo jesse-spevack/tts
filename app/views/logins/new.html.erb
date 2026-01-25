@@ -1,0 +1,40 @@
+<% content_for :title, "Login" %>
+
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+  <div class="w-full max-w-md text-center">
+    <!-- Envelope Icon -->
+    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--color-primary)]/10">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-[var(--color-primary)]">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+      </svg>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="mt-4 text-xl font-semibold text-[var(--color-text)]">Login</h1>
+
+    <!-- Form -->
+    <%= form_with url: session_path, class: "mt-6" do |form| %>
+      <% if @return_to.present? %>
+        <%= form.hidden_field :return_to, value: @return_to %>
+      <% end %>
+
+      <div class="space-y-4">
+        <%= form.email_field :email_address,
+            required: true,
+            autofocus: true,
+            autocomplete: "email",
+            placeholder: "Enter your email",
+            class: input_classes %>
+
+        <%= form.submit "Send me a link",
+            class: button_classes(type: :primary, full_width: true) %>
+      </div>
+    <% end %>
+
+    <p class="mt-4 text-center text-xs text-[var(--color-subtext)]">
+      By signing in, you agree to our
+      <%= link_to "Terms", terms_path, class: "underline hover:text-[var(--color-primary)]" %>
+      and <%= link_to "Privacy Policy", privacy_path, class: "underline hover:text-[var(--color-primary)]" %>.
+    </p>
+  </div>
+</div>

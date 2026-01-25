@@ -1,0 +1,33 @@
+{
+  "name": "tts-browser-extension",
+  "version": "0.1.0",
+  "description": "Chrome extension for sending articles to TTS podcast feed",
+  "private": true,
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "build:dev": "node esbuild.config.js",
+    "build:prod": "NODE_ENV=production node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/jest": "^29.5.14",
+    "@types/mozilla__readability": "^0.4.2",
+    "@types/node": "^25.0.10",
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0"
+  }
+}

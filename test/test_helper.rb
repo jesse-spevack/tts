@@ -32,3 +32,10 @@ module ActiveSupport
     end
   end
 end
+
+# Reset Rack::Attack cache between integration tests
+class ActionDispatch::IntegrationTest
+  setup do
+    Rack::Attack.reset! if defined?(Rack::Attack)
+  end
+end

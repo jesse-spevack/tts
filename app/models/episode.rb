@@ -8,23 +8,23 @@ class Episode < ApplicationRecord
   delegate :voice, to: :user
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
-  enum :source_type, { file: 0, url: 1, paste: 2 }
+  enum :source_type, { file: 0, url: 1, paste: 2, extension: 3 }
 
   validates :title, presence: true, length: { maximum: 255 }
-  validates :source_url, presence: true, if: :url?
+  validates :source_url, presence: true, if: :source_url_required?
   validates :source_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]) }, if: -> { source_url.present? }
   validates :author, presence: true, length: { maximum: 255 }
   validates :description, presence: true, length: { maximum: 1000 }
   validates :duration_seconds, numericality: { greater_than: 0, less_than_or_equal_to: 86_400 }, allow_nil: true
 
   validates :source_text, presence: { message: "cannot be empty" },
-            if: -> { paste? || file? }
+            if: :source_text_required?
 
   validates :source_text, length: {
               minimum: AppConfig::Content::MIN_LENGTH,
               message: "must be at least %{count} characters"
             },
-            if: -> { paste? || file? },
+            if: :source_text_required?,
             allow_blank: true
 
   validate :content_within_tier_limit, on: :create,
@@ -64,6 +64,14 @@ class Episode < ApplicationRecord
   end
 
   private
+
+  def source_url_required?
+    url? || extension?
+  end
+
+  def source_text_required?
+    paste? || file? || extension?
+  end
 
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)

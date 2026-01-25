@@ -1,0 +1,13 @@
+active_token:
+  user: one
+  token_digest: active_token_digest_12345
+
+revoked_token:
+  user: one
+  token_digest: revoked_token_digest_67890
+  revoked_at: <%= 1.day.ago %>
+
+recently_used_token:
+  user: two
+  token_digest: recently_used_digest_abcde
+  last_used_at: <%= 1.hour.ago %>
