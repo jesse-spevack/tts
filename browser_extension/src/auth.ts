@@ -6,9 +6,9 @@
 const TOKEN_KEY = 'very_normal_tts_api_token';
 
 /**
- * Valid token format: pk_live_* or pk_test_* followed by 32-64 alphanumeric chars
+ * Valid token format: pk_live_* followed by 32-64 alphanumeric chars
  */
-const TOKEN_PATTERN = /^pk_(live|test)_[a-zA-Z0-9_-]{32,64}$/;
+const TOKEN_PATTERN = /^pk_live_[a-zA-Z0-9_-]{32,64}$/;
 
 /**
  * Validate token format before storage
@@ -20,7 +20,7 @@ export function validateToken(token: unknown): asserts token is string {
   }
   if (!TOKEN_PATTERN.test(token)) {
     throw new Error(
-      'Invalid token format. Expected pk_live_* or pk_test_* with 32-64 character suffix'
+      'Invalid token format. Expected pk_live_* with 32-64 character suffix'
     );
   }
 }

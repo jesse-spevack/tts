@@ -5,7 +5,7 @@ module Api
     class ExtensionLogsControllerTest < ActionDispatch::IntegrationTest
       setup do
         @user = users(:one)
-        @api_token = ApiToken.generate_for(@user)
+        @api_token = GeneratesApiToken.call(user: @user)
         @plain_token = @api_token.plain_token
       end
 
@@ -67,7 +67,7 @@ module Api
       end
 
       test "create returns 401 with revoked token" do
-        @api_token.revoke!
+        RevokesApiToken.call(token: @api_token)
 
         post api_v1_extension_logs_path,
           params: { error_type: "parse_error", url: "https://example.com/article" },

@@ -6,9 +6,8 @@ import {
   validateToken,
 } from './auth';
 
-// Valid test token matching the required format: pk_test_ + 32-64 chars
-const VALID_TEST_TOKEN = 'pk_test_abcdefghij1234567890abcdefghij12';
-const VALID_LIVE_TOKEN = 'pk_live_abcdefghij1234567890abcdefghij12';
+// Valid test token matching the required format: pk_live_ + 32-64 chars
+const VALID_TOKEN = 'pk_live_abcdefghij1234567890abcdefghij12';
 
 describe('auth', () => {
   beforeEach(() => {
@@ -17,17 +16,13 @@ describe('auth', () => {
   });
 
   describe('validateToken', () => {
-    it('accepts valid pk_test_ token', () => {
-      expect(() => validateToken(VALID_TEST_TOKEN)).not.toThrow();
-    });
-
     it('accepts valid pk_live_ token', () => {
-      expect(() => validateToken(VALID_LIVE_TOKEN)).not.toThrow();
+      expect(() => validateToken(VALID_TOKEN)).not.toThrow();
     });
 
     it('accepts token with 64 character suffix', () => {
       const longToken =
-        'pk_test_' + 'a'.repeat(64);
+        'pk_live_' + 'a'.repeat(64);
       expect(() => validateToken(longToken)).not.toThrow();
     });
 
@@ -48,22 +43,26 @@ describe('auth', () => {
       expect(() => validateToken('pk_invalid_abc123')).toThrow(
         'Invalid token format'
       );
+      // pk_test_ is no longer valid
+      expect(() => validateToken('pk_test_abcdefghij1234567890abcdefghij12')).toThrow(
+        'Invalid token format'
+      );
     });
 
     it('rejects token with suffix too short', () => {
       // Only 31 chars after prefix
-      const shortToken = 'pk_test_' + 'a'.repeat(31);
+      const shortToken = 'pk_live_' + 'a'.repeat(31);
       expect(() => validateToken(shortToken)).toThrow('Invalid token format');
     });
 
     it('rejects token with suffix too long', () => {
       // 65 chars after prefix
-      const longToken = 'pk_test_' + 'a'.repeat(65);
+      const longToken = 'pk_live_' + 'a'.repeat(65);
       expect(() => validateToken(longToken)).toThrow('Invalid token format');
     });
 
     it('rejects token with invalid characters', () => {
-      const invalidToken = 'pk_test_abcdefghij1234567890abcd!@#$';
+      const invalidToken = 'pk_live_abcdefghij1234567890abcd!@#$';
       expect(() => validateToken(invalidToken)).toThrow('Invalid token format');
     });
   });
@@ -76,10 +75,10 @@ describe('auth', () => {
         }
       );
 
-      await storeToken(VALID_TEST_TOKEN);
+      await storeToken(VALID_TOKEN);
 
       expect(chrome.storage.sync.set).toHaveBeenCalledWith(
-        { very_normal_tts_api_token: VALID_TEST_TOKEN },
+        { very_normal_tts_api_token: VALID_TOKEN },
         expect.any(Function)
       );
     });
@@ -102,7 +101,7 @@ describe('auth', () => {
         }
       );
 
-      await expect(storeToken(VALID_TEST_TOKEN)).rejects.toThrow(
+      await expect(storeToken(VALID_TOKEN)).rejects.toThrow(
         'Storage quota exceeded'
       );
     });
@@ -112,7 +111,7 @@ describe('auth', () => {
     it('returns token when stored', async () => {
       (chrome.storage.sync.get as jest.Mock).mockImplementation(
         (_keys, callback) => {
-          callback({ very_normal_tts_api_token: VALID_TEST_TOKEN });
+          callback({ very_normal_tts_api_token: VALID_TOKEN });
         }
       );
 
@@ -122,7 +121,7 @@ describe('auth', () => {
         ['very_normal_tts_api_token'],
         expect.any(Function)
       );
-      expect(token).toBe(VALID_TEST_TOKEN);
+      expect(token).toBe(VALID_TOKEN);
     });
 
     it('returns null when no token stored', async () => {
@@ -183,7 +182,7 @@ describe('auth', () => {
     it('returns true when token exists', async () => {
       (chrome.storage.sync.get as jest.Mock).mockImplementation(
         (_keys, callback) => {
-          callback({ very_normal_tts_api_token: VALID_TEST_TOKEN });
+          callback({ very_normal_tts_api_token: VALID_TOKEN });
         }
       );
 

@@ -22,7 +22,7 @@ module Api
         assert_response :success
         json = response.parsed_body
         assert json["token"].present?
-        assert json["token"].start_with?("pk_test_")
+        assert json["token"].start_with?("pk_live_")
       end
 
       test "create generates a valid token that can be used for API auth" do
@@ -34,7 +34,7 @@ module Api
         token = response.parsed_body["token"]
 
         # Verify the token works for API authentication
-        api_token = ApiToken.find_by_token(token)
+        api_token = FindsApiToken.call(plain_token:token)
         assert_not_nil api_token
         assert_equal @user, api_token.user
         assert api_token.active?
@@ -46,7 +46,7 @@ module Api
         # Generate first token
         post api_v1_extension_token_path
         first_token = response.parsed_body["token"]
-        first_api_token = ApiToken.find_by_token(first_token)
+        first_api_token = FindsApiToken.call(plain_token:first_token)
 
         # Generate second token
         post api_v1_extension_token_path
@@ -57,7 +57,7 @@ module Api
         assert first_api_token.revoked?
 
         # Second token should be active
-        second_api_token = ApiToken.find_by_token(second_token)
+        second_api_token = FindsApiToken.call(plain_token:second_token)
         assert second_api_token.active?
       end
 

@@ -39,16 +39,16 @@ class RevokesApiTokenTest < ActiveSupport::TestCase
     assert token_from_db.revoked?
   end
 
-  test "call makes token unfindable by find_by_token" do
+  test "call makes token unfindable by FindsApiToken" do
     plain_token = @api_token.plain_token
 
     # Token should be findable before revocation
-    assert_not_nil ApiToken.find_by_token(plain_token)
+    assert_not_nil FindsApiToken.call(plain_token: plain_token)
 
     RevokesApiToken.call(token: @api_token)
 
-    # Token should not be findable after revocation (find_by_token only returns active tokens)
-    assert_nil ApiToken.find_by_token(plain_token)
+    # Token should not be findable after revocation (FindsApiToken only returns active tokens)
+    assert_nil FindsApiToken.call(plain_token: plain_token)
   end
 
   test "call does not affect other tokens" do

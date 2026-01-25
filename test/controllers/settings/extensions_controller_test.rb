@@ -73,7 +73,7 @@ class Settings::ExtensionsControllerTest < ActionDispatch::IntegrationTest
   test "destroy redirects with alert when no active token exists" do
     user = users(:free_user)
     sign_in_as(user)
-    assert_nil ApiToken.active_token_for(user)
+    assert_nil GetsApiToken.call(user: user)
 
     delete settings_extensions_path
 

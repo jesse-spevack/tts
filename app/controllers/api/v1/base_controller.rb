@@ -9,7 +9,7 @@ module Api
 
       def authenticate_token!
         token = extract_bearer_token
-        api_token = ApiToken.find_by_token(token)
+        api_token = FindsApiToken.call(plain_token: token)
 
         if api_token.nil?
           render json: { error: "Unauthorized" }, status: :unauthorized

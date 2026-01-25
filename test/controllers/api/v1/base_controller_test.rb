@@ -9,7 +9,7 @@ module Api
 
       setup do
         @user = users(:one)
-        @api_token = ApiToken.generate_for(@user)
+        @api_token = GeneratesApiToken.call(user: @user)
         @plain_token = @api_token.plain_token
       end
 
@@ -50,7 +50,7 @@ module Api
       end
 
       test "authenticate_token! returns 401 when token is revoked" do
-        @api_token.revoke!
+        RevokesApiToken.call(token: @api_token)
 
         with_routing do |set|
           set.draw do

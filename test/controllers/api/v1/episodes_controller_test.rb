@@ -5,7 +5,7 @@ module Api
     class EpisodesControllerTest < ActionDispatch::IntegrationTest
       setup do
         @user = users(:one)
-        @api_token = ApiToken.generate_for(@user)
+        @api_token = GeneratesApiToken.call(user: @user)
         @plain_token = @api_token.plain_token
         @valid_params = {
           title: "Test Article",
@@ -109,7 +109,7 @@ module Api
       test "create returns 403 when user exceeds free tier limit" do
         # Use a free user and max out their episode count
         free_user = users(:free_user)
-        token = ApiToken.generate_for(free_user)
+        token = GeneratesApiToken.call(user: free_user)
 
         EpisodeUsage.create!(
           user: free_user,
@@ -128,7 +128,7 @@ module Api
 
       test "create records episode usage for free user" do
         free_user = users(:free_user)
-        token = ApiToken.generate_for(free_user)
+        token = GeneratesApiToken.call(user: free_user)
 
         assert_difference -> { EpisodeUsage.current_for(free_user).episode_count }, 1 do
           post api_v1_episodes_path,

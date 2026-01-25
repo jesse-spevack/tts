@@ -10,7 +10,7 @@ module Api
           return
         end
 
-        token = ApiToken.generate_for(Current.user)
+        token = GeneratesApiToken.call(user: Current.user)
 
         render json: {
           token: token.plain_token

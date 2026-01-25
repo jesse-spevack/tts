@@ -3,7 +3,7 @@
 class GeneratesApiToken
   include StructuredLogging
 
-  TOKEN_PREFIX = Rails.env.production? ? "pk_live_" : "pk_test_"
+  TOKEN_PREFIX = "pk_live_"
 
   def self.call(user:)
     new(user: user).call
@@ -15,7 +15,9 @@ class GeneratesApiToken
 
   def call
     # Revoke any existing active tokens for this user
-    @user.api_tokens.active.find_each(&:revoke!)
+    @user.api_tokens.active.find_each do |token|
+      token.update!(revoked_at: Time.current)
+    end
 
     # Generate a secure random token
     raw_token = "#{TOKEN_PREFIX}#{SecureRandom.urlsafe_base64(32)}"

@@ -4,7 +4,7 @@ class RackAttackTest < ActionDispatch::IntegrationTest
   setup do
     # Use unlimited user to avoid free tier episode limits (2/month)
     @user = users(:unlimited_user)
-    @api_token = ApiToken.generate_for(@user)
+    @api_token = GeneratesApiToken.call(user: @user)
     @plain_token = @api_token.plain_token
     @valid_params = {
       title: "Test Article",
@@ -88,7 +88,7 @@ class RackAttackTest < ActionDispatch::IntegrationTest
   test "rate limits are per-token" do
     # Create a second unlimited user with their own token
     other_user = users(:complimentary_user)
-    other_token = ApiToken.generate_for(other_user)
+    other_token = GeneratesApiToken.call(user: other_user)
 
     # Make 20 requests for first user
     20.times do |i|

@@ -3,11 +3,11 @@ module Settings
     before_action :require_authentication
 
     def show
-      @api_token = ApiToken.active_token_for(Current.user)
+      @api_token = GetsApiToken.call(user: Current.user)
     end
 
     def destroy
-      api_token = ApiToken.active_token_for(Current.user)
+      api_token = GetsApiToken.call(user: Current.user)
 
       if api_token
         RevokesApiToken.call(token: api_token)

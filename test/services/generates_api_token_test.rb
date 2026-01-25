@@ -16,7 +16,7 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
 
     assert api_token.is_a?(ApiToken)
     assert api_token.plain_token.present?
-    assert api_token.plain_token.start_with?("pk_test_")
+    assert api_token.plain_token.start_with?("pk_live_")
   end
 
   test "call creates token associated with user" do
@@ -48,11 +48,11 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
     assert_not_equal token1.plain_token, token2.plain_token
   end
 
-  test "call generates tokens that can be found by ApiToken.find_by_token" do
+  test "call generates tokens that can be found by FindsApiToken" do
     api_token = GeneratesApiToken.call(user: @user)
     plain_token = api_token.plain_token
 
-    found_token = ApiToken.find_by_token(plain_token)
+    found_token = FindsApiToken.call(plain_token: plain_token)
     assert_not_nil found_token
     assert_equal api_token.id, found_token.id
   end

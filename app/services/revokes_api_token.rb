@@ -12,7 +12,7 @@ class RevokesApiToken
   end
 
   def call
-    @token.revoke!
+    @token.update!(revoked_at: Time.current)
 
     log_info "api_token_revoked", user_id: @token.user_id, token_id: @token.id
 

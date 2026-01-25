@@ -20,7 +20,7 @@ module Extension
 
       assert_response :success
       # Check that a token starting with prefix is present in the page (passed to extension via JS)
-      assert_match(/pk_test_/, response.body)
+      assert_match(/pk_live_/, response.body)
     end
 
     test "show generates a valid API token" do
@@ -31,11 +31,11 @@ module Extension
       end
 
       # Extract token from response body
-      token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
+      token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
       assert token_match, "Expected to find token in response"
 
       token = token_match[0]
-      api_token = ApiToken.find_by_token(token)
+      api_token = FindsApiToken.call(plain_token:token)
       assert_not_nil api_token
       assert_equal @user, api_token.user
       assert api_token.active?
@@ -46,20 +46,20 @@ module Extension
 
       # Generate first token
       get extension_connect_path
-      first_token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
-      first_api_token = ApiToken.find_by_token(first_token_match[0])
+      first_token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
+      first_api_token = FindsApiToken.call(plain_token:first_token_match[0])
       assert first_api_token.active?
 
       # Generate second token
       get extension_connect_path
-      second_token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
+      second_token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
 
       # First token should now be revoked
       first_api_token.reload
       assert first_api_token.revoked?
 
       # Second token should be active
-      second_api_token = ApiToken.find_by_token(second_token_match[0])
+      second_api_token = FindsApiToken.call(plain_token:second_token_match[0])
       assert second_api_token.active?
     end
 
