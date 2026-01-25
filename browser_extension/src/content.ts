@@ -39,12 +39,12 @@ import type { ExtractRequest, ExtractResponse } from './messages';
  * List of trusted domains that are allowed to provide tokens to the extension.
  * This prevents malicious sites from injecting tokens via the extension connect flow.
  */
-const TRUSTED_DOMAINS = ['verynormal.fyi', 'verynormal.dev', 'localhost'];
+export const TRUSTED_DOMAINS = ['verynormal.fyi', 'verynormal.dev', 'localhost'];
 
 /**
  * Check if the current hostname is a trusted domain
  */
-function isTrustedDomain(hostname: string): boolean {
+export function isTrustedDomain(hostname: string): boolean {
   return TRUSTED_DOMAINS.some(
     (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
   );
