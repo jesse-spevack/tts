@@ -3,8 +3,20 @@ require "test_helper"
 class FetchesUrlTest < ActiveSupport::TestCase
   include Mocktail::DSL
 
+  # Use a real public IP for example.com to pass SSRF checks
+  EXAMPLE_COM_IP = "93.184.216.34"
+
   teardown do
     Mocktail.reset
+  end
+
+  # Helper to stub DNS resolution
+  def with_dns_stub(addresses)
+    original_method = Resolv.method(:getaddresses)
+    Resolv.define_singleton_method(:getaddresses) { |_host| addresses }
+    yield
+  ensure
+    Resolv.define_singleton_method(:getaddresses, original_method)
   end
 
   test "fetches HTML from valid URL" do
@@ -13,10 +25,12 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/article")
       .to_return(status: 200, body: "<html><body>Hello</body></html>", headers: { "Content-Type" => "text/html" })
 
-    result = FetchesUrl.call(url: "https://example.com/article")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/article")
 
-    assert result.success?
-    assert_includes result.data, "Hello"
+      assert result.success?
+      assert_includes result.data, "Hello"
+    end
   end
 
   test "fails on invalid URL format" do
@@ -30,10 +44,12 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:head, "https://example.com/slow")
       .to_timeout
 
-    result = FetchesUrl.call(url: "https://example.com/slow")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/slow")
 
-    assert result.failure?
-    assert_equal "Could not fetch URL", result.error
+      assert result.failure?
+      assert_equal "Could not fetch URL", result.error
+    end
   end
 
   test "fails on 404 response" do
@@ -42,10 +58,12 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/missing")
       .to_return(status: 404)
 
-    result = FetchesUrl.call(url: "https://example.com/missing")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/missing")
 
-    assert result.failure?
-    assert_equal "Could not fetch URL", result.error
+      assert result.failure?
+      assert_equal "Could not fetch URL", result.error
+    end
   end
 
   test "fails on 500 response" do
@@ -54,10 +72,12 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/error")
       .to_return(status: 500)
 
-    result = FetchesUrl.call(url: "https://example.com/error")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/error")
 
-    assert result.failure?
-    assert_equal "Could not fetch URL", result.error
+      assert result.failure?
+      assert_equal "Could not fetch URL", result.error
+    end
   end
 
   test "follows redirects" do
@@ -70,30 +90,36 @@ class FetchesUrlTest < ActiveSupport::TestCase
     stub_request(:get, "https://example.com/new")
       .to_return(status: 200, body: "<html><body>New page</body></html>")
 
-    result = FetchesUrl.call(url: "https://example.com/old")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/old")
 
-    assert result.success?
-    assert_includes result.data, "New page"
+      assert result.success?
+      assert_includes result.data, "New page"
+    end
   end
 
   test "rejects content exceeding max size based on Content-Length header" do
     stub_request(:head, "https://example.com/large")
       .to_return(status: 200, headers: { "Content-Length" => "20000000" })
 
-    result = FetchesUrl.call(url: "https://example.com/large")
+    with_dns_stub([EXAMPLE_COM_IP]) do
+      result = FetchesUrl.call(url: "https://example.com/large")
 
-    assert result.failure?
-    assert_equal "Content too large", result.error
+      assert result.failure?
+      assert_equal "Content too large", result.error
+    end
   end
 
   test "blocks redirect to localhost (DNS rebinding protection)" do
     fetcher = FetchesUrl.new(url: "https://example.com")
 
-    # Simulate redirect to localhost
+    # Simulate redirect to localhost - stub DNS to return localhost IP
     new_env = { url: URI.parse("http://localhost/secret") }
 
-    assert_raises(Faraday::ConnectionFailed) do
-      fetcher.send(:validate_redirect_target, {}, new_env)
+    with_dns_stub(["127.0.0.1"]) do
+      assert_raises(Faraday::ConnectionFailed) do
+        fetcher.send(:validate_redirect_target, {}, new_env)
+      end
     end
   end
 
@@ -102,8 +128,10 @@ class FetchesUrlTest < ActiveSupport::TestCase
 
     new_env = { url: URI.parse("http://192.168.1.1/admin") }
 
-    assert_raises(Faraday::ConnectionFailed) do
-      fetcher.send(:validate_redirect_target, {}, new_env)
+    with_dns_stub(["192.168.1.1"]) do
+      assert_raises(Faraday::ConnectionFailed) do
+        fetcher.send(:validate_redirect_target, {}, new_env)
+      end
     end
   end
 
@@ -112,8 +140,10 @@ class FetchesUrlTest < ActiveSupport::TestCase
 
     new_env = { url: URI.parse("http://169.254.169.254/latest/meta-data/") }
 
-    assert_raises(Faraday::ConnectionFailed) do
-      fetcher.send(:validate_redirect_target, {}, new_env)
+    with_dns_stub(["169.254.169.254"]) do
+      assert_raises(Faraday::ConnectionFailed) do
+        fetcher.send(:validate_redirect_target, {}, new_env)
+      end
     end
   end
 
@@ -172,24 +202,32 @@ class FetchesUrlTest < ActiveSupport::TestCase
   end
 
   test "safe_host? integration with actual localhost" do
-    fetcher = FetchesUrl.new(url: "http://localhost/admin")
-    assert_not fetcher.send(:safe_host?)
+    with_dns_stub(["127.0.0.1"]) do
+      fetcher = FetchesUrl.new(url: "http://localhost/admin")
+      assert_not fetcher.send(:safe_host?)
+    end
   end
 
   test "safe_host? integration with 127.0.0.1" do
-    fetcher = FetchesUrl.new(url: "http://127.0.0.1/admin")
-    assert_not fetcher.send(:safe_host?)
+    with_dns_stub(["127.0.0.1"]) do
+      fetcher = FetchesUrl.new(url: "http://127.0.0.1/admin")
+      assert_not fetcher.send(:safe_host?)
+    end
   end
 
   test "blocks localhost URL via call" do
-    result = FetchesUrl.call(url: "http://localhost/admin")
-    assert result.failure?
-    assert_equal "URL not allowed", result.error
+    with_dns_stub(["127.0.0.1"]) do
+      result = FetchesUrl.call(url: "http://localhost/admin")
+      assert result.failure?
+      assert_equal "URL not allowed", result.error
+    end
   end
 
   test "blocks 127.0.0.1 URL via call" do
-    result = FetchesUrl.call(url: "http://127.0.0.1/secret")
-    assert result.failure?
-    assert_equal "URL not allowed", result.error
+    with_dns_stub(["127.0.0.1"]) do
+      result = FetchesUrl.call(url: "http://127.0.0.1/secret")
+      assert result.failure?
+      assert_equal "URL not allowed", result.error
+    end
   end
 end
