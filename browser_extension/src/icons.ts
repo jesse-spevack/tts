@@ -1,6 +1,7 @@
 /**
  * Icon state management for TTS browser extension
  * Controls the extension icon appearance based on current state
+ * Uses Catppuccin colors matching the app's design system
  */
 
 export type IconState = 'neutral' | 'loading' | 'success' | 'error' | 'offline' | 'rate_limited';
@@ -10,33 +11,60 @@ interface IconConfig {
   badgeColor: string;
 }
 
-// Catppuccin Latte colors for badge visibility
-const ICON_CONFIGS: Record<IconState, IconConfig> = {
-  neutral: {
-    badgeText: '',
-    badgeColor: '#8c8fa1', // Catppuccin overlay1
-  },
-  loading: {
-    badgeText: '...',
-    badgeColor: '#1e66f5', // Catppuccin blue
-  },
-  success: {
-    badgeText: '✓',
-    badgeColor: '#40a02b', // Catppuccin green
-  },
-  error: {
-    badgeText: '!',
-    badgeColor: '#d20f39', // Catppuccin red
-  },
-  offline: {
-    badgeText: '○',
-    badgeColor: '#8c8fa1', // Catppuccin overlay1
-  },
-  rate_limited: {
-    badgeText: '⏳',
-    badgeColor: '#df8e1d', // Catppuccin yellow
-  },
+// Catppuccin Latte (light mode) colors
+const LIGHT_COLORS = {
+  green: '#40a02b',
+  red: '#d20f39',
+  blue: '#1e66f5',
+  yellow: '#df8e1d',
+  overlay: '#8c8fa1',
 };
+
+// Catppuccin Mocha (dark mode) colors
+const DARK_COLORS = {
+  green: '#a6e3a1',
+  red: '#f38ba8',
+  blue: '#89b4fa',
+  yellow: '#f9e2af',
+  overlay: '#6c7086',
+};
+
+function getColors(): typeof LIGHT_COLORS {
+  // Detect system dark mode preference
+  const isDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  return isDark ? DARK_COLORS : LIGHT_COLORS;
+}
+
+function getIconConfigs(): Record<IconState, IconConfig> {
+  const colors = getColors();
+
+  return {
+    neutral: {
+      badgeText: '',
+      badgeColor: colors.overlay,
+    },
+    loading: {
+      badgeText: '...',
+      badgeColor: colors.blue,
+    },
+    success: {
+      badgeText: '✓',
+      badgeColor: colors.green,
+    },
+    error: {
+      badgeText: '!',
+      badgeColor: colors.red,
+    },
+    offline: {
+      badgeText: '○',
+      badgeColor: colors.overlay,
+    },
+    rate_limited: {
+      badgeText: '⏳',
+      badgeColor: colors.yellow,
+    },
+  };
+}
 
 // Auto-revert delay in milliseconds
 const AUTO_REVERT_DELAY = 2500;
@@ -55,7 +83,8 @@ export async function setIconState(state: IconState): Promise<void> {
     revertTimeout = null;
   }
 
-  const config = ICON_CONFIGS[state];
+  const configs = getIconConfigs();
+  const config = configs[state];
 
   await Promise.all([
     setBadgeText(config.badgeText),
@@ -92,5 +121,5 @@ function setBadgeBackgroundColor(color: string): Promise<void> {
  * Get the current icon configuration for a state (for testing)
  */
 export function getIconConfig(state: IconState): IconConfig {
-  return ICON_CONFIGS[state];
+  return getIconConfigs()[state];
 }
