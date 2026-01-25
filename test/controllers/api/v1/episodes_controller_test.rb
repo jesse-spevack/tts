@@ -106,7 +106,7 @@ module Api
         assert_response :unprocessable_entity
       end
 
-      test "create returns 429 when user exceeds free tier limit" do
+      test "create returns 403 when user exceeds free tier limit" do
         # Use a free user and max out their episode count
         free_user = users(:free_user)
         token = ApiToken.generate_for(free_user)
@@ -122,8 +122,8 @@ module Api
           headers: auth_header(token.plain_token),
           as: :json
 
-        assert_response :too_many_requests
-        assert_equal "Episode limit reached", response.parsed_body["error"]
+        assert_response :forbidden
+        assert_equal "Episode limit reached. Please upgrade your plan.", response.parsed_body["error"]
       end
 
       test "create records episode usage for free user" do

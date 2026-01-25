@@ -8,19 +8,15 @@ import { BASE_URL } from './config';
 import { setIconState } from './icons';
 import { createEpisode, logExtensionFailure } from './api';
 import { shouldDebounce, recordSuccessfulSend } from './debounce';
+import type { ExtractedArticle } from './extractor';
 
 // Message types for communication with content script
 export interface ExtractRequest {
   type: 'EXTRACT_ARTICLE';
 }
 
-export interface ExtractedArticle {
-  title: string;
-  content: string;
-  url: string;
-  author?: string;
-  description?: string;
-}
+// Re-export for consumers of this module
+export type { ExtractedArticle };
 
 export interface ExtractSuccessResponse {
   success: true;
@@ -216,7 +212,23 @@ async function handleExtractionError(
   }
 }
 
-// Listen for installation
+// Listen for installation - create context menu for disconnect
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TTS Extension installed');
+
+  // Create context menu item for disconnecting (appears when right-clicking extension icon)
+  chrome.contextMenus.create({
+    id: 'disconnect',
+    title: 'Disconnect from TTS',
+    contexts: ['action']
+  });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener(async (info) => {
+  if (info.menuItemId === 'disconnect') {
+    await clearToken();
+    await setIconState('default');
+    console.log('TTS Extension: Disconnected');
+  }
 });

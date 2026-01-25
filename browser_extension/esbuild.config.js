@@ -20,14 +20,6 @@ function copyStaticFiles() {
     console.log('Copied manifest.json to dist/');
   }
 
-  // Copy popup.html
-  const popupSrc = path.join(__dirname, 'popup.html');
-  const popupDest = path.join(distDir, 'popup.html');
-  if (fs.existsSync(popupSrc)) {
-    fs.copyFileSync(popupSrc, popupDest);
-    console.log('Copied popup.html to dist/');
-  }
-
   // Copy icons directory
   const iconsSrc = path.join(__dirname, 'icons');
   const iconsDest = path.join(distDir, 'icons');
@@ -51,7 +43,7 @@ function copyStaticFiles() {
 const entryPoints = [];
 
 // Dynamically find entry points if they exist
-const potentialEntries = ['background.ts', 'content.ts', 'popup.ts'];
+const potentialEntries = ['background.ts', 'content.ts'];
 for (const entry of potentialEntries) {
   const entryPath = path.join(__dirname, 'src', entry);
   if (fs.existsSync(entryPath)) {
@@ -65,7 +57,7 @@ copyStaticFiles();
 // If no entry points exist yet, exit gracefully
 if (entryPoints.length === 0) {
   console.log('No TypeScript entry points found in src/. Skipping JS build.');
-  console.log('Expected files: background.ts, content.ts, popup.ts');
+  console.log('Expected files: background.ts, content.ts');
   console.log('Static files have been copied to dist/');
   process.exit(0);
 }

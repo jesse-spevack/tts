@@ -1,4 +1,14 @@
-import { storeToken, getToken, clearToken, isConnected } from './auth';
+import {
+  storeToken,
+  getToken,
+  clearToken,
+  isConnected,
+  validateToken,
+} from './auth';
+
+// Valid test token matching the required format: pk_test_ + 32-64 chars
+const VALID_TEST_TOKEN = 'pk_test_abcdefghij1234567890abcdefghij12';
+const VALID_LIVE_TOKEN = 'pk_live_abcdefghij1234567890abcdefghij12';
 
 describe('auth', () => {
   beforeEach(() => {
@@ -6,32 +16,93 @@ describe('auth', () => {
     (chrome.runtime as any).lastError = null;
   });
 
+  describe('validateToken', () => {
+    it('accepts valid pk_test_ token', () => {
+      expect(() => validateToken(VALID_TEST_TOKEN)).not.toThrow();
+    });
+
+    it('accepts valid pk_live_ token', () => {
+      expect(() => validateToken(VALID_LIVE_TOKEN)).not.toThrow();
+    });
+
+    it('accepts token with 64 character suffix', () => {
+      const longToken =
+        'pk_test_' + 'a'.repeat(64);
+      expect(() => validateToken(longToken)).not.toThrow();
+    });
+
+    it('rejects empty string', () => {
+      expect(() => validateToken('')).toThrow('Token must be a non-empty string');
+    });
+
+    it('rejects non-string values', () => {
+      expect(() => validateToken(null)).toThrow('Token must be a non-empty string');
+      expect(() => validateToken(undefined)).toThrow(
+        'Token must be a non-empty string'
+      );
+      expect(() => validateToken(123)).toThrow('Token must be a non-empty string');
+    });
+
+    it('rejects token with wrong prefix', () => {
+      expect(() => validateToken('tts_ext_abc123')).toThrow('Invalid token format');
+      expect(() => validateToken('pk_invalid_abc123')).toThrow(
+        'Invalid token format'
+      );
+    });
+
+    it('rejects token with suffix too short', () => {
+      // Only 31 chars after prefix
+      const shortToken = 'pk_test_' + 'a'.repeat(31);
+      expect(() => validateToken(shortToken)).toThrow('Invalid token format');
+    });
+
+    it('rejects token with suffix too long', () => {
+      // 65 chars after prefix
+      const longToken = 'pk_test_' + 'a'.repeat(65);
+      expect(() => validateToken(longToken)).toThrow('Invalid token format');
+    });
+
+    it('rejects token with invalid characters', () => {
+      const invalidToken = 'pk_test_abcdefghij1234567890abcd!@#$';
+      expect(() => validateToken(invalidToken)).toThrow('Invalid token format');
+    });
+  });
+
   describe('storeToken', () => {
-    it('stores token in chrome.storage.sync', async () => {
+    it('stores valid token in chrome.storage.sync', async () => {
       (chrome.storage.sync.set as jest.Mock).mockImplementation(
         (_data, callback) => {
           callback();
         }
       );
 
-      await storeToken('tts_ext_abc123');
+      await storeToken(VALID_TEST_TOKEN);
 
       expect(chrome.storage.sync.set).toHaveBeenCalledWith(
-        { tts_api_token: 'tts_ext_abc123' },
+        { very_normal_tts_api_token: VALID_TEST_TOKEN },
         expect.any(Function)
       );
+    });
+
+    it('rejects invalid token format before storage', async () => {
+      await expect(storeToken('invalid_token')).rejects.toThrow(
+        'Invalid token format'
+      );
+      expect(chrome.storage.sync.set).not.toHaveBeenCalled();
     });
 
     it('rejects on storage error', async () => {
       (chrome.storage.sync.set as jest.Mock).mockImplementation(
         (_data, callback) => {
-          (chrome.runtime as any).lastError = { message: 'Storage quota exceeded' };
+          (chrome.runtime as any).lastError = {
+            message: 'Storage quota exceeded',
+          };
           callback();
           (chrome.runtime as any).lastError = null;
         }
       );
 
-      await expect(storeToken('tts_ext_abc123')).rejects.toThrow(
+      await expect(storeToken(VALID_TEST_TOKEN)).rejects.toThrow(
         'Storage quota exceeded'
       );
     });
@@ -41,17 +112,17 @@ describe('auth', () => {
     it('returns token when stored', async () => {
       (chrome.storage.sync.get as jest.Mock).mockImplementation(
         (_keys, callback) => {
-          callback({ tts_api_token: 'tts_ext_stored_token' });
+          callback({ very_normal_tts_api_token: VALID_TEST_TOKEN });
         }
       );
 
       const token = await getToken();
 
       expect(chrome.storage.sync.get).toHaveBeenCalledWith(
-        ['tts_api_token'],
+        ['very_normal_tts_api_token'],
         expect.any(Function)
       );
-      expect(token).toBe('tts_ext_stored_token');
+      expect(token).toBe(VALID_TEST_TOKEN);
     });
 
     it('returns null when no token stored', async () => {
@@ -90,7 +161,7 @@ describe('auth', () => {
       await clearToken();
 
       expect(chrome.storage.sync.remove).toHaveBeenCalledWith(
-        ['tts_api_token'],
+        ['very_normal_tts_api_token'],
         expect.any(Function)
       );
     });
@@ -112,7 +183,7 @@ describe('auth', () => {
     it('returns true when token exists', async () => {
       (chrome.storage.sync.get as jest.Mock).mockImplementation(
         (_keys, callback) => {
-          callback({ tts_api_token: 'tts_ext_some_token' });
+          callback({ very_normal_tts_api_token: VALID_TEST_TOKEN });
         }
       );
 

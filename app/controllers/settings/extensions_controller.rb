@@ -10,7 +10,7 @@ module Settings
       api_token = ApiToken.active_token_for(Current.user)
 
       if api_token
-        api_token.revoke!
+        RevokesApiToken.call(token: api_token)
         redirect_to settings_extensions_path, notice: "Extension disconnected successfully."
       else
         redirect_to settings_extensions_path, alert: "No active extension connection found."

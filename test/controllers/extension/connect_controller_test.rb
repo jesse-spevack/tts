@@ -19,9 +19,8 @@ module Extension
       get extension_connect_path
 
       assert_response :success
-      assert_select "code#token-display"
-      # Check that a token starting with prefix is present
-      assert_match(/tts_ext_/, response.body)
+      # Check that a token starting with prefix is present in the page (passed to extension via JS)
+      assert_match(/pk_test_/, response.body)
     end
 
     test "show generates a valid API token" do
@@ -32,7 +31,7 @@ module Extension
       end
 
       # Extract token from response body
-      token_match = response.body.match(/tts_ext_[A-Za-z0-9_-]+/)
+      token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
       assert token_match, "Expected to find token in response"
 
       token = token_match[0]
@@ -47,13 +46,13 @@ module Extension
 
       # Generate first token
       get extension_connect_path
-      first_token_match = response.body.match(/tts_ext_[A-Za-z0-9_-]+/)
+      first_token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
       first_api_token = ApiToken.find_by_token(first_token_match[0])
       assert first_api_token.active?
 
       # Generate second token
       get extension_connect_path
-      second_token_match = response.body.match(/tts_ext_[A-Za-z0-9_-]+/)
+      second_token_match = response.body.match(/pk_test_[A-Za-z0-9_-]+/)
 
       # First token should now be revoked
       first_api_token.reload

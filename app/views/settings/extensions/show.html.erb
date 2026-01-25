@@ -14,10 +14,6 @@
 
         <dl class="space-y-3 text-sm">
           <div class="flex justify-between">
-            <dt class="text-[var(--color-subtext)]">Token</dt>
-            <dd class="font-mono"><%= @api_token.token_prefix %>...</dd>
-          </div>
-          <div class="flex justify-between">
             <dt class="text-[var(--color-subtext)]">Last used</dt>
             <dd>
               <% if @api_token.last_used_at %>

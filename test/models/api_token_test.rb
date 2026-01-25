@@ -7,29 +7,22 @@ class ApiTokenTest < ActiveSupport::TestCase
   end
 
   test "requires user" do
-    token = ApiToken.new(token_digest: "test_digest", token_prefix: "tts_ext_x")
+    token = ApiToken.new(token_digest: "test_digest")
     refute token.valid?
     assert_includes token.errors[:user], "must exist"
   end
 
   test "requires token_digest" do
-    token = ApiToken.new(user: users(:one), token_prefix: "tts_ext_x")
+    token = ApiToken.new(user: users(:one))
     refute token.valid?
     assert_includes token.errors[:token_digest], "can't be blank"
-  end
-
-  test "requires token_prefix" do
-    token = ApiToken.new(user: users(:one), token_digest: "test_digest")
-    refute token.valid?
-    assert_includes token.errors[:token_prefix], "can't be blank"
   end
 
   test "enforces uniqueness of token_digest" do
     existing = api_tokens(:active_token)
     duplicate = ApiToken.new(
       user: users(:two),
-      token_digest: existing.token_digest,
-      token_prefix: "tts_ext_d"
+      token_digest: existing.token_digest
     )
     refute duplicate.valid?
     assert_includes duplicate.errors[:token_digest], "has already been taken"
@@ -62,8 +55,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     token = ApiToken.generate_for(user)
 
     assert token.persisted?
-    assert token.plain_token.start_with?("tts_ext_")
-    assert_equal "tts_ext_", token.token_prefix
+    assert token.plain_token.start_with?("pk_test_")
   end
 
   test "generate_for returns plain_token which is not stored in database" do
@@ -90,8 +82,8 @@ class ApiTokenTest < ActiveSupport::TestCase
     token = ApiToken.generate_for(user)
     plain_token = token.plain_token
 
-    # Verify the digest is a SHA256 hash of the plain token
-    expected_digest = Digest::SHA256.hexdigest(plain_token)
+    # Verify the digest is an HMAC-SHA256 hash of the plain token
+    expected_digest = OpenSSL::HMAC.hexdigest("SHA256", Rails.application.credentials.secret_key_base, plain_token)
     assert_equal expected_digest, token.token_digest
   end
 
@@ -133,7 +125,7 @@ class ApiTokenTest < ActiveSupport::TestCase
   end
 
   test "find_by_token returns nil for invalid token" do
-    result = ApiToken.find_by_token("tts_ext_invalid_token_12345")
+    result = ApiToken.find_by_token("pk_test_invalid_token_12345")
 
     assert_nil result
   end

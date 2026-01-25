@@ -5,6 +5,9 @@
 
 import { BASE_URL } from './config';
 
+/** Default timeout for API requests in milliseconds */
+const API_TIMEOUT_MS = 30000;
+
 export interface CreateEpisodeRequest {
   title: string;
   content: string;
@@ -36,12 +39,27 @@ export type ApiResult<T> =
   | { success: false; status: number; error: string; retryAfter?: number };
 
 /**
+ * Safely parse JSON response, returning null if parsing fails
+ * (e.g., when server returns HTML error pages instead of JSON)
+ */
+async function safeParseJson<T>(response: Response): Promise<T | null> {
+  try {
+    return await response.json() as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Create a new episode from extracted article content
  */
 export async function createEpisode(
   token: string,
   request: CreateEpisodeRequest
 ): Promise<ApiResult<CreateEpisodeResponse>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${BASE_URL}/api/v1/episodes`, {
       method: 'POST',
@@ -50,18 +68,28 @@ export async function createEpisode(
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(request),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (response.ok) {
-      const data = await response.json() as CreateEpisodeResponse;
-      return { success: true, data };
+      const data = await safeParseJson<CreateEpisodeResponse>(response);
+      if (data) {
+        return { success: true, data };
+      }
+      return {
+        success: false,
+        status: response.status,
+        error: 'Invalid response format',
+      };
     }
 
-    const errorData = await response.json() as ApiError;
+    const errorData = await safeParseJson<ApiError>(response);
     const result: ApiResult<CreateEpisodeResponse> = {
       success: false,
       status: response.status,
-      error: errorData.error || getDefaultErrorMessage(response.status),
+      error: errorData?.error || getDefaultErrorMessage(response.status),
     };
 
     // Extract Retry-After header for rate-limited responses
@@ -74,10 +102,14 @@ export async function createEpisode(
 
     return result;
   } catch (error) {
+    clearTimeout(timeoutId);
+    const errorMessage = error instanceof Error
+      ? (error.name === 'AbortError' ? 'Request timed out' : error.message)
+      : 'Network error';
     return {
       success: false,
       status: 0,
-      error: error instanceof Error ? error.message : 'Network error',
+      error: errorMessage,
     };
   }
 }
@@ -105,6 +137,9 @@ export async function logExtensionFailure(
   token: string,
   request: LogExtensionFailureRequest
 ): Promise<ApiResult<LogExtensionFailureResponse>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${BASE_URL}/api/v1/extension_logs`, {
       method: 'POST',
@@ -113,24 +148,38 @@ export async function logExtensionFailure(
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(request),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (response.ok) {
-      const data = await response.json() as LogExtensionFailureResponse;
-      return { success: true, data };
+      const data = await safeParseJson<LogExtensionFailureResponse>(response);
+      if (data) {
+        return { success: true, data };
+      }
+      return {
+        success: false,
+        status: response.status,
+        error: 'Invalid response format',
+      };
     }
 
-    const errorData = await response.json() as ApiError;
+    const errorData = await safeParseJson<ApiError>(response);
     return {
       success: false,
       status: response.status,
-      error: errorData.error || getDefaultErrorMessage(response.status),
+      error: errorData?.error || getDefaultErrorMessage(response.status),
     };
   } catch (error) {
+    clearTimeout(timeoutId);
+    const errorMessage = error instanceof Error
+      ? (error.name === 'AbortError' ? 'Request timed out' : error.message)
+      : 'Network error';
     return {
       success: false,
       status: 0,
-      error: error instanceof Error ? error.message : 'Network error',
+      error: errorMessage,
     };
   }
 }

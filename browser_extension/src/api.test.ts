@@ -29,14 +29,15 @@ describe('api', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${BASE_URL}/api/v1/episodes`,
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer test-token',
           },
           body: JSON.stringify(validRequest),
-        }
+          signal: expect.any(AbortSignal),
+        })
       );
       expect(result).toEqual({ success: true, data: { id: 'ep_abc123' } });
     });
@@ -151,6 +152,53 @@ describe('api', () => {
         error: 'Network error',
       });
     });
+
+    it('handles timeout (AbortError)', async () => {
+      const abortError = new Error('The operation was aborted');
+      abortError.name = 'AbortError';
+      mockFetch.mockRejectedValue(abortError);
+
+      const result = await createEpisode('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 0,
+        error: 'Request timed out',
+      });
+    });
+
+    it('handles non-JSON success response gracefully', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.reject(new SyntaxError('Unexpected token')),
+      });
+
+      const result = await createEpisode('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 200,
+        error: 'Invalid response format',
+      });
+    });
+
+    it('handles non-JSON error response gracefully', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: { get: () => null },
+        json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+      });
+
+      const result = await createEpisode('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 500,
+        error: 'Request failed with status 500',
+      });
+    });
   });
 
   describe('logExtensionFailure', () => {
@@ -170,14 +218,15 @@ describe('api', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${BASE_URL}/api/v1/extension_logs`,
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer test-token',
           },
           body: JSON.stringify(validRequest),
-        }
+          signal: expect.any(AbortSignal),
+        })
       );
       expect(result).toEqual({ success: true, data: { logged: true } });
     });
@@ -207,6 +256,52 @@ describe('api', () => {
         success: false,
         status: 0,
         error: 'Network unavailable',
+      });
+    });
+
+    it('handles timeout (AbortError)', async () => {
+      const abortError = new Error('The operation was aborted');
+      abortError.name = 'AbortError';
+      mockFetch.mockRejectedValue(abortError);
+
+      const result = await logExtensionFailure('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 0,
+        error: 'Request timed out',
+      });
+    });
+
+    it('handles non-JSON success response gracefully', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.reject(new SyntaxError('Unexpected token')),
+      });
+
+      const result = await logExtensionFailure('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 200,
+        error: 'Invalid response format',
+      });
+    });
+
+    it('handles non-JSON error response gracefully', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: () => Promise.reject(new SyntaxError('Unexpected token')),
+      });
+
+      const result = await logExtensionFailure('test-token', validRequest);
+
+      expect(result).toEqual({
+        success: false,
+        status: 502,
+        error: 'Request failed with status 502',
       });
     });
   });

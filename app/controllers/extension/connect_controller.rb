@@ -9,7 +9,7 @@ module Extension
       end
 
       # Generate a new API token for the current user
-      @api_token = ApiToken.generate_for(Current.user)
+      @api_token = GeneratesApiToken.call(user: Current.user)
     end
   end
 end

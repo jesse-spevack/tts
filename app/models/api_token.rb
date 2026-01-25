@@ -1,10 +1,9 @@
 class ApiToken < ApplicationRecord
-  TOKEN_PREFIX = "tts_ext_"
+  TOKEN_PREFIX = Rails.env.production? ? "pk_live_" : "pk_test_"
 
   belongs_to :user
 
   validates :token_digest, presence: true, uniqueness: true
-  validates :token_prefix, presence: true
 
   scope :active, -> { where(revoked_at: nil) }
 
@@ -24,8 +23,7 @@ class ApiToken < ApplicationRecord
     # Create the token record
     token = create!(
       user: user,
-      token_digest: hash_token(raw_token),
-      token_prefix: raw_token[0, 8]
+      token_digest: hash_token(raw_token)
     )
 
     # Set the plain token so it can be returned to the caller once
@@ -62,9 +60,10 @@ class ApiToken < ApplicationRecord
     !revoked?
   end
 
-  # Hash a plain token using SHA256
+  # Hash a plain token using HMAC-SHA256 with application secret
+  # This provides defense-in-depth against rainbow table attacks if DB is compromised
   def self.hash_token(plain_token)
-    Digest::SHA256.hexdigest(plain_token)
+    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.credentials.secret_key_base, plain_token)
   end
 
   private_class_method :hash_token

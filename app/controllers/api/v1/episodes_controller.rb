@@ -4,7 +4,7 @@ module Api
       before_action :check_episode_creation_permission
 
       def create
-        podcast = current_user.podcasts.first || CreatesDefaultPodcast.call(user: current_user)
+        podcast = GetsDefaultPodcastForUser.call(user: current_user)
 
         result = CreatesExtensionEpisode.call(
           podcast: podcast,
@@ -34,7 +34,7 @@ module Api
         result = ChecksEpisodeCreationPermission.call(user: current_user)
         return if result.success?
 
-        render json: { error: "Episode limit reached" }, status: :too_many_requests
+        render json: { error: "Episode limit reached. Please upgrade your plan." }, status: :forbidden
       end
     end
   end

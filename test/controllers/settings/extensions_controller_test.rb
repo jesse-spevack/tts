@@ -26,7 +26,6 @@ class Settings::ExtensionsControllerTest < ActionDispatch::IntegrationTest
     get settings_extensions_path
     assert_response :success
     assert_match "Connected", response.body
-    assert_match "tts_ext_a...", response.body
   end
 
   test "show displays last used time when token has been used" do

@@ -5,11 +5,15 @@ module Api
       # NOT token auth - users need to be logged in to generate a token
 
       def create
+        unless Current.user
+          render json: { error: "Unauthorized" }, status: :unauthorized
+          return
+        end
+
         token = ApiToken.generate_for(Current.user)
 
         render json: {
-          token: token.plain_token,
-          prefix: token.token_prefix
+          token: token.plain_token
         }
       end
     end

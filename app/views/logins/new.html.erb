@@ -1,3 +1,5 @@
+<% content_for :title, "Login" %>
+
 <div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
   <div class="w-full max-w-md text-center">
     <!-- Envelope Icon -->
@@ -22,10 +24,10 @@
             autofocus: true,
             autocomplete: "email",
             placeholder: "Enter your email",
-            class: "w-full rounded-lg bg-[var(--color-surface0)] px-4 py-3 text-base text-[var(--color-text)] outline-none ring-1 ring-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:ring-2 focus:ring-[var(--color-primary)]" %>
+            class: input_classes %>
 
         <%= form.submit "Send me a link",
-            class: "w-full rounded-lg bg-[var(--color-primary)] px-4 py-3 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] cursor-pointer" %>
+            class: button_classes(type: :primary, full_width: true) %>
       </div>
     <% end %>
 

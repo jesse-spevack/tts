@@ -1,6 +1,10 @@
 <% content_for :title, "Extension Connected" %>
 
-<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]"
+     data-controller="extension-connect"
+     data-extension-connect-token-value="<%= @api_token.plain_token %>"
+     data-tts-token="<%= @api_token.plain_token %>"
+     data-tts-connect-status="ready">
   <div class="w-full max-w-md text-center">
     <!-- Success Icon -->
     <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--color-green)]/10">
@@ -13,7 +17,7 @@
     <h1 class="mt-4 text-xl font-semibold text-[var(--color-text)]">Extension Connected</h1>
 
     <!-- Status Message -->
-    <p id="status-message" class="mt-2 text-sm text-[var(--color-subtext)]">
+    <p data-extension-connect-target="status" class="mt-2 text-sm text-[var(--color-subtext)]">
       Connecting to extension...
     </p>
 
@@ -23,25 +27,3 @@
     </p>
   </div>
 </div>
-
-<!-- Hidden token for extension to read (not visible to user) -->
-<script>
-  (function() {
-    const token = "<%= @api_token.plain_token %>";
-    const statusEl = document.getElementById('status-message');
-
-    // Set data attribute for extension content script to read
-    document.body.setAttribute('data-tts-token', token);
-    document.body.setAttribute('data-tts-connect-status', 'ready');
-
-    // Dispatch custom event for extension
-    window.dispatchEvent(new CustomEvent('tts-extension-token', {
-      detail: { token: token }
-    }));
-
-    // Update status
-    setTimeout(function() {
-      statusEl.textContent = 'Your extension is now connected.';
-    }, 500);
-  })();
-</script>

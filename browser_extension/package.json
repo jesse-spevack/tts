@@ -14,7 +14,6 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "@types/chrome": "^0.0.287",
     "@types/jest": "^29.5.14",
     "@types/mozilla__readability": "^0.4.2",

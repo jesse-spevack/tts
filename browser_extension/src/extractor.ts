@@ -118,7 +118,19 @@ function countWords(text: string): number {
 }
 
 /**
- * Convert HTML to plain text, preserving paragraph breaks
+ * Convert HTML to plain text, preserving paragraph breaks.
+ *
+ * We use custom conversion instead of Readability's textContent because:
+ * 1. Readability returns HTML with semantic structure, but its textContent
+ *    property strips all formatting, concatenating paragraphs without breaks.
+ * 2. For TTS (text-to-speech), paragraph breaks are critical - they create
+ *    natural pauses in the synthesized audio, improving listening experience.
+ * 3. This function preserves paragraph structure by inserting double newlines
+ *    after block elements (p, div, headings, li), which the TTS engine
+ *    interprets as pause points.
+ *
+ * @param html - The HTML content string from Readability's article.content
+ * @returns Plain text with preserved paragraph breaks for natural TTS pauses
  */
 function htmlToText(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
