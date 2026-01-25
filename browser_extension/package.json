@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "build": "node esbuild.config.js",
+    "build:dev": "node esbuild.config.js",
+    "build:prod": "NODE_ENV=production node esbuild.config.js",
     "watch": "node esbuild.config.js --watch",
     "test": "jest",
     "test:watch": "jest --watch",

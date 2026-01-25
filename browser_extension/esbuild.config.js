@@ -70,6 +70,10 @@ if (entryPoints.length === 0) {
   process.exit(0);
 }
 
+// Determine BASE_URL based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const baseUrl = process.env.TTS_BASE_URL || (isProduction ? 'https://tts.verynormal.dev' : 'http://localhost:3000');
+
 const buildOptions = {
   entryPoints,
   bundle: true,
@@ -78,8 +82,11 @@ const buildOptions = {
   target: 'es2020',
   format: 'iife',
   sourcemap: true,
-  minify: process.env.NODE_ENV === 'production',
+  minify: isProduction,
   logLevel: 'info',
+  define: {
+    'process.env.TTS_BASE_URL': JSON.stringify(baseUrl),
+  },
 };
 
 async function build() {

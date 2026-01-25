@@ -1,10 +1,16 @@
 /**
  * Configuration for TTS browser extension
- * Change BASE_URL for local development vs production
+ * BASE_URL is injected at build time by esbuild
+ *
+ * Development: npm run build (uses localhost:3000)
+ * Production:  NODE_ENV=production npm run build (uses tts.verynormal.dev)
+ * Custom:      TTS_BASE_URL=https://custom.url npm run build
  */
 
-// For local development (uncomment when testing locally):
-// export const BASE_URL = 'http://localhost:3000';
+declare const process: {
+  env: {
+    TTS_BASE_URL: string;
+  };
+};
 
-// For production:
-export const BASE_URL = 'https://tts.verynormal.dev';
+export const BASE_URL = process.env.TTS_BASE_URL;
