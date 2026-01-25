@@ -1,38 +1,37 @@
 /**
  * Background service worker for TTS browser extension
  * Handles icon clicks and coordinates the extraction/send flow
+ *
+ * This file serves as the main entry point for the background script,
+ * delegating to specialized modules for specific functionality:
+ * - messages.ts: Message type definitions
+ * - errorHandling.ts: Error classification and handling
+ * - contextMenu.ts: Right-click menu management
+ * - api.ts: Backend API communication
+ * - icons.ts: Badge/icon state management
+ * - auth.ts: Token storage and validation
+ * - debounce.ts: Double-click prevention
  */
 
-import { getToken, isConnected, clearToken } from './auth';
+import { getToken, isConnected } from './auth';
 import { BASE_URL } from './config';
 import { setIconState } from './icons';
-import { createEpisode, logExtensionFailure } from './api';
+import { createEpisode } from './api';
 import { shouldDebounce, recordSuccessfulSend } from './debounce';
-import type { ExtractedArticle } from './extractor';
+import { setupContextMenu, registerContextMenuListeners } from './contextMenu';
+import {
+  handleApiError,
+  handleExtractionError,
+  handleExtensionError,
+} from './errorHandling';
+import type { ExtractRequest, ExtractResponse } from './messages';
 
-// Message types for communication with content script
-export interface ExtractRequest {
-  type: 'EXTRACT_ARTICLE';
-}
-
-// Re-export for consumers of this module
-export type { ExtractedArticle };
-
-export interface ExtractSuccessResponse {
-  success: true;
-  article: ExtractedArticle;
-}
-
-export interface ExtractErrorResponse {
-  success: false;
-  error: string;
-  errorType: 'NOT_ARTICLE' | 'EXTRACTION_FAILED';
-}
-
-export type ExtractResponse = ExtractSuccessResponse | ExtractErrorResponse;
+// Re-export message types for consumers (e.g., content.ts)
+export type { ExtractRequest, ExtractResponse, ExtractedArticle } from './messages';
 
 /**
  * Handle extension icon click
+ * Main entry point for user interaction
  */
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id || !tab.url) {
@@ -102,133 +101,18 @@ chrome.action.onClicked.addListener(async (tab) => {
       await handleApiError(result.status, result.error, tab.url, token);
     }
   } catch (error) {
-    console.error('Error processing article:', error);
-
-    // Check if it's a network error (offline)
-    if (error instanceof Error && isNetworkError(error)) {
-      await setIconState('offline');
-    } else {
-      await setIconState('error');
-    }
-
-    // Try to log the error (only if we might be online)
-    try {
-      const token = await getToken();
-      if (token && tab.url) {
-        await logExtensionFailure(token, {
-          url: tab.url,
-          error_type: 'EXTENSION_ERROR',
-          error_message: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-    } catch {
-      // Ignore logging failures
-    }
+    await handleExtensionError(error, tab.url);
   }
 });
 
 /**
- * Handle API errors based on status code
+ * Handle extension installation
+ * Sets up context menus and logs installation
  */
-async function handleApiError(
-  status: number,
-  error: string,
-  url: string,
-  token: string
-): Promise<void> {
-  switch (status) {
-    case 401:
-      // Unauthorized - token is invalid or revoked
-      await clearToken();
-      await setIconState('error');
-      // Don't log - token is already invalid
-      break;
-
-    case 429:
-      // Rate limited
-      await setIconState('rate_limited');
-      // Don't log rate limits
-      break;
-
-    case 0:
-      // Network error (fetch failed)
-      await setIconState('offline');
-      break;
-
-    default:
-      // All other errors (including 5xx)
-      await setIconState('error');
-      // Log the error for debugging
-      try {
-        await logExtensionFailure(token, {
-          url,
-          error_type: status >= 500 ? 'SERVER_ERROR' : 'API_ERROR',
-          error_message: error,
-        });
-      } catch {
-        // Ignore logging failures
-      }
-  }
-}
-
-/**
- * Check if an error is likely a network connectivity issue
- */
-function isNetworkError(error: Error): boolean {
-  const networkErrorMessages = [
-    'Failed to fetch',
-    'NetworkError',
-    'Network request failed',
-    'net::ERR_',
-    'TypeError: Failed to fetch',
-  ];
-  return networkErrorMessages.some(msg =>
-    error.message.includes(msg) || error.name.includes(msg)
-  );
-}
-
-/**
- * Handle extraction errors
- */
-async function handleExtractionError(
-  error: string,
-  errorType: string,
-  url: string
-): Promise<void> {
-  await setIconState('error');
-
-  // Log to backend
-  try {
-    const token = await getToken();
-    if (token) {
-      await logExtensionFailure(token, {
-        url,
-        error_type: errorType,
-        error_message: error,
-      });
-    }
-  } catch {
-    // Ignore logging failures
-  }
-}
-
-// Listen for installation - create context menu for disconnect
 chrome.runtime.onInstalled.addListener(() => {
   console.log('TTS Extension installed');
-
-  // Create context menu item for disconnecting (appears when right-clicking extension icon)
-  chrome.contextMenus.create({
-    id: 'disconnect',
-    title: 'Disconnect from TTS',
-    contexts: ['action']
-  });
+  setupContextMenu();
 });
 
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener(async (info) => {
-  if (info.menuItemId === 'disconnect') {
-    await clearToken();
-    await setIconState('default');
-    console.log('TTS Extension: Disconnected');
-  }
-});
+// Register context menu click handler
+registerContextMenuListeners();

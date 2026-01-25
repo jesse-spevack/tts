@@ -33,7 +33,7 @@
 
 import { isArticleLike, extract } from './extractor';
 import { storeToken } from './auth';
-import type { ExtractRequest, ExtractResponse } from './background';
+import type { ExtractRequest, ExtractResponse } from './messages';
 
 /**
  * List of trusted domains that are allowed to provide tokens to the extension.
