@@ -31,7 +31,7 @@ class CreatesExtensionEpisode
     episode = podcast.episodes.create(
       user: user,
       title: title,
-      author: author,
+      author: author.presence || extract_domain_from_url,
       description: description,
       source_type: :extension,
       source_url: url,
@@ -59,4 +59,10 @@ class CreatesExtensionEpisode
   private
 
   attr_reader :podcast, :user, :title, :content, :url, :author, :description
+
+  def extract_domain_from_url
+    URI.parse(url).host&.gsub(/^www\./, "") || "Unknown"
+  rescue URI::InvalidURIError
+    "Unknown"
+  end
 end
