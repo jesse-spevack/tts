@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EnablesEmailEpisodes
+  include GeneratesEmailIngestToken
+
   def self.call(user:)
     new(user: user).call
   end
@@ -12,13 +14,7 @@ class EnablesEmailEpisodes
   def call
     @user.update!(
       email_episodes_enabled: true,
-      email_ingest_token: generate_token
+      email_ingest_token: generate_email_ingest_token
     )
-  end
-
-  private
-
-  def generate_token
-    SecureRandom.urlsafe_base64(16).downcase
   end
 end

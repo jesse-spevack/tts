@@ -49,6 +49,10 @@ class User < ApplicationRecord
     podcasts.first || CreatesDefaultPodcast.call(user: self)
   end
 
+  def email_ingest_address
+    GeneratesEmailIngestAddress.call(user: self)
+  end
+
   private
 
   def effective_tier

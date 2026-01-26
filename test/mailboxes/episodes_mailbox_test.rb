@@ -111,9 +111,20 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     end
   end
 
+  test "does not route emails with empty token" do
+    assert_raises(ActionMailbox::Router::RoutingError) do
+      receive_inbound_email_from_mail(
+        to: "readtome+@tts.verynormal.dev",
+        from: "sender@example.com",
+        subject: "Empty token",
+        body: "A" * 150
+      )
+    end
+  end
+
   private
 
   def email_address_for(user)
-    GeneratesEmailIngestAddress.call(user: user)
+    user.email_ingest_address
   end
 end

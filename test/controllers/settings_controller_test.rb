@@ -96,7 +96,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path
 
     assert_response :success
-    assert_select "code", text: GeneratesEmailIngestAddress.call(user: @user)
+    assert_select "code", text: @user.email_ingest_address
     assert_select "button", text: "Disable"
     assert_select "button", text: "Regenerate Address"
   end

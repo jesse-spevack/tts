@@ -5,6 +5,7 @@ require "test_helper"
 class GeneratesEmailIngestAddressTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
+    @configured_domain = Rails.configuration.x.email_ingest_domain
   end
 
   test "returns nil when email episodes disabled" do
@@ -20,7 +21,7 @@ class GeneratesEmailIngestAddressTest < ActiveSupport::TestCase
 
     result = GeneratesEmailIngestAddress.call(user: @user)
 
-    assert_equal "readtome+#{@user.email_ingest_token}@tts.verynormal.dev", result
+    assert_equal "readtome+#{@user.email_ingest_token}@#{@configured_domain}", result
   end
 
   test "address includes user token" do
@@ -36,6 +37,15 @@ class GeneratesEmailIngestAddressTest < ActiveSupport::TestCase
 
     result = GeneratesEmailIngestAddress.call(user: @user)
 
-    assert_match(/\Areadtome\+[a-z0-9_-]+@tts\.verynormal\.dev\z/, result)
+    escaped_domain = Regexp.escape(@configured_domain)
+    assert_match(/\Areadtome\+[a-z0-9_-]+@#{escaped_domain}\z/, result)
+  end
+
+  test "uses configured email ingest domain" do
+    EnablesEmailEpisodes.call(user: @user)
+
+    result = GeneratesEmailIngestAddress.call(user: @user)
+
+    assert result.end_with?("@#{@configured_domain}")
   end
 end

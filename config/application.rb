@@ -23,5 +23,9 @@ module Hub
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Email ingest domain for email-to-podcast feature
+    # Override in environment files as needed
+    config.x.email_ingest_domain = "tts.verynormal.dev"
   end
 end

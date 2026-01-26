@@ -240,4 +240,19 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
+
+  # email_ingest_address tests
+  test "email_ingest_address delegates to GeneratesEmailIngestAddress service" do
+    user = users(:one)
+    EnablesEmailEpisodes.call(user: user)
+
+    assert_equal GeneratesEmailIngestAddress.call(user: user), user.email_ingest_address
+  end
+
+  test "email_ingest_address returns nil for user without email_ingest_token" do
+    user = users(:one)
+    user.update!(email_ingest_token: nil)
+
+    assert_nil user.email_ingest_address
+  end
 end

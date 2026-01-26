@@ -12,6 +12,12 @@ class GeneratesEmailIngestAddress
   def call
     return nil unless @user.email_episodes_enabled?
 
-    "readtome+#{@user.email_ingest_token}@tts.verynormal.dev"
+    "readtome+#{@user.email_ingest_token}@#{domain}"
+  end
+
+  private
+
+  def domain
+    Rails.configuration.x.email_ingest_domain
   end
 end
