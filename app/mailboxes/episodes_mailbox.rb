@@ -4,10 +4,10 @@ class EpisodesMailbox < ApplicationMailbox
   include StructuredLogging
 
   def process
-    log_info "email_received", from: sender_email, subject: mail.subject
+    log_info "email_received", to: recipient_email, from: sender_email, subject: mail.subject
 
     unless user
-      log_info "unknown_sender", email: sender_email
+      log_info "invalid_token", token: extract_token_from_recipient
       return
     end
 
@@ -25,7 +25,25 @@ class EpisodesMailbox < ApplicationMailbox
   private
 
   def user
-    @user ||= User.find_by(email_address: sender_email)
+    @user ||= find_user_by_token
+  end
+
+  def find_user_by_token
+    token = extract_token_from_recipient
+    return nil unless token
+
+    User.find_by(email_ingest_token: token, email_episodes_enabled: true)
+  end
+
+  def extract_token_from_recipient
+    return nil unless recipient_email
+
+    match = recipient_email.match(/^readtome\+([^@]+)@/i)
+    match&.[](1)
+  end
+
+  def recipient_email
+    mail.to.first&.downcase
   end
 
   def sender_email

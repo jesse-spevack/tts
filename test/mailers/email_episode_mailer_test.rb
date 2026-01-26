@@ -37,10 +37,18 @@ class EmailEpisodeMailerTest < ActionMailer::TestCase
     assert_equal "Unable to process your email", email.subject
   end
 
-  test "episode_failed includes error in body" do
-    email = EmailEpisodeMailer.episode_failed(user: @user, error: "Content too short")
+  test "episode_failed includes friendly error in body" do
+    email = EmailEpisodeMailer.episode_failed(user: @user, error: "LLM processing failed")
 
-    assert_includes email.html_part.body.to_s, "Content too short"
-    assert_includes email.text_part.body.to_s, "Content too short"
+    # Should show friendly message, not raw error
+    assert_includes email.html_part.body.to_s, "We had trouble processing your content"
+    assert_includes email.text_part.body.to_s, "We had trouble processing your content"
+  end
+
+  test "episode_failed uses default message for unknown errors" do
+    email = EmailEpisodeMailer.episode_failed(user: @user, error: "Some unknown error")
+
+    assert_includes email.html_part.body.to_s, "Something went wrong processing your email"
+    assert_includes email.text_part.body.to_s, "Something went wrong processing your email"
   end
 end

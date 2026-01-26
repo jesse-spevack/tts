@@ -40,7 +40,11 @@ Rails.application.routes.draw do
   end
 
   resource :session
-  resource :settings, only: [ :show, :update ]
+  resource :settings, only: [ :show, :update ] do
+    post :enable_email_episodes
+    post :disable_email_episodes
+    post :regenerate_email_token
+  end
 
   # Browser extension auth callback
   namespace :extension do

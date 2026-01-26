@@ -8,37 +8,57 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
   setup do
     @user = users(:one)
+    @user.enable_email_episodes!
   end
 
-  test "routes readtome@ emails to episodes mailbox" do
+  test "routes readtome+token@ emails to episodes mailbox" do
     inbound_email = receive_inbound_email_from_mail(
-      to: "readtome@tts.verynormal.dev",
-      from: @user.email_address,
+      to: @user.email_ingest_address,
+      from: "sender@example.com",
       subject: "Newsletter content",
       body: "A" * 150
     )
 
-    assert_equal "episodes", inbound_email.mail.to.first.split("@").first.downcase == "readtome" ? "episodes" : "unknown"
+    assert inbound_email.delivered?
   end
 
-  test "creates episode for known sender" do
+  test "creates episode for valid token" do
     assert_enqueued_with(job: ProcessesEmailEpisodeJob) do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
-        from: @user.email_address,
+        to: @user.email_ingest_address,
+        from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
       )
     end
   end
 
-  test "does not create episode for unknown senders" do
+  test "does not create episode for invalid token" do
     assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
-        from: "unknown@example.com",
+        to: "readtome+invalidtoken123@tts.verynormal.dev",
+        from: "sender@example.com",
         subject: "Spam",
         body: "Content that should be ignored"
+      )
+    end
+  end
+
+  test "does not create episode for disabled user" do
+    @user.disable_email_episodes!
+    old_token = @user.email_ingest_token
+
+    # Re-enable to get address, then disable again
+    @user.enable_email_episodes!
+    address = @user.email_ingest_address
+    @user.disable_email_episodes!
+
+    assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
+      receive_inbound_email_from_mail(
+        to: address,
+        from: "sender@example.com",
+        subject: "Newsletter",
+        body: "A" * 150
       )
     end
   end
@@ -48,8 +68,8 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
     assert_enqueued_emails 1 do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
-        from: @user.email_address,
+        to: @user.email_ingest_address,
+        from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
       )
@@ -61,8 +81,8 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
     assert_no_enqueued_jobs(only: ActionMailer::MailDeliveryJob) do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
-        from: @user.email_address,
+        to: @user.email_ingest_address,
+        from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
       )
@@ -73,10 +93,21 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     # Email too short to create episode
     assert_enqueued_emails 1 do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
-        from: @user.email_address,
+        to: @user.email_ingest_address,
+        from: "sender@example.com",
         subject: "Short email",
         body: "Too short"
+      )
+    end
+  end
+
+  test "does not route emails without token suffix" do
+    assert_raises(ActionMailbox::Router::RoutingError) do
+      receive_inbound_email_from_mail(
+        to: "readtome@tts.verynormal.dev",
+        from: "sender@example.com",
+        subject: "No token",
+        body: "A" * 150
       )
     end
   end

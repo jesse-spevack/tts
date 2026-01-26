@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_25_195044) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -180,12 +180,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_25_195044) do
     t.datetime "created_at", null: false
     t.string "email_address"
     t.boolean "email_episode_confirmation", default: true, null: false
+    t.boolean "email_episodes_enabled", default: false, null: false
+    t.string "email_ingest_token"
     t.string "stripe_customer_id"
     t.datetime "updated_at", null: false
     t.string "voice_preference"
     t.index ["auth_token"], name: "index_users_on_auth_token"
     t.index ["auth_token_expires_at"], name: "index_users_on_auth_token_expires_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["email_ingest_token"], name: "index_users_on_email_ingest_token", unique: true
     t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true
   end
 

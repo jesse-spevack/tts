@@ -49,7 +49,32 @@ class User < ApplicationRecord
     podcasts.first || CreatesDefaultPodcast.call(user: self)
   end
 
+  # Email episodes feature
+  def enable_email_episodes!
+    update!(
+      email_episodes_enabled: true,
+      email_ingest_token: generate_email_ingest_token
+    )
+  end
+
+  def disable_email_episodes!
+    update!(email_episodes_enabled: false, email_ingest_token: nil)
+  end
+
+  def regenerate_email_ingest_token!
+    update!(email_ingest_token: generate_email_ingest_token)
+  end
+
+  def email_ingest_address
+    return nil unless email_episodes_enabled?
+    "readtome+#{email_ingest_token}@tts.verynormal.dev"
+  end
+
   private
+
+  def generate_email_ingest_token
+    SecureRandom.urlsafe_base64(16).downcase
+  end
 
   def effective_tier
     return "unlimited" if unlimited?

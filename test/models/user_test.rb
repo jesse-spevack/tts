@@ -240,4 +240,65 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
+
+  # Email episodes tests
+  test "enable_email_episodes! sets enabled and generates token" do
+    user = users(:one)
+    refute user.email_episodes_enabled?
+    assert_nil user.email_ingest_token
+
+    user.enable_email_episodes!
+
+    assert user.email_episodes_enabled?
+    assert_not_nil user.email_ingest_token
+    assert_equal 22, user.email_ingest_token.length # urlsafe_base64(16) = 22 chars
+  end
+
+  test "disable_email_episodes! clears enabled and token" do
+    user = users(:one)
+    user.enable_email_episodes!
+
+    user.disable_email_episodes!
+
+    refute user.email_episodes_enabled?
+    assert_nil user.email_ingest_token
+  end
+
+  test "regenerate_email_ingest_token! generates new token" do
+    user = users(:one)
+    user.enable_email_episodes!
+    old_token = user.email_ingest_token
+
+    user.regenerate_email_ingest_token!
+
+    assert_not_equal old_token, user.email_ingest_token
+    assert_equal 22, user.email_ingest_token.length
+  end
+
+  test "email_ingest_address returns nil when disabled" do
+    user = users(:one)
+    refute user.email_episodes_enabled?
+
+    assert_nil user.email_ingest_address
+  end
+
+  test "email_ingest_address returns formatted address when enabled" do
+    user = users(:one)
+    user.enable_email_episodes!
+
+    address = user.email_ingest_address
+
+    assert_match(/^readtome\+[a-zA-Z0-9_-]+@tts\.verynormal\.dev$/, address)
+    assert_includes address, user.email_ingest_token
+  end
+
+  test "email_ingest_token is unique across users" do
+    user1 = users(:one)
+    user2 = users(:two)
+
+    user1.enable_email_episodes!
+    user2.enable_email_episodes!
+
+    assert_not_equal user1.email_ingest_token, user2.email_ingest_token
+  end
 end
