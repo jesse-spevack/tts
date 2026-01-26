@@ -24,19 +24,24 @@
           <li>Open your podcast app — the episode will appear in your feed</li>
         </ol>
 
-        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Icon States</h2>
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Icon Badge States</h2>
+        <p class="mt-4">The extension shows a small badge on the icon to indicate status:</p>
         <ul class="mt-4 space-y-3">
           <li class="flex items-center gap-3">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-surface0)] text-lg">🔊</span>
-            <span><strong class="text-[var(--color-text)]">Default</strong> — Ready to send an article</span>
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-surface0)] text-sm font-medium text-[var(--color-subtext)]">—</span>
+            <span><strong class="text-[var(--color-text)]">No badge</strong> — Ready to send an article</span>
           </li>
           <li class="flex items-center gap-3">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-green)] text-lg">✓</span>
-            <span><strong class="text-[var(--color-text)]">Success</strong> — Article sent to your feed</span>
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-blue)] text-sm font-bold text-white">...</span>
+            <span><strong class="text-[var(--color-text)]">Blue dots</strong> — Sending article</span>
           </li>
           <li class="flex items-center gap-3">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-red)] text-lg text-white">✕</span>
-            <span><strong class="text-[var(--color-text)]">Error</strong> — Something went wrong (page may not be an article)</span>
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-green)] text-sm font-bold text-white">✓</span>
+            <span><strong class="text-[var(--color-text)]">Green checkmark</strong> — Article sent to your feed</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-red)] text-sm font-bold text-white">!</span>
+            <span><strong class="text-[var(--color-text)]">Red exclamation</strong> — Something went wrong (page may not be an article)</span>
           </li>
         </ul>
 
