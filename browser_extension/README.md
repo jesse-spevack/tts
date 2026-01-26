@@ -41,9 +41,8 @@ npm run test:watch  # Watch mode
 ```
 browser_extension/
 ├── src/
-│   ├── background.ts    # Service worker (to be added)
-│   ├── content.ts       # Content script (to be added)
-│   └── popup.ts         # Popup UI script (to be added)
+│   ├── background.ts    # Service worker
+│   └── content.ts       # Content script
 ├── dist/                # Build output (gitignored)
 ├── package.json
 ├── tsconfig.json
