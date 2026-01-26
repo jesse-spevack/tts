@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   get "privacy", to: "pages#privacy"
   get "how-it-sounds", to: "pages#how_it_sounds"
   get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
+  get "help/extension", to: "pages#extension_help", as: :help_extension
 
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
