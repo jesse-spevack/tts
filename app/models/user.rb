@@ -51,30 +51,22 @@ class User < ApplicationRecord
 
   # Email episodes feature
   def enable_email_episodes!
-    update!(
-      email_episodes_enabled: true,
-      email_ingest_token: generate_email_ingest_token
-    )
+    EnablesEmailEpisodes.call(user: self)
   end
 
   def disable_email_episodes!
-    update!(email_episodes_enabled: false, email_ingest_token: nil)
+    DisablesEmailEpisodes.call(user: self)
   end
 
   def regenerate_email_ingest_token!
-    update!(email_ingest_token: generate_email_ingest_token)
+    RegeneratesEmailIngestToken.call(user: self)
   end
 
   def email_ingest_address
-    return nil unless email_episodes_enabled?
-    "readtome+#{email_ingest_token}@tts.verynormal.dev"
+    GeneratesEmailIngestAddress.call(user: self)
   end
 
   private
-
-  def generate_email_ingest_token
-    SecureRandom.urlsafe_base64(16).downcase
-  end
 
   def effective_tier
     return "unlimited" if unlimited?
