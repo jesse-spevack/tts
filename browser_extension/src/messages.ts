@@ -3,7 +3,18 @@
  * Defines the protocol for inter-script messaging
  */
 
-import type { ExtractedArticle } from './extractor';
+/**
+ * Extracted article data from content script
+ * Note: Defined here (not imported from extractor.ts) to avoid pulling
+ * extractor dependencies into background.js service worker
+ */
+export interface ExtractedArticle {
+  title: string;
+  content: string;
+  url: string;
+  author?: string;
+  description?: string;
+}
 
 /**
  * Request to extract article content from the current page
@@ -33,6 +44,3 @@ export interface ExtractErrorResponse {
  * Union type for all possible extraction responses
  */
 export type ExtractResponse = ExtractSuccessResponse | ExtractErrorResponse;
-
-// Re-export ExtractedArticle for consumers
-export type { ExtractedArticle };

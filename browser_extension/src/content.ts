@@ -16,8 +16,8 @@
  *   element. This handles the case where the token was already rendered before
  *   the content script loaded (e.g., on page refresh).
  *
- * Security: Token capture is restricted to trusted domains (verynormal.fyi,
- * verynormal.dev, localhost) to prevent malicious sites from injecting tokens.
+ * Security: Token capture is restricted to trusted domains (verynormal.dev,
+ * localhost) to prevent malicious sites from injecting tokens.
  *
  * ## 2. Article Extraction on Demand
  * When the user clicks the extension icon, the background script sends an
@@ -33,22 +33,11 @@
 
 import { isArticleLike, extract } from './extractor';
 import { storeToken } from './auth';
+import { isTrustedDomain } from './trustedDomains';
 import type { ExtractRequest, ExtractResponse } from './messages';
 
-/**
- * List of trusted domains that are allowed to provide tokens to the extension.
- * This prevents malicious sites from injecting tokens via the extension connect flow.
- */
-export const TRUSTED_DOMAINS = ['verynormal.fyi', 'verynormal.dev', 'localhost'];
-
-/**
- * Check if the current hostname is a trusted domain
- */
-export function isTrustedDomain(hostname: string): boolean {
-  return TRUSTED_DOMAINS.some(
-    (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
-  );
-}
+// Re-export for tests
+export { TRUSTED_DOMAINS, isTrustedDomain } from './trustedDomains';
 
 /**
  * Check if we're on the extension connect page and handle token capture

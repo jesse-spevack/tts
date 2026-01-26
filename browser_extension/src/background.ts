@@ -24,7 +24,7 @@ import {
   handleExtractionError,
   handleExtensionError,
 } from './errorHandling';
-import { TRUSTED_DOMAINS } from './content';
+import { TRUSTED_DOMAINS } from './trustedDomains';
 import type { ExtractRequest, ExtractResponse } from './messages';
 
 // Re-export message types for consumers (e.g., content.ts)

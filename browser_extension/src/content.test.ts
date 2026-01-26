@@ -2,10 +2,6 @@ import { isTrustedDomain, TRUSTED_DOMAINS } from './content';
 
 describe('content', () => {
   describe('TRUSTED_DOMAINS', () => {
-    it('includes verynormal.fyi', () => {
-      expect(TRUSTED_DOMAINS).toContain('verynormal.fyi');
-    });
-
     it('includes verynormal.dev', () => {
       expect(TRUSTED_DOMAINS).toContain('verynormal.dev');
     });
@@ -14,17 +10,13 @@ describe('content', () => {
       expect(TRUSTED_DOMAINS).toContain('localhost');
     });
 
-    it('has exactly 3 trusted domains', () => {
-      expect(TRUSTED_DOMAINS).toHaveLength(3);
+    it('has exactly 2 trusted domains', () => {
+      expect(TRUSTED_DOMAINS).toHaveLength(2);
     });
   });
 
   describe('isTrustedDomain', () => {
     describe('accepts trusted domains', () => {
-      it('accepts verynormal.fyi', () => {
-        expect(isTrustedDomain('verynormal.fyi')).toBe(true);
-      });
-
       it('accepts verynormal.dev', () => {
         expect(isTrustedDomain('verynormal.dev')).toBe(true);
       });
@@ -39,16 +31,12 @@ describe('content', () => {
         expect(isTrustedDomain('tts.verynormal.dev')).toBe(true);
       });
 
-      it('accepts www.verynormal.fyi', () => {
-        expect(isTrustedDomain('www.verynormal.fyi')).toBe(true);
-      });
-
       it('accepts staging.tts.verynormal.dev', () => {
         expect(isTrustedDomain('staging.tts.verynormal.dev')).toBe(true);
       });
 
-      it('accepts app.verynormal.fyi', () => {
-        expect(isTrustedDomain('app.verynormal.fyi')).toBe(true);
+      it('accepts www.verynormal.dev', () => {
+        expect(isTrustedDomain('www.verynormal.dev')).toBe(true);
       });
     });
 

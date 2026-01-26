@@ -10,7 +10,6 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://*.verynormal.fyi/*",
     "https://*.verynormal.dev/*"
   ],
   "action": {
@@ -26,7 +25,6 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.verynormal.fyi/*",
         "*://*.verynormal.dev/*",
         "*://localhost/*"
       ],
