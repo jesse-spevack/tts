@@ -31,19 +31,4 @@ class SettingsController < ApplicationController
       redirect_to settings_path, alert: "Failed to update settings."
     end
   end
-
-  def enable_email_episodes
-    Current.user.enable_email_episodes!
-    redirect_to settings_path, notice: "Email episodes enabled."
-  end
-
-  def disable_email_episodes
-    Current.user.disable_email_episodes!
-    redirect_to settings_path, notice: "Email episodes disabled."
-  end
-
-  def regenerate_email_token
-    Current.user.regenerate_email_ingest_token!
-    redirect_to settings_path, notice: "Email address regenerated."
-  end
 end

@@ -85,11 +85,11 @@
       </div>
 
       <div class="flex flex-wrap gap-2 mb-4">
-        <%= button_to "Regenerate Address", regenerate_email_token_settings_path,
+        <%= button_to "Regenerate Address", settings_email_token_path,
             method: :post, class: button_classes(type: :secondary),
             data: { turbo_confirm: "This will invalidate your current email address. Continue?" } %>
-        <%= button_to "Disable", disable_email_episodes_settings_path,
-            method: :post, class: button_classes(type: :danger) %>
+        <%= button_to "Disable", settings_email_episodes_path,
+            method: :delete, class: button_classes(type: :danger) %>
       </div>
 
       <div class="border-t border-[var(--color-overlay0)] pt-4">
@@ -110,7 +110,7 @@
         Enable email episodes to get a unique email address for creating episodes by forwarding content.
       </p>
 
-      <%= button_to "Enable Email Episodes", enable_email_episodes_settings_path,
+      <%= button_to "Enable Email Episodes", settings_email_episodes_path,
           method: :post, class: button_classes(type: :primary) %>
     <% end %>
   <% end %>
