@@ -73,11 +73,11 @@
 
       <div class="flex items-center gap-2 mb-4">
         <code class="flex-1 bg-[var(--color-surface)] border border-[var(--color-overlay0)] rounded-md px-3 py-2 text-sm font-mono break-all">
-          <%= Current.user.email_ingest_address %>
+          <%= @email_ingest_address %>
         </code>
         <button type="button"
                 data-controller="clipboard"
-                data-clipboard-text-value="<%= Current.user.email_ingest_address %>"
+                data-clipboard-text-value="<%= @email_ingest_address %>"
                 data-action="clipboard#copy"
                 class="<%= button_classes(type: :secondary) %>">
           Copy

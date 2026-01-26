@@ -6,7 +6,7 @@ module Settings
   class EmailTokensControllerTest < ActionDispatch::IntegrationTest
     setup do
       @user = users(:one)
-      @user.enable_email_episodes!
+      EnablesEmailEpisodes.call(user: @user)
       sign_in_as(@user)
     end
 

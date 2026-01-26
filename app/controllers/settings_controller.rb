@@ -8,6 +8,7 @@ class SettingsController < ApplicationController
       Voice.find(key).merge(key: key, sample_url: Voice.sample_url(key))
     end
     @selected_voice = Current.user.voice_preference
+    @email_ingest_address = GeneratesEmailIngestAddress.call(user: Current.user)
   end
 
   def update

@@ -8,12 +8,12 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
   setup do
     @user = users(:one)
-    @user.enable_email_episodes!
+    EnablesEmailEpisodes.call(user: @user)
   end
 
   test "routes readtome+token@ emails to episodes mailbox" do
     inbound_email = receive_inbound_email_from_mail(
-      to: @user.email_ingest_address,
+      to: email_address_for(@user),
       from: "sender@example.com",
       subject: "Newsletter content",
       body: "A" * 150
@@ -25,7 +25,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   test "creates episode for valid token" do
     assert_enqueued_with(job: ProcessesEmailEpisodeJob) do
       receive_inbound_email_from_mail(
-        to: @user.email_ingest_address,
+        to: email_address_for(@user),
         from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
@@ -45,13 +45,12 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   end
 
   test "does not create episode for disabled user" do
-    @user.disable_email_episodes!
-    old_token = @user.email_ingest_token
+    DisablesEmailEpisodes.call(user: @user)
 
     # Re-enable to get address, then disable again
-    @user.enable_email_episodes!
-    address = @user.email_ingest_address
-    @user.disable_email_episodes!
+    EnablesEmailEpisodes.call(user: @user)
+    address = email_address_for(@user)
+    DisablesEmailEpisodes.call(user: @user)
 
     assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
       receive_inbound_email_from_mail(
@@ -68,7 +67,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
     assert_enqueued_emails 1 do
       receive_inbound_email_from_mail(
-        to: @user.email_ingest_address,
+        to: email_address_for(@user),
         from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
@@ -81,7 +80,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
     assert_no_enqueued_jobs(only: ActionMailer::MailDeliveryJob) do
       receive_inbound_email_from_mail(
-        to: @user.email_ingest_address,
+        to: email_address_for(@user),
         from: "sender@example.com",
         subject: "My newsletter",
         body: "A" * 150
@@ -93,7 +92,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     # Email too short to create episode
     assert_enqueued_emails 1 do
       receive_inbound_email_from_mail(
-        to: @user.email_ingest_address,
+        to: email_address_for(@user),
         from: "sender@example.com",
         subject: "Short email",
         body: "Too short"
@@ -110,5 +109,11 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
         body: "A" * 150
       )
     end
+  end
+
+  private
+
+  def email_address_for(user)
+    GeneratesEmailIngestAddress.call(user: user)
   end
 end

@@ -21,7 +21,7 @@ module Settings
     end
 
     test "destroy disables email episodes for user" do
-      @user.enable_email_episodes!
+      EnablesEmailEpisodes.call(user: @user)
 
       delete settings_email_episodes_path
 

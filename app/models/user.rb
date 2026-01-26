@@ -49,23 +49,6 @@ class User < ApplicationRecord
     podcasts.first || CreatesDefaultPodcast.call(user: self)
   end
 
-  # Email episodes feature
-  def enable_email_episodes!
-    EnablesEmailEpisodes.call(user: self)
-  end
-
-  def disable_email_episodes!
-    DisablesEmailEpisodes.call(user: self)
-  end
-
-  def regenerate_email_ingest_token!
-    RegeneratesEmailIngestToken.call(user: self)
-  end
-
-  def email_ingest_address
-    GeneratesEmailIngestAddress.call(user: self)
-  end
-
   private
 
   def effective_tier

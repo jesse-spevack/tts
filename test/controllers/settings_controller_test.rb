@@ -91,12 +91,12 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show displays email ingest address when enabled" do
-    @user.enable_email_episodes!
+    EnablesEmailEpisodes.call(user: @user)
 
     get settings_path
 
     assert_response :success
-    assert_select "code", text: @user.email_ingest_address
+    assert_select "code", text: GeneratesEmailIngestAddress.call(user: @user)
     assert_select "button", text: "Disable"
     assert_select "button", text: "Regenerate Address"
   end
