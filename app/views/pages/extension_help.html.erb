@@ -1,0 +1,86 @@
+<% content_for :raw_body do %>
+  <div class="bg-[var(--color-base)] px-6 py-16 lg:px-8">
+    <div class="mx-auto max-w-3xl text-base/7 text-[var(--color-text)]">
+      <p class="text-base/7 font-semibold text-[var(--color-primary)]">Help</p>
+      <h1 class="mt-2 text-4xl font-semibold tracking-tight text-pretty sm:text-5xl">Browser Extension</h1>
+      <p class="mt-6 text-xl/8 text-[var(--color-subtext)]">
+        Send any article to your podcast feed with one click.
+      </p>
+
+      <div class="mt-10 max-w-2xl text-[var(--color-subtext)]">
+        <h2 class="mt-8 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Installation</h2>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li>Install the extension from the <a href="#" class="text-[var(--color-primary)] hover:underline">Chrome Web Store</a></li>
+          <li>Click the extension icon in your browser toolbar</li>
+          <li>You'll be redirected to connect your account</li>
+          <li>Once connected, you're ready to go!</li>
+        </ol>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">How to Use</h2>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li>Navigate to any article or blog post you want to listen to</li>
+          <li>Click the <strong class="text-[var(--color-text)]">TTS Podcast</strong> icon in your toolbar</li>
+          <li>The icon shows a <strong class="text-[var(--color-text)]">green checkmark</strong> when the article is sent</li>
+          <li>Open your podcast app — the episode will appear in your feed</li>
+        </ol>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Icon States</h2>
+        <ul class="mt-4 space-y-3">
+          <li class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-surface0)] text-lg">🔊</span>
+            <span><strong class="text-[var(--color-text)]">Default</strong> — Ready to send an article</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-green)] text-lg">✓</span>
+            <span><strong class="text-[var(--color-text)]">Success</strong> — Article sent to your feed</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-[var(--color-red)] text-lg text-white">✕</span>
+            <span><strong class="text-[var(--color-text)]">Error</strong> — Something went wrong (page may not be an article)</span>
+          </li>
+        </ul>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Disconnecting</h2>
+        <p class="mt-4">
+          To disconnect the extension from your account:
+        </p>
+        <ol class="mt-4 list-decimal list-inside space-y-2">
+          <li><strong class="text-[var(--color-text)]">Right-click</strong> the extension icon</li>
+          <li>Select <strong class="text-[var(--color-text)]">Disconnect from TTS</strong></li>
+        </ol>
+        <p class="mt-4">
+          You can also disconnect from your <%= link_to "account settings", settings_extensions_path, class: "text-[var(--color-primary)] hover:underline" %>.
+        </p>
+
+        <h2 class="mt-12 text-2xl font-semibold tracking-tight text-[var(--color-text)]">Troubleshooting</h2>
+
+        <h3 class="mt-6 text-lg font-semibold text-[var(--color-text)]">"This page does not appear to be an article"</h3>
+        <p class="mt-2">
+          The extension works best on article pages with substantial text content. It may not work on:
+        </p>
+        <ul class="mt-2 list-disc list-inside space-y-1">
+          <li>Home pages or index pages</li>
+          <li>Pages with mostly images or video</li>
+          <li>Pages behind paywalls or login walls</li>
+          <li>PDFs or non-HTML content</li>
+        </ul>
+
+        <h3 class="mt-6 text-lg font-semibold text-[var(--color-text)]">Extension shows error state</h3>
+        <p class="mt-2">
+          Try refreshing the page and clicking the icon again. If the problem persists, the page content may not be extractable.
+        </p>
+
+        <h3 class="mt-6 text-lg font-semibold text-[var(--color-text)]">Need to reconnect?</h3>
+        <p class="mt-2">
+          If you're logged out or need to reconnect, just click the extension icon — you'll be redirected to the connect page automatically.
+        </p>
+
+        <div class="mt-12 pt-8 border-t border-[var(--color-overlay0)]">
+          <p>
+            <%= link_to "← Back to your episodes", episodes_path, class: "text-[var(--color-primary)] hover:underline" %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
