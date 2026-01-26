@@ -189,6 +189,40 @@ class UserTest < ActiveSupport::TestCase
     assert_equal Voice::DEFAULT_STANDARD, user.voice
   end
 
+  # primary_podcast tests
+  test "primary_podcast returns first podcast for user with podcasts" do
+    user = users(:one)
+    podcast = podcasts(:one)
+
+    assert_equal podcast, user.primary_podcast
+  end
+
+  test "primary_podcast creates default podcast for user without podcasts" do
+    user = User.create!(email_address: "newuser@example.com")
+
+    assert_difference "Podcast.count", 1 do
+      podcast = user.primary_podcast
+      assert podcast.persisted?
+      assert_includes podcast.title, user.email_address
+    end
+  end
+
+  # email_episode_confirmation tests
+  test "email_episode_confirmation defaults to true" do
+    user = User.new(email_address: "test@example.com")
+    # The default is set in the database, so we need to save and reload
+    user.save!
+    user.reload
+
+    assert user.email_episode_confirmation?
+  end
+
+  test "email_episode_confirmation can be set to false" do
+    user = users(:two)
+
+    refute user.email_episode_confirmation?
+  end
+
   test "available_voices returns FREE_VOICES for free user" do
     user = users(:free_user)
 
@@ -205,5 +239,20 @@ class UserTest < ActiveSupport::TestCase
     user = users(:subscriber)
 
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
+  end
+
+  # email_ingest_address tests
+  test "email_ingest_address delegates to GeneratesEmailIngestAddress service" do
+    user = users(:one)
+    EnablesEmailEpisodes.call(user: user)
+
+    assert_equal GeneratesEmailIngestAddress.call(user: user), user.email_ingest_address
+  end
+
+  test "email_ingest_address returns nil for user without email_ingest_token" do
+    user = users(:one)
+    user.update!(email_ingest_token: nil)
+
+    assert_nil user.email_ingest_address
   end
 end

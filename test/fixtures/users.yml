@@ -1,10 +1,12 @@
 one:
   email_address: user1@example.com
   account_type: 0
+  email_episode_confirmation: true
 
 two:
   email_address: user2@example.com
   account_type: 0
+  email_episode_confirmation: false
 
 free_user:
   email_address: free@example.com

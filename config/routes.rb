@@ -42,6 +42,11 @@ Rails.application.routes.draw do
   resource :session
   resource :settings, only: [ :show, :update ]
 
+  namespace :settings do
+    resource :email_episodes, only: [ :create, :destroy ]
+    resource :email_token, only: [ :create ]
+  end
+
   # Browser extension auth callback
   namespace :extension do
     resource :connect, only: [ :show ], controller: "connect"

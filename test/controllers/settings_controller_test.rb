@@ -81,4 +81,41 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
   end
+
+  test "show displays email episodes section when disabled" do
+    get settings_path
+
+    assert_response :success
+    assert_select "h2", text: "Email to Podcast"
+    assert_select "button", text: "Enable Email Episodes"
+  end
+
+  test "show displays email ingest address when enabled" do
+    EnablesEmailEpisodes.call(user: @user)
+
+    get settings_path
+
+    assert_response :success
+    assert_select "code", text: @user.email_ingest_address
+    assert_select "button", text: "Disable"
+    assert_select "button", text: "Regenerate Address"
+  end
+
+  test "update saves email_episode_confirmation preference" do
+    @user.update!(email_episode_confirmation: true)
+
+    patch settings_path, params: { email_episode_confirmation: "0" }
+
+    assert_redirected_to settings_path
+    refute @user.reload.email_episode_confirmation?
+  end
+
+  test "update enables email_episode_confirmation" do
+    @user.update!(email_episode_confirmation: false)
+
+    patch settings_path, params: { email_episode_confirmation: "1" }
+
+    assert_redirected_to settings_path
+    assert @user.reload.email_episode_confirmation?
+  end
 end

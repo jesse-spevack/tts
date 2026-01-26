@@ -8,7 +8,7 @@ class Episode < ApplicationRecord
   delegate :voice, to: :user
 
   enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
-  enum :source_type, { file: 0, url: 1, paste: 2, extension: 3 }
+  enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
 
   validates :title, presence: true, length: { maximum: 255 }
   validates :source_url, presence: true, if: :source_url_required?
@@ -70,7 +70,7 @@ class Episode < ApplicationRecord
   end
 
   def source_text_required?
-    paste? || file? || extension?
+    paste? || file? || extension? || email?
   end
 
   def content_within_tier_limit

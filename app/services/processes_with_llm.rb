@@ -52,8 +52,11 @@ class ProcessesWithLlm
   end
 
   def build_prompt
-    if episode.paste?
+    case
+    when episode.paste?
       BuildsPasteProcessingPrompt.call(text: text)
+    when episode.email?
+      BuildsEmailProcessingPrompt.call(text: text)
     else
       BuildsUrlProcessingPrompt.call(text: text)
     end
