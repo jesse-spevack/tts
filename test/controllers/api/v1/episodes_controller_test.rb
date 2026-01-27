@@ -147,10 +147,56 @@ module Api
         end
       end
 
+      test "create returns 429 when user exceeds hourly rate limit" do
+        # Clear any existing episodes so we have a clean slate for rate limit test
+        @user.episodes.unscoped.delete_all
+        create_recent_episodes(20)
+
+        post api_v1_episodes_path,
+          params: @valid_params,
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :too_many_requests
+        assert_equal "You've reached your hourly episode limit", response.parsed_body["error"]
+      end
+
+      test "create succeeds when user is under hourly rate limit" do
+        # Clear any existing episodes so we have a clean slate for rate limit test
+        @user.episodes.unscoped.delete_all
+        create_recent_episodes(19)
+
+        assert_difference "Episode.count", 1 do
+          post api_v1_episodes_path,
+            params: @valid_params,
+            headers: auth_header(@plain_token),
+            as: :json
+        end
+
+        assert_response :created
+      end
+
       private
 
       def auth_header(token)
         { "Authorization" => "Bearer #{token}" }
+      end
+
+      def create_recent_episodes(count)
+        podcast = @user.podcasts.first || CreatesDefaultPodcast.call(user: @user)
+
+        count.times do |i|
+          Episode.create!(
+            user: @user,
+            podcast: podcast,
+            title: "Rate limit test episode #{i}",
+            author: "Test Author",
+            description: "Test description",
+            source_type: :url,
+            source_url: "https://example.com/article-#{i}",
+            status: :pending
+          )
+        end
       end
     end
   end

@@ -11,6 +11,13 @@ class EpisodesMailbox < ApplicationMailbox
       return
     end
 
+    rate_limit_result = ChecksEpisodeRateLimit.call(user: user)
+    unless rate_limit_result.success?
+      log_warn "email_episode_rate_limited", user_id: user.id
+      send_failure_notification(rate_limit_result.error)
+      return
+    end
+
     result = CreatesEmailEpisode.call(user: user, email_body: email_content)
 
     if result.success?

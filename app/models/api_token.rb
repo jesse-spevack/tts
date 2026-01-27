@@ -17,12 +17,4 @@ class ApiToken < ApplicationRecord
   def active?
     !revoked?
   end
-
-  # Hash a plain token using HMAC-SHA256 with application secret
-  # This provides defense-in-depth against rainbow table attacks if DB is compromised
-  def self.hash_token(plain_token)
-    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, plain_token)
-  end
-
-  private_class_method :hash_token
 end

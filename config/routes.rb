@@ -45,15 +45,12 @@ Rails.application.routes.draw do
   namespace :settings do
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
+    resource :extensions, only: [ :show, :destroy ]
   end
 
   # Browser extension auth callback
   namespace :extension do
     resource :connect, only: [ :show ], controller: "connect"
-  end
-
-  namespace :settings do
-    resource :extensions, only: [ :show, :destroy ]
   end
 
   # Billing

@@ -2,6 +2,7 @@ module Api
   module V1
     class EpisodesController < BaseController
       before_action :check_episode_creation_permission
+      before_action :check_episode_rate_limit
 
       def create
         podcast = GetsDefaultPodcastForUser.call(user: current_user)
@@ -35,6 +36,13 @@ module Api
         return if result.success?
 
         render json: { error: "Episode limit reached. Please upgrade your plan." }, status: :forbidden
+      end
+
+      def check_episode_rate_limit
+        result = ChecksEpisodeRateLimit.call(user: current_user)
+        return if result.success?
+
+        render json: { error: result.error }, status: :too_many_requests
       end
     end
   end

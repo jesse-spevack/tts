@@ -100,6 +100,38 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     end
   end
 
+  test "sends failure notification when user is rate limited" do
+    # Clear any existing episodes so we have a clean slate for rate limit test
+    @user.episodes.unscoped.delete_all
+    create_recent_episodes(20)
+
+    assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
+      assert_enqueued_emails 1 do
+        receive_inbound_email_from_mail(
+          to: email_address_for(@user),
+          from: "sender@example.com",
+          subject: "Rate limited newsletter",
+          body: "A" * 150
+        )
+      end
+    end
+  end
+
+  test "creates episode when user is under rate limit" do
+    # Clear any existing episodes so we have a clean slate for rate limit test
+    @user.episodes.unscoped.delete_all
+    create_recent_episodes(19)
+
+    assert_enqueued_with(job: ProcessesEmailEpisodeJob) do
+      receive_inbound_email_from_mail(
+        to: email_address_for(@user),
+        from: "sender@example.com",
+        subject: "Under limit newsletter",
+        body: "A" * 150
+      )
+    end
+  end
+
   test "does not route emails without token suffix" do
     assert_raises(ActionMailbox::Router::RoutingError) do
       receive_inbound_email_from_mail(
@@ -126,5 +158,22 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
   def email_address_for(user)
     user.email_ingest_address
+  end
+
+  def create_recent_episodes(count)
+    podcast = @user.podcasts.first || CreatesDefaultPodcast.call(user: @user)
+
+    count.times do |i|
+      Episode.create!(
+        user: @user,
+        podcast: podcast,
+        title: "Rate limit test episode #{i}",
+        author: "Test Author",
+        description: "Test description",
+        source_type: :url,
+        source_url: "https://example.com/article-#{i}",
+        status: :pending
+      )
+    end
   end
 end

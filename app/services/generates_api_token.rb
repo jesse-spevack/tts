@@ -25,7 +25,7 @@ class GeneratesApiToken
     # Create the token record
     token = ApiToken.create!(
       user: @user,
-      token_digest: hash_token(raw_token)
+      token_digest: HashesToken.call(plain_token: raw_token)
     )
 
     # Set the plain token so it can be returned to the caller once
@@ -36,9 +36,4 @@ class GeneratesApiToken
     token
   end
 
-  private
-
-  def hash_token(plain_token)
-    OpenSSL::HMAC.hexdigest("SHA256", Rails.application.secret_key_base, plain_token)
-  end
 end
