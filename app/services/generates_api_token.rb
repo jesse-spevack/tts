@@ -35,5 +35,4 @@ class GeneratesApiToken
 
     token
   end
-
 end
