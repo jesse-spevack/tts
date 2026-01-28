@@ -75,13 +75,12 @@
         <code class="flex-1 bg-[var(--color-surface)] border border-[var(--color-overlay0)] rounded-md px-3 py-2 text-sm font-mono break-all">
           <%= @email_ingest_address %>
         </code>
-        <button type="button"
-                data-controller="clipboard"
-                data-clipboard-text-value="<%= @email_ingest_address %>"
-                data-action="clipboard#copy"
-                class="<%= button_classes(type: :secondary) %>">
-          Copy
-        </button>
+        <%= render "shared/clipboard_button",
+          content: @email_ingest_address,
+          title: "Copy email address",
+          icon: "copy",
+          button_class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors cursor-pointer flex-shrink-0"
+        %>
       </div>
 
       <div class="flex flex-wrap gap-2 mb-4">
@@ -94,11 +93,18 @@
 
       <div class="border-t border-[var(--color-overlay0)] pt-4">
         <%= form_with url: settings_path, method: :patch do %>
-          <label class="flex items-center gap-3 cursor-pointer">
+          <label class="group flex items-center gap-3 cursor-pointer">
             <input type="hidden" name="email_episode_confirmation" value="0">
             <input type="checkbox" name="email_episode_confirmation" value="1"
                    <%= "checked" if Current.user.email_episode_confirmation? %>
-                   class="w-5 h-5 rounded border-[var(--color-overlay0)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]">
+                   class="peer sr-only">
+            <span class="relative w-11 h-6 bg-[var(--color-overlay0)] rounded-full
+                         peer-checked:bg-[var(--color-primary)] peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50
+                         transition-colors duration-200
+                         after:content-[''] after:absolute after:top-0.5 after:left-0.5
+                         after:bg-white after:rounded-full after:h-5 after:w-5
+                         after:transition-transform after:duration-200
+                         peer-checked:after:translate-x-5"></span>
             <span class="text-sm">Send confirmation email when episodes are created</span>
           </label>
 
