@@ -63,6 +63,7 @@ Rails.application.routes.draw do
   get "checkout/success", to: "checkout#success"
   get "checkout/cancel", to: "checkout#cancel"
   post "webhooks/stripe", to: "webhooks#stripe"
+  post "webhooks/resend/inbound", to: "webhooks/resend#inbound"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
