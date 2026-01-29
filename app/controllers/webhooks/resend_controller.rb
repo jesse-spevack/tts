@@ -46,8 +46,6 @@ module Webhooks
     private
 
     def verify_webhook_signature
-      return true if Rails.env.test? # Skip in tests
-
       webhook_secret = ENV["RESEND_WEBHOOK_SECRET"]
       return false unless webhook_secret.present?
 
