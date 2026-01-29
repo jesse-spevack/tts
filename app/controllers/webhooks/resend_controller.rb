@@ -2,32 +2,34 @@
 
 module Webhooks
   class ResendController < ApplicationController
+    include StructuredLogging
+
     skip_before_action :verify_authenticity_token
     allow_unauthenticated_access
 
     def inbound
       unless verify_webhook_signature
-        Rails.logger.warn("[Resend Webhook] Invalid signature")
+        log_warn "resend_webhook_invalid_signature"
         return head :unauthorized
       end
 
       event = JSON.parse(request.body.read)
 
       unless event["type"] == "email.received"
-        Rails.logger.info("[Resend Webhook] Ignoring event type: #{event["type"]}")
+        log_info "resend_webhook_ignored", event_type: event["type"]
         return head :ok
       end
 
       email_id = event.dig("data", "email_id")
       unless email_id
-        Rails.logger.warn("[Resend Webhook] Missing email_id in payload")
+        log_warn "resend_webhook_missing_email_id"
         return head :bad_request
       end
 
       # Fetch full email content from Resend API
       email_data = fetch_email_content(email_id)
       unless email_data
-        Rails.logger.error("[Resend Webhook] Failed to fetch email #{email_id}")
+        log_error "resend_webhook_fetch_failed", email_id: email_id
         return head :unprocessable_entity
       end
 
@@ -36,10 +38,10 @@ module Webhooks
 
       head :ok
     rescue JSON::ParserError => e
-      Rails.logger.error("[Resend Webhook] Invalid JSON: #{e.message}")
+      log_error "resend_webhook_invalid_json", error: e.message
       head :bad_request
     rescue StandardError => e
-      Rails.logger.error("[Resend Webhook] Unexpected error: #{e.class} - #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+      log_error "resend_webhook_error", error_class: e.class.name, error: e.message
       head :internal_server_error
     end
 
@@ -92,7 +94,7 @@ module Webhooks
       if response.is_a?(Net::HTTPSuccess)
         JSON.parse(response.body)
       else
-        Rails.logger.error("[Resend Webhook] API error: #{response.code} - #{response.body}")
+        log_error "resend_api_error", status: response.code, body: response.body.truncate(200)
         nil
       end
     end
@@ -104,9 +106,8 @@ module Webhooks
       # Create an ActionMailbox InboundEmail and route it
       inbound_email = ActionMailbox::InboundEmail.create_and_extract_message_id!(mail.to_s)
 
-      Rails.logger.info("[Resend Webhook] Created inbound email #{inbound_email.id} for #{email_data["to"]&.first}")
+      log_info "resend_inbound_email_created", inbound_email_id: inbound_email.id, to: email_data["to"]&.first
 
-      # Process immediately (or use deliver_later for async)
       inbound_email.route
     end
 
