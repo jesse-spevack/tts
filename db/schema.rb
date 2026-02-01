@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_01_000001) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -138,6 +138,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["podcast_id"], name: "index_podcasts_on_podcast_id", unique: true
+  end
+
+  create_table "processed_webhook_emails", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email_id", null: false
+    t.datetime "processed_at", null: false
+    t.string "source", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source", "email_id"], name: "index_processed_webhook_emails_on_source_and_email_id", unique: true
   end
 
   create_table "sent_messages", force: :cascade do |t|

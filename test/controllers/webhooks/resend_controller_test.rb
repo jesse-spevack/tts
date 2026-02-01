@@ -128,6 +128,46 @@ module Webhooks
       assert_response :unprocessable_entity
     end
 
+    test "ignores duplicate webhook deliveries with same email_id" do
+      email_data = {
+        "from" => "sender@example.com",
+        "to" => [ "readtome+test_token_123@tts.verynormal.dev" ],
+        "subject" => "Test Article",
+        "html" => "<p>This is the article content.</p>",
+        "text" => "This is the article content.",
+        "message_id" => "<duplicate_test@example.com>"
+      }
+
+      stub_request(:get, "https://api.resend.com/emails/receiving/email_duplicate_test")
+        .to_return(status: 200, body: email_data.to_json, headers: { "Content-Type" => "application/json" })
+
+      payload = {
+        type: "email.received",
+        data: {
+          email_id: "email_duplicate_test",
+          from: "sender@example.com",
+          to: [ "readtome+test_token_123@tts.verynormal.dev" ],
+          subject: "Test Article"
+        }
+      }.to_json
+
+      # First request should create an InboundEmail
+      assert_difference "ActionMailbox::InboundEmail.count", 1 do
+        assert_difference "ProcessedWebhookEmail.count", 1 do
+          post_with_signature(payload)
+          assert_response :ok
+        end
+      end
+
+      # Second request with same email_id should NOT create another InboundEmail
+      assert_no_difference "ActionMailbox::InboundEmail.count" do
+        assert_no_difference "ProcessedWebhookEmail.count" do
+          post_with_signature(payload)
+          assert_response :ok
+        end
+      end
+    end
+
     private
 
     def post_with_signature(payload)

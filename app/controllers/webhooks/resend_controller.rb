@@ -26,6 +26,12 @@ module Webhooks
         return head :bad_request
       end
 
+      # Check for duplicate webhook delivery
+      unless ProcessedWebhookEmail.process_if_new(email_id: email_id, source: "resend")
+        log_info "resend_webhook_duplicate", email_id: email_id
+        return head :ok
+      end
+
       # Fetch full email content from Resend API
       email_data = fetch_email_content(email_id)
       unless email_data
