@@ -21,7 +21,7 @@ module Webhooks
     test "processes email.received webhook with valid signature" do
       email_data = {
         "from" => "sender@example.com",
-        "to" => [ "readtome+test_token_123@tts.verynormal.dev" ],
+        "to" => ["readtome+test_token_123@tts.verynormal.dev"],
         "subject" => "Test Article",
         "html" => "<p>This is the article content.</p>",
         "text" => "This is the article content.",
@@ -36,7 +36,7 @@ module Webhooks
         data: {
           email_id: "email_abc123",
           from: "sender@example.com",
-          to: [ "readtome+test_token_123@tts.verynormal.dev" ],
+          to: ["readtome+test_token_123@tts.verynormal.dev"],
           subject: "Test Article"
         }
       }.to_json
@@ -131,7 +131,7 @@ module Webhooks
     test "ignores duplicate webhook deliveries with same email_id" do
       email_data = {
         "from" => "sender@example.com",
-        "to" => [ "readtome+test_token_123@tts.verynormal.dev" ],
+        "to" => ["readtome+test_token_123@tts.verynormal.dev"],
         "subject" => "Test Article",
         "html" => "<p>This is the article content.</p>",
         "text" => "This is the article content.",
@@ -146,7 +146,7 @@ module Webhooks
         data: {
           email_id: "email_duplicate_test",
           from: "sender@example.com",
-          to: [ "readtome+test_token_123@tts.verynormal.dev" ],
+          to: ["readtome+test_token_123@tts.verynormal.dev"],
           subject: "Test Article"
         }
       }.to_json
