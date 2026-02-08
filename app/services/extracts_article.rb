@@ -77,8 +77,8 @@ class ExtractsArticle
       extract_author_from_meta(doc, 'meta[property="og:article:author"]') ||
       extract_author_from_meta(doc, 'meta[name="twitter:creator"]') ||
       extract_author_from_element(doc, '[rel="author"]') ||
-      extract_author_from_element(doc, '.byline') ||
-      extract_author_from_element(doc, '.author')
+      extract_author_from_element(doc, ".byline") ||
+      extract_author_from_element(doc, ".author")
   end
 
   def extract_author_from_meta(doc, selector)
