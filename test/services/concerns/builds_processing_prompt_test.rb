@@ -32,4 +32,10 @@ class BuildsProcessingPromptTest < ActiveSupport::TestCase
     result = TestPromptBuilder.call(text: "test")
     assert_includes result, "Expand abbreviations"
   end
+
+  test "author_instruction encourages finding author from bylines and article text" do
+    result = TestPromptBuilder.call(text: "test")
+    assert_includes result, "byline"
+    assert_includes result, "article text"
+  end
 end
