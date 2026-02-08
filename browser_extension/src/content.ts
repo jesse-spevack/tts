@@ -16,8 +16,8 @@
  *   element. This handles the case where the token was already rendered before
  *   the content script loaded (e.g., on page refresh).
  *
- * Security: Token capture is restricted to trusted domains (verynormal.fyi,
- * verynormal.dev, localhost) to prevent malicious sites from injecting tokens.
+ * Security: Token capture is restricted to trusted domains (podread.app,
+ * localhost) to prevent malicious sites from injecting tokens.
  *
  * ## 2. Article Extraction on Demand
  * When the user clicks the extension icon, the background script sends an
@@ -39,7 +39,7 @@ import type { ExtractRequest, ExtractResponse } from './messages';
  * List of trusted domains that are allowed to provide tokens to the extension.
  * This prevents malicious sites from injecting tokens via the extension connect flow.
  */
-export const TRUSTED_DOMAINS = ['verynormal.fyi', 'verynormal.dev', 'localhost'];
+export const TRUSTED_DOMAINS = ['podread.app', 'localhost'];
 
 /**
  * Check if the current hostname is a trusted domain

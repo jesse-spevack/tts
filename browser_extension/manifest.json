@@ -10,8 +10,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://*.verynormal.fyi/*",
-    "https://*.verynormal.dev/*"
+    "https://*.podread.app/*"
   ],
   "action": {
     "default_icon": {
@@ -26,8 +25,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.verynormal.fyi/*",
-        "*://*.verynormal.dev/*",
+        "*://*.podread.app/*",
         "*://localhost/*"
       ],
       "js": ["content.js"]

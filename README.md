@@ -2,7 +2,7 @@
 
 A Ruby on Rails application that converts web articles, pasted text, and uploaded files into podcast episodes using text-to-speech. Submit content through any of three input methods, and the app extracts the content, processes it with an LLM for cleanup and metadata extraction, and generates audio episodes delivered via a private RSS feed compatible with any podcast player.
 
-**Live Site:** [tts.verynormal.dev](https://tts.verynormal.dev)
+**Live Site:** [podread.app](https://podread.app)
 
 ## Features
 

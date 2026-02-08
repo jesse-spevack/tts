@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: -> { ENV.fetch("MAILER_FROM_ADDRESS", "noreply@tts.verynormal.dev") }
+  default from: -> { AppConfig::Domain::MAIL_FROM }
   layout "mailer"
 end

@@ -25,7 +25,9 @@ module Hub
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Email ingest domain for email-to-podcast feature
-    # Override in environment files as needed
-    config.x.email_ingest_domain = "tts.verynormal.dev"
+    # Strip port — email domains never include ports
+    # Note: AppConfig::Domain::MAIL_FROM (app/models/app_config.rb) does the same
+    # port stripping, but can't be referenced here (loads before autoloading)
+    config.x.email_ingest_domain = ENV.fetch("APP_HOST", "localhost").sub(/:\d+\z/, "")
   end
 end

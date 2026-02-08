@@ -36,7 +36,7 @@ That's it. No copying URLs, no switching tabs, no friction.
 
 ### Requirements
 
-• A Very Normal TTS account (free tier available at verynormal.fyi)
+• A Very Normal TTS account (free tier available at podread.app)
 • Works with any podcast app that supports custom RSS feeds
 
 ### Privacy
@@ -49,5 +49,5 @@ This extension:
 
 ---
 
-**Questions or feedback?** Visit verynormal.fyi or email support@verynormal.fyi
+**Questions or feedback?** Visit podread.app or email support@podread.app
 

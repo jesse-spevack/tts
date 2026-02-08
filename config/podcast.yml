@@ -5,8 +5,8 @@
 title: "Very normal podcast"
 description: "Readings turned to audio by text to speech app."
 author: "Very Normal TTS"
-email: "noreply@tts.verynormal.dev"
-link: "https://tts.verynormal.dev"  # Podcast website URL
+email: <%= ENV.fetch("MAILER_FROM_ADDRESS", "noreply@localhost") %>
+link: <%= "https://#{ENV.fetch('APP_HOST', 'localhost:3000')}" %>  # Podcast website URL
 
 # Podcast settings
 language: "en-us"

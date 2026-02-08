@@ -85,7 +85,7 @@ class AppConfigTest < ActiveSupport::TestCase
   test "Storage.public_feed_url returns branded URL" do
     result = AppConfig::Storage.public_feed_url("podcast_abc123")
 
-    assert_equal "https://tts.verynormal.dev/feeds/podcast_abc123.xml", result
+    assert_equal "https://example.com/feeds/podcast_abc123.xml", result
   end
 
   test "Storage.feed_url returns GCS URL" do

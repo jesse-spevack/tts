@@ -7,7 +7,8 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   include ActionMailer::TestHelper
 
   setup do
-    @user = users(:one)
+    @user = User.create!(email_address: "mailbox-test-#{SecureRandom.hex(4)}@example.com", email_episode_confirmation: true)
+    @podcast = CreatesDefaultPodcast.call(user: @user)
     EnablesEmailEpisodes.call(user: @user)
   end
 
@@ -36,7 +37,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   test "does not create episode for invalid token" do
     assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
       receive_inbound_email_from_mail(
-        to: "readtome+invalidtoken123@tts.verynormal.dev",
+        to: "readtome+invalidtoken123@example.com",
         from: "sender@example.com",
         subject: "Spam",
         body: "Content that should be ignored"
@@ -135,7 +136,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   test "does not route emails without token suffix" do
     assert_raises(ActionMailbox::Router::RoutingError) do
       receive_inbound_email_from_mail(
-        to: "readtome@tts.verynormal.dev",
+        to: "readtome@example.com",
         from: "sender@example.com",
         subject: "No token",
         body: "A" * 150
@@ -146,7 +147,7 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
   test "does not route emails with empty token" do
     assert_raises(ActionMailbox::Router::RoutingError) do
       receive_inbound_email_from_mail(
-        to: "readtome+@tts.verynormal.dev",
+        to: "readtome+@example.com",
         from: "sender@example.com",
         subject: "Empty token",
         body: "A" * 150

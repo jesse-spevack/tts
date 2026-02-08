@@ -16,7 +16,7 @@ class GeneratesPodcastFeedUrlTest < ActiveSupport::TestCase
 
     result = GeneratesPodcastFeedUrl.call(podcast)
 
-    expected = "https://tts.verynormal.dev/feeds/#{podcast.podcast_id}.xml"
+    expected = "https://example.com/feeds/#{podcast.podcast_id}.xml"
     assert_equal expected, result
   end
 end
