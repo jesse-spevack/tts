@@ -72,6 +72,20 @@ class ExtractsArticle
   end
 
   def extract_author(doc)
-    doc.at_css('meta[name="author"]')&.[]("content")&.strip.presence
+    extract_author_from_meta(doc, 'meta[name="author"]') ||
+      extract_author_from_meta(doc, 'meta[property="article:author"]') ||
+      extract_author_from_meta(doc, 'meta[property="og:article:author"]') ||
+      extract_author_from_meta(doc, 'meta[name="twitter:creator"]') ||
+      extract_author_from_element(doc, '[rel="author"]') ||
+      extract_author_from_element(doc, '.byline') ||
+      extract_author_from_element(doc, '.author')
+  end
+
+  def extract_author_from_meta(doc, selector)
+    doc.at_css(selector)&.[]("content")&.strip.presence
+  end
+
+  def extract_author_from_element(doc, selector)
+    doc.at_css(selector)&.text&.strip.presence
   end
 end

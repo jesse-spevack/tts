@@ -39,6 +39,6 @@ module BuildsProcessingPrompt
   end
 
   def author_instruction
-    'The author\'s name (use "Unknown" if not found)'
+    'The author\'s name — check the byline and article text if not in metadata (use "Unknown" if not found)'
   end
 end
