@@ -197,4 +197,243 @@ class ExtractsArticleTest < ActiveSupport::TestCase
     assert_nil result.data.title
     assert_nil result.data.author
   end
+
+  # --- Expanded author extraction tests ---
+
+  test "extracts author from article:author meta property" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="article:author" content="Alice Walker">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Alice Walker", result.data.author
+  end
+
+  test "extracts author from og:article:author meta property" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="og:article:author" content="Bob Marley">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Bob Marley", result.data.author
+  end
+
+  test "extracts author from twitter:creator meta tag" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta name="twitter:creator" content="Carol Danvers">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Carol Danvers", result.data.author
+  end
+
+  test "extracts author from rel=author element" do
+    html = <<~HTML
+      <html>
+        <body>
+          <article>
+            <a rel="author">David Foster Wallace</a>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "David Foster Wallace", result.data.author
+  end
+
+  test "extracts author from byline class element" do
+    html = <<~HTML
+      <html>
+        <body>
+          <article>
+            <span class="byline">Eleanor Roosevelt</span>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Eleanor Roosevelt", result.data.author
+  end
+
+  test "extracts author from author class element" do
+    html = <<~HTML
+      <html>
+        <body>
+          <article>
+            <span class="author">Frank Herbert</span>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Frank Herbert", result.data.author
+  end
+
+  test "meta name=author takes priority over article:author" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta name="author" content="Primary Author">
+          <meta property="article:author" content="Secondary Author">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Primary Author", result.data.author
+  end
+
+  test "article:author takes priority over og:article:author" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="article:author" content="Article Author">
+          <meta property="og:article:author" content="OG Author">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Article Author", result.data.author
+  end
+
+  test "meta tags take priority over byline selectors" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="article:author" content="Meta Author">
+        </head>
+        <body>
+          <article>
+            <span class="byline">Byline Author</span>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Meta Author", result.data.author
+  end
+
+  test "byline selectors work when no meta tags exist" do
+    html = <<~HTML
+      <html>
+        <body>
+          <article>
+            <div class="byline">Sean Goedecke</div>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Sean Goedecke", result.data.author
+  end
+
+  test "strips whitespace from extracted author in all selectors" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="article:author" content="  Whitespace Author  ">
+        </head>
+        <body>
+          <article>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_equal "Whitespace Author", result.data.author
+  end
+
+  test "returns nil when author meta tags and byline selectors are all empty" do
+    html = <<~HTML
+      <html>
+        <head>
+          <meta property="article:author" content="">
+          <meta property="og:article:author" content="">
+        </head>
+        <body>
+          <article>
+            <span class="byline"></span>
+            <p>Content that is long enough to pass the minimum length requirement for extraction. This paragraph needs substantial content.</p>
+          </article>
+        </body>
+      </html>
+    HTML
+
+    result = ExtractsArticle.call(html: html)
+
+    assert result.success?
+    assert_nil result.data.author
+  end
 end
