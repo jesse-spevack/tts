@@ -1,0 +1,20 @@
+<%# Screenshot - Image display in wallpaper frame with placement options
+  Locals:
+    wallpaper   - (required) wallpaper color: "green", "blue", "purple", "brown"
+    placement   - (required) one of: "bottom", "bottom-left", "bottom-right", "top", "top-left", "top-right"
+    extra_class - (optional) additional CSS classes for the outer wrapper
+  Block:
+    The screenshot image content (typically an <img> tag)
+%>
+<%
+  screenshot_wallpaper = local_assigns.fetch(:wallpaper, "blue")
+  screenshot_placement = local_assigns.fetch(:placement, "bottom")
+  screenshot_extra = local_assigns.fetch(:extra_class, "")
+%>
+<%= render layout: "shared/marketing/wallpaper", locals: { color: screenshot_wallpaper, extra_class: "group #{screenshot_extra}" } do %>
+  <div data-placement="<%= screenshot_placement %>" class="relative [--padding:min(10%,--spacing(16))] group-data-[placement=bottom]:px-(--padding) group-data-[placement=bottom]:pt-(--padding) group-data-[placement=bottom-left]:pt-(--padding) group-data-[placement=bottom-left]:pr-(--padding) group-data-[placement=bottom-right]:pt-(--padding) group-data-[placement=bottom-right]:pl-(--padding) group-data-[placement=top]:px-(--padding) group-data-[placement=top]:pb-(--padding) group-data-[placement=top-left]:pr-(--padding) group-data-[placement=top-left]:pb-(--padding) group-data-[placement=top-right]:pb-(--padding) group-data-[placement=top-right]:pl-(--padding)">
+    <div class="*:relative *:ring-1 *:ring-black/10 group-data-[placement=bottom]:*:rounded-t-sm group-data-[placement=bottom-left]:*:rounded-tr-sm group-data-[placement=bottom-right]:*:rounded-tl-sm group-data-[placement=top]:*:rounded-b-sm group-data-[placement=top-left]:*:rounded-br-sm group-data-[placement=top-right]:*:rounded-bl-sm">
+      <%= yield %>
+    </div>
+  </div>
+<% end %>

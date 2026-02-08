@@ -1,0 +1,52 @@
+<%# features-with-large-demo
+    Renders a section with eyebrow, headline, subheadline, a large demo area,
+    and a 3-column grid of icon+text feature items below it.
+
+    Locals:
+      eyebrow:     (String, optional) small label above headline
+      headline:    (String, optional) section heading
+      subheadline: (String, optional) section description
+      id:          (String, optional) section id attribute
+      demo:        (String, optional) HTML content for the large demo area
+
+    Usage: Provide feature items in the yielded block. The large demo area
+    can be passed via the demo local, or place demo content before yield.
+
+    Example:
+      render "shared/marketing/features_large_demo", eyebrow: "Platform", headline: "See it in action.", demo: capture {
+        <img src="/placeholder.webp" alt="" class="w-full rounded-lg">
+      } do
+        render "shared/marketing/features_large_demo_item", headline: "Fast", subheadline: "Lightning speed."
+        render "shared/marketing/features_large_demo_item", headline: "Secure", subheadline: "Enterprise security."
+        render "shared/marketing/features_large_demo_item", headline: "Reliable", subheadline: "99.9% uptime."
+      end
+%>
+
+<section class="py-16" <% if local_assigns[:id] %>id="<%= id %>"<% end %>>
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col gap-10 sm:gap-16">
+    <% if local_assigns[:headline] %>
+      <div class="flex max-w-2xl flex-col gap-6">
+        <div class="flex flex-col gap-2">
+          <% if local_assigns[:eyebrow] %>
+            <div class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400"><%= eyebrow %></div>
+          <% end %>
+          <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= headline %></h2>
+        </div>
+        <% if local_assigns[:subheadline] %>
+          <div class="text-base/7 text-mist-700 dark:text-mist-400 text-pretty"><%= subheadline %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div>
+      <div class="flex flex-col gap-14">
+        <% if local_assigns[:demo] %>
+          <div class="flex flex-col gap-32"><%= demo %></div>
+        <% end %>
+        <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
+          <%= yield %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,68 @@
+<%# About 03 - Simple centered hero, stats three-col with description, team four-col, testimonial large quote, CTA centered
+  Navbar: left-aligned links | Footer: links + social icons
+  Template source: pages/about-03.tsx
+%>
+
+<%# ===== Navbar (left-aligned links) ===== %>
+<%= render "shared/marketing/navbar_left_links",
+  links: [
+    { label: "Features", href: "#" },
+    { label: "Pricing", href: "#" },
+    { label: "About", href: "#hero" },
+  ] %>
+
+<%# ===== Hero (simple centered) ===== %>
+<%= render "shared/marketing/hero_simple_centered",
+  headline: "Your reading list, as a podcast.",
+  subheadline: '<p>PodRead turns web articles into podcast episodes. Paste a URL, and a few minutes later it shows up in your podcast app. Built by a solo founder who got tired of never finishing his reading list.</p>'.html_safe %>
+
+<%# Stats (three-column with description) %>
+<%= render layout: "shared/marketing/stats_three_col", locals: {
+  heading: "About PodRead",
+  description: '<p>PodRead started with a simple problem. I had dozens of articles saved in browser tabs that I never found time to sit down and read. But I spend hours every week running, doing chores, and driving. That time was going to waste.</p><p>So I built PodRead. Paste a URL, and it extracts the article, converts it to natural-sounding audio, and delivers it as a podcast episode to your private feed. No apps to install. Just open your podcast player and listen.</p><p>PodRead is bootstrapped and independent. No VC funding, no investors, no board of directors. Just one developer in Denver building a tool that solves a real problem. The goal is simple: help people get through their reading list by turning it into something they can listen to.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/stat_card", stat: "10,000+", text: "Articles converted into podcast episodes since launch." %>
+  <%= render "shared/marketing/stat_card", stat: "1", text: "Founder, developer, and support team. The whole company." %>
+  <%= render "shared/marketing/stat_card", stat: "2024", text: "Year PodRead launched. Built to solve a real problem." %>
+<% end %>
+
+<%# Testimonial (large quote) %>
+<%= render "shared/marketing/testimonial_large_quote",
+  quote: '<p>I have a 45-minute commute each way. I used to waste it on random podcasts. Now I listen to the articles I actually want to read. PodRead turned dead time into the most productive part of my day.</p>'.html_safe,
+  name: "Marcus Rivera",
+  byline: "Daily commuter, recovering tab hoarder",
+  img_src: "https://placehold.co/160x160" %>
+
+<%# Team (four-column grid) %>
+<%= render layout: "shared/marketing/team_four_col", locals: {
+  headline: "The person behind PodRead",
+  subheadline: '<p>No leadership team. No org chart. Just one person building, shipping, and supporting PodRead.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/team_member", name: "Jesse Spevack", byline: "Founder & Developer", img_src: "https://placehold.co/800x1000" %>
+<% end %>
+
+<%# Call To Action (centered) %>
+<%= render "shared/marketing/cta_centered",
+  headline: "Turn your reading list into a podcast.",
+  subheadline: '<p>Start with two free episodes a month. No credit card. No commitment. Just paste a link and listen.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Create my feed</a>
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white">See how it works <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" role="image" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
+  </div>'.html_safe %>
+
+<%# ===== Footer (links + social icons) ===== %>
+<%= render "shared/marketing/footer_links_social",
+  links: [
+    { label: "About", href: "#" },
+    { label: "Features", href: "#" },
+    { label: "Pricing", href: "#" },
+    { label: "Help Center", href: "#" },
+    { label: "Privacy Policy", href: "#" },
+    { label: "Contact", href: "#" },
+  ],
+  social_links: [
+    { name: "X", href: "https://x.com", icon: "x" },
+    { name: "GitHub", href: "https://github.com", icon: "github" },
+    { name: "YouTube", href: "https://www.youtube.com", icon: "youtube" },
+  ],
+  fineprint: "&copy; 2026 PodRead. All rights reserved." %>

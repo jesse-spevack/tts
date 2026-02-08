@@ -1,0 +1,16 @@
+<%# Individual testimonial card for use within testimonials_grid %>
+<%# Locals: quote (html_safe string), name (string), byline (string), img_src (string, URL to avatar image) %>
+<figure class="flex flex-col justify-between gap-10 rounded-md bg-mist-950/2.5 p-6 text-sm/7 text-mist-950 dark:bg-white/5 dark:text-white">
+  <blockquote class="relative flex flex-col gap-4 *:first:before:absolute *:first:before:inline *:first:before:-translate-x-full *:first:before:content-['\201C'] *:last:after:inline *:last:after:content-['\201D']">
+    <%= quote %>
+  </blockquote>
+  <figcaption class="flex items-center gap-4">
+    <div class="flex size-12 overflow-hidden rounded-full outline -outline-offset-1 outline-black/5 *:size-full *:object-cover dark:outline-white/5">
+      <img src="<%= local_assigns[:img_src] || '/placeholder.webp' %>" alt="<%= name %>">
+    </div>
+    <div>
+      <p class="font-semibold"><%= name %></p>
+      <p class="text-mist-700 dark:text-mist-400"><%= byline %></p>
+    </div>
+  </figcaption>
+</figure>

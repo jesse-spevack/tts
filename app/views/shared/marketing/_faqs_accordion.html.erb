@@ -1,0 +1,18 @@
+<%# Single-column FAQ accordion %>
+<%# Locals: headline (string, optional), subheadline (string, optional) %>
+<%# Pass FAQ items as the block content using _faq_item partial %>
+<section class="py-16">
+  <div class="mx-auto flex max-w-3xl flex-col gap-6 px-6 lg:max-w-5xl lg:px-10">
+    <div class="flex flex-col gap-6">
+      <% if local_assigns[:headline] %>
+        <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= headline %></h2>
+      <% end %>
+      <% if local_assigns[:subheadline] %>
+        <div class="text-base/7 text-mist-700 dark:text-mist-400 flex flex-col gap-4 text-pretty"><%= subheadline %></div>
+      <% end %>
+    </div>
+    <div class="divide-y divide-mist-950/10 border-y border-mist-950/10 dark:divide-white/10 dark:border-white/10">
+      <%= yield %>
+    </div>
+  </div>
+</section>

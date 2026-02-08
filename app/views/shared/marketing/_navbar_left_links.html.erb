@@ -1,0 +1,116 @@
+<%#
+  Navbar with logo, actions, and left-aligned links.
+  Ported from: components/sections/navbar-with-logo-actions-and-left-aligned-links.tsx
+
+  Locals:
+    links       - Array of hashes with :label and :href keys (default: placeholder nav links)
+    logo_href   - URL for the logo link (default: "/")
+    logo_text   - Text for the logo (default: "PodRead")
+    actions     - Block or HTML string for action buttons (default: login/signup links)
+%>
+
+<%
+  links     ||= [
+    { label: "Features", href: "#features" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "About", href: "#about" },
+    { label: "Blog", href: "#blog" },
+  ]
+  logo_href ||= "/"
+  logo_text ||= "PodRead"
+  actions   ||= nil
+%>
+
+<header class="sticky top-0 z-10 bg-mist-100 dark:bg-mist-950">
+  <style>:root { --scroll-padding-top: 5.25rem }</style>
+  <nav>
+    <div class="mx-auto flex h-(--scroll-padding-top) max-w-7xl items-center gap-4 px-6 lg:px-10">
+      <%# Left: logo + links (desktop only) %>
+      <div class="flex flex-1 items-center gap-12">
+        <div class="flex items-center">
+          <a href="<%= logo_href %>" class="inline-flex items-stretch">
+            <span class="font-display text-xl text-mist-950 dark:text-white"><%= logo_text %></span>
+          </a>
+        </div>
+        <div class="flex gap-8 max-lg:hidden">
+          <% links.each do |link| %>
+            <a href="<%= link[:href] %>" class="group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 lg:text-sm/7 dark:text-white">
+              <%= link[:label] %>
+              <span class="inline-flex p-1.5 opacity-0 group-hover:opacity-100 lg:hidden" aria-hidden="true">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+              </span>
+            </a>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Right: actions + mobile menu toggle %>
+      <div class="flex flex-1 items-center justify-end gap-4">
+        <div class="flex shrink-0 items-center gap-5">
+          <% if actions %>
+            <%= actions %>
+          <% else %>
+            <a href="#" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
+            <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</a>
+          <% end %>
+        </div>
+
+        <button
+          command="show-modal"
+          commandfor="mobile-menu"
+          aria-label="Toggle menu"
+          class="inline-flex rounded-full p-1.5 text-mist-950 hover:bg-mist-950/10 lg:hidden dark:text-white dark:hover:bg-white/10"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" class="size-6">
+            <path
+              fill-rule="evenodd"
+              d="M3.748 8.248a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75ZM3.748 15.75a.75.75 0 0 1 .75-.751h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <%# Mobile menu dialog %>
+    <el-dialog class="lg:hidden">
+      <dialog id="mobile-menu" class="backdrop:bg-transparent">
+        <el-dialog-panel class="fixed inset-0 bg-mist-100 px-6 py-6 lg:px-10 dark:bg-mist-950">
+          <div class="flex justify-end">
+            <button
+              command="close"
+              commandfor="mobile-menu"
+              aria-label="Toggle menu"
+              class="inline-flex rounded-full p-1.5 text-mist-950 hover:bg-mist-950/10 dark:text-white dark:hover:bg-white/10"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-6"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="mt-6 flex flex-col gap-6">
+            <% links.each do |link| %>
+              <a href="<%= link[:href] %>" class="group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 lg:text-sm/7 dark:text-white">
+                <%= link[:label] %>
+                <span class="inline-flex p-1.5 opacity-0 group-hover:opacity-100 lg:hidden" aria-hidden="true">
+                  <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </span>
+              </a>
+            <% end %>
+          </div>
+        </el-dialog-panel>
+      </dialog>
+    </el-dialog>
+  </nav>
+</header>

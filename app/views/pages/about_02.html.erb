@@ -1,0 +1,132 @@
+<%# About 02 - Two-column hero with photo, brands cards, team three-col, features/values three-col, CTA
+  Navbar: centered links | Footer: link categories
+  Template source: pages/about-02.tsx
+%>
+
+<%# ===== Navbar (centered links) ===== %>
+<%= render "shared/marketing/navbar_centered_links",
+  links: [
+    { label: "Features", href: "#" },
+    { label: "Pricing", href: "#" },
+    { label: "About", href: "#hero" },
+  ] %>
+
+<%# ===== Hero (two-column with photo) ===== %>
+<%= render "shared/marketing/hero_two_col_photo",
+  eyebrow: render("shared/marketing/announcement_badge", text: "Now with premium HD voices", href: "#", cta: "Learn more"),
+  headline: "Articles in. Podcast episodes out.",
+  subheadline: '<p>I built PodRead because I had dozens of browser tabs with articles I never found time to read. Now I listen to them while running, driving, and doing chores. It turns any article into a podcast episode in your favorite app.</p>'.html_safe,
+  photo: '<img class="not-dark:bg-white/75 max-xl:hidden dark:bg-black/75" src="https://placehold.co/1800x1600" width="1800" height="1600" alt="" /><img class="not-dark:bg-white/75 xl:hidden dark:bg-black/75" src="https://placehold.co/1800x945" width="1800" height="945" alt="" />'.html_safe %>
+
+<%# Brands %>
+<%= render layout: "shared/marketing/brands_cards", locals: {
+  id: "brands",
+  eyebrow: "Works everywhere",
+  headline: "Listen in your favorite podcast app.",
+  subheadline: '<p>PodRead creates a private podcast feed that works with every major podcast player. No new apps to install. Just subscribe and listen.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Subscribe to your PodRead feed directly in Apple Podcasts. Episodes sync automatically.",
+    footnote: "Available on iPhone, iPad, Mac, and Apple Watch." do %>
+    <img src="https://placehold.co/124x32" alt="Brand logo" class="dark:hidden">
+    <img src="https://placehold.co/124x32" alt="Brand logo" class="not-dark:hidden">
+  <% end %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Add your private feed to Spotify and listen alongside your music and other podcasts.",
+    footnote: "Available on all Spotify platforms." do %>
+    <img src="https://placehold.co/146x32" alt="Brand logo" class="dark:hidden">
+    <img src="https://placehold.co/146x32" alt="Brand logo" class="not-dark:hidden">
+  <% end %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Works great with Overcast, Pocket Casts, and any app that supports RSS podcast feeds.",
+    footnote: "Standard RSS feed compatible with all podcast apps." do %>
+    <img src="https://placehold.co/106x32" alt="Brand logo" class="dark:hidden">
+    <img src="https://placehold.co/106x32" alt="Brand logo" class="not-dark:hidden">
+  <% end %>
+<% end %>
+
+<%# Team (three-column grid) %>
+<%= render layout: "shared/marketing/team_three_col", locals: {
+  headline: "The person behind PodRead",
+  subheadline: '<p>PodRead is a one-person operation. Built, maintained, and supported by a solo founder in Denver, CO.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/team_member", name: "Jesse Spevack", byline: "Founder & Developer", img_src: "https://placehold.co/800x800" %>
+<% end %>
+
+<%# Features / Values (three-column) %>
+<%= render layout: "shared/marketing/features_three_col", locals: {
+  id: "features",
+  headline: "What I believe in.",
+  subheadline: '<p>PodRead is built on a few simple principles. No mission statements. No corporate values deck. Just how I think software should be made.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Simplicity", subheadline: '<p>Do one thing well. PodRead turns articles into podcast episodes. That\'s it. No feature bloat, no distractions.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/rocket", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Privacy", subheadline: '<p>Your feed is private. Your data stays yours. I don\'t sell your information or track you across the web.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/heart", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Honesty", subheadline: '<p>Transparent pricing. No dark patterns. No tricks to keep you subscribed. Cancel anytime, no questions asked.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/git_diff", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Quality", subheadline: '<p>Natural-sounding voices powered by Google Cloud TTS with Chirp HD. Clean article extraction that skips the ads and navigation.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/user_2", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Independence", subheadline: '<p>Bootstrapped. No VC funding. No investors to answer to. PodRead is built for users, not for a board of directors.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/target", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Reliability", subheadline: '<p>Your podcast feed should just work. Episodes ready in minutes, available in your app whenever you are.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/star", css_class: "size-3.25" %>
+  <% end %>
+<% end %>
+
+<%# Call To Action %>
+<%= render "shared/marketing/cta_simple",
+  headline: "Ready to listen to your reading list?",
+  subheadline: '<p>Try PodRead free. Two episodes a month, no credit card required. Upgrade anytime for unlimited episodes and premium voices.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Try PodRead free</a>
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white">View pricing <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" role="image" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
+  </div>'.html_safe %>
+
+<%# ===== Footer (link categories) ===== %>
+<%= render "shared/marketing/footer_categories",
+  categories: [
+    {
+      title: "Product",
+      links: [
+        { label: "Features", href: "#" },
+        { label: "Pricing", href: "#" },
+        { label: "Browser Extension", href: "#" },
+      ]
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About", href: "#" },
+        { label: "Blog", href: "#" },
+      ]
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "Help Center", href: "#" },
+        { label: "Contact", href: "#" },
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: "#" },
+        { label: "Terms of Service", href: "#" },
+      ]
+    },
+    {
+      title: "Connect",
+      links: [
+        { label: "X", href: "#" },
+        { label: "GitHub", href: "#" },
+        { label: "YouTube", href: "#" },
+      ]
+    },
+  ],
+  fineprint: "&copy; 2026 PodRead. All rights reserved." %>

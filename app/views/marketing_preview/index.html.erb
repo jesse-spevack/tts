@@ -1,0 +1,705 @@
+<%# Marketing Preview - Developer tool for visually inspecting all marketing partials %>
+<% content_for(:title, "Marketing Preview") %>
+
+<style>
+  /* Sidebar navigation */
+  .preview-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    overflow-y: auto;
+    z-index: 50;
+    padding: 1rem;
+    border-right: 1px solid;
+  }
+  .preview-sidebar {
+    background: oklch(96.3% 0.002 197.1);
+    border-color: oklch(87.2% 0.007 219.6);
+  }
+  .dark .preview-sidebar {
+    background: oklch(14.8% 0.004 228.8);
+    border-color: oklch(27.5% 0.011 216.9);
+  }
+  .preview-main {
+    margin-left: 260px;
+  }
+  .preview-sidebar a {
+    display: block;
+    padding: 2px 8px;
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  .preview-sidebar a:hover {
+    background: oklch(92.5% 0.005 214.3);
+  }
+  .dark .preview-sidebar a:hover {
+    background: oklch(21.8% 0.008 223.9);
+  }
+  .preview-sidebar h3 {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0.5rem 0.25rem;
+    margin-top: 0.5rem;
+  }
+  .preview-sidebar h3:first-child { margin-top: 0; }
+  .partial-section {
+    scroll-margin-top: 1rem;
+  }
+  .partial-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid;
+    border-color: oklch(87.2% 0.007 219.6);
+  }
+  .dark .partial-header {
+    border-color: oklch(27.5% 0.011 216.9);
+  }
+  .partial-divider {
+    height: 2px;
+    background: oklch(87.2% 0.007 219.6);
+    margin: 0;
+  }
+  .dark .partial-divider {
+    background: oklch(27.5% 0.011 216.9);
+  }
+  .partial-error {
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 0.5rem;
+    font-family: monospace;
+    font-size: 0.8125rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .refinement-form {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+  .refinement-form input[type="text"] {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    border: 1px solid oklch(87.2% 0.007 219.6);
+    background: white;
+    color: oklch(14.8% 0.004 228.8);
+  }
+  .dark .refinement-form input[type="text"] {
+    border-color: oklch(27.5% 0.011 216.9);
+    background: oklch(21.8% 0.008 223.9);
+    color: white;
+  }
+  .refinement-form button[type="submit"] {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid oklch(87.2% 0.007 219.6);
+  }
+  .dark .refinement-form button[type="submit"] {
+    border-color: oklch(27.5% 0.011 216.9);
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+    padding: 2rem;
+  }
+  .icon-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.6875rem;
+    text-align: center;
+  }
+  .icon-cell svg {
+    width: 24px;
+    height: 24px;
+  }
+  /* Theme toggle button in sidebar */
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid oklch(87.2% 0.007 219.6);
+    background: white;
+    color: oklch(14.8% 0.004 228.8);
+  }
+  .dark .theme-toggle-btn {
+    border-color: oklch(37.8% 0.015 216);
+    background: oklch(21.8% 0.008 223.9);
+    color: white;
+  }
+  .needs-refinement-tag {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background: oklch(70% 0.15 30);
+    color: white;
+  }
+</style>
+
+<%# Sidebar navigation %>
+<div class="preview-sidebar">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+    <h2 style="font-size: 0.875rem; font-weight: 700;">Partials</h2>
+    <button class="theme-toggle-btn" onclick="document.documentElement.classList.toggle('dark')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 8.002-4.248Z" />
+      </svg>
+      Toggle
+    </button>
+  </div>
+
+  <% @partials.each do |category, partials| %>
+    <h3 class="text-mist-700 dark:text-mist-400"><%= category %></h3>
+    <% if category == "Icons" %>
+      <a href="#icons-grid" class="text-mist-950 dark:text-white">All icons (grid)</a>
+    <% else %>
+      <% partials.each do |partial| %>
+        <a href="#<%= partial %>" class="text-mist-950 dark:text-white">
+          <%= partial %>
+          <% ref = @refinements["shared/marketing/#{partial}"] %>
+          <% if ref && ref["needs_refinement"] %>
+            <span class="needs-refinement-tag">!</span>
+          <% end %>
+        </a>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<%# Main content %>
+<div class="preview-main">
+  <%
+    # --- Placeholder data used across multiple partials ---
+    placeholder_img = "https://placehold.co/800x600/e2e8f0/94a3b8?text=Placeholder"
+    placeholder_avatar = "https://placehold.co/200x200/e2e8f0/94a3b8?text=Avatar"
+    placeholder_logo = "https://placehold.co/120x40/e2e8f0/94a3b8?text=Logo"
+
+    cta_button = '<a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</a>'.html_safe
+
+    cta_pair = '<div class="flex gap-4"><a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</a><a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Learn more</a></div>'.html_safe
+
+    demo_img = "<img src=\"#{placeholder_img}\" alt=\"Demo screenshot\" class=\"w-full\">".html_safe
+    photo_img = "<img src=\"#{placeholder_img}\" alt=\"Photo\" class=\"w-full h-full object-cover\">".html_safe
+
+    faq_items = capture do
+      3.times do |i|
+        concat(render("shared/marketing/faq_item",
+          id: "preview-faq-#{i}",
+          question: "What is question number #{i + 1}?",
+          answer: "<p>This is the answer to question #{i + 1}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>".html_safe
+        ))
+      end
+    end
+
+    stat_borders = capture do
+      [["10K+", "Active users"], ["99.9%", "Uptime"], ["24/7", "Support"], ["150+", "Countries"]].each do |stat, text|
+        concat(render("shared/marketing/stat_border", stat: stat, text: text))
+      end
+    end
+
+    stat_cards = capture do
+      [["10K+", "Active users"], ["99.9%", "Uptime"], ["24/7", "Support"], ["150+", "Countries"]].each do |stat, text|
+        concat(render("shared/marketing/stat_card", stat: stat, text: text))
+      end
+    end
+
+    team_members = capture do
+      [["Alice Johnson", "CEO"], ["Bob Smith", "CTO"], ["Carol Lee", "VP Design"], ["Dan Kim", "VP Engineering"]].each do |name, role|
+        concat(render("shared/marketing/team_member", name: name, byline: role, img_src: placeholder_avatar))
+      end
+    end
+
+    three_team_members = capture do
+      [["Alice Johnson", "CEO"], ["Bob Smith", "CTO"], ["Carol Lee", "VP Design"]].each do |name, role|
+        concat(render("shared/marketing/team_member", name: name, byline: role, img_src: placeholder_avatar))
+      end
+    end
+
+    testimonial_cards = capture do
+      [
+        { quote: "<p>This product changed how we work. Absolutely fantastic.</p>".html_safe, name: "Jane Doe", byline: "CEO at Acme", img_src: placeholder_avatar },
+        { quote: "<p>Simple, elegant, and powerful. Exactly what we needed.</p>".html_safe, name: "John Smith", byline: "CTO at Widget Co", img_src: placeholder_avatar },
+        { quote: "<p>Best in class. Our team loves it and productivity soared.</p>".html_safe, name: "Sarah Park", byline: "VP Eng at StartupXYZ", img_src: placeholder_avatar },
+      ].each do |t|
+        concat(render("shared/marketing/testimonial_card", **t))
+      end
+    end
+
+    pricing_features = ["Unlimited projects", "Priority support", "Advanced analytics", "Custom integrations", "API access"]
+
+    plans = [
+      { name: "Starter", price: "$0", period: "/month", subheadline: "For individuals getting started.", features: pricing_features.first(2), cta_text: "Get started", cta_href: "#", cta_style: "soft" },
+      { name: "Growth", price: "$29", period: "/month", subheadline: "For growing teams.", badge: "Most popular", features: pricing_features.first(4), cta_text: "Start trial", cta_href: "#", cta_style: "primary" },
+      { name: "Enterprise", price: "$99", period: "/month", subheadline: "For large organizations.", features: pricing_features, cta_text: "Contact sales", cta_href: "#", cta_style: "soft" },
+    ]
+    plan_cards = capture do
+      plans.each do |plan|
+        concat(render("shared/marketing/pricing_hero_multi_plan", **plan))
+      end
+      nil
+    end
+
+    plan_comparison_features = [
+      {
+        title: "Collaboration",
+        features: [
+          { name: "Shared inboxes", value: { "Starter" => "1", "Growth" => "5", "Enterprise" => "Unlimited" } },
+          { name: "Private notes", value: true },
+          { name: "Team chat", value: { "Starter" => false, "Growth" => true, "Enterprise" => true } },
+        ]
+      },
+      {
+        title: "Analytics",
+        features: [
+          { name: "Basic reports", value: true },
+          { name: "Advanced analytics", value: { "Starter" => false, "Growth" => true, "Enterprise" => true } },
+          { name: "Custom dashboards", value: { "Starter" => false, "Growth" => false, "Enterprise" => true } },
+        ]
+      }
+    ]
+
+    feature_two_col_cards = capture do
+      2.times do |i|
+        concat(render("shared/marketing/features_two_col_card", headline: "Feature #{i + 1}", subheadline: "A powerful capability that makes your workflow faster and more efficient.", cta_text: "Learn more", cta_href: "#") { demo_img })
+      end
+    end
+
+    feature_three_col_demo_cards = capture do
+      3.times do |i|
+        concat(render("shared/marketing/features_three_col_demos_card", headline: "Feature #{i + 1}", subheadline: "Makes your workflow faster.") { demo_img })
+      end
+    end
+
+    feature_three_col_items = capture do
+      6.times do |i|
+        concat(render("shared/marketing/features_three_col_item", headline: "Value #{i + 1}", subheadline: "We believe in this principle deeply."))
+      end
+    end
+
+    feature_alternating_cards = capture do
+      3.times do |i|
+        concat(render("shared/marketing/features_alternating_card", headline: "Feature #{i + 1}", subheadline: "An important capability.", cta_text: "Learn more", cta_href: "#") { demo_img })
+      end
+    end
+
+    feature_large_demo_items = capture do
+      3.times do |i|
+        concat(render("shared/marketing/features_large_demo_item", headline: "Benefit #{i + 1}", subheadline: "This helps you accomplish more."))
+      end
+    end
+
+    brand_cards = capture do
+      4.times do |i|
+        concat(render("shared/marketing/brands_cards_item", text: "Focused capital for founders building the future.", footnote: "Investor in Acme, Widget Co.") {
+          "<img src=\"#{placeholder_logo}\" alt=\"Brand #{i + 1}\" class=\"h-8\">".html_safe
+        })
+      end
+    end
+
+    document_prose = "<h2>Section Heading</h2><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p><h2>Another Section</h2><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <a href='#'>Learn more here</a>.</p><ul><li>First item in the list</li><li>Second item</li><li>Third item</li></ul>".html_safe
+  %>
+
+  <% @partials.each do |category, partials| %>
+    <% if category == "Icons" %>
+      <%# Render all icons in a grid %>
+      <div id="icons-grid" class="partial-section">
+        <div class="partial-header">
+          <h3 class="text-base font-semibold text-mist-950 dark:text-white">Icons (grid)</h3>
+        </div>
+        <div class="icon-grid">
+          <%
+            icon_files = Dir.glob(Rails.root.join("app/views/shared/marketing/icons/_*.html.erb")).sort
+            icon_files.each do |f|
+              icon_name = File.basename(f, ".html.erb").delete_prefix("_")
+          %>
+            <div class="icon-cell bg-mist-950/5 dark:bg-white/5 text-mist-950 dark:text-white">
+              <% begin %>
+                <%= render "shared/marketing/icons/#{icon_name}", css_class: "size-6 inline-block" %>
+              <% rescue => e %>
+                <span class="text-red-500" title="<%= e.message %>">ERR</span>
+              <% end %>
+              <span class="text-mist-700 dark:text-mist-400"><%= icon_name %></span>
+            </div>
+          <% end %>
+        </div>
+        <div class="partial-divider"></div>
+      </div>
+    <% else %>
+      <% partials.each do |partial| %>
+        <% full_partial = "shared/marketing/#{partial}" %>
+        <div id="<%= partial %>" class="partial-section">
+          <div class="partial-header">
+            <h3 class="text-base font-semibold text-mist-950 dark:text-white"><%= full_partial %></h3>
+            <% ref = @refinements[full_partial] %>
+            <% if ref && ref["needs_refinement"] %>
+              <span class="needs-refinement-tag">Needs refinement</span>
+            <% end %>
+          </div>
+
+          <%# Render the partial with placeholder data, wrapped in rescue %>
+          <div class="partial-render">
+            <% begin %>
+              <% case partial
+              # === NAVBARS === %>
+              <% when "navbar_centered_logo" %>
+                <%= render "shared/marketing/navbar_centered_logo" %>
+              <% when "navbar_centered_links" %>
+                <%= render "shared/marketing/navbar_centered_links" %>
+              <% when "navbar_left_links" %>
+                <%= render "shared/marketing/navbar_left_links" %>
+
+              <%# === FOOTERS === %>
+              <% when "footer_newsletter" %>
+                <%= render "shared/marketing/footer_newsletter" %>
+              <% when "footer_categories" %>
+                <%= render "shared/marketing/footer_categories" %>
+              <% when "footer_links_social" %>
+                <%= render "shared/marketing/footer_links_social" %>
+
+              <%# === HEROES === %>
+              <% when "hero_simple_centered" %>
+                <%= render "shared/marketing/hero_simple_centered",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair %>
+              <% when "hero_simple_left" %>
+                <%= render "shared/marketing/hero_simple_left",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair %>
+              <% when "hero_left_demo" %>
+                <%= render "shared/marketing/hero_left_demo",
+                  eyebrow: '<span class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400">New release</span>'.html_safe,
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair,
+                  demo: demo_img %>
+              <% when "hero_centered_demo" %>
+                <%= render "shared/marketing/hero_centered_demo",
+                  eyebrow: '<span class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400">New release</span>'.html_safe,
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair,
+                  demo: demo_img %>
+              <% when "hero_centered_photo" %>
+                <%= render "shared/marketing/hero_centered_photo",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair,
+                  photo: photo_img %>
+              <% when "hero_left_photo" %>
+                <%= render "shared/marketing/hero_left_photo",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair,
+                  photo: photo_img %>
+              <% when "hero_two_col_photo" %>
+                <%= render "shared/marketing/hero_two_col_photo",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: cta_pair,
+                  photo: photo_img %>
+              <% when "hero_demo_bg" %>
+                <%= render "shared/marketing/hero_demo_bg",
+                  headline: "Build something amazing",
+                  subheadline: "The modern platform for teams who want to ship faster and collaborate better.",
+                  cta: '<a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 hover bg-white text-mist-950 hover:bg-mist-100 dark:bg-mist-100 dark:hover:bg-white">Get started</a>'.html_safe,
+                  demo: demo_img,
+                  wallpaper_color: "blue" %>
+
+              <%# === FEATURES === %>
+              <% when "features_two_col" %>
+                <%= render "shared/marketing/features_two_col",
+                  eyebrow: "Features",
+                  headline: "Everything you need to ship faster",
+                  subheadline: "A comprehensive toolkit designed for modern teams." do %>
+                  <%= feature_two_col_cards %>
+                <% end %>
+              <% when "features_three_col_demos" %>
+                <%= render "shared/marketing/features_three_col_demos",
+                  eyebrow: "Features",
+                  headline: "Powerful tools for every team",
+                  subheadline: "Built from the ground up for productivity." do %>
+                  <%= feature_three_col_demo_cards %>
+                <% end %>
+              <% when "features_three_col" %>
+                <%= render "shared/marketing/features_three_col",
+                  eyebrow: "Our values",
+                  headline: "What drives us forward",
+                  subheadline: "The principles that guide everything we do." do %>
+                  <%= feature_three_col_items %>
+                <% end %>
+              <% when "features_alternating" %>
+                <%= render "shared/marketing/features_alternating",
+                  eyebrow: "Features",
+                  headline: "Built for modern teams",
+                  subheadline: "Every feature designed with care." do %>
+                  <%= feature_alternating_cards %>
+                <% end %>
+              <% when "features_large_demo" %>
+                <%= render "shared/marketing/features_large_demo",
+                  eyebrow: "Platform",
+                  headline: "See it in action",
+                  subheadline: "A live look at what the platform can do.",
+                  demo: capture { concat(demo_img) } do %>
+                  <%= feature_large_demo_items %>
+                <% end %>
+
+              <%# === PRICING === %>
+              <% when "pricing_multi" %>
+                <%= render "shared/marketing/pricing_multi",
+                  eyebrow: "Pricing",
+                  headline: "Simple, transparent pricing",
+                  subheadline: "No hidden fees. Cancel anytime." do %>
+                  <%= plan_cards %>
+                <% end %>
+              <% when "pricing_hero_multi" %>
+                <%= render "shared/marketing/pricing_hero_multi",
+                  headline: "Pricing",
+                  subheadline: "Choose the plan that works for your team.",
+                  options: ["Monthly", "Yearly"] do %>
+                  <%= render "shared/marketing/pricing_hero_multi_panel" do %>
+                    <%= plan_cards %>
+                  <% end %>
+                  <%= render "shared/marketing/pricing_hero_multi_panel" do %>
+                    <%= plan_cards %>
+                  <% end %>
+                <% end %>
+              <% when "pricing_single_two_col" %>
+                <%= render "shared/marketing/pricing_single_two_col",
+                  headline: "No setup fees. Cancel anytime.",
+                  subheadline: "Simple pricing for everyone.",
+                  price: "$49",
+                  period: "/mo",
+                  features: pricing_features,
+                  cta_text: "Start free trial",
+                  cta_href: "#" %>
+              <% when "plan_comparison" %>
+                <%= render "shared/marketing/plan_comparison",
+                  plans: ["Starter", "Growth", "Enterprise"],
+                  features: plan_comparison_features %>
+
+              <%# === TESTIMONIALS === %>
+              <% when "testimonial_large_quote" %>
+                <%= render "shared/marketing/testimonial_large_quote",
+                  quote: "<p>This product has completely transformed how our team collaborates. </p><p>It's the best tool we've ever used.</p>".html_safe,
+                  name: "Jane Doe",
+                  byline: "CEO at Acme Corp",
+                  img_src: placeholder_avatar %>
+              <% when "testimonial_two_col_photo" %>
+                <%= render "shared/marketing/testimonial_two_col_photo",
+                  quote: "<p>Since switching to this platform, our team's productivity has increased by 40%. The interface is intuitive and the support is outstanding.</p>".html_safe,
+                  name: "John Smith",
+                  byline: "CTO at Widget Co",
+                  img_src: placeholder_img %>
+              <% when "testimonials_grid" %>
+                <%= render layout: "shared/marketing/testimonials_grid", locals: {
+                  eyebrow: "Testimonials",
+                  headline: "Loved by teams everywhere",
+                  subheadline: "Hear from our customers about their experience."
+                } do %>
+                  <%= testimonial_cards %>
+                <% end %>
+
+              <%# === STATS === %>
+              <% when "stats_graph" %>
+                <%= render layout: "shared/marketing/stats_graph", locals: {
+                  eyebrow: "Growth",
+                  headline: "Trusted by thousands",
+                  subheadline: "Our platform is growing fast."
+                } do %>
+                  <%= stat_borders %>
+                <% end %>
+              <% when "stats_four_col" %>
+                <%= render layout: "shared/marketing/stats_four_col", locals: {
+                  eyebrow: "By the numbers",
+                  headline: "Our impact in numbers"
+                } do %>
+                  <%= stat_cards %>
+                <% end %>
+              <% when "stats_three_col" %>
+                <%= render layout: "shared/marketing/stats_three_col", locals: {
+                  heading: "Scaling with confidence",
+                  description: "<p>We have grown consistently year over year, delivering value to teams worldwide.</p>".html_safe
+                } do %>
+                  <%= stat_cards %>
+                <% end %>
+
+              <%# === TEAMS === %>
+              <% when "team_four_col" %>
+                <%= render layout: "shared/marketing/team_four_col", locals: {
+                  eyebrow: "Our team",
+                  headline: "Meet the people behind the product"
+                } do %>
+                  <%= team_members %>
+                <% end %>
+              <% when "team_three_col" %>
+                <%= render layout: "shared/marketing/team_three_col", locals: {
+                  eyebrow: "Leadership",
+                  headline: "Our leadership team"
+                } do %>
+                  <%= three_team_members %>
+                <% end %>
+
+              <%# === FAQs === %>
+              <% when "faqs_accordion" %>
+                <%= render layout: "shared/marketing/faqs_accordion", locals: {
+                  headline: "Frequently asked questions",
+                  subheadline: "Can't find the answer you're looking for? Reach out to our support team."
+                } do %>
+                  <%= faq_items %>
+                <% end %>
+              <% when "faqs_two_col_accordion" %>
+                <%= render layout: "shared/marketing/faqs_two_col_accordion", locals: {
+                  headline: "Frequently asked questions",
+                  subheadline: "Everything you need to know."
+                } do %>
+                  <%= faq_items %>
+                <% end %>
+
+              <%# === CTAs === %>
+              <% when "cta_simple" %>
+                <%= render "shared/marketing/cta_simple",
+                  eyebrow: "Get started",
+                  headline: "Ready to transform your workflow?",
+                  subheadline: "Join thousands of teams already using our platform.",
+                  cta: cta_pair %>
+              <% when "cta_centered" %>
+                <%= render "shared/marketing/cta_centered",
+                  headline: "Ready to get started?",
+                  subheadline: "Start your free trial today. No credit card required.",
+                  cta: cta_button %>
+
+              <%# === DOCUMENTS === %>
+              <% when "document_centered" %>
+                <%= render layout: "shared/marketing/document_centered", locals: {
+                  headline: "Privacy Policy",
+                  subheadline: "Last updated February 2026"
+                } do %>
+                  <%= document_prose %>
+                <% end %>
+              <% when "document_left" %>
+                <%= render layout: "shared/marketing/document_left", locals: {
+                  headline: "Terms of Service",
+                  subheadline: "Last updated February 2026"
+                } do %>
+                  <%= document_prose %>
+                <% end %>
+
+              <%# === ELEMENTS === %>
+              <% when "section" %>
+                <%= render layout: "shared/marketing/section", locals: {
+                  eyebrow: "Section element",
+                  headline: "This is the section wrapper",
+                  subheadline: "It provides consistent padding, max-width, and optional header."
+                } do %>
+                  <div class="rounded-xl bg-mist-950/5 dark:bg-white/5 p-10 text-center text-sm text-mist-700 dark:text-mist-400">
+                    Block content goes here
+                  </div>
+                <% end %>
+              <% when "announcement_badge" %>
+                <div class="py-8 px-10">
+                  <div class="flex flex-col gap-4 items-start">
+                    <%= render "shared/marketing/announcement_badge",
+                      text: "We just launched v2.0 with exciting new features",
+                      href: "#",
+                      cta: "Learn more" %>
+                    <%= render "shared/marketing/announcement_badge",
+                      text: "Now available for enterprise teams",
+                      href: "#",
+                      variant: "overlay" %>
+                  </div>
+                </div>
+              <% when "email_signup_form" %>
+                <div class="py-8 px-10 max-w-md">
+                  <div class="flex flex-col gap-6">
+                    <p class="text-sm font-semibold text-mist-950 dark:text-white">Normal variant:</p>
+                    <%= render "shared/marketing/email_signup_form" %>
+                    <p class="text-sm font-semibold text-mist-950 dark:text-white">Overlay variant:</p>
+                    <div class="bg-mist-800 p-4 rounded-lg">
+                      <%= render "shared/marketing/email_signup_form", variant: "overlay" %>
+                    </div>
+                  </div>
+                </div>
+              <% when "install_command" %>
+                <div class="py-8 px-10 max-w-lg">
+                  <%= render "shared/marketing/install_command", snippet: "gem install podread" %>
+                </div>
+              <% when "wallpaper" %>
+                <div class="py-8 px-10">
+                  <div class="grid grid-cols-2 gap-4">
+                    <% %w[green blue purple brown].each do |color| %>
+                      <%= render layout: "shared/marketing/wallpaper", locals: { color: color, extra_class: "rounded-lg" } do %>
+                        <div class="p-10 text-center text-white text-sm font-medium"><%= color %></div>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              <% when "screenshot" %>
+                <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "blue", placement: "bottom" } do %>
+                  <img src="<%= placeholder_img %>" alt="Screenshot demo" class="w-full">
+                <% end %>
+
+              <% else %>
+                <div class="p-4 text-mist-500 text-sm italic">No preview configured for this partial.</div>
+              <% end %>
+
+            <% rescue => e %>
+              <div class="partial-error bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                <strong>Error rendering <%= full_partial %>:</strong><br>
+                <%= e.class %>: <%= e.message %><br>
+                <%= e.backtrace&.first(3)&.join("\n") %>
+              </div>
+            <% end %>
+          </div>
+
+          <%# Refinement form %>
+          <div class="refinement-form border-t border-mist-950/10 dark:border-white/10">
+            <% ref = @refinements[full_partial] || {} %>
+            <form method="post" action="/marketing-preview/refine">
+              <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+              <input type="hidden" name="partial_name" value="<%= full_partial %>">
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 0.375rem; cursor: pointer; white-space: nowrap;">
+                  <input type="hidden" name="needs_refinement" value="0">
+                  <input type="checkbox" name="needs_refinement" value="1" <%= "checked" if ref["needs_refinement"] %>>
+                  <span class="text-mist-700 dark:text-mist-400">Needs refinement</span>
+                </label>
+                <input type="text" name="notes" value="<%= ref["notes"] %>" placeholder="Notes..." style="min-width: 200px;">
+                <button type="submit" class="text-mist-700 dark:text-mist-400 hover:text-mist-950 dark:hover:text-white">Save</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="partial-divider"></div>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

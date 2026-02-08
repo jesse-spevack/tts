@@ -1,0 +1,9 @@
+<%# Four-column stats grid with card background %>
+<%# Uses the _section partial layout for optional eyebrow/headline/subheadline %>
+<%# Locals: eyebrow (optional), headline (optional), subheadline (optional), cta (optional) %>
+<%# Pass stat items as the block content using _stat_card partial %>
+<%= render layout: "shared/marketing/section", locals: { eyebrow: local_assigns[:eyebrow], headline: local_assigns[:headline], subheadline: local_assigns[:subheadline], cta: local_assigns[:cta] } do %>
+  <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <%= yield %>
+  </div>
+<% end %>

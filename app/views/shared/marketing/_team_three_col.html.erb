@@ -1,0 +1,9 @@
+<%# Three-column team member grid %>
+<%# Uses the _section partial layout for optional eyebrow/headline/subheadline %>
+<%# Locals: eyebrow (optional), headline (optional), subheadline (optional), cta (optional) %>
+<%# Pass team member items as the block content using _team_member partial %>
+<%= render layout: "shared/marketing/section", locals: { eyebrow: local_assigns[:eyebrow], headline: local_assigns[:headline], subheadline: local_assigns[:subheadline], cta: local_assigns[:cta] } do %>
+  <ul role="list" class="grid grid-cols-2 gap-x-2 gap-y-10 md:grid-cols-3">
+    <%= yield %>
+  </ul>
+<% end %>

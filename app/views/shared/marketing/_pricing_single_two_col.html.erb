@@ -1,0 +1,62 @@
+<%# pricing-single-tier-two-column
+    Renders a single-tier pricing section with a two-column layout:
+    left column has headline, subheadline, and CTA; right column has price and feature list.
+
+    Locals:
+      headline:    (String) section heading
+      subheadline: (String) section description
+      price:       (String) price display (e.g. "$49")
+      period:      (String, optional) billing period (e.g. "/mo")
+      features:    (Array<String>) list of features
+      cta_text:    (String) CTA button text
+      cta_href:    (String) CTA button URL
+      id:          (String, optional) section id attribute
+
+    Example:
+      render "shared/marketing/pricing_single_two_col",
+            headline: "No setup fees. Cancel anytime.",
+            subheadline: "Simple pricing for everyone.",
+            price: "$49",
+            period: "/mo",
+            features: ["Unlimited mailboxes", "Unlimited team members"],
+            cta_text: "Start listening free",
+            cta_href: "#"
+%>
+
+<section class="py-16" <% if local_assigns[:id] %>id="<%= id %>"<% end %>>
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+    <div class="grid grid-cols-1 gap-x-2 rounded-xl bg-mist-950/2.5 p-2 lg:grid-cols-2 dark:bg-white/5">
+      <div class="flex flex-col items-start justify-between gap-10 p-6 sm:p-10">
+        <div class="flex flex-col gap-6">
+          <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= headline %></h2>
+          <div class="text-base/7 text-mist-700 dark:text-mist-400 flex flex-col gap-4 text-pretty"><%= subheadline %></div>
+        </div>
+        <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">
+          <%= cta_text %>
+        </a>
+      </div>
+      <div class="rounded-sm bg-mist-100 p-6 sm:p-10 dark:bg-mist-950">
+        <div class="flex items-baseline gap-2">
+          <p class="text-[5rem]/24 font-light tracking-tight text-mist-950 sm:text-8xl/32 dark:text-white">
+            <%= price %>
+          </p>
+          <% if local_assigns[:period] %>
+            <div class="text-lg/8 text-mist-700 dark:text-mist-400"><%= period %></div>
+          <% end %>
+        </div>
+        <ul class="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1">
+          <% features.each do |feature| %>
+            <li class="flex gap-3 text-sm/5">
+              <span class="flex size-5 shrink-0 items-center justify-center rounded-xs bg-mist-950 dark:bg-mist-700">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1" role="image" class="inline-block size-3 stroke-white">
+                  <path d="M1.5 6.5L5.5 11.5L11.5 1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <p class="text-mist-700 dark:text-mist-400"><%= feature %></p>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

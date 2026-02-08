@@ -1,0 +1,65 @@
+<%# Plan card for use inside pricing_hero_multi or pricing_multi sections.
+    Renders a single plan with name, price, period, description, feature list, and CTA.
+
+    Locals:
+      name:        (String) plan name (e.g. "Starter")
+      price:       (String) price display (e.g. "$12")
+      period:      (String, optional) billing period (e.g. "/month")
+      subheadline: (String) plan description
+      badge:       (String, optional) badge text (e.g. "Most popular")
+      features:    (Array<String>) list of features
+      cta_text:    (String) CTA button text
+      cta_href:    (String) CTA button URL
+      cta_style:   (String, optional) "primary" (default) or "soft" for button style
+
+    Example:
+      render "shared/marketing/pricing_hero_multi_plan",
+            name: "Starter",
+            price: "$12",
+            period: "/month",
+            subheadline: "For small teams.",
+            features: ["Feature 1", "Feature 2"],
+            cta_text: "Start listening free",
+            cta_href: "#"
+%>
+
+<div class="flex flex-col justify-between gap-6 rounded-xl bg-mist-950/2.5 p-6 sm:items-start dark:bg-white/5">
+  <div class="self-stretch">
+    <div class="flex items-center justify-between">
+      <% if local_assigns[:badge] %>
+        <div class="order-last inline-flex rounded-full bg-mist-950/10 px-2 text-xs/6 font-medium text-mist-950 dark:bg-white/10 dark:text-white">
+          <%= badge %>
+        </div>
+      <% end %>
+
+      <h3 class="text-2xl/8 tracking-tight text-mist-950 dark:text-white"><%= name %></h3>
+    </div>
+    <p class="mt-1 inline-flex gap-1 text-base/7">
+      <span class="text-mist-950 dark:text-white"><%= price %></span>
+      <% if local_assigns[:period] %>
+        <span class="text-mist-500 dark:text-mist-500"><%= period %></span>
+      <% end %>
+    </p>
+    <div class="mt-4 flex flex-col gap-4 text-sm/6 text-mist-700 dark:text-mist-400"><%= subheadline %></div>
+    <ul class="mt-4 space-y-2 text-sm/6 text-mist-700 dark:text-mist-400">
+      <% features.each do |feature| %>
+        <li class="flex gap-4">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1" role="image" class="inline-block h-lh shrink-0 stroke-mist-950 dark:stroke-white">
+            <path d="M1.5 6.5L5.5 11.5L11.5 1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <p><%= feature %></p>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  <% cta_style_val = local_assigns[:cta_style] || "soft" %>
+  <% if cta_style_val == "primary" %>
+    <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">
+      <%= cta_text %>
+    </a>
+  <% else %>
+    <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+      <%= cta_text %>
+    </a>
+  <% end %>
+</div>

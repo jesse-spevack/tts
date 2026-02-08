@@ -1,0 +1,24 @@
+<%# Section wrapper with optional eyebrow, headline, subheadline, and CTA %>
+<%# Locals: eyebrow (string, optional), headline (string, optional), subheadline (string, optional), cta (html_safe string, optional) %>
+<%# Pass body content via a block using `render layout:` %>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col gap-10 sm:gap-16">
+    <% if local_assigns[:headline] %>
+      <div class="flex max-w-2xl flex-col gap-6">
+        <div class="flex flex-col gap-2">
+          <% if local_assigns[:eyebrow] %>
+            <div class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400"><%= eyebrow %></div>
+          <% end %>
+          <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= headline %></h2>
+        </div>
+        <% if local_assigns[:subheadline] %>
+          <div class="text-base/7 text-mist-700 dark:text-mist-400 text-pretty"><%= subheadline %></div>
+        <% end %>
+        <% if local_assigns[:cta] %>
+          <%= cta %>
+        <% end %>
+      </div>
+    <% end %>
+    <div><%= yield %></div>
+  </div>
+</section>

@@ -1,0 +1,24 @@
+<%# Feature item for use inside _features_three_col.html.erb
+    Each item has an optional icon, headline, and subheadline text.
+
+    Locals:
+      headline:    (String) feature title
+      subheadline: (String) feature description
+
+    Usage: Provide the icon content in the yielded block (optional).
+
+    Example:
+      render "shared/marketing/features_three_col_item", headline: "Innovation", subheadline: "We push boundaries." do
+        <svg ...>...</svg>
+      end
+%>
+
+<div class="flex flex-col gap-2 text-sm/7">
+  <div class="flex items-start gap-3 text-mist-950 dark:text-white">
+    <% if block_given? %>
+      <div class="flex size-3.25 h-lh items-center"><%= yield %></div>
+    <% end %>
+    <h3 class="font-semibold"><%= headline %></h3>
+  </div>
+  <div class="flex flex-col gap-4 text-mist-700 dark:text-mist-400"><%= subheadline %></div>
+</div>

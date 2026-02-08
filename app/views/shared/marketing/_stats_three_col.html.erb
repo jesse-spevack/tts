@@ -1,0 +1,19 @@
+<%# Three-column stats with heading and description %>
+<%# Locals: heading (string), description (html_safe string) %>
+<%# Pass stat items as the block content using _stat_card partial %>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+    <div class="relative flex flex-col gap-10 sm:gap-16">
+      <hr class="absolute inset-x-0 -top-16 border-t border-mist-950/10 dark:border-white/10" />
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= heading %></h2>
+        <div class="flex max-w-xl flex-col gap-4 text-base/7 text-mist-700 dark:text-mist-400">
+          <%= description %>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <%= yield %>
+      </div>
+    </div>
+  </div>
+</section>

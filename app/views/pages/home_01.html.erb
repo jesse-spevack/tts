@@ -1,0 +1,250 @@
+<%# Home Page Variation 01
+  Section order: Navbar (centered logo) > Hero (left-aligned with demo) > Features (2-col) >
+  Stats (with graph) > Testimonials (3-col grid) > FAQs (2-col accordion) >
+  Pricing (multi-tier) > CTA (simple) > Footer (newsletter + categories + social)
+
+  Template source: pages/home-01.tsx
+%>
+
+<%# ===== Navbar ===== %>
+<%= render "shared/marketing/navbar_centered_logo",
+  links: [
+    { label: "How it works", href: "#features" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "About", href: "#" },
+  ] %>
+
+<%# ===== Hero (left-aligned with demo) ===== %>
+<%= render "shared/marketing/hero_left_demo",
+  eyebrow: render("shared/marketing/announcement_badge",
+    href: "#",
+    text: "Now with natural-sounding HD voices",
+    cta: "Try it free"),
+  headline: "Finally listen to your reading list.",
+  subheadline: '<p>Paste a URL, upload a file, or drop in text. PodRead turns it into a podcast episode in your private feed. Listen in Apple Podcasts, Spotify, Overcast, or any podcast app.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Start listening free</a>
+    <a href="#" class="inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white">See how it works <svg width="13" height="7" viewBox="0 0 13 7" fill="none" stroke-width="1" class="inline-block"><path d="M12.5049 3.49512L0.504883 3.49512" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /><path d="M9.5 6.5L12.5 3.5L9.5 0.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" /></svg></a>
+  </div>'.html_safe,
+  demo: render(layout: "shared/marketing/screenshot", locals: { wallpaper: "blue", placement: "bottom" }) {
+    '<img src="https://placehold.co/3440x1990" alt="" class="dark:hidden" width="3440" height="1990" />
+     <img src="https://placehold.co/3440x1990" alt="" class="not-dark:hidden" width="3440" height="1990" />'.html_safe
+  },
+  footer: '<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+    <img src="https://placehold.co/51x32" alt="" width="51" height="32" />
+    <img src="https://placehold.co/70x32" alt="" width="70" height="32" />
+    <img src="https://placehold.co/100x32" alt="" width="100" height="32" />
+    <img src="https://placehold.co/85x32" alt="" width="85" height="32" />
+    <img src="https://placehold.co/75x32" alt="" width="75" height="32" />
+    <img src="https://placehold.co/85x32" alt="" width="85" height="32" />
+  </div>'.html_safe %>
+
+<%# ===== Features (2-column with demos) ===== %>
+<%= render layout: "shared/marketing/features_two_col", locals: {
+  id: "features",
+  eyebrow: "How it works",
+  headline: "From article to podcast in minutes.",
+  subheadline: "Paste a URL, drop in text, or upload a file. PodRead handles the rest and delivers the episode straight to your podcast app."
+} do %>
+  <%= render layout: "shared/marketing/features_two_col_card", locals: {
+    headline: "Paste any URL",
+    subheadline: "Drop in a link to any article. PodRead extracts the content, skips the ads and clutter, and converts it to a clean audio episode.",
+    cta_text: "Try it free",
+    cta_href: "#"
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "purple", placement: "bottom-right" } do %>
+      <img src="https://placehold.co/1800x1250" alt="" width="1800" height="1250" />
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_two_col_card", locals: {
+    headline: "Listen in your favorite app",
+    subheadline: "Your episodes land in a private podcast feed that works with Apple Podcasts, Spotify, Overcast, Pocket Casts, and any other podcast app. No new app to install.",
+    cta_text: "Create my feed",
+    cta_href: "#"
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "blue", placement: "bottom-left" } do %>
+      <img src="https://placehold.co/1800x1250" alt="" width="1800" height="1250" />
+    <% end %>
+  <% end %>
+<% end %>
+
+<%# ===== Stats (with graph) ===== %>
+<%= render layout: "shared/marketing/stats_graph", locals: {
+  eyebrow: "Growing every day",
+  headline: "Thousands of articles turned into podcast episodes.",
+  subheadline: "PodRead helps people listen to the articles they save but never get around to reading. Every day, more people are turning their reading lists into listening lists."
+} do %>
+  <%= render "shared/marketing/stat_border", stat: "50,000+", text: "Episodes created by readers who'd rather listen." %>
+  <%= render "shared/marketing/stat_border", stat: "99.9%", text: "Uptime — your feed is always ready when you are." %>
+<% end %>
+
+<%# ===== Testimonials (3-column grid) ===== %>
+<%= render layout: "shared/marketing/testimonials_grid", locals: {
+  headline: "What people are saying",
+  subheadline: "Real people who turned their reading lists into listening habits."
+} do %>
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>I have a 40-minute commute and I used to waste it on random podcasts. Now I listen to the articles I actually want to read. Game changer for my mornings.</p>'.html_safe,
+    name: "Sarah Chen",
+    byline: "Product manager",
+    img_src: "https://placehold.co/100x100" %>
+
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>I run 4 days a week and I was always looking for something to listen to. Now I just send my saved articles to PodRead before I head out. Perfect for long runs.</p>'.html_safe,
+    name: "Marcus Webb",
+    byline: "Software engineer",
+    img_src: "https://placehold.co/100x100" %>
+
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>Between the kids and work, I never have time to sit and read. PodRead lets me catch up on articles while I\'m cooking dinner or folding laundry. I love it.</p>'.html_safe,
+    name: "Priya Patel",
+    byline: "Working parent",
+    img_src: "https://placehold.co/100x100" %>
+
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>I convert my professor\'s reading assignments and listen while walking to class. I\'m retaining way more than when I was trying to skim PDFs at midnight.</p>'.html_safe,
+    name: "Alex Torres",
+    byline: "Graduate student",
+    img_src: "https://placehold.co/100x100" %>
+
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>I have about 200 tabs of articles I\'ll never read. PodRead is the only thing that actually gets me through them. The voices sound surprisingly natural.</p>'.html_safe,
+    name: "David Kim",
+    byline: "Startup founder",
+    img_src: "https://placehold.co/100x100" %>
+
+  <%= render "shared/marketing/testimonial_card",
+    quote: '<p>I need to stay current on industry news but I just can\'t stare at screens anymore after work. PodRead lets me keep up without the eye strain.</p>'.html_safe,
+    name: "Rachel Okonkwo",
+    byline: "Marketing director",
+    img_src: "https://placehold.co/100x100" %>
+<% end %>
+
+<%# ===== FAQs (2-column accordion) ===== %>
+<%= render layout: "shared/marketing/faqs_two_col_accordion", locals: {
+  headline: "Questions & Answers"
+} do %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-1",
+    question: "Is it really free?",
+    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want unlimited episodes and premium HD voices, you can upgrade to Premium for $7.99/month." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-2",
+    question: "Does it sound robotic?",
+    answer: "Not at all. PodRead uses Google Cloud's latest text-to-speech with Chirp HD voices. They sound natural and pleasant to listen to, even for long articles." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-3",
+    question: "Which podcast apps work with PodRead?",
+    answer: "Any podcast app that supports custom RSS feeds. That includes Apple Podcasts, Spotify, Overcast, Pocket Casts, Castro, and many more. You don't need to install any new apps." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-4",
+    question: "How long does conversion take?",
+    answer: "Most articles are ready in just a few minutes. You'll get a notification when your episode is available in your feed." %>
+<% end %>
+
+<%# ===== Pricing (multi-tier) ===== %>
+<%= render layout: "shared/marketing/pricing_multi", locals: {
+  id: "pricing",
+  headline: "Simple, honest pricing."
+} do %>
+  <%= render "shared/marketing/pricing_hero_multi_plan",
+    name: "Free",
+    price: "$0",
+    period: "/mo",
+    subheadline: "Try it out, no commitment needed",
+    features: [
+      "2 episodes per month",
+      "Standard voices",
+      "Private podcast feed",
+      "Works with any podcast app",
+      "Paste URLs or text",
+    ],
+    cta_text: "Start listening free",
+    cta_href: "#",
+    cta_style: "soft" %>
+
+  <%= render "shared/marketing/pricing_hero_multi_plan",
+    name: "Premium",
+    price: "$7.99",
+    period: "/mo",
+    subheadline: "For people who listen to everything",
+    badge: "Most popular",
+    features: [
+      "Unlimited episodes",
+      "Premium HD voices",
+      "Browser extension",
+      "Email-to-podcast",
+      "Priority processing",
+      "Upload markdown files",
+      "All free features included",
+    ],
+    cta_text: "Start listening free",
+    cta_href: "#",
+    cta_style: "primary" %>
+
+  <%= render "shared/marketing/pricing_hero_multi_plan",
+    name: "Premium Yearly",
+    price: "$79.99",
+    period: "/yr",
+    subheadline: "Save 17% with annual billing",
+    features: [
+      "Everything in Premium",
+      "Billed annually",
+      "Best value",
+    ],
+    cta_text: "Start listening free",
+    cta_href: "#",
+    cta_style: "soft" %>
+<% end %>
+
+<%# ===== Call to Action ===== %>
+<%= render "shared/marketing/cta_simple",
+  headline: "Your reading list isn't going to listen to itself.",
+  subheadline: '<p>Start converting articles into podcast episodes today. Free to try, no credit card required.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <a href="#" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Start listening free</a>
+    <a href="#" class="inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white">See how it works <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
+  </div>'.html_safe %>
+
+<%# ===== Footer (newsletter + categories + social) ===== %>
+<%= render "shared/marketing/footer_newsletter",
+  newsletter_headline: "Stay in the loop",
+  newsletter_subheadline: '<p>Get product updates and tips for getting the most out of PodRead. No spam, ever.</p>'.html_safe,
+  categories: [
+    {
+      title: "Product",
+      links: [
+        { label: "How it works", href: "#" },
+        { label: "Pricing", href: "#" },
+        { label: "Browser extension", href: "#" },
+      ]
+    },
+    {
+      title: "About",
+      links: [
+        { label: "Our story", href: "#" },
+        { label: "Blog", href: "#" },
+      ]
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "Help Center", href: "#" },
+        { label: "Contact", href: "#" },
+        { label: "FAQ", href: "#" },
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: "#" },
+        { label: "Terms of Service", href: "#" },
+      ]
+    },
+  ],
+  social_links: [
+    { name: "X", href: "https://x.com", icon: "x" },
+    { name: "GitHub", href: "https://github.com", icon: "github" },
+    { name: "YouTube", href: "https://www.youtube.com", icon: "youtube" },
+  ] %>
