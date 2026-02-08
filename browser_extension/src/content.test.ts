@@ -2,31 +2,23 @@ import { isTrustedDomain, TRUSTED_DOMAINS } from './content';
 
 describe('content', () => {
   describe('TRUSTED_DOMAINS', () => {
-    it('includes verynormal.fyi', () => {
-      expect(TRUSTED_DOMAINS).toContain('verynormal.fyi');
-    });
-
-    it('includes verynormal.dev', () => {
-      expect(TRUSTED_DOMAINS).toContain('verynormal.dev');
+    it('includes podread.app', () => {
+      expect(TRUSTED_DOMAINS).toContain('podread.app');
     });
 
     it('includes localhost', () => {
       expect(TRUSTED_DOMAINS).toContain('localhost');
     });
 
-    it('has exactly 3 trusted domains', () => {
-      expect(TRUSTED_DOMAINS).toHaveLength(3);
+    it('has exactly 2 trusted domains', () => {
+      expect(TRUSTED_DOMAINS).toHaveLength(2);
     });
   });
 
   describe('isTrustedDomain', () => {
     describe('accepts trusted domains', () => {
-      it('accepts verynormal.fyi', () => {
-        expect(isTrustedDomain('verynormal.fyi')).toBe(true);
-      });
-
-      it('accepts verynormal.dev', () => {
-        expect(isTrustedDomain('verynormal.dev')).toBe(true);
+      it('accepts podread.app', () => {
+        expect(isTrustedDomain('podread.app')).toBe(true);
       });
 
       it('accepts localhost', () => {
@@ -35,20 +27,16 @@ describe('content', () => {
     });
 
     describe('accepts subdomains of trusted domains', () => {
-      it('accepts tts.verynormal.dev', () => {
-        expect(isTrustedDomain('tts.verynormal.dev')).toBe(true);
+      it('accepts www.podread.app', () => {
+        expect(isTrustedDomain('www.podread.app')).toBe(true);
       });
 
-      it('accepts www.verynormal.fyi', () => {
-        expect(isTrustedDomain('www.verynormal.fyi')).toBe(true);
+      it('accepts staging.podread.app', () => {
+        expect(isTrustedDomain('staging.podread.app')).toBe(true);
       });
 
-      it('accepts staging.tts.verynormal.dev', () => {
-        expect(isTrustedDomain('staging.tts.verynormal.dev')).toBe(true);
-      });
-
-      it('accepts app.verynormal.fyi', () => {
-        expect(isTrustedDomain('app.verynormal.fyi')).toBe(true);
+      it('accepts api.podread.app', () => {
+        expect(isTrustedDomain('api.podread.app')).toBe(true);
       });
     });
 
@@ -66,12 +54,12 @@ describe('content', () => {
       });
 
       it('rejects domains that contain trusted domain as substring', () => {
-        // notverynormal.dev should NOT be trusted (doesn't end with .verynormal.dev)
-        expect(isTrustedDomain('notverynormal.dev')).toBe(false);
+        // notpodread.app should NOT be trusted (doesn't end with .podread.app)
+        expect(isTrustedDomain('notpodread.app')).toBe(false);
       });
 
       it('rejects domains with trusted domain in path-like position', () => {
-        expect(isTrustedDomain('evil.com.verynormal.dev.attacker.com')).toBe(false);
+        expect(isTrustedDomain('evil.com.podread.app.attacker.com')).toBe(false);
       });
 
       it('rejects empty string', () => {
@@ -79,8 +67,8 @@ describe('content', () => {
       });
 
       it('rejects domains that start with trusted domain', () => {
-        // verynormal.dev.evil.com should NOT be trusted
-        expect(isTrustedDomain('verynormal.dev.evil.com')).toBe(false);
+        // podread.app.evil.com should NOT be trusted
+        expect(isTrustedDomain('podread.app.evil.com')).toBe(false);
       });
     });
 
@@ -92,8 +80,8 @@ describe('content', () => {
 
       it('is case-sensitive (lowercase only)', () => {
         // Hostnames are typically lowercase, but verify behavior
-        expect(isTrustedDomain('VERYNORMAL.DEV')).toBe(false);
-        expect(isTrustedDomain('Verynormal.Dev')).toBe(false);
+        expect(isTrustedDomain('PODREAD.APP')).toBe(false);
+        expect(isTrustedDomain('Podread.App')).toBe(false);
       });
     });
   });

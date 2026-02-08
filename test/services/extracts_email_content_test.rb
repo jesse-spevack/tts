@@ -33,7 +33,7 @@ class ExtractsEmailContentTest < ActiveSupport::TestCase
   test "handles plain text body without parts" do
     mail = Mail.new do
       from "sender@example.com"
-      to "readtome@tts.verynormal.dev"
+      to "readtome@example.com"
       subject "Test"
       body "Simple body content"
     end
@@ -46,7 +46,7 @@ class ExtractsEmailContentTest < ActiveSupport::TestCase
   test "strips HTML from body when body contains HTML" do
     mail = Mail.new do
       from "sender@example.com"
-      to "readtome@tts.verynormal.dev"
+      to "readtome@example.com"
       subject "Test"
       body "<html><body><p>HTML body</p></body></html>"
     end
@@ -59,7 +59,7 @@ class ExtractsEmailContentTest < ActiveSupport::TestCase
   test "returns empty string when no content" do
     mail = Mail.new do
       from "sender@example.com"
-      to "readtome@tts.verynormal.dev"
+      to "readtome@example.com"
       subject "Test"
     end
 
@@ -81,7 +81,7 @@ class ExtractsEmailContentTest < ActiveSupport::TestCase
   def create_mail(text: nil, html: nil)
     Mail.new do
       from "sender@example.com"
-      to "readtome@tts.verynormal.dev"
+      to "readtome@example.com"
       subject "Test Subject"
 
       if text && html

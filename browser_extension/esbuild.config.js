@@ -64,7 +64,7 @@ if (entryPoints.length === 0) {
 
 // Determine BASE_URL based on environment
 const isProduction = process.env.NODE_ENV === 'production';
-const baseUrl = process.env.TTS_BASE_URL || (isProduction ? 'https://tts.verynormal.dev' : 'http://localhost:3000');
+const baseUrl = process.env.TTS_BASE_URL || (isProduction ? 'https://podread.app' : 'http://localhost:3000');
 
 const buildOptions = {
   entryPoints,

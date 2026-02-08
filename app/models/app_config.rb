@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class AppConfig
+  module Domain
+    HOST = ENV.fetch("APP_HOST", "localhost:3000")
+    BASE_URL = "https://#{HOST}".freeze
+    # Strip port for email domain — email addresses never include ports
+    # Note: config/application.rb has a parallel definition for email_ingest_domain
+    # that also strips ports, since it loads before autoloading makes this available
+    MAIL_FROM = ENV.fetch("MAILER_FROM_ADDRESS", "noreply@#{HOST.sub(/:\d+\z/, "")}")
+  end
+
   module Tiers
     FREE_CHARACTER_LIMIT = 15_000
     PREMIUM_CHARACTER_LIMIT = 50_000
@@ -60,7 +69,7 @@ class AppConfig
     end
 
     def self.public_feed_url(podcast_id)
-      "https://tts.verynormal.dev/feeds/#{podcast_id}.xml"
+      "#{AppConfig::Domain::BASE_URL}/feeds/#{podcast_id}.xml"
     end
 
     def self.voice_sample_url(voice_key)
