@@ -11,4 +11,13 @@ class UserMailerPreview < ActionMailer::Preview
 
     UserMailer.first_episode_ready(episode: episode)
   end
+
+  # Preview this email at http://localhost:3000/rails/mailers/user_mailer/feed_url_migration
+  def feed_url_migration
+    user = User.joins(podcasts: :episodes)
+               .where(episodes: { status: :complete })
+               .first || User.first
+
+    UserMailer.feed_url_migration(user: user)
+  end
 end

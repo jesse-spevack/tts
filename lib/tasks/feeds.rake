@@ -24,4 +24,28 @@ namespace :feeds do
 
     puts "\nDone! #{succeeded} succeeded, #{failed} failed (#{total} total)"
   end
+
+  desc "Send feed URL migration email to all users with active podcast feeds"
+  task send_migration_emails: :environment do
+    users = User.joins(podcasts: :episodes)
+                .where(episodes: { status: :complete, deleted_at: nil })
+                .distinct
+    total = users.count
+    succeeded = 0
+    failed = 0
+
+    puts "Sending migration emails to #{total} users..."
+
+    users.find_each.with_index do |user, index|
+      UserMailer.feed_url_migration(user: user).deliver_now
+
+      succeeded += 1
+      puts "[#{index + 1}/#{total}] #{user.email_address}: OK"
+    rescue StandardError => e
+      failed += 1
+      puts "[#{index + 1}/#{total}] #{user.email_address}: FAILED - #{e.message}"
+    end
+
+    puts "\nDone! #{succeeded} succeeded, #{failed} failed (#{total} total)"
+  end
 end

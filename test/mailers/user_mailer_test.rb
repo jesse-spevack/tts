@@ -35,4 +35,40 @@ class UserMailerTest < ActionMailer::TestCase
 
     assert_match "help/add-rss-feed", mail.body.encoded
   end
+
+  test "feed_url_migration sends to user email" do
+    user = users(:two)
+    mail = UserMailer.feed_url_migration(user: user)
+
+    assert_equal [ user.email_address ], mail.to
+  end
+
+  test "feed_url_migration has correct subject" do
+    user = users(:two)
+    mail = UserMailer.feed_url_migration(user: user)
+
+    assert_equal "We're now PodRead! Your feed URL has changed", mail.subject
+  end
+
+  test "feed_url_migration includes feed URL" do
+    user = users(:two)
+    mail = UserMailer.feed_url_migration(user: user)
+
+    assert_match user.primary_podcast.feed_url, mail.body.encoded
+  end
+
+  test "feed_url_migration includes blog URL" do
+    user = users(:two)
+    mail = UserMailer.feed_url_migration(user: user)
+
+    assert_match "https://podread.app/blog/rebrand", mail.body.encoded
+  end
+
+  test "feed_url_migration includes rebrand messaging" do
+    user = users(:two)
+    mail = UserMailer.feed_url_migration(user: user)
+
+    assert_match "PodRead", mail.body.encoded
+    assert_match "podread.app", mail.body.encoded
+  end
 end
