@@ -57,3 +57,6 @@ browser_extension/dist/
 browser_extension/node_modules/
 browser_extension/coverage/
 browser_extension/*.zip
+
+# Git worktrees
+.worktrees/
