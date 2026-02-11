@@ -258,6 +258,26 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_match(/Processing/, response.body)
   end
 
+  test "create with text param passes title and author to service" do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
+      post episodes_url, params: { text: "A" * 150, title: "My Title", author: "Jane Doe" }
+    end
+
+    episode = Episode.last
+    assert_equal "My Title", episode.title
+    assert_equal "Jane Doe", episode.author
+  end
+
+  test "create with text param uses placeholders when title and author blank" do
+    assert_enqueued_with(job: ProcessesPasteEpisodeJob) do
+      post episodes_url, params: { text: "A" * 150, title: "", author: "" }
+    end
+
+    episode = Episode.last
+    assert_equal "Processing...", episode.title
+    assert_equal "Processing...", episode.author
+  end
+
   test "create with text param fails with empty text" do
     post episodes_url, params: { text: "" }
 

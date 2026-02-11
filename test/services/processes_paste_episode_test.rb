@@ -22,7 +22,7 @@ class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
     Mocktail.replace(SubmitsEpisodeForProcessing)
   end
 
-  test "processes text and updates episode metadata" do
+  test "processes text and updates episode metadata with LLM values" do
     mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
       title: "Extracted Title",
       author: "Extracted Author",
@@ -39,6 +39,46 @@ class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
     assert_equal "Extracted Title", @episode.title
     assert_equal "Extracted Author", @episode.author
     assert_equal "Extracted description.", @episode.description
+  end
+
+  test "preserves user-provided title over LLM extraction" do
+    @episode.update!(title: "User Title")
+
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
+      title: "Extracted Title",
+      author: "Extracted Author",
+      description: "Extracted description.",
+      content: "Cleaned content for TTS."
+    ))
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+
+    ProcessesPasteEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "User Title", @episode.title
+    assert_equal "Extracted Author", @episode.author
+  end
+
+  test "preserves user-provided author over LLM extraction" do
+    @episode.update!(author: "User Author")
+
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
+      title: "Extracted Title",
+      author: "Extracted Author",
+      description: "Extracted description.",
+      content: "Cleaned content for TTS."
+    ))
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+
+    ProcessesPasteEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "Extracted Title", @episode.title
+    assert_equal "User Author", @episode.author
   end
 
   test "sets content_preview from LLM content" do
