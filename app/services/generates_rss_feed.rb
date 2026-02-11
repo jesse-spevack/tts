@@ -67,6 +67,7 @@ class GeneratesRssFeed
     xml.link podcast_config["link"]
     if podcast_config["feed_url"]
       xml.tag! "atom:link", href: podcast_config["feed_url"], rel: "self", type: "application/rss+xml"
+      xml.tag! "itunes:new-feed-url", podcast_config["feed_url"]
     end
     xml.language podcast_config["language"]
     xml.tag! "itunes:author", podcast_config["author"]
