@@ -4,15 +4,15 @@ require "builder"
 
 class GeneratesRssFeed
   PODCAST_DEFAULTS = {
-    "title" => "Very normal podcast",
+    "title" => "PodRead Podcast",
     "description" => "Readings turned to audio by text to speech app.",
-    "author" => "Very Normal TTS",
+    "author" => "PodRead",
     "email" => AppConfig::Domain::MAIL_FROM,
     "link" => AppConfig::Domain::BASE_URL,
     "language" => "en-us",
     "category" => "Technology",
     "explicit" => false,
-    "artwork_url" => "https://verynormal.info/content/images/2022/11/verynormallogo2.png"
+    "artwork_url" => "#{AppConfig::Domain::BASE_URL}/icon.png"
   }.freeze
 
   def self.call(podcast:)

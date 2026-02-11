@@ -2,9 +2,9 @@
 # This file contains podcast-level metadata used to generate the RSS feed
 
 # Required fields
-title: "Very normal podcast"
+title: "PodRead Podcast"
 description: "Readings turned to audio by text to speech app."
-author: "Very Normal TTS"
+author: "PodRead"
 email: <%= ENV.fetch("MAILER_FROM_ADDRESS", "noreply@localhost") %>
 link: <%= "https://#{ENV.fetch('APP_HOST', 'localhost:3000')}" %>  # Podcast website URL
 
@@ -14,4 +14,4 @@ category: "Technology"
 explicit: false
 
 # Optional fields
-artwork_url: "https://verynormal.info/content/images/2022/11/verynormallogo2.png"  # 1400x1400 to 3000x3000 pixels recommended
+artwork_url: "https://podread.app/icon.png"  # 1400x1400 to 3000x3000 pixels recommended

@@ -2,14 +2,14 @@
 
 <% content_for :head do %>
   <meta property="og:title" content="<%= @episode.title %>">
-  <meta property="og:description" content="Transcribed for podcast by Very Normal TTS.">
+  <meta property="og:description" content="Transcribed for podcast by PodRead.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="<%= episode_url(@episode.prefix_id) %>">
-  <meta property="og:image" content="https://verynormal.info/content/images/2022/11/verynormallogo2.png">
+  <meta property="og:image" content="https://podread.app/icon.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="<%= @episode.title %>">
-  <meta name="twitter:description" content="Transcribed for podcast by Very Normal TTS.">
-  <meta name="twitter:image" content="https://verynormal.info/content/images/2022/11/verynormallogo2.png">
+  <meta name="twitter:description" content="Transcribed for podcast by PodRead.">
+  <meta name="twitter:image" content="https://podread.app/icon.png">
 <% end %>
 
 <% if authenticated? %>
@@ -80,7 +80,7 @@
 <% else %>
   <%# === Public/Shared View: Simple centered content === %>
   <div class="mx-auto max-w-2xl px-6 py-16 lg:py-24">
-    <p class="text-sm text-mist-500 dark:text-mist-400 mb-4">Audio transcribed by Very Normal TTS</p>
+    <p class="text-sm text-mist-500 dark:text-mist-400 mb-4">Audio transcribed by PodRead</p>
 
     <h1 class="font-display text-3xl md:text-4xl font-semibold text-mist-950 dark:text-white mb-2"><%= @episode.title %></h1>
 

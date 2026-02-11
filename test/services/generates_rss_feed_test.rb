@@ -14,7 +14,7 @@ class GeneratesRssFeedTest < ActiveSupport::TestCase
     assert result.include?('<?xml version="1.0" encoding="UTF-8"?>')
     assert result.include?("<rss")
     assert result.include?("xmlns:itunes")
-    assert result.include?("<title>Very normal podcast</title>")
+    assert result.include?("<title>PodRead Podcast</title>")
   end
 
   test "includes completed episodes in feed" do

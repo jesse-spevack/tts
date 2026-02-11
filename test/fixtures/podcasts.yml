@@ -12,5 +12,5 @@ two:
 
 default:
   podcast_id: podcast_default
-  title: Very normal podcast
+  title: PodRead Podcast
   description: Readings turned to audio by text to speech app.

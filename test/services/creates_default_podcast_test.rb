@@ -7,7 +7,7 @@ class CreatesDefaultPodcastTest < ActiveSupport::TestCase
     podcast = CreatesDefaultPodcast.call(user: user)
 
     assert_not_nil podcast
-    assert_equal "test@example.com's Very Normal Podcast", podcast.title
+    assert_equal "test@example.com's PodRead Podcast", podcast.title
     assert_equal "My podcast created with example.com", podcast.description
     assert_match /^podcast_[a-f0-9]{16}$/, podcast.podcast_id
   end

@@ -14,7 +14,7 @@ class CreatesUserTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_not_nil result.data[:podcast]
-    assert_equal "newuser@example.com's Very Normal Podcast", result.data[:podcast].title
+    assert_equal "newuser@example.com's PodRead Podcast", result.data[:podcast].title
   end
 
   test "creates user and podcast in a transaction" do
