@@ -37,10 +37,16 @@ namespace :feeds do
     puts "Sending migration emails to #{total} users..."
 
     users.find_each.with_index do |user, index|
+      unless user.podcasts.any?
+        puts "[#{index + 1}/#{total}] #{user.email_address}: SKIPPED - no podcast"
+        next
+      end
+
       UserMailer.feed_url_migration(user: user).deliver_now
 
       succeeded += 1
       puts "[#{index + 1}/#{total}] #{user.email_address}: OK"
+      sleep 0.1  # Rate limit outbound email
     rescue StandardError => e
       failed += 1
       puts "[#{index + 1}/#{total}] #{user.email_address}: FAILED - #{e.message}"
