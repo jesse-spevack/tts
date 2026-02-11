@@ -1,0 +1,23 @@
+<%# Call to Action Simple Centered
+  Locals:
+    headline   - (required) string or HTML for the heading
+    subheadline - (optional) string or HTML for the subheading text
+    cta        - (optional) HTML for the call-to-action buttons/links
+%>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col items-center gap-10">
+    <div class="flex flex-col gap-6">
+      <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white max-w-4xl text-center">
+        <%= headline %>
+      </h2>
+      <% if local_assigns[:subheadline] %>
+        <div class="text-base/7 text-mist-700 dark:text-mist-400 flex max-w-3xl flex-col gap-4 text-center text-pretty">
+          <%= subheadline %>
+        </div>
+      <% end %>
+    </div>
+    <% if local_assigns[:cta] %>
+      <%= cta %>
+    <% end %>
+  </div>
+</section>

@@ -9,11 +9,11 @@
         <h2 class="text-lg font-semibold mb-4">Last 7 Days</h2>
         <table class="w-full text-sm">
           <tr>
-            <td class="py-1 text-[var(--color-subtext)]">Page Views</td>
+            <td class="py-1 text-mist-500 dark:text-mist-400">Page Views</td>
             <td class="py-1 text-right font-medium"><%= @stats_7_days[:total_views] %></td>
           </tr>
           <tr>
-            <td class="py-1 text-[var(--color-subtext)]">Unique Visitors</td>
+            <td class="py-1 text-mist-500 dark:text-mist-400">Unique Visitors</td>
             <td class="py-1 text-right font-medium"><%= @stats_7_days[:unique_visitors] %></td>
           </tr>
         </table>
@@ -24,11 +24,11 @@
         <h2 class="text-lg font-semibold mb-4">Last 30 Days</h2>
         <table class="w-full text-sm">
           <tr>
-            <td class="py-1 text-[var(--color-subtext)]">Page Views</td>
+            <td class="py-1 text-mist-500 dark:text-mist-400">Page Views</td>
             <td class="py-1 text-right font-medium"><%= @stats_30_days[:total_views] %></td>
           </tr>
           <tr>
-            <td class="py-1 text-[var(--color-subtext)]">Unique Visitors</td>
+            <td class="py-1 text-mist-500 dark:text-mist-400">Unique Visitors</td>
             <td class="py-1 text-right font-medium"><%= @stats_30_days[:unique_visitors] %></td>
           </tr>
         </table>
@@ -40,21 +40,21 @@
       <h2 class="text-lg font-semibold mb-4">Views by Page (30 days)</h2>
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[var(--color-surface1)]">
-            <th class="py-2 text-left text-[var(--color-subtext)]">Path</th>
-            <th class="py-2 text-right text-[var(--color-subtext)]">Views</th>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Path</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Views</th>
           </tr>
         </thead>
         <tbody>
           <% @stats_30_days[:views_by_page].each do |path, count| %>
-            <tr class="border-b border-[var(--color-surface0)]">
+            <tr class="border-b border-mist-200 dark:border-mist-700">
               <td class="py-2"><%= path %></td>
               <td class="py-2 text-right font-medium"><%= count %></td>
             </tr>
           <% end %>
           <% if @stats_30_days[:views_by_page].empty? %>
             <tr>
-              <td colspan="2" class="py-4 text-center text-[var(--color-subtext)]">No data yet</td>
+              <td colspan="2" class="py-4 text-center text-mist-500 dark:text-mist-400">No data yet</td>
             </tr>
           <% end %>
         </tbody>
@@ -66,21 +66,21 @@
       <h2 class="text-lg font-semibold mb-4">Top Referrers (30 days)</h2>
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[var(--color-surface1)]">
-            <th class="py-2 text-left text-[var(--color-subtext)]">Source</th>
-            <th class="py-2 text-right text-[var(--color-subtext)]">Views</th>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Source</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Views</th>
           </tr>
         </thead>
         <tbody>
           <% @top_referrers.each do |host, count| %>
-            <tr class="border-b border-[var(--color-surface0)]">
+            <tr class="border-b border-mist-200 dark:border-mist-700">
               <td class="py-2"><%= host || "Direct" %></td>
               <td class="py-2 text-right font-medium"><%= count %></td>
             </tr>
           <% end %>
           <% if @top_referrers.empty? %>
             <tr>
-              <td colspan="2" class="py-4 text-center text-[var(--color-subtext)]">No data yet</td>
+              <td colspan="2" class="py-4 text-center text-mist-500 dark:text-mist-400">No data yet</td>
             </tr>
           <% end %>
         </tbody>
@@ -92,21 +92,21 @@
       <h2 class="text-lg font-semibold mb-4">Daily Views (30 days)</h2>
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[var(--color-surface1)]">
-            <th class="py-2 text-left text-[var(--color-subtext)]">Date</th>
-            <th class="py-2 text-right text-[var(--color-subtext)]">Views</th>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Date</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Views</th>
           </tr>
         </thead>
         <tbody>
           <% @daily_views.each do |date, count| %>
-            <tr class="border-b border-[var(--color-surface0)]">
+            <tr class="border-b border-mist-200 dark:border-mist-700">
               <td class="py-2"><%= date %></td>
               <td class="py-2 text-right font-medium"><%= count %></td>
             </tr>
           <% end %>
           <% if @daily_views.empty? %>
             <tr>
-              <td colspan="2" class="py-4 text-center text-[var(--color-subtext)]">No data yet</td>
+              <td colspan="2" class="py-4 text-center text-mist-500 dark:text-mist-400">No data yet</td>
             </tr>
           <% end %>
         </tbody>

@@ -5,27 +5,27 @@ class EpisodesHelperTest < ActionView::TestCase
     result = status_badge("processing")
     assert_includes result, "Processing"
     assert_includes result, "animate-pulse"
-    assert_includes result, "var(--color-yellow)"
+    assert_includes result, "text-yellow-500"
   end
 
   test "status_badge returns completed badge with checkmark" do
     result = status_badge("complete")
     assert_includes result, "Completed"
     assert_includes result, "✓"
-    assert_includes result, "var(--color-green)"
+    assert_includes result, "text-green-600"
   end
 
   test "status_badge returns failed badge with X" do
     result = status_badge("failed")
     assert_includes result, "Failed"
     assert_includes result, "✗"
-    assert_includes result, "var(--color-red)"
+    assert_includes result, "text-red-600"
   end
 
   test "status_badge returns pending badge" do
     result = status_badge("pending")
     assert_includes result, "Pending"
-    assert_includes result, "var(--color-yellow)"
+    assert_includes result, "text-yellow-500"
   end
 
   test "format_duration formats seconds as MM:SS" do

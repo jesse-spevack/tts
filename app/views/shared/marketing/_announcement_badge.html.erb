@@ -1,0 +1,46 @@
+<%# Announcement Badge - Pill-shaped announcement link or button
+  Locals:
+    text    - (required) the announcement text
+    href    - (optional) the link URL (used when tag is "a")
+    cta     - (optional) call-to-action text, defaults to "Learn more"
+    variant - (optional) "normal" (default) or "overlay" (for use on dark backgrounds like wallpaper)
+    tag     - (optional) "a" (default) or "button" (renders a <button> instead of <a>)
+    data    - (optional) hash of data attributes for the element
+%>
+<%
+  badge_cta = local_assigns.fetch(:cta, "Learn more")
+  badge_variant = local_assigns.fetch(:variant, "normal")
+  badge_href = local_assigns.fetch(:href, "#")
+  badge_tag = local_assigns.fetch(:tag, "a")
+  badge_data = local_assigns.fetch(:data, {})
+%>
+<% badge_classes = "group relative inline-flex max-w-full gap-x-3 overflow-hidden rounded-md px-3.5 py-2 text-sm/6 max-sm:flex-col sm:items-center sm:rounded-full sm:px-3 sm:py-0.5 #{badge_variant == "normal" ? "bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/5 dark:text-white dark:inset-ring-1 dark:inset-ring-white/5 dark:hover:bg-white/10" : "bg-mist-950/15 text-white hover:bg-mist-950/20 dark:bg-mist-950/20 dark:hover:bg-mist-950/25"}" %>
+<% if badge_tag == "button" %>
+<button
+  type="button"
+  data-variant="<%= badge_variant %>"
+  class="<%= badge_classes %>"
+  <% badge_data.each do |key, value| %>
+    data-<%= key %>="<%= value %>"
+  <% end %>
+>
+<% else %>
+<a
+  href="<%= badge_href %>"
+  data-variant="<%= badge_variant %>"
+  class="<%= badge_classes %>"
+  <% badge_data.each do |key, value| %>
+    data-<%= key %>="<%= value %>"
+  <% end %>
+>
+<% end %>
+  <span class="text-pretty sm:truncate"><%= text %></span>
+  <span class="h-3 w-px max-sm:hidden <%= badge_variant == "normal" ? "bg-mist-950/20 dark:bg-white/10" : "bg-white/20" %>"></span>
+  <span class="inline-flex shrink-0 items-center gap-2 font-semibold <%= badge_variant == "normal" ? "text-mist-950 dark:text-white" : "" %>">
+    <%= badge_cta %>
+    <%# Chevron icon (inline SVG) %>
+    <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" role="image" class="inline-block shrink-0">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" />
+    </svg>
+  </span>
+<% if badge_tag == "button" %></button><% else %></a><% end %>

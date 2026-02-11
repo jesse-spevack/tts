@@ -1,0 +1,14 @@
+<%# Tab panel wrapper for pricing_hero_multi
+    Wraps plan cards in a responsive grid for one tab panel.
+
+    Usage: Provide plan cards in the yielded block.
+
+    Example:
+      render "shared/marketing/pricing_hero_multi_panel" do
+        render "shared/marketing/pricing_hero_multi_plan", ...
+      end
+%>
+
+<div class="grid grid-cols-1 gap-2 sm:has-[>:nth-child(5)]:grid-cols-2 sm:max-lg:has-[>:last-child:nth-child(even)]:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none lg:has-[>:nth-child(5)]:grid-flow-row lg:has-[>:nth-child(5)]:grid-cols-3">
+  <%= yield %>
+</div>

@@ -4,37 +4,37 @@
   <div class="space-y-3">
     <%# App header %>
     <div class="text-center py-2">
-      <span class="text-xs font-medium text-[var(--color-subtext)]">Podcasts</span>
+      <span class="text-xs font-medium text-mist-500 dark:text-mist-400">Podcasts</span>
     </div>
 
     <%# Now playing card %>
-    <div class="rounded-lg bg-[var(--color-surface0)] p-3 space-y-2">
+    <div class="rounded-lg bg-white dark:bg-mist-800 p-3 space-y-2">
       <%# Album art %>
-      <div class="w-full aspect-square rounded-md bg-[var(--color-primary)] flex items-center justify-center">
-        <%= render "shared/icons/headphones", css_class: "w-8 h-8 text-[var(--color-primary-text)]" %>
+      <div class="w-full aspect-square rounded-md bg-mist-950 dark:bg-white flex items-center justify-center">
+        <%= render "shared/icons/headphones", css_class: "w-8 h-8 text-white dark:text-mist-950" %>
       </div>
 
       <%# Episode title %>
       <div class="text-center">
-        <p class="text-xs font-medium text-[var(--color-text)] truncate">The Future of Remote Work</p>
-        <p class="text-xs text-[var(--color-subtext)]">12 min</p>
+        <p class="text-xs font-medium text-mist-950 dark:text-white truncate">The Gift Card Accountability Sink</p>
+        <p class="text-xs text-mist-500 dark:text-mist-400">18 min</p>
       </div>
 
       <%# Playback bar - at start %>
-      <div class="relative h-1 rounded-full bg-[var(--color-surface1)] overflow-hidden">
-        <div class="absolute inset-y-0 left-0 w-[10%] bg-[var(--color-primary)] rounded-full"></div>
+      <div class="relative h-1 rounded-full bg-mist-200 dark:bg-mist-700 overflow-hidden">
+        <div class="absolute inset-y-0 left-0 w-[10%] bg-mist-950 dark:bg-white rounded-full"></div>
       </div>
 
       <%# Playback controls - play button pressed %>
       <div class="flex items-center justify-center gap-4 pt-1">
-        <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-5 h-5 text-mist-950 dark:text-white" fill="currentColor" viewBox="0 0 20 20">
           <path d="M8.445 14.832A1 1 0 0010 14v-4.586l4.445 3.418A1 1 0 0016 12V8a1 1 0 00-1.555-.832L10 10.586V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
         </svg>
         <%# Play button - pressed state %>
-        <div class="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary-text)] scale-95 brightness-75">
+        <div class="w-10 h-10 rounded-full bg-mist-950 dark:bg-white flex items-center justify-center text-white dark:text-mist-950 scale-95 brightness-75">
           <%= render "shared/icons/play", css_class: "w-5 h-5" %>
         </div>
-        <svg class="w-5 h-5 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-5 h-5 text-mist-950 dark:text-white" fill="currentColor" viewBox="0 0 20 20">
           <path d="M11.555 5.168A1 1 0 0010 6v4.586L5.555 7.168A1 1 0 004 8v4a1 1 0 001.555.832L10 9.414V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4z" />
         </svg>
       </div>

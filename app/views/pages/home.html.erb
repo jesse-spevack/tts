@@ -1,177 +1,251 @@
-<% content_for :raw_body do %>
-  <!-- Hero Section -->
-  <div class="bg-[var(--color-base)]">
-    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
-        <%# Left column: Copy and CTA %>
-        <div>
-          <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-            Finally listen to your reading list
-          </h1>
-          <p class="mt-4 text-lg text-[var(--color-subtext)]">
-            Paste a URL, upload a file, or drop in text. We'll turn it into a podcast episode in your feed.
-          </p>
-          <div class="mt-10 flex items-center gap-x-6">
-            <%= render "shared/signup_cta_button",
-              text: "Start listening free",
-              plan: "free",
-              heading: "Start listening free",
-              subtext: "2 episodes/month, no credit card required",
-              style: :primary %>
-            <%= link_to how_it_sounds_path, class: "text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-primary)]" do %>
-              Hear a sample <span aria-hidden="true">&rarr;</span>
-            <% end %>
-          </div>
-          <p class="mt-4 text-sm text-[var(--color-subtext)]">
-            No credit card · 2 free episodes/month · Works with any podcast app
-          </p>
-        </div>
+<%# Home Page — Based on Variation 02
+  Section order: Navbar (centered links) > Hero (demo on background, wallpaper blue) >
+  Features (3-col with demos) > Stats (with graph) > Testimonial (large quote) >
+  FAQs (2-col accordion) > Pricing (multi-tier) > CTA (simple) > Footer (link categories)
+%>
 
-        <%# Right column: Demo animation %>
-        <div class="mt-12 lg:mt-0">
-          <%= render "pages/hero_demo" %>
-        </div>
-      </div>
-    </div>
+<%# ===== Navbar ===== %>
+<%= render "shared/marketing/navbar_centered_links",
+  links: [
+    { label: "How it works", href: "#features" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "About", href: about_path },
+  ],
+  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
+    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+
+<%# ===== Hero (demo on background) ===== %>
+<%= render "shared/marketing/hero_demo_bg",
+  eyebrow: render("shared/marketing/announcement_badge",
+    tag: "button",
+    text: "Now with natural-sounding HD voices",
+    cta: "Hear how it sounds",
+    variant: "overlay",
+    data: { action: "click->sample-modal#open" }),
+  headline: "Turn any article into a podcast episode.",
+  subheadline: '<p>Paste a URL, upload a file, or drop in text. PodRead converts it to audio and delivers it to your private podcast feed. Listen in any podcast app.</p>'.html_safe,
+  cta: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-white text-mist-950 hover:bg-mist-200">Create my feed</button>'.html_safe,
+  demo: render("pages/hero_demo"),
+  wallpaper_color: "blue" %>
+
+<%# ===== Features (5 ways) ===== %>
+<%= render layout: "shared/marketing/features_three_col_demos", locals: {
+  id: "features",
+  headline: "Every way to turn words into audio.",
+  subheadline: "However you find articles worth reading, PodRead has a way to get them into your ears."
+} do %>
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Paste a URL",
+    subheadline: "Drop in a link to any article. PodRead extracts the content, skips the clutter, and turns it into a podcast episode."
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "blue", placement: "bottom-right" } do %>
+      <%= render "pages/feature_url" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Paste text",
+    subheadline: "Copy and paste any text directly. Great for paywalled articles, PDFs, or anything you've already got on your clipboard."
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "purple", placement: "top-left" } do %>
+      <%= render "pages/feature_paste" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Upload a file",
+    subheadline: "Upload a .txt or .md file and PodRead turns it into an episode. Perfect for notes, drafts, or long-form content."
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "brown", placement: "bottom-left" } do %>
+      <%= render "pages/feature_upload" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Email to podcast",
+    subheadline: "Forward any article or newsletter to your PodRead email address and it shows up as an episode in your feed."
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "green", placement: "bottom-right" } do %>
+      <%= render "pages/feature_email" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Browser extension",
+    subheadline: "One click from any article you're reading. The browser extension sends it straight to your podcast feed.",
+    badge: "Coming soon"
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "orange", placement: "top-left" } do %>
+      <%= render "pages/feature_extension" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "API",
+    subheadline: "Build text-to-speech into your own workflows. Send content programmatically and get episodes delivered to any feed.",
+    badge: "Coming soon"
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "brown", placement: "bottom-left" } do %>
+      <%= render "pages/feature_api" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<%# ===== Stats (with graph) ===== %>
+<%= render layout: "shared/marketing/stats_graph", locals: {
+  eyebrow: "Growing every day",
+  headline: "Hundreds of articles turned into podcast episodes.",
+  subheadline: "PodRead helps people listen to the articles they save but never get around to reading. Every day, more people are turning their reading lists into listening lists."
+} do %>
+  <%= render "shared/marketing/stat_border", stat: number_with_delimiter(@episode_count), text: "Episodes created by readers who'd rather listen." %>
+  <%= render "shared/marketing/stat_border", stat: number_with_delimiter(@user_count), text: "Listeners who turned their reading list into a playlist." %>
+<% end %>
+
+<%# ===== Testimonial (large quote) ===== %>
+<%= render "shared/marketing/testimonial_large_quote",
+  quote: '<p>I built PodRead because I had dozens of articles open in browser tabs that I never made time to read. Now I listen to them on my commute. It took me a weekend to build the first version, and I\'ve been using it every day since.</p>'.html_safe,
+  name: "Jesse Spevack",
+  byline: "Founder of PodRead",
+  img_src: "/jesse-profile.jpg" %>
+
+<%# ===== FAQs (2-column accordion) ===== %>
+<%= render layout: "shared/marketing/faqs_two_col_accordion", locals: {
+  id: "faqs",
+  headline: "Questions & Answers"
+} do %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-1",
+    question: "Is it really free?",
+    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want unlimited episodes and premium HD voices, you can upgrade to Premium for $9/month." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-2",
+    question: "Does it sound robotic?",
+    answer: "Not at all. PodRead uses Google Cloud's latest text-to-speech with Chirp HD voices. They sound natural and pleasant to listen to, even for long articles." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-3",
+    question: "Which podcast apps work with PodRead?",
+    answer: "Any podcast app that supports custom RSS feeds. That includes Apple Podcasts, Spotify, Overcast, Pocket Casts, Castro, and many more. You don't need to install any new apps." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-4",
+    question: "What content can I convert?",
+    answer: "Web articles (via URL), pasted text, and uploaded markdown files. If you can read it, PodRead can turn it into audio." %>
+<% end %>
+
+<%# ===== Pricing (multi-tier with toggle) ===== %>
+<%= render layout: "shared/marketing/pricing_hero_multi", locals: {
+  id: "pricing",
+  headline: "Simple, honest pricing.",
+  subheadline: "",
+  options: ["Monthly", "Yearly"]
+} do %>
+  <%# Monthly panel %>
+  <div class="grid grid-cols-1 gap-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
+    <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Free",
+      price: "$0",
+      period: "/month",
+      subheadline: "Try it out, no credit card required.",
+      features: [
+        "Private podcast feed",
+        "Paste links, text, or upload files",
+        "Choose your voice",
+        "2 episodes per month",
+        "Up to 15,000 characters",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
+
+    <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Premium",
+      price: "$9",
+      period: "/month",
+      subheadline: "For serious readers and listeners.",
+      badge: "Most popular",
+      features: [
+        "Everything in Free, plus:",
+        "Unlimited episodes",
+        "Up to 50,000 characters",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="premium_monthly" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get Premium</button>'.html_safe %>
   </div>
 
-  <!-- How It Works Section -->
-  <section class="bg-[var(--color-base)]">
-    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">How it works</h2>
-      <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
-        <div class="flex items-start gap-4">
-          <div class="flex-shrink-0 text-[var(--color-text)]">
-            <%= render "shared/icons/upload", css_class: "size-8" %>
-          </div>
-          <div>
-            <h3 class="font-semibold text-[var(--color-text)]">Add your content</h3>
-            <p class="mt-1 text-sm text-[var(--color-subtext)]">Paste a URL, enter text, or upload a file.</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="flex-shrink-0 text-[var(--color-text)]">
-            <%= render "shared/icons/waveform", css_class: "size-8" %>
-          </div>
-          <div>
-            <h3 class="font-semibold text-[var(--color-text)]">We turn it into audio</h3>
-            <p class="mt-1 text-sm text-[var(--color-subtext)]">Natural-sounding voices, ready in minutes.</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="flex-shrink-0 text-[var(--color-text)]">
-            <%= render "shared/icons/headphones", css_class: "size-8" %>
-          </div>
-          <div>
-            <h3 class="font-semibold text-[var(--color-text)]">Listen anywhere</h3>
-            <p class="mt-1 text-sm text-[var(--color-subtext)]">New episodes appear in your podcast app automatically.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <%# Yearly panel %>
+  <div class="grid grid-cols-1 gap-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
+    <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Free",
+      price: "$0",
+      period: "/month",
+      subheadline: "Try it out, no credit card required.",
+      features: [
+        "Private podcast feed",
+        "Paste links, text, or upload files",
+        "Choose your voice",
+        "2 episodes per month",
+        "Up to 15,000 characters",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
 
-  <!-- Personal Note Section -->
-  <section class="bg-[var(--color-base)]">
-    <figure class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl text-[var(--color-text)]">Why I built this</h2>
-
-      <p class="mt-6 text-xl/8 text-[var(--color-text)] sm:text-2xl/9">
-        I built this for myself. I had dozens of articles open in browser tabs that I never made time to read, but I spend hours every week running, doing chores, and driving around for errands. Now I actually get through all of the long form writing I used to let pile up.
-      </p>
-
-      <div class="mt-6 space-y-6 text-xl/8 text-[var(--color-text)] sm:text-2xl/9">
-        <p>
-          Paste a link, get a podcast episode in your private feed. Works with Apple Podcasts, Spotify, Overcast—whatever you already use.
-        </p>
-
-        <p>
-          Very Normal TTS is free to try—2 episodes per month, no credit card required. Need more? <a href="mailto:jspevack@gmail.com" class="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] underline">Reach out</a> while we're still in beta. I hope you find it as useful as I do.
-        </p>
-      </div>
-
-      <figcaption class="mt-10 flex items-center gap-x-6">
-        <img src="/jesse-profile.jpg" alt="" class="size-12 rounded-full bg-[var(--color-surface1)] object-cover" />
-        <div class="text-sm/6">
-          <div class="font-semibold text-[var(--color-text)]">Jesse Spevack</div>
-          <div class="mt-0.5 text-[var(--color-subtext)]">Creator</div>
-        </div>
-      </figcaption>
-    </figure>
-  </section>
-
-  <!-- FAQ Section -->
-  <section class="bg-[var(--color-base)]">
-    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-      <div class="lg:grid lg:grid-cols-12 lg:gap-8">
-        <div class="lg:col-span-5">
-          <h2 class="text-2xl font-semibold tracking-tight text-pretty sm:text-3xl">Frequently asked questions</h2>
-          <p class="mt-4 text-base/7 text-pretty text-[var(--color-subtext)]">Can't find the answer you're looking for? <a href="mailto:jspevack@gmail.com" class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]">Send me an email</a>.</p>
-        </div>
-        <div class="mt-10 lg:col-span-7 lg:mt-0">
-          <dl class="space-y-10">
-            <div>
-              <dt class="text-base/7 font-semibold text-[var(--color-text)]">Does it sound robotic?</dt>
-              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Not at all. We use the latest text-to-speech technology to produce natural-sounding voices. <a href="<%= how_it_sounds_path %>" class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]">Hear a sample</a> and judge for yourself.</dd>
-            </div>
-            <div>
-              <dt class="text-base/7 font-semibold text-[var(--color-text)]">Which podcast apps are supported?</dt>
-              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Any podcast app that supports custom RSS feeds, including Apple Podcasts, Overcast, Pocket Casts, Castro, and many more.</dd>
-            </div>
-            <div>
-              <dt class="text-base/7 font-semibold text-[var(--color-text)]">How long does it take?</dt>
-              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Most articles are ready to listen within a few minutes. Longer content may take a bit more time.</dd>
-            </div>
-            <div>
-              <dt class="text-base/7 font-semibold text-[var(--color-text)]">Is it really free?</dt>
-              <dd class="mt-2 text-base/7 text-[var(--color-subtext)]">Yes. The free tier gives you 2 episodes per month. Need more? Paid plans are available for heavier use.</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Pricing Section -->
-  <section id="pricing" class="bg-[var(--color-base)]">
-    <div class="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8" data-controller="pricing-toggle">
-      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">Pricing</h2>
-      <p class="mt-4 text-base/7 text-[var(--color-subtext)]">
-        2 free episodes every month. Upgrade anytime for unlimited.
-      </p>
-
-      <!-- Monthly/Annual Toggle -->
-      <div class="mt-8">
-        <%= render "shared/pricing_toggle" %>
-      </div>
-
-      <!-- Pricing Cards -->
-      <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-3xl mx-auto">
-        <!-- Free Card -->
-        <%= render "shared/free_card", mode: :landing %>
-
-        <!-- Premium Card -->
-        <%= render "shared/premium_card", mode: :landing %>
-      </div>
-    </div>
-  </section>
-
-  <!-- Signup Section -->
-  <div id="signup" class="bg-[var(--color-base)] py-16 sm:py-24 lg:py-32">
-    <div class="mx-auto max-w-7xl px-6 text-center lg:px-8">
-      <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-        Ready to start listening?
-      </h2>
-      <p class="mt-4 text-lg text-[var(--color-subtext)]">
-        No credit card required. Start with 2 free episodes.
-      </p>
-      <%= render "shared/signup_cta_button",
-        text: "Create my free feed",
-        plan: "free",
-        heading: "Start listening free",
-        subtext: "2 episodes/month, no credit card required",
-        style: :large,
-        additional_classes: "mt-8" %>
-    </div>
+    <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Premium",
+      price: "$89",
+      period: "/year",
+      subheadline: "For serious readers and listeners.",
+      badge: "Most popular",
+      features: [
+        "Everything in Free, plus:",
+        "Unlimited episodes",
+        "Up to 50,000 characters",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="premium_annual" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get Premium</button>'.html_safe %>
   </div>
 <% end %>
+
+<%# ===== Call to Action ===== %>
+<%= render "shared/marketing/cta_simple",
+  headline: "Your reading list isn't going to listen to itself.",
+  subheadline: '<p>Start converting articles into podcast episodes today. Free to try, no credit card required.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Start listening free</button>
+    <a href="#features" class="inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white">See how it works <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
+  </div>'.html_safe %>
+
+<%# ===== Footer (link categories) ===== %>
+<%= render "shared/marketing/footer_categories",
+  categories: [
+    {
+      title: "Product",
+      links: [
+        { label: "How it works", href: "#features" },
+        { label: "Pricing", href: "#pricing" },
+        { label: "Browser extension", href: help_extension_path },
+      ]
+    },
+    {
+      title: "About",
+      links: [
+        { label: "Our story", href: about_path },
+      ]
+    },
+    {
+      title: "Connect",
+      links: [
+        { label: "Twitter", href: "https://x.com/pod_read" },
+        { label: "GitHub", href: "https://github.com/jesse-spevack/tts/blob/main/LICENSE.md" },
+        { label: "Blog", href: "https://verynormal.info" },
+      ]
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "Help Center", href: how_it_sounds_path },
+        { label: "Contact", href: "mailto:jspevack@gmail.com" },
+        { label: "FAQ", href: "#faqs" },
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: privacy_path },
+        { label: "Terms of Service", href: terms_path },
+      ]
+    },
+  ] %>

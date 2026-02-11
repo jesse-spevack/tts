@@ -1,21 +1,21 @@
 <%# Only show pagination when there's more than one page %>
 <% return if pagy.pages <= 1 %>
 
-<nav class="pagination flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 dark:border-white/10 mt-6">
+<nav class="pagination flex items-center justify-between border-t border-mist-200 dark:border-white/10 px-4 sm:px-0 mt-6">
   <%# Previous link %>
   <div class="-mt-px flex w-0 flex-1">
     <% if pagy.previous %>
       <%= link_to episodes_path(page: pagy.previous),
-            class: "inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200",
+            class: "inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-mist-500 hover:border-mist-300 hover:text-mist-700 dark:text-mist-400 dark:hover:border-white/20 dark:hover:text-mist-200",
             data: { turbo_frame: "episodes_list", turbo_action: "advance" } do %>
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-gray-400 dark:text-gray-500">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-mist-400 dark:text-mist-500">
           <path d="M18 10a.75.75 0 0 1-.75.75H4.66l2.1 1.95a.75.75 0 1 1-1.02 1.1l-3.5-3.25a.75.75 0 0 1 0-1.1l3.5-3.25a.75.75 0 1 1 1.02 1.1l-2.1 1.95h12.59A.75.75 0 0 1 18 10Z" clip-rule="evenodd" fill-rule="evenodd" />
         </svg>
         Previous
       <% end %>
     <% else %>
-      <span class="inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-gray-300 dark:text-gray-600 cursor-not-allowed">
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-gray-300 dark:text-gray-600">
+      <span class="inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-mist-300 dark:text-mist-600 cursor-not-allowed">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-mist-300 dark:text-mist-600">
           <path d="M18 10a.75.75 0 0 1-.75.75H4.66l2.1 1.95a.75.75 0 1 1-1.02 1.1l-3.5-3.25a.75.75 0 0 1 0-1.1l3.5-3.25a.75.75 0 1 1 1.02 1.1l-2.1 1.95h12.59A.75.75 0 0 1 18 10Z" clip-rule="evenodd" fill-rule="evenodd" />
         </svg>
         Previous
@@ -25,7 +25,7 @@
 
   <%# Page indicator (desktop only) %>
   <div class="hidden md:-mt-px md:flex">
-    <span class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-gray-500 dark:text-gray-400">
+    <span class="inline-flex items-center border-t-2 border-transparent px-4 pt-4 text-sm font-medium text-mist-500 dark:text-mist-400">
       Page <%= pagy.page %> of <%= pagy.pages %>
     </span>
   </div>
@@ -34,17 +34,17 @@
   <div class="-mt-px flex w-0 flex-1 justify-end">
     <% if pagy.next %>
       <%= link_to episodes_path(page: pagy.next),
-            class: "inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200",
+            class: "inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-mist-500 hover:border-mist-300 hover:text-mist-700 dark:text-mist-400 dark:hover:border-white/20 dark:hover:text-mist-200",
             data: { turbo_frame: "episodes_list", turbo_action: "advance" } do %>
         Next
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-3 size-5 text-gray-400 dark:text-gray-500">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-3 size-5 text-mist-400 dark:text-mist-500">
           <path d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-1.95a.75.75 0 1 1 1.02-1.1l3.5 3.25a.75.75 0 0 1 0 1.1l-3.5 3.25a.75.75 0 1 1-1.02-1.1l2.1-1.95H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" fill-rule="evenodd" />
         </svg>
       <% end %>
     <% else %>
-      <span class="inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-gray-300 dark:text-gray-600 cursor-not-allowed">
+      <span class="inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-mist-300 dark:text-mist-600 cursor-not-allowed">
         Next
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-3 size-5 text-gray-300 dark:text-gray-600">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="ml-3 size-5 text-mist-300 dark:text-mist-600">
           <path d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-1.95a.75.75 0 1 1 1.02-1.1l3.5 3.25a.75.75 0 0 1 0 1.1l-3.5 3.25a.75.75 0 1 1-1.02-1.1l2.1-1.95H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" fill-rule="evenodd" />
         </svg>
       </span>

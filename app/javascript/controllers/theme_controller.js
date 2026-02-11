@@ -15,8 +15,7 @@ export default class extends Controller {
 
   loadTheme() {
     const savedTheme = localStorage.getItem("theme")
-    // Default to dark mode if no preference saved
-    const isDark = savedTheme === "light" ? false : true
+    const isDark = savedTheme ? savedTheme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches
 
     if (isDark) {
       document.documentElement.classList.add("dark")

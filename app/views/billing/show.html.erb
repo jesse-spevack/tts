@@ -1,46 +1,78 @@
-<div class="max-w-2xl mx-auto px-4 py-8">
+<div class="mx-auto max-w-4xl px-4 py-8">
   <%= render "shared/back_link", path: episodes_path, text: "Back to Episodes" %>
-  <%= render "shared/page_header", title: "Billing" %>
+  <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-10">Billing</h1>
 
-  <% if Current.user.unlimited? %>
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2"><span style="color: var(--color-red)">U</span><span style="color: var(--color-peach)">n</span><span style="color: var(--color-yellow)">l</span><span style="color: var(--color-green)">i</span><span style="color: var(--color-teal)">m</span><span style="color: var(--color-blue)">i</span><span style="color: var(--color-lavender)">t</span><span style="color: var(--color-red)">e</span><span style="color: var(--color-peach)">d</span> <span style="color: var(--color-green)">P</span><span style="color: var(--color-teal)">l</span><span style="color: var(--color-blue)">a</span><span style="color: var(--color-lavender)">n</span></h2>
-      <p class="text-[var(--color-subtext)] text-sm">You have unlimited access with no restrictions.</p>
-    <% end %>
+  <div class="space-y-12">
+    <%# Current Plan section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Current Plan</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Manage your subscription and billing.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <% if Current.user.unlimited? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">
+                <span class="text-red-600 dark:text-red-400">U</span><span class="text-orange-500">n</span><span class="text-yellow-500 dark:text-yellow-300">l</span><span class="text-green-600 dark:text-green-400">i</span><span class="text-teal-500">m</span><span class="text-blue-500">i</span><span class="text-indigo-400">t</span><span class="text-red-600 dark:text-red-400">e</span><span class="text-orange-500">d</span>
+              </h3>
+              <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">Active</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">You have unlimited access with no restrictions.</p>
 
-  <% elsif Current.user.complimentary? %>
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2">Premium (Complimentary)</h2>
-      <p class="text-[var(--color-subtext)] text-sm">You have complimentary premium access.</p>
-    <% end %>
+          <% elsif Current.user.complimentary? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
+              <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">Complimentary</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">You have complimentary premium access.</p>
 
-  <% elsif @subscription&.active? %>
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2">Premium Plan</h2>
-      <p class="text-[var(--color-subtext)] text-sm mb-4">
-        <%= @subscription.canceling? ? "Ends" : "Renews" %> on <%= (@subscription.canceling? ? @subscription.cancel_at : @subscription.current_period_end).strftime("%B %d, %Y") %>
-      </p>
-      <%= button_to "Manage Subscription", portal_session_path, class: button_classes(type: :secondary), data: { turbo: false } %>
-    <% end %>
+          <% elsif @subscription&.active? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
+              <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">Active</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              <%= @subscription.canceling? ? "Ends" : "Renews" %> on <%= (@subscription.canceling? ? @subscription.cancel_at : @subscription.current_period_end).strftime("%B %d, %Y") %>
+            </p>
+            <div class="mt-4">
+              <%= button_to "Manage Subscription", portal_session_path, class: button_classes(type: :secondary), data: { turbo: false } %>
+            </div>
 
-  <% elsif @subscription&.past_due? %>
-    <div class="bg-[var(--color-yellow)]/10 border border-[var(--color-yellow)]/30 rounded-lg p-4 sm:p-8">
-      <h2 class="text-lg font-medium mb-2">Payment Failed</h2>
-      <p class="text-[var(--color-subtext)] text-sm mb-4">Please update your payment method to restore Premium access.</p>
-      <%= button_to "Fix Payment", portal_session_path,
-        class: "px-4 py-2 bg-[var(--color-yellow)] text-[var(--color-base)] rounded-lg hover:opacity-90",
-        data: { turbo: false } %>
+          <% elsif @subscription&.past_due? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
+              <span class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400">Past Due</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">Please update your payment method to restore Premium access.</p>
+            <div class="mt-4">
+              <%= button_to "Fix Payment", portal_session_path, class: button_classes(type: :primary), data: { turbo: false } %>
+            </div>
+
+          <% elsif @subscription&.canceled? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
+              <span class="inline-flex items-center rounded-full bg-mist-100 px-2 py-1 text-xs font-medium text-mist-600 dark:bg-mist-500/10 dark:text-mist-400">Canceled</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              Your subscription ended on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>.
+            </p>
+          <% end %>
+        </div>
+      </div>
     </div>
 
-  <% elsif @subscription&.canceled? %>
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2">Subscription Ended</h2>
-      <p class="text-[var(--color-subtext)] text-sm">
-        Your subscription ended on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>.
-      </p>
+    <% if @subscription&.canceled? %>
+      <%# Upgrade section for canceled users %>
+      <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+        <div>
+          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Resubscribe</h2>
+          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pick up where you left off with a new subscription.</p>
+        </div>
+        <div class="md:col-span-2">
+          <%= render "upgrade_options" %>
+        </div>
+      </div>
     <% end %>
-    <div class="mt-6">
-      <%= render "upgrade_options" %>
-    </div>
-  <% end %>
+  </div>
 </div>

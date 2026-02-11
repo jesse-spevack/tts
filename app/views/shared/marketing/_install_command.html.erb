@@ -1,0 +1,14 @@
+<%# Terminal-style install command with copy button %>
+<%# Locals: snippet (string, the command text), variant (string, "normal" or "overlay", default "normal") %>
+<% variant = local_assigns[:variant] || "normal" %>
+<% snippet = local_assigns[:snippet] || "" %>
+<div class="flex items-center justify-between gap-6 rounded-full p-1 font-mono text-sm/7 inset-ring-1 dark:bg-white/10 dark:inset-ring-white/10 <%= variant == 'normal' ? 'bg-white text-mist-600 inset-ring-black/10 dark:text-white' : 'bg-white/15 text-white inset-ring-white/10' %>">
+  <div class="flex items-center gap-2 pl-3">
+    <div class="text-current/60 select-none">$</div>
+    <el-copyable id="snippet"><%= snippet %></el-copyable>
+  </div>
+  <button command="--copy" commandfor="snippet" type="button" class="group relative flex size-9 items-center justify-center rounded-full after:absolute after:-inset-1 hover:bg-mist-950/10 dark:hover:bg-white/10 after:pointer-fine:hidden">
+    <%= render "shared/marketing/icons/squares_2_stacked", css_class: "group-data-copied:hidden" %>
+    <%= render "shared/marketing/icons/checkmark", css_class: "not-group-data-copied:hidden" %>
+  </button>
+</div>

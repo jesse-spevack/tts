@@ -1,36 +1,45 @@
-<div class="max-w-2xl mx-auto">
-  <h1 class="text-3xl font-bold mb-8">Terms of Service</h1>
+<%= render "shared/marketing/navbar_centered_links",
+  links: [
+    { label: "How it works", href: root_path + "#features" },
+    { label: "Pricing", href: root_path + "#pricing" },
+    { label: "About", href: about_path },
+  ],
+  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
+    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+
+<div class="max-w-2xl mx-auto px-6 py-16">
+  <h1 class="font-display text-3xl tracking-tight text-mist-950 dark:text-white mb-8">Terms of Service</h1>
 
   <%= render "shared/card", padding: "p-8" do %>
-    <div class="prose prose-sm text-[var(--color-text)]">
-      <p class="text-[var(--color-subtext)] mb-6">
+    <div class="prose prose-sm text-mist-950 dark:text-white">
+      <p class="text-mist-500 dark:text-mist-400 mb-6">
         <strong>Beta Release</strong> — Last updated: <%= Date.today.strftime("%B %Y") %>
       </p>
 
       <p class="mb-4">By using Very Normal TTS, you agree to these terms:</p>
 
       <h2 class="text-lg font-semibold mt-6 mb-2">1. Beta Software</h2>
-      <p class="mb-4 text-[var(--color-subtext)]">
+      <p class="mb-4 text-mist-500 dark:text-mist-400">
         This service is in beta. Features may change, break, or disappear without notice.
       </p>
 
       <h2 class="text-lg font-semibold mt-6 mb-2">2. No Guarantees</h2>
-      <p class="mb-4 text-[var(--color-subtext)]">
+      <p class="mb-4 text-mist-500 dark:text-mist-400">
         We provide this service "as is" with no warranty. We're not liable for any damages from using this service.
       </p>
 
       <h2 class="text-lg font-semibold mt-6 mb-2">3. Your Content</h2>
-      <p class="mb-4 text-[var(--color-subtext)]">
+      <p class="mb-4 text-mist-500 dark:text-mist-400">
         You must have the right to upload any content you submit. We may delete your content at any time.
       </p>
 
       <h2 class="text-lg font-semibold mt-6 mb-2">4. Account Termination</h2>
-      <p class="mb-4 text-[var(--color-subtext)]">
+      <p class="mb-4 text-mist-500 dark:text-mist-400">
         We may suspend or terminate your account at any time for any reason.
       </p>
 
       <h2 class="text-lg font-semibold mt-6 mb-2">5. Changes</h2>
-      <p class="mb-4 text-[var(--color-subtext)]">
+      <p class="mb-4 text-mist-500 dark:text-mist-400">
         We may update these terms at any time. Continued use means you accept the changes.
       </p>
     </div>

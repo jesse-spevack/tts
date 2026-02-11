@@ -1,0 +1,34 @@
+<%# Feature card for use inside _features_two_col.html.erb
+    Each card has a demo/screenshot area, a headline, subheadline text, and an optional CTA.
+
+    Locals:
+      headline:    (String) feature title
+      subheadline: (String) feature description
+      cta_text:    (String, optional) link text
+      cta_href:    (String, optional) link URL
+
+    Usage: Provide the demo/screenshot content in the yielded block.
+
+    Example:
+      render "shared/marketing/features_two_col_card", headline: "Shared Inbox", subheadline: "..." do
+        <img src="/placeholder.webp" alt="" class="w-full">
+      end
+%>
+
+<div class="rounded-lg bg-mist-950/2.5 p-2 dark:bg-white/5">
+  <div class="relative overflow-hidden rounded-sm dark:after:absolute dark:after:inset-0 dark:after:rounded-sm dark:after:outline-1 dark:after:-outline-offset-1 dark:after:outline-white/10">
+    <%= yield %>
+  </div>
+  <div class="flex flex-col gap-4 p-6 sm:p-10 lg:p-6">
+    <div>
+      <h3 class="text-base/8 font-medium text-mist-950 dark:text-white"><%= headline %></h3>
+      <div class="mt-2 flex flex-col gap-4 text-sm/7 text-mist-700 dark:text-mist-400"><%= subheadline %></div>
+    </div>
+    <% if local_assigns[:cta_text] && local_assigns[:cta_href] %>
+      <a href="<%= cta_href %>" class="inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white">
+        <%= cta_text %>
+        <svg width="6" height="10" viewBox="0 0 6 10" fill="none" stroke="currentColor" class="inline-block" stroke-width="1"><path d="M1 1L5 5L1 9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    <% end %>
+  </div>
+</div>

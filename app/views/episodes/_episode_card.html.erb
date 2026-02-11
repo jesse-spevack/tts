@@ -1,26 +1,45 @@
 <%= turbo_frame_tag dom_id(episode), data: { testid: "episode-card" } do %>
-  <%= render "shared/card" do %>
-    <div class="mb-2 flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <%= status_badge(episode.status) %>
+  <li class="relative">
+    <% row_classes = "flex items-center gap-4 py-4 px-2 -mx-2 rounded-lg" %>
+    <% if episode.complete? %>
+      <%= link_to episode_path(episode.prefix_id), class: "#{row_classes} hover:bg-mist-50 dark:hover:bg-mist-800 group transition-colors" do %>
+        <span class="<%= status_dot_class(episode.status) %>"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm/6 font-medium text-mist-950 dark:text-white truncate"><%= episode.title %></p>
+          <p class="text-sm/6 text-mist-500 dark:text-mist-400 truncate">
+            by <%= episode.author %><% if episode.created_at %> &middot; <%= episode.created_at.strftime("%b %d, %Y") %><% end %>
+          </p>
+        </div>
+        <% if episode.duration_seconds %>
+          <span class="text-sm text-mist-500 dark:text-mist-400 flex-shrink-0"><%= format_duration(episode.duration_seconds) %></span>
+        <% end %>
+        <svg class="size-5 text-mist-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+        </svg>
+      <% end %>
+    <% else %>
+      <div class="<%= row_classes %>">
+        <span class="<%= status_dot_class(episode.status) %>"></span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm/6 font-medium text-mist-950 dark:text-white truncate"><%= episode.title %></p>
+          <p class="text-sm/6 text-mist-500 dark:text-mist-400 truncate">
+            <%= status_badge(episode.status) %>
+            <% if episode.failed? && episode.error_message.present? %>
+              &mdash; <span class="text-rose-600 dark:text-rose-400"><%= episode.error_message %></span>
+            <% end %>
+          </p>
+        </div>
+        <% if deletable?(episode) %>
+          <%= button_to episode_path(episode, page: params[:page]),
+            method: :delete,
+            form_class: "contents",
+            class: "text-mist-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer flex-shrink-0",
+            title: "Delete episode",
+            data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?" } do %>
+            <%= render "shared/icons/trash" %>
+          <% end %>
+        <% end %>
       </div>
-      <%= render "episodes/episode_actions", episode: episode, layout: :compact %>
-    </div>
-    <% if episode.failed? && episode.error_message.present? %>
-      <p class="text-sm text-[var(--color-red)] mt-1"><%= episode.error_message %></p>
     <% end %>
-    <h2 class="text-lg font-semibold mb-1"><%= episode.title %></h2>
-    <% if episode.url? && episode.source_url.present? %>
-      <p class="text-xs text-[var(--color-subtext)] truncate mb-1">
-        <%= link_to episode.source_url, episode.source_url, target: "_blank", class: "hover:underline" %>
-      </p>
-    <% end %>
-    <div class="flex justify-between items-center text-sm text-[var(--color-subtext)]">
-      <span>by <%= episode.author %></span>
-      <span><%= episode.created_at.strftime("%b %d, %Y") %></span>
-    </div>
-    <p class="mt-2 text-xs text-[var(--color-subtext)] font-mono truncate">
-      <%= episode.content_preview %>
-    </p>
-  <% end %>
+  </li>
 <% end %>

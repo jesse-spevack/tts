@@ -1,0 +1,11 @@
+<%# Individual team member card %>
+<%# Locals: name (string), byline (string), img_src (string, URL to photo) %>
+<li class="flex flex-col gap-4 text-sm/7">
+  <div class="aspect-3/4 w-full overflow-hidden rounded-sm outline -outline-offset-1 outline-black/5 *:size-full *:object-cover dark:outline-white/5">
+    <img src="<%= local_assigns[:img_src] || '/placeholder.webp' %>" alt="<%= name %>">
+  </div>
+  <div>
+    <p class="font-semibold text-mist-950 dark:text-white"><%= name %></p>
+    <p class="text-mist-700 dark:text-mist-400"><%= byline %></p>
+  </div>
+</li>

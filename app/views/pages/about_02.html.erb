@@ -1,0 +1,110 @@
+<%# About 02 - Two-column hero with photo, brands cards, team three-col, features/values three-col, CTA
+  Navbar: centered links | Footer: link categories
+  Template source: pages/about-02.tsx
+%>
+
+<%# ===== Navbar (centered links) ===== %>
+<%= render "shared/marketing/navbar_centered_links",
+  links: [
+    { label: "How it works", href: root_path + "#features" },
+    { label: "Pricing", href: root_path + "#pricing" },
+    { label: "About", href: "#hero" },
+  ],
+  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
+    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+
+<%# ===== Hero (two-column with photo) ===== %>
+<%= render "shared/marketing/hero_two_col_photo",
+  eyebrow: render("shared/marketing/announcement_badge", text: "Now with premium HD voices", tag: "button", cta: "Hear how it sounds", data: { action: "click->sample-modal#open" }),
+  headline: "Articles in. Podcast episodes out.",
+  subheadline: '<p>Podcasts fit into your life &mdash; on commutes, during workouts, while cooking. There&rsquo;s more great writing out there than any of us have time to sit down and read. PodRead bridges the gap: the depth of your favorite writing with the convenience of a podcast.</p>'.html_safe,
+  photo: render("pages/about_hero_illustration") %>
+
+<%# Brands %>
+<%= render layout: "shared/marketing/brands_cards", locals: {
+  id: "brands",
+  eyebrow: "Works everywhere",
+  headline: "Works with every podcast app.",
+  subheadline: '<p>PodRead creates a private podcast feed that works with every major podcast player. No new apps to install. Just subscribe and listen.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Episodes appear alongside your other podcasts. Syncs across iPhone, iPad, Mac, and Apple Watch." do %>
+    <span class="text-lg font-semibold text-mist-950 dark:text-white">Apple Podcasts</span>
+  <% end %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Listen between songs and shows. Your articles live right in your existing library." do %>
+    <span class="text-lg font-semibold text-mist-950 dark:text-white">Spotify</span>
+  <% end %>
+  <%= render "shared/marketing/brands_cards_item",
+    text: "Pocket Casts, Castro, and any app that supports RSS. Add once, listen everywhere." do %>
+    <span class="text-lg font-semibold text-mist-950 dark:text-white">Overcast & more</span>
+  <% end %>
+<% end %>
+
+<%# Features / Values (three-column) %>
+<%= render layout: "shared/marketing/features_three_col", locals: {
+  id: "features",
+  headline: "What I believe in.",
+  subheadline: '<p>PodRead is built on a few simple principles about how I think software should be made.</p>'.html_safe
+} do %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Craft", subheadline: '<p>Take pride in what you do. Natural-sounding voices, clean article extraction, reliable feed. No feature bloat, no shortcuts.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/home", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Anti-Enshittification", subheadline: '<p>No ads in your feed. No algorithmic recommendations. No dark patterns. PodRead makes money when you pay for it, not when it sells your attention. Your data stays yours.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/shield_exclamation", css_class: "size-3.25" %>
+  <% end %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Independence", subheadline: '<p>Bootstrapped. No VC funding. No investors to answer to. Built for users, not a board of directors. Cancel anytime, no questions asked.</p>'.html_safe do %>
+    <%= render "shared/marketing/icons/compass", css_class: "size-3.25" %>
+  <% end %>
+<% end %>
+
+<%# Call To Action %>
+<%= render "shared/marketing/cta_simple",
+  headline: "Ready to listen to your reading list?",
+  subheadline: '<p>Try PodRead free. Two episodes a month, no credit card required. Upgrade anytime for unlimited episodes and premium voices.</p>'.html_safe,
+  cta: '<div class="flex items-center gap-4">
+    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Try PodRead free</button>
+    <a href="/#pricing" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white">View pricing <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" role="image" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
+  </div>'.html_safe %>
+
+<%# ===== Footer (link categories) ===== %>
+<%= render "shared/marketing/footer_categories",
+  categories: [
+    {
+      title: "Product",
+      links: [
+        { label: "How it works", href: root_path + "#features" },
+        { label: "Pricing", href: root_path + "#pricing" },
+        { label: "Browser extension", href: help_extension_path },
+      ]
+    },
+    {
+      title: "About",
+      links: [
+        { label: "Our story", href: about_path },
+      ]
+    },
+    {
+      title: "Connect",
+      links: [
+        { label: "Twitter", href: "https://x.com/pod_read" },
+        { label: "GitHub", href: "https://github.com/jesse-spevack/tts/blob/main/LICENSE.md" },
+        { label: "Blog", href: "https://verynormal.info" },
+      ]
+    },
+    {
+      title: "Support",
+      links: [
+        { label: "Help Center", href: how_it_sounds_path },
+        { label: "Contact", href: "mailto:jspevack@gmail.com" },
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: privacy_path },
+        { label: "Terms of Service", href: terms_path },
+      ]
+    },
+  ],
+  fineprint: "PodRead is built by Jesse Spevack in Denver, CO. &copy; 2026 PodRead. All rights reserved." %>

@@ -9,11 +9,11 @@ export default class extends Controller {
     // Update tab styles
     this.tabTargets.forEach(tab => {
       if (tab.dataset.tab === selectedTab) {
-        tab.classList.add("bg-[var(--color-surface0)]", "text-[var(--color-text)]")
-        tab.classList.remove("text-[var(--color-subtext)]")
+        tab.classList.add("border-b-2", "border-mist-950", "text-mist-950", "dark:border-white", "dark:text-white")
+        tab.classList.remove("text-mist-500", "dark:text-mist-400", "hover:text-mist-700", "dark:hover:text-mist-300")
       } else {
-        tab.classList.remove("bg-[var(--color-surface0)]", "text-[var(--color-text)]")
-        tab.classList.add("text-[var(--color-subtext)]")
+        tab.classList.remove("border-b-2", "border-mist-950", "text-mist-950", "dark:border-white", "dark:text-white")
+        tab.classList.add("text-mist-500", "dark:text-mist-400", "hover:text-mist-700", "dark:hover:text-mist-300")
       }
     })
 

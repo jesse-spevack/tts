@@ -12,13 +12,79 @@
   <meta name="twitter:image" content="https://verynormal.info/content/images/2022/11/verynormallogo2.png">
 <% end %>
 
-<div class="max-w-2xl mx-auto">
-  <%= render "shared/card", padding: "p-8" do %>
-    <p class="text-sm text-[var(--color-subtext)] mb-2">Audio transcribed by Very Normal TTS</p>
+<% if authenticated? %>
+  <%# === Owner View: Two-column detail layout === %>
+  <%= render "shared/back_link", path: episodes_path, text: "Episodes" %>
 
-    <h1 class="text-2xl font-semibold mb-2"><%= @episode.title %></h1>
+  <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <%# Left column: Main content (2/3 width) %>
+    <div class="md:col-span-2">
+      <h1 class="font-display text-2xl md:text-3xl font-semibold text-mist-950 dark:text-white mb-2"><%= @episode.title %></h1>
 
-    <p class="text-sm text-[var(--color-subtext)] mb-6">
+      <p class="text-sm text-mist-500 dark:text-mist-400 mb-6">
+        by <%= @episode.author %>
+      </p>
+
+      <div class="mb-6">
+        <%= render "shared/audio_player", source: @episode.audio_url, preload: "metadata" %>
+      </div>
+
+      <% if @episode.description.present? %>
+        <div class="prose prose-mist dark:prose-invert max-w-none">
+          <p class="text-mist-500 dark:text-mist-400"><%= @episode.description %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Right column: Summary card (1/3 width) %>
+    <div>
+      <div class="rounded-xl bg-mist-50 p-6 dark:bg-mist-900">
+        <h2 class="text-sm font-semibold text-mist-950 dark:text-white mb-4">Details</h2>
+
+        <dl class="divide-y divide-mist-950/5 dark:divide-white/5">
+          <div class="flex justify-between py-3">
+            <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Status</dt>
+            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= status_badge(@episode.status) %></dd>
+          </div>
+
+          <% if @episode.duration_seconds %>
+            <div class="flex justify-between py-3">
+              <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Duration</dt>
+              <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= format_duration(@episode.duration_seconds) %></dd>
+            </div>
+          <% end %>
+
+          <div class="flex justify-between py-3">
+            <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Created</dt>
+            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= @episode.created_at.strftime("%b %-d, %Y") %></dd>
+          </div>
+
+          <% if @episode.url? && @episode.source_url.present? %>
+            <div class="flex justify-between py-3">
+              <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Source</dt>
+              <dd class="text-sm/6 font-medium text-mist-950 dark:text-white truncate ml-4">
+                <%= link_to URI.parse(@episode.source_url).host, @episode.source_url, target: "_blank", rel: "noopener", class: "hover:underline" %>
+              </dd>
+            </div>
+          <% end %>
+        </dl>
+
+        <%# Action buttons %>
+        <div class="mt-6 flex flex-col gap-3">
+          <%= render "episodes/episode_actions", episode: @episode, layout: :card %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<% else %>
+  <%# === Public/Shared View: Simple centered content === %>
+  <div class="mx-auto max-w-2xl px-6 py-16 lg:py-24">
+    <p class="text-sm text-mist-500 dark:text-mist-400 mb-4">Audio transcribed by Very Normal TTS</p>
+
+    <h1 class="font-display text-3xl md:text-4xl font-semibold text-mist-950 dark:text-white mb-2"><%= @episode.title %></h1>
+
+    <p class="text-sm text-mist-500 dark:text-mist-400 mb-8">
       by <%= @episode.author %>
       <% if @episode.duration_seconds %>
         <span class="mx-2">&middot;</span>
@@ -26,19 +92,18 @@
       <% end %>
     </p>
 
-    <div class="mb-6">
+    <div class="mb-8">
       <%= render "shared/audio_player", source: @episode.audio_url, preload: "metadata" %>
     </div>
 
-    <p class="text-[var(--color-subtext)] mb-6"><%= @episode.description %></p>
+    <% if @episode.description.present? %>
+      <p class="text-mist-500 dark:text-mist-400 mb-12"><%= @episode.description %></p>
+    <% end %>
 
-    <%= render "episodes/episode_actions", episode: @episode, layout: :full %>
-  <% end %>
-
-  <% unless authenticated? %>
-    <div class="mt-8 text-center">
-      <h2 class="text-xl font-semibold mb-2">Listen to anything.</h2>
-      <p class="text-[var(--color-subtext)] mb-6">Turn articles into audio with your own personal podcast feed.</p>
+    <%# Sign-up CTA %>
+    <div class="border-t border-mist-200 dark:border-mist-700 pt-12 text-center">
+      <h2 class="font-display text-2xl font-semibold text-mist-950 dark:text-white mb-2">Listen to anything.</h2>
+      <p class="text-mist-500 dark:text-mist-400 mb-8">Turn articles into audio with your own personal podcast feed.</p>
 
       <%= form_with url: session_path, class: "max-w-md mx-auto" do |form| %>
         <div class="flex flex-col sm:flex-row gap-4 sm:gap-x-4">
@@ -47,13 +112,13 @@
               required: true,
               autocomplete: "username",
               placeholder: "Enter your email",
-              class: "min-w-0 flex-auto rounded-lg bg-[var(--color-surface0)] px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-[var(--color-overlay0)] placeholder:text-[var(--color-subtext)] focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--color-primary)]" %>
-          <%= form.submit "Get started", class: "flex-none rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] cursor-pointer" %>
+              class: "min-w-0 flex-auto rounded-lg bg-white dark:bg-mist-800 px-4 py-2.5 text-base outline-1 -outline-offset-1 outline-mist-200 dark:outline-mist-700 placeholder:text-mist-500 dark:placeholder:text-mist-400 focus:outline-2 focus:-outline-offset-2 focus:outline-mist-950 dark:focus:outline-white" %>
+          <%= form.submit "Get started", class: "flex-none rounded-lg bg-mist-950 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-mist-950 shadow-sm hover:bg-mist-800 dark:hover:bg-mist-200 cursor-pointer" %>
         </div>
-        <p class="mt-4 text-sm text-[var(--color-subtext)]">
+        <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">
           Free tier, no credit card required. <%= render "shared/legal_links" %>
         </p>
       <% end %>
     </div>
-  <% end %>
-</div>
+  </div>
+<% end %>

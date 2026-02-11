@@ -20,6 +20,8 @@ Rails.application.routes.draw do
   # Static pages
   get "terms", to: "pages#terms"
   get "privacy", to: "pages#privacy"
+  get "about" => "pages#about_02", as: :about
+  get "about-02" => redirect("/about")
   get "how-it-sounds", to: "pages#how_it_sounds"
   get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
   get "help/extension", to: "pages#extension_help", as: :help_extension
@@ -74,6 +76,9 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
+  # Marketing preview (dev tool for inspecting icons)
+  get "marketing-preview/icons", to: "marketing_preview#icons", as: :marketing_preview_icons
 
   # Test helpers (only available in development/test)
   if Rails.env.local?

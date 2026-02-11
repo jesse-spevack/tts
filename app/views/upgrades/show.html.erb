@@ -1,14 +1,47 @@
-<div class="max-w-2xl mx-auto px-4 py-8">
+<div class="mx-auto max-w-4xl px-4 py-8">
   <%= render "shared/back_link", path: episodes_path, text: "Back to Episodes" %>
-  <h1 class="text-3xl font-bold text-[var(--color-text)] mb-8">Upgrade</h1>
+  <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-10">Upgrade</h1>
 
-  <div class="border border-[var(--color-overlay0)] rounded-lg p-6 mb-6">
-    <h2 class="text-xl font-semibold text-[var(--color-text)] mb-2">Free Plan</h2>
-    <% if @usage %>
-      <p class="text-[var(--color-subtext)]">
-        <%= @usage.episode_count %> of <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes used this month
-      </p>
-    <% end %>
+  <div class="space-y-12">
+    <%# Current Plan section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Current Plan</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Your free plan usage this month.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <div class="flex items-center gap-3">
+            <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Free</h3>
+            <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">Active</span>
+          </div>
+          <% if @usage %>
+            <% used = @usage.episode_count %>
+            <% total = AppConfig::Tiers::FREE_MONTHLY_EPISODES %>
+            <% pct = total > 0 ? (used * 100.0 / total).round : 0 %>
+            <div class="mt-4">
+              <div class="flex justify-between text-sm/6">
+                <span class="text-mist-500 dark:text-mist-400"><%= used %> of <%= total %> episodes</span>
+                <span class="font-medium text-mist-950 dark:text-white"><%= pct %>%</span>
+              </div>
+              <div class="mt-2 h-2 rounded-full bg-mist-200 dark:bg-mist-700">
+                <div class="h-full rounded-full bg-mist-950 dark:bg-white" style="width: <%= pct %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# Upgrade section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Upgrade to Premium</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Unlock unlimited episodes and longer content.</p>
+      </div>
+      <div class="md:col-span-2">
+        <%= render "billing/upgrade_options" %>
+      </div>
+    </div>
   </div>
-  <%= render "billing/upgrade_options" %>
 </div>

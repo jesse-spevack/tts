@@ -1,0 +1,42 @@
+<%# pricing-multi-tier
+    Renders a pricing section (without tab toggle) with eyebrow, headline, subheadline,
+    and a responsive grid of plan cards.
+
+    Locals:
+      eyebrow:     (String, optional) small label above headline
+      headline:    (String, optional) section heading
+      subheadline: (String, optional) section description
+      id:          (String, optional) section id attribute
+
+    Usage: Provide plan cards in the yielded block.
+
+    Example:
+      render "shared/marketing/pricing_multi", eyebrow: "Pricing", headline: "Simple, transparent pricing." do
+        render "shared/marketing/pricing_hero_multi_plan", name: "Free", price: "$0", ...
+        render "shared/marketing/pricing_hero_multi_plan", name: "Pro", price: "$19", ...
+      end
+%>
+
+<section class="py-16" <% if local_assigns[:id] %>id="<%= id %>"<% end %>>
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col gap-10 sm:gap-16">
+    <% if local_assigns[:headline] %>
+      <div class="flex max-w-2xl flex-col gap-6">
+        <div class="flex flex-col gap-2">
+          <% if local_assigns[:eyebrow] %>
+            <div class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400"><%= eyebrow %></div>
+          <% end %>
+          <h2 class="font-display text-[2rem]/10 tracking-tight text-pretty text-mist-950 sm:text-5xl/14 dark:text-white"><%= headline %></h2>
+        </div>
+        <% if local_assigns[:subheadline] %>
+          <div class="text-base/7 text-mist-700 dark:text-mist-400 text-pretty"><%= subheadline %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div>
+      <div class="grid grid-cols-1 gap-2 sm:has-[>:nth-child(5)]:grid-cols-2 sm:max-lg:has-[>:last-child:nth-child(even)]:grid-cols-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none lg:has-[>:nth-child(5)]:grid-flow-row lg:has-[>:nth-child(5)]:grid-cols-3">
+        <%= yield %>
+      </div>
+    </div>
+  </div>
+</section>

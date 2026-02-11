@@ -1,0 +1,150 @@
+<%# plan-comparison-table
+    Renders a feature comparison table for multiple plans.
+    Desktop shows a full multi-column table; mobile shows tab-switched single-plan tables.
+
+    Uses @tailwindplus/elements Web Components for mobile tabs:
+      <el-tab-group>, <el-tab-list>, <el-tab-panels>
+
+    Locals:
+      plans:    (Array<String>) plan names, e.g. ["Starter", "Growth", "Pro"]
+      features: (Array<Hash>) feature groups, each with:
+                  title:    (String) group name
+                  features: (Array<Hash>) each with:
+                    name:  (String) feature name
+                    value: (Hash<String, value> or single value)
+                           value can be: true (checkmark), false (minus), or a String
+                           If a Hash, keyed by plan name
+      id:       (String, optional) section id attribute
+
+    Example:
+      render "shared/marketing/plan_comparison",
+            plans: ["Starter", "Growth", "Pro"],
+            features: [
+              {
+                title: "Collaboration",
+                features: [
+                  { name: "Shared inboxes", value: { "Starter" => "2", "Growth" => "Unlimited", "Pro" => "Unlimited" } },
+                  { name: "Private notes", value: true },
+                ]
+              }
+            ]
+%>
+
+<section class="py-16" <% if local_assigns[:id] %>id="<%= id %>"<% end %>>
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+
+    <%# Desktop table (hidden on small screens) %>
+    <table class="w-full border-collapse text-left text-sm/5 max-sm:hidden">
+      <colgroup>
+        <col class="w-2/5">
+        <% plans.each do |plan| %>
+          <col style="width: calc(60% / <%= plans.length %>)">
+        <% end %>
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="sticky top-(--scroll-padding-top) bg-mist-100 py-5 pr-3 text-base/7 font-medium text-mist-950 dark:bg-mist-950 dark:text-white">
+            Compare features
+          </th>
+          <% plans.each do |plan| %>
+            <th class="sticky top-(--scroll-padding-top) bg-mist-100 p-3 text-center font-semibold text-mist-950 dark:bg-mist-950 dark:text-white">
+              <%= plan %>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <% features.each do |group| %>
+        <tbody>
+          <tr>
+            <th colspan="<%= plans.length + 1 %>" scope="colgroup" class="border-t border-b border-t-mist-950/5 border-b-mist-950/10 pt-14 pb-4 font-semibold text-mist-950 dark:border-t-white/5 dark:border-b-white/10 dark:text-white">
+              <%= group[:title] %>
+            </th>
+          </tr>
+          <% group[:features].each_with_index do |feature, fi| %>
+            <tr class="group">
+              <th scope="row" class="border-t border-mist-950/5 py-4 pr-3 font-normal text-mist-700 <%= 'group-first:border-mist-950/10 dark:group-first:border-white/10' if fi == 0 %> dark:border-white/5 dark:text-mist-400">
+                <%= feature[:name] %>
+              </th>
+              <% plans.each do |plan| %>
+                <%
+                  val = feature[:value]
+                  val = val[plan] if val.is_a?(Hash) && val.key?(plan)
+                %>
+                <td class="border-t border-mist-950/5 px-3 py-4 text-center text-mist-700 <%= 'group-first:border-mist-950/10 dark:group-first:border-white/10' if fi == 0 %> dark:border-white/10 dark:text-mist-400">
+                  <% if val == true %>
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1" role="image" aria-label="Included" class="inline-block stroke-mist-950 dark:stroke-white">
+                      <path d="M1.5 6.5L5.5 11.5L11.5 1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  <% elsif val == false %>
+                    <svg width="13" height="1" viewBox="0 0 13 1" fill="none" stroke="currentColor" stroke-width="1" role="image" aria-label="Not included" class="inline-block stroke-mist-950 dark:stroke-white">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.505.5h-12" />
+                    </svg>
+                  <% else %>
+                    <%= val %>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      <% end %>
+    </table>
+
+    <%# Mobile tab view (hidden on sm+) %>
+    <div class="sm:hidden">
+      <el-tab-group>
+        <el-tab-list class="flex gap-6">
+          <% plans.each do |plan| %>
+            <button type="button" class="relative -mb-px flex-1 border-b border-b-transparent px-2 py-6 text-sm/5 font-medium text-mist-500 aria-selected:border-mist-950 aria-selected:text-mist-950 dark:aria-selected:border-white dark:aria-selected:text-white">
+              <%= plan %>
+            </button>
+          <% end %>
+        </el-tab-list>
+        <el-tab-panels>
+          <% plans.each do |plan| %>
+            <table class="w-full border-collapse text-left text-sm/5">
+              <colgroup>
+                <col class="w-3/4">
+                <col class="w-1/4">
+              </colgroup>
+              <% features.each do |group| %>
+                <tbody>
+                  <tr>
+                    <th colspan="2" scope="colgroup" class="border-t border-b border-t-mist-950/5 border-b-mist-950/10 pt-14 pb-4 font-semibold text-mist-950 dark:border-t-white/5 dark:border-b-white/10 dark:text-white">
+                      <%= group[:title] %>
+                    </th>
+                  </tr>
+                  <% group[:features].each_with_index do |feature, fi| %>
+                    <tr class="group">
+                      <th scope="row" class="border-t border-mist-950/5 py-4 pr-3 font-normal text-mist-700 <%= 'group-first:border-mist-950/10 dark:group-first:border-white/10' if fi == 0 %> dark:border-white/5 dark:text-mist-400">
+                        <%= feature[:name] %>
+                      </th>
+                      <%
+                        val = feature[:value]
+                        val = val[plan] if val.is_a?(Hash) && val.key?(plan)
+                      %>
+                      <td class="border-t border-mist-950/5 px-3 py-4 text-center text-mist-700 <%= 'group-first:border-mist-950/10 dark:group-first:border-white/10' if fi == 0 %> dark:border-white/10 dark:text-mist-400">
+                        <% if val == true %>
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1" role="image" aria-label="Included" class="inline-block stroke-mist-950 dark:stroke-white">
+                            <path d="M1.5 6.5L5.5 11.5L11.5 1.5" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        <% elsif val == false %>
+                          <svg width="13" height="1" viewBox="0 0 13 1" fill="none" stroke="currentColor" stroke-width="1" role="image" aria-label="Not included" class="inline-block stroke-mist-950 dark:stroke-white">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.505.5h-12" />
+                          </svg>
+                        <% else %>
+                          <%= val %>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              <% end %>
+            </table>
+          <% end %>
+        </el-tab-panels>
+      </el-tab-group>
+    </div>
+
+  </div>
+</section>

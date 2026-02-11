@@ -9,7 +9,7 @@
         icon: "share"
       %>
       <%= link_to episode_path(episode.prefix_id, format: :mp3),
-        class: "text-[var(--color-subtext)] hover:text-[var(--color-primary)] transition-colors",
+        class: "text-mist-500 dark:text-mist-400 hover:text-mist-950 dark:hover:text-white transition-colors",
         title: "Download MP3" do %>
         <%= render "shared/icons/download" %>
       <% end %>
@@ -18,36 +18,72 @@
       <%= button_to episode_path(episode, page: params[:page]),
         method: :delete,
         form_class: "contents",
-        class: "text-[var(--color-subtext)] hover:text-[var(--color-red)] transition-colors cursor-pointer",
+        class: "text-mist-500 dark:text-mist-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer",
         title: "Delete episode",
         data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?" } do %>
         <%= render "shared/icons/trash" %>
       <% end %>
     <% end %>
     <% if episode.duration_seconds %>
-      <span class="text-sm text-[var(--color-subtext)]"><%= format_duration(episode.duration_seconds) %></span>
+      <span class="text-sm text-mist-500 dark:text-mist-400"><%= format_duration(episode.duration_seconds) %></span>
     <% end %>
   </div>
+<% elsif layout == :card %>
+  <%# Card layout for show page summary card — stacked full-width buttons %>
+  <% if episode.complete? %>
+    <%= link_to episode_path(episode.prefix_id, format: :mp3),
+      class: "#{button_classes(type: :secondary)} flex items-center justify-center gap-2 w-full transition-colors" do %>
+      <%= render "shared/icons/download" %>
+      <span>Download MP3</span>
+    <% end %>
+
+    <%= render "shared/clipboard_button",
+      content: episode_url(episode.prefix_id),
+      title: "Copy share link",
+      icon: "share",
+      button_class: "#{button_classes(type: :secondary)} flex items-center justify-center gap-2 w-full transition-colors",
+      label: "Share"
+    %>
+
+    <% if episode.url? && episode.source_url.present? %>
+      <%= link_to episode.source_url, target: "_blank", rel: "noopener",
+        class: "#{button_classes(type: :secondary)} flex items-center justify-center gap-2 w-full transition-colors" do %>
+        <%= render "shared/icons/external_link" %>
+        <span>View Original</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if deletable?(episode) %>
+    <%= button_to episode_path(episode, page: params[:page]),
+      method: :delete,
+      form_class: "contents",
+      class: "#{button_classes(type: :danger)} flex items-center justify-center gap-2 w-full transition-colors",
+      data: { turbo_confirm: "Are you sure you want to delete '#{episode.title}'?" } do %>
+      <%= render "shared/icons/trash" %>
+      <span>Delete</span>
+    <% end %>
+  <% end %>
 <% else %>
-  <%# Full layout for show page with labeled buttons %>
+  <%# Full layout for show page with labeled buttons (legacy) %>
   <div class="flex gap-4">
     <%= render "shared/clipboard_button",
       content: episode_url(episode.prefix_id),
       title: "Copy share link",
       icon: "share",
-      button_class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors",
+      button_class: "flex items-center gap-2 border border-mist-200 dark:border-mist-700 text-mist-950 dark:text-white font-medium py-2 px-4 rounded-lg hover:border-mist-950 dark:hover:border-white cursor-pointer transition-colors",
       label: "Share"
     %>
 
     <%= link_to episode_path(episode.prefix_id, format: :mp3),
-      class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
+      class: "flex items-center gap-2 border border-mist-200 dark:border-mist-700 text-mist-950 dark:text-white font-medium py-2 px-4 rounded-lg hover:border-mist-950 dark:hover:border-white cursor-pointer transition-colors" do %>
       <%= render "shared/icons/download" %>
       <span>Download MP3</span>
     <% end %>
 
     <% if episode.url? && episode.source_url.present? %>
       <%= link_to episode.source_url, target: "_blank", rel: "noopener",
-        class: "flex items-center gap-2 border border-[var(--color-overlay0)] text-[var(--color-text)] font-medium py-2 px-4 rounded-lg hover:border-[var(--color-primary)] cursor-pointer transition-colors" do %>
+        class: "flex items-center gap-2 border border-mist-200 dark:border-mist-700 text-mist-950 dark:text-white font-medium py-2 px-4 rounded-lg hover:border-mist-950 dark:hover:border-white cursor-pointer transition-colors" do %>
         <%= render "shared/icons/external_link" %>
         <span>View Original</span>
       <% end %>

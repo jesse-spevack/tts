@@ -1,63 +1,75 @@
-<div class="max-w-2xl mx-auto">
+<div class="mx-auto max-w-4xl">
   <%= render "shared/back_link", path: settings_path, text: "Back to Settings" %>
   <%= render "shared/page_header", title: "Browser Extension" %>
 
-  <div class="space-y-6">
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2">Connection Status</h2>
+  <div class="space-y-12">
+    <%# Connection Status section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Connection Status</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">View and manage your browser extension connection.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <% if @api_token %>
+            <div class="flex items-center gap-2 mb-4">
+              <span class="inline-block h-2 w-2 rounded-full bg-green-600 dark:bg-green-400"></span>
+              <span class="text-sm/6 font-medium text-mist-950 dark:text-white">Connected</span>
+            </div>
 
-      <% if @api_token %>
-        <div class="flex items-center gap-2 mb-4">
-          <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-green)]"></span>
-          <span class="text-[var(--color-text)]">Connected</span>
+            <dl class="space-y-3 text-sm/6">
+              <div class="flex justify-between">
+                <dt class="text-mist-500 dark:text-mist-400">Last used</dt>
+                <dd class="text-mist-950 dark:text-white">
+                  <% if @api_token.last_used_at %>
+                    <%= time_ago_in_words(@api_token.last_used_at) %> ago
+                  <% else %>
+                    Never
+                  <% end %>
+                </dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-mist-500 dark:text-mist-400">Connected since</dt>
+                <dd class="text-mist-950 dark:text-white"><%= @api_token.created_at.strftime("%B %d, %Y") %></dd>
+              </div>
+            </dl>
+
+            <div class="mt-6 border-t border-mist-200 pt-6 dark:border-mist-700">
+              <%= button_to "Disconnect Extension",
+                            settings_extensions_path,
+                            method: :delete,
+                            class: "text-sm text-red-600 hover:underline dark:text-red-400",
+                            data: {
+                              turbo_confirm: "Are you sure you want to disconnect the extension? You'll need to reconnect from the extension to use it again."
+                            } %>
+            </div>
+          <% else %>
+            <div class="flex items-center gap-2 mb-4">
+              <span class="inline-block h-2 w-2 rounded-full bg-mist-400 dark:bg-mist-500"></span>
+              <span class="text-sm/6 text-mist-500 dark:text-mist-400">Not connected</span>
+            </div>
+
+            <p class="text-sm/6 text-mist-500 dark:text-mist-400">
+              Install the Chrome extension and click the icon while logged in to connect.
+            </p>
+          <% end %>
         </div>
+      </div>
+    </div>
 
-        <dl class="space-y-3 text-sm">
-          <div class="flex justify-between">
-            <dt class="text-[var(--color-subtext)]">Last used</dt>
-            <dd>
-              <% if @api_token.last_used_at %>
-                <%= time_ago_in_words(@api_token.last_used_at) %> ago
-              <% else %>
-                Never
-              <% end %>
-            </dd>
-          </div>
-          <div class="flex justify-between">
-            <dt class="text-[var(--color-subtext)]">Connected since</dt>
-            <dd><%= @api_token.created_at.strftime("%B %d, %Y") %></dd>
-          </div>
-        </dl>
-
-        <div class="mt-6 pt-6 border-t border-[var(--color-overlay0)]">
-          <%= button_to "Disconnect Extension",
-                        settings_extensions_path,
-                        method: :delete,
-                        class: "text-sm text-[var(--color-red)] hover:underline",
-                        data: {
-                          turbo_confirm: "Are you sure you want to disconnect the extension? You'll need to reconnect from the extension to use it again."
-                        } %>
+    <%# Get the Extension section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Get the Extension</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Send any article to your TTS podcast with one click.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <p class="text-sm/6 text-mist-500 dark:text-mist-400">
+            Chrome Web Store link coming soon.
+          </p>
         </div>
-      <% else %>
-        <div class="flex items-center gap-2 mb-4">
-          <span class="inline-block w-2 h-2 rounded-full bg-[var(--color-overlay1)]"></span>
-          <span class="text-[var(--color-subtext)]">Not connected</span>
-        </div>
-
-        <p class="text-sm text-[var(--color-subtext)]">
-          Install the Chrome extension and click the icon while logged in to connect.
-        </p>
-      <% end %>
-    <% end %>
-
-    <%= render "shared/card", padding: "p-4 sm:p-8" do %>
-      <h2 class="text-lg font-medium mb-2">Get the Extension</h2>
-      <p class="text-[var(--color-subtext)] text-sm mb-4">
-        Send any article to your TTS podcast with one click.
-      </p>
-      <p class="text-[var(--color-subtext)] text-sm">
-        Chrome Web Store link coming soon.
-      </p>
-    <% end %>
+      </div>
+    </div>
   </div>
 </div>

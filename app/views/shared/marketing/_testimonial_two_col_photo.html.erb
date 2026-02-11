@@ -1,0 +1,20 @@
+<%# Two-column testimonial with large photo %>
+<%# Locals: quote (html_safe string), name (string), byline (string), img_src (string, URL to large photo) %>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+    <figure class="grid grid-cols-1 gap-x-2 rounded-xl bg-mist-950/2.5 p-2 lg:grid-cols-2 dark:bg-white/5">
+      <div class="flex flex-col items-start justify-between gap-10 p-6 text-mist-950 sm:p-10 dark:text-white">
+        <blockquote class="relative flex flex-col gap-4 text-2xl/9 text-pretty *:first:before:absolute *:first:before:inline *:first:before:-translate-x-full *:first:before:content-['\201C'] *:last:after:inline *:last:after:content-['\201D']">
+          <%= quote %>
+        </blockquote>
+        <figcaption class="text-sm/7">
+          <p class="font-semibold"><%= name %></p>
+          <p class="text-mist-700 dark:text-mist-400"><%= byline %></p>
+        </figcaption>
+      </div>
+      <div class="flex overflow-hidden rounded-sm outline -outline-offset-1 outline-black/5 *:object-cover dark:outline-white/5">
+        <img src="<%= local_assigns[:img_src] || '/placeholder.webp' %>" alt="<%= name %>">
+      </div>
+    </figure>
+  </div>
+</section>

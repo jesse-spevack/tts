@@ -1,0 +1,18 @@
+<%# Single testimonial with large centered quote %>
+<%# Locals: quote (html_safe string), name (string), byline (string), img_src (string, URL to avatar image) %>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+    <figure class="text-mist-950 dark:text-white">
+      <blockquote class="mx-auto flex max-w-240 flex-col gap-4 text-center font-display text-[2rem]/12 tracking-tight text-pretty *:first:before:content-['\201C'] *:last:after:content-['\201D'] sm:text-5xl/16">
+        <%= quote %>
+      </blockquote>
+      <figcaption class="mt-16 flex flex-col items-center">
+        <div class="flex size-12 overflow-hidden rounded-full outline -outline-offset-1 outline-black/5 *:size-full *:object-cover dark:outline-white/5">
+          <img src="<%= local_assigns[:img_src] || '/placeholder.webp' %>" alt="<%= name %>">
+        </div>
+        <p class="mt-4 text-center text-sm/6 font-semibold"><%= name %></p>
+        <p class="text-center text-sm/6 text-mist-700 dark:text-mist-400"><%= byline %></p>
+      </figcaption>
+    </figure>
+  </div>
+</section>
