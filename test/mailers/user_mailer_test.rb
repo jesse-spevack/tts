@@ -61,7 +61,7 @@ class UserMailerTest < ActionMailer::TestCase
     user = users(:two)
     mail = UserMailer.feed_url_migration(user: user)
 
-    assert_match "https://podread.app/blog/rebrand", mail.body.encoded
+    assert_match "https://verynormal.info/very-normal-tts-is-now-podread/", mail.body.encoded
   end
 
   test "feed_url_migration includes rebrand messaging" do

@@ -14,7 +14,7 @@ class UserMailer < ApplicationMailer
   def feed_url_migration(user:)
     @user = user
     @feed_url = user.primary_podcast.feed_url
-    @blog_url = "https://podread.app/blog/rebrand"
+    @blog_url = "https://verynormal.info/very-normal-tts-is-now-podread/"
 
     mail(
       to: @user.email_address,
