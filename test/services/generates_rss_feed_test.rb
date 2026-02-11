@@ -72,4 +72,11 @@ class GeneratesRssFeedTest < ActiveSupport::TestCase
     assert result.include?(%(href="#{expected_url}"))
     assert result.include?('rel="self"')
   end
+
+  test "includes itunes:new-feed-url tag for feed migration" do
+    result = GeneratesRssFeed.call(podcast: @podcast)
+
+    expected_url = "https://example.com/feeds/#{@podcast.podcast_id}.xml"
+    assert result.include?("<itunes:new-feed-url>#{expected_url}</itunes:new-feed-url>")
+  end
 end
