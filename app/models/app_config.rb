@@ -60,7 +60,8 @@ class AppConfig
     end
 
     def self.public_feed_url(podcast_id)
-      "https://tts.verynormal.dev/feeds/#{podcast_id}.xml"
+      host = ENV.fetch("APP_HOST", "localhost:3000")
+      "https://#{host}/feeds/#{podcast_id}.xml"
     end
 
     def self.voice_sample_url(voice_key)
