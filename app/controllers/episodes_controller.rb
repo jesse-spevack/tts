@@ -70,7 +70,9 @@ class EpisodesController < ApplicationController
     result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: Current.user,
-      text: params[:text]
+      text: params[:text],
+      title: params[:title],
+      author: params[:author]
     )
     handle_create_result(result, "Processing pasted text...")
   end

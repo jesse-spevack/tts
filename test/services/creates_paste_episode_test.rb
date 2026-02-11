@@ -28,7 +28,7 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
     assert_equal @valid_text, result.data.source_text
   end
 
-  test "creates episode with placeholder metadata" do
+  test "creates episode with placeholder metadata when no title or author provided" do
     result = CreatesPasteEpisode.call(
       podcast: @podcast,
       user: @user,
@@ -38,6 +38,56 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
     assert_equal "Processing...", result.data.title
     assert_equal "Processing...", result.data.author
     assert_equal "Processing pasted text...", result.data.description
+  end
+
+  test "creates episode with user-provided title when given" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      title: "My Custom Title"
+    )
+
+    assert_equal "My Custom Title", result.data.title
+    assert_equal "Processing...", result.data.author
+  end
+
+  test "creates episode with user-provided author when given" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      author: "Jane Doe"
+    )
+
+    assert_equal "Processing...", result.data.title
+    assert_equal "Jane Doe", result.data.author
+  end
+
+  test "creates episode with both user-provided title and author" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      title: "My Title",
+      author: "Jane Doe"
+    )
+
+    assert_equal "My Title", result.data.title
+    assert_equal "Jane Doe", result.data.author
+  end
+
+  test "treats blank title as not provided" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      title: "  ",
+      author: ""
+    )
+
+    assert_equal "Processing...", result.data.title
+    assert_equal "Processing...", result.data.author
   end
 
   test "fails on empty text" do

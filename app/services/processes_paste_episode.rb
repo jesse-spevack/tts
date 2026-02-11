@@ -62,8 +62,8 @@ class ProcessesPasteEpisode
     content = @llm_result.data.content
 
     episode.update!(
-      title: @llm_result.data.title,
-      author: @llm_result.data.author,
+      title: user_provided_title? ? episode.title : @llm_result.data.title,
+      author: user_provided_author? ? episode.author : @llm_result.data.author,
       description: @llm_result.data.description,
       content_preview: GeneratesContentPreview.call(content)
     )
@@ -71,5 +71,13 @@ class ProcessesPasteEpisode
     log_info "episode_metadata_updated"
 
     SubmitsEpisodeForProcessing.call(episode: episode, content: content)
+  end
+
+  def user_provided_title?
+    episode.title != EpisodePlaceholders::TITLE
+  end
+
+  def user_provided_author?
+    episode.author != EpisodePlaceholders::AUTHOR
   end
 end
