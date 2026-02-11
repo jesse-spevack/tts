@@ -4,7 +4,7 @@
   <div class="mb-8">
     <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white">Episodes</h1>
     <p class="mt-2 text-sm text-mist-500 dark:text-mist-400 flex items-center gap-2">
-      RSS Feed: <%= link_to @podcast.feed_url, @podcast.feed_url, class: "text-mist-950 dark:text-white hover:underline break-all", target: "_blank" %>
+      RSS Feed: <span class="text-mist-950 dark:text-white break-all"><%= @podcast.feed_url %></span>
       <%= render "shared/clipboard_button",
         content: @podcast.feed_url,
         title: "Copy RSS feed URL",

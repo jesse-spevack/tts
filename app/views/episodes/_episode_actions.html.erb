@@ -33,7 +33,7 @@
   <% if episode.complete? %>
     <%= link_to episode_path(episode.prefix_id, format: :mp3),
       class: "#{button_classes(type: :secondary)} flex items-center justify-center gap-2 w-full transition-colors" do %>
-      <%= render "shared/icons/download" %>
+      <%= render "shared/icons/download", css_class: "size-5" %>
       <span>Download MP3</span>
     <% end %>
 
@@ -48,7 +48,7 @@
     <% if episode.url? && episode.source_url.present? %>
       <%= link_to episode.source_url, target: "_blank", rel: "noopener",
         class: "#{button_classes(type: :secondary)} flex items-center justify-center gap-2 w-full transition-colors" do %>
-        <%= render "shared/icons/external_link" %>
+        <%= render "shared/icons/external_link", css_class: "size-5" %>
         <span>View Original</span>
       <% end %>
     <% end %>
@@ -77,14 +77,14 @@
 
     <%= link_to episode_path(episode.prefix_id, format: :mp3),
       class: "flex items-center gap-2 border border-mist-200 dark:border-mist-700 text-mist-950 dark:text-white font-medium py-2 px-4 rounded-lg hover:border-mist-950 dark:hover:border-white cursor-pointer transition-colors" do %>
-      <%= render "shared/icons/download" %>
+      <%= render "shared/icons/download", css_class: "size-5" %>
       <span>Download MP3</span>
     <% end %>
 
     <% if episode.url? && episode.source_url.present? %>
       <%= link_to episode.source_url, target: "_blank", rel: "noopener",
         class: "flex items-center gap-2 border border-mist-200 dark:border-mist-700 text-mist-950 dark:text-white font-medium py-2 px-4 rounded-lg hover:border-mist-950 dark:hover:border-white cursor-pointer transition-colors" do %>
-        <%= render "shared/icons/external_link" %>
+        <%= render "shared/icons/external_link", css_class: "size-5" %>
         <span>View Original</span>
       <% end %>
     <% end %>
