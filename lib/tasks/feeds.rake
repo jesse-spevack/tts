@@ -8,7 +8,7 @@ namespace :feeds do
     succeeded = 0
     failed = 0
 
-    puts "Regenerating feeds for #{total} podcasts..."
+    log "Regenerating feeds for #{total} podcasts..."
 
     podcasts.find_each.with_index do |podcast, index|
       feed_xml = GeneratesRssFeed.call(podcast: podcast)
@@ -16,13 +16,13 @@ namespace :feeds do
                   .upload_content(content: feed_xml, remote_path: "feed.xml")
 
       succeeded += 1
-      puts "[#{index + 1}/#{total}] #{podcast.podcast_id}: OK"
+      log "[#{index + 1}/#{total}] #{podcast.podcast_id}: OK"
     rescue StandardError => e
       failed += 1
-      puts "[#{index + 1}/#{total}] #{podcast.podcast_id}: FAILED - #{e.message}"
+      log "[#{index + 1}/#{total}] #{podcast.podcast_id}: FAILED - #{e.message}", level: :error
     end
 
-    puts "\nDone! #{succeeded} succeeded, #{failed} failed (#{total} total)"
+    log "Done! #{succeeded} succeeded, #{failed} failed (#{total} total)"
   end
 
   desc "Send feed URL migration email to all users with active podcast feeds"
@@ -34,24 +34,29 @@ namespace :feeds do
     succeeded = 0
     failed = 0
 
-    puts "Sending migration emails to #{total} users..."
+    log "Sending migration emails to #{total} users..."
 
     users.find_each.with_index do |user, index|
       unless user.podcasts.any?
-        puts "[#{index + 1}/#{total}] #{user.email_address}: SKIPPED - no podcast"
+        log "[#{index + 1}/#{total}] #{user.email_address}: SKIPPED - no podcast"
         next
       end
 
       UserMailer.feed_url_migration(user: user).deliver_now
 
       succeeded += 1
-      puts "[#{index + 1}/#{total}] #{user.email_address}: OK"
+      log "[#{index + 1}/#{total}] #{user.email_address}: OK"
       sleep 0.1  # Rate limit outbound email
     rescue StandardError => e
       failed += 1
-      puts "[#{index + 1}/#{total}] #{user.email_address}: FAILED - #{e.message}"
+      log "[#{index + 1}/#{total}] #{user.email_address}: FAILED - #{e.message}", level: :error
     end
 
-    puts "\nDone! #{succeeded} succeeded, #{failed} failed (#{total} total)"
+    log "Done! #{succeeded} succeeded, #{failed} failed (#{total} total)"
+  end
+
+  def log(message, level: :info)
+    puts message
+    Rails.logger.public_send(level, "[feeds] #{message}")
   end
 end
