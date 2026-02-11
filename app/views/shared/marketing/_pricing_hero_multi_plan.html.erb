@@ -8,8 +8,9 @@
       subheadline: (String) plan description
       badge:       (String, optional) badge text (e.g. "Most popular")
       features:    (Array<String>) list of features
-      cta_text:    (String) CTA button text
-      cta_href:    (String) CTA button URL
+      cta_html:    (String, optional) raw HTML for CTA — overrides cta_text/cta_href/cta_style
+      cta_text:    (String) CTA button text (used when cta_html is not provided)
+      cta_href:    (String) CTA button URL (used when cta_html is not provided)
       cta_style:   (String, optional) "primary" (default) or "soft" for button style
 
     Example:
@@ -52,14 +53,18 @@
       <% end %>
     </ul>
   </div>
-  <% cta_style_val = local_assigns[:cta_style] || "soft" %>
-  <% if cta_style_val == "primary" %>
-    <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">
-      <%= cta_text %>
-    </a>
+  <% if local_assigns[:cta_html] %>
+    <%= cta_html %>
   <% else %>
-    <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
-      <%= cta_text %>
-    </a>
+    <% cta_style_val = local_assigns[:cta_style] || "soft" %>
+    <% if cta_style_val == "primary" %>
+      <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">
+        <%= cta_text %>
+      </a>
+    <% else %>
+      <a href="<%= cta_href %>" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">
+        <%= cta_text %>
+      </a>
+    <% end %>
   <% end %>
 </div>

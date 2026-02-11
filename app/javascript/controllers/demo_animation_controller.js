@@ -32,7 +32,7 @@ export default class extends Controller {
     }
     // Hide border from container (keep padding to prevent layout shift)
     if (this.hasContainerTarget) {
-      this.containerTarget.classList.remove("border-[var(--color-text)]/20")
+      this.containerTarget.classList.remove("border-mist-950/20", "dark:border-white/20")
       this.containerTarget.classList.add("border-transparent")
     }
     // Trigger typing animation

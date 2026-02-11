@@ -3,11 +3,11 @@
   heading ||= text
   button_style = case style
   when :primary
-    "rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+    "rounded-lg bg-mist-950 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-mist-950 shadow-sm hover:bg-mist-800 dark:hover:bg-mist-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white"
   when :outline
-    "block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-primary)] hover:bg-[var(--color-surface0)]"
+    "block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-mist-950 dark:text-white ring-1 ring-mist-950 dark:ring-white hover:bg-white dark:hover:bg-mist-800"
   when :large
-    "rounded-lg bg-[var(--color-primary)] px-6 py-3 text-base font-semibold text-[var(--color-primary-text)] shadow-sm hover:bg-[var(--color-primary-hover)]"
+    "rounded-lg bg-mist-950 dark:bg-white px-6 py-3 text-base font-semibold text-white dark:text-mist-950 shadow-sm hover:bg-mist-800 dark:hover:bg-mist-200"
   end
 %>
 <button

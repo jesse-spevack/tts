@@ -18,5 +18,7 @@
     <div class="flex h-8 shrink-0"><%= yield %></div>
     <p class="text-sm/7 text-mist-700 dark:text-mist-400"><%= text %></p>
   </div>
-  <p class="text-xs/6 text-mist-700 dark:text-mist-400"><%= footnote %></p>
+  <% if local_assigns[:footnote] %>
+    <p class="text-xs/6 text-mist-700 dark:text-mist-400"><%= footnote %></p>
+  <% end %>
 </div>

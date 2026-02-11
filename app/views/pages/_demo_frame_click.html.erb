@@ -3,17 +3,17 @@
 <%= render "shared/demo_browser_frame" do %>
   <div class="space-y-3 w-full">
     <%# Input field with completed URL %>
-    <div class="flex items-center gap-2 rounded-md border border-[var(--color-overlay0)] bg-[var(--color-surface0)] px-3 h-10">
-      <span class="text-[var(--color-subtext)]">
+    <div class="flex items-center gap-2 rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 h-10">
+      <span class="text-mist-500 dark:text-mist-400">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
       </span>
-      <span class="text-sm text-[var(--color-text)]">example.com/future-of-remote-work</span>
+      <span class="text-sm text-mist-950 dark:text-white">example.com/future-of-remote-work</span>
     </div>
 
     <%# Button in pressed state - darker color indicates pressed %>
-    <button class="w-full rounded-md bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-[var(--color-primary-text)] brightness-75">
+    <button class="w-full rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 brightness-75">
       Convert
     </button>
   </div>

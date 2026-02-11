@@ -4,7 +4,7 @@
     <div class="max-w-<%= max_width %> mx-auto">
       <p class="text-lg mb-4"><%= title %></p>
       <% if instructions.any? %>
-        <ol class="text-left text-[var(--color-subtext)] space-y-2">
+        <ol class="text-left text-mist-500 dark:text-mist-400 space-y-2">
           <% instructions.each do |instruction| %>
             <li><%= instruction %></li>
           <% end %>

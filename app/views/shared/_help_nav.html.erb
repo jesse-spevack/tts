@@ -1,0 +1,17 @@
+<%# locals: (current:) %>
+<%
+  links = [
+    { label: "How It Sounds", path: how_it_sounds_path, key: :how_it_sounds },
+    { label: "Add RSS Feed", path: help_add_rss_feed_path, key: :add_rss_feed },
+    { label: "Browser Extension", path: help_extension_path, key: :extension_help }
+  ]
+%>
+<nav class="mb-8 flex gap-4 text-sm font-medium">
+  <% links.each do |link| %>
+    <% if link[:key] == current %>
+      <span class="text-mist-950 dark:text-white"><%= link[:label] %></span>
+    <% else %>
+      <%= link_to link[:label], link[:path], class: "text-mist-500 hover:text-mist-700 dark:text-mist-400 dark:hover:text-mist-200" %>
+    <% end %>
+  <% end %>
+</nav>

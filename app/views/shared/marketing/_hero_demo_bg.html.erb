@@ -28,12 +28,8 @@
             <% end %>
           </div>
           <% if local_assigns[:demo] %>
-            <div class="lg:pt-24">
-              <div class="relative h-72 sm:h-92 md:h-125 lg:size-full">
-                <div class="absolute inset-y-0 left-0 flex w-screen overflow-hidden *:h-full *:w-auto *:max-w-none max-lg:rounded-t-lg lg:rounded-tl-lg">
-                  <%= demo %>
-                </div>
-              </div>
+            <div class="flex flex-1 items-center justify-center py-12 lg:py-24">
+              <%= demo %>
             </div>
           <% end %>
         </div>

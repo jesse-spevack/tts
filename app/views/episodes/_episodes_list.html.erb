@@ -1,18 +1,16 @@
 <% if @episodes.any? %>
-  <div class="flex flex-col gap-3">
+  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-white/5">
     <% @episodes.each do |episode| %>
       <%= render "episode_card", episode: episode %>
     <% end %>
-  </div>
+  </ul>
 
   <%= render "pagination", pagy: @pagy %>
 <% else %>
-  <%= render "shared/empty_state",
-    title: "No episodes yet",
-    instructions: [
-      "1. Click <strong>+ New Episode</strong> above".html_safe,
-      "2. Paste a URL, enter text, or upload a file",
-      "3. Listen in your personal feed linked above"
-    ]
-  %>
+  <div class="text-center py-16">
+    <p class="text-lg text-mist-500 dark:text-mist-400 mb-6">No episodes yet</p>
+    <%= link_to new_episode_path, class: button_classes(type: :primary) do %>
+      + New Episode
+    <% end %>
+  </div>
 <% end %>

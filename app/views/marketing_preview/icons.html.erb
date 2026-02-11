@@ -1,0 +1,20 @@
+<%# Icon Gallery - Shows all ported marketing icons %>
+<% content_for(:title, "Icon Gallery") %>
+
+<div class="mx-auto max-w-5xl px-6 py-16">
+  <h1 class="font-display text-3xl font-bold text-mist-950 dark:text-white mb-2">Icon Gallery</h1>
+  <p class="text-sm text-mist-500 dark:text-mist-400 mb-10">
+    <%= @icon_names.size %> icons ported from Tailwind Plus. Each renders at 13x13 native size.
+  </p>
+
+  <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
+    <% @icon_names.each do |name| %>
+      <div class="flex flex-col items-center gap-2 rounded-lg bg-mist-950/2.5 dark:bg-white/5 p-3">
+        <div class="flex items-center justify-center w-10 h-10 text-mist-950 dark:text-white">
+          <%= render "shared/marketing/icons/#{name}", css_class: "size-5" %>
+        </div>
+        <span class="text-[10px] text-mist-500 dark:text-mist-400 text-center leading-tight truncate w-full" title="<%= name %>"><%= name %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

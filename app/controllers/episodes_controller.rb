@@ -1,4 +1,6 @@
 class EpisodesController < ApplicationController
+  layout :determine_layout
+
   before_action :require_authentication, except: [ :show ]
   before_action :require_can_create_episode, only: [ :new, :create ]
   before_action :load_podcast, except: [ :show ]
@@ -118,5 +120,13 @@ class EpisodesController < ApplicationController
 
   def episode_params
     params.require(:episode).permit(:title, :author, :description, :content)
+  end
+
+  def determine_layout
+    if action_name == "show" && !authenticated?
+      "marketing"
+    else
+      "application"
+    end
   end
 end

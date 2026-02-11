@@ -1,37 +1,39 @@
 <div class="max-w-2xl mx-auto">
-  <%= render "shared/page_header", title: "Create New Episode" %>
+  <%= render "shared/page_header", title: "New Episode" %>
 
   <%= render "shared/card", padding: "p-4 sm:p-8" do %>
     <div data-controller="tab-switch">
-      <!-- Segmented Control -->
-      <div class="flex bg-[var(--color-base)] rounded-lg p-1 mb-6">
-        <button
-          type="button"
-          data-tab-switch-target="tab"
-          data-tab="url"
-          data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-[var(--color-surface0)] text-[var(--color-text)]"
-        >
-          From URL
-        </button>
-        <button
-          type="button"
-          data-tab-switch-target="tab"
-          data-tab="paste"
-          data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
-        >
-          Paste Text
-        </button>
-        <button
-          type="button"
-          data-tab-switch-target="tab"
-          data-tab="file"
-          data-action="click->tab-switch#switch"
-          class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-[var(--color-subtext)]"
-        >
-          Upload File
-        </button>
+      <!-- Tab Bar -->
+      <div class="border-b border-mist-200 dark:border-mist-700 mb-6">
+        <nav class="flex gap-8">
+          <button
+            type="button"
+            data-tab-switch-target="tab"
+            data-tab="url"
+            data-action="click->tab-switch#switch"
+            class="border-b-2 border-mist-950 pb-3 text-sm/6 font-medium text-mist-950 dark:border-white dark:text-white"
+          >
+            From URL
+          </button>
+          <button
+            type="button"
+            data-tab-switch-target="tab"
+            data-tab="paste"
+            data-action="click->tab-switch#switch"
+            class="pb-3 text-sm/6 font-medium text-mist-500 hover:text-mist-700 dark:text-mist-400 dark:hover:text-mist-300"
+          >
+            Paste Text
+          </button>
+          <button
+            type="button"
+            data-tab-switch-target="tab"
+            data-tab="file"
+            data-action="click->tab-switch#switch"
+            class="pb-3 text-sm/6 font-medium text-mist-500 hover:text-mist-700 dark:text-mist-400 dark:hover:text-mist-300"
+          >
+            Upload File
+          </button>
+        </nav>
       </div>
 
       <!-- URL Form Panel -->
@@ -39,11 +41,13 @@
         <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
           <div>
             <%= f.label :url, "Article URL", class: label_classes %>
-            <%= f.url_field :url,
-                class: input_classes,
-                placeholder: "https://example.com/article",
-                required: true %>
-            <p class="mt-2 text-sm text-[var(--color-subtext)]">
+            <div class="mt-2">
+              <%= f.url_field :url,
+                  class: input_classes,
+                  placeholder: "https://example.com/article",
+                  required: true %>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               We'll extract the article content, title, and author automatically.
             </p>
           </div>
@@ -58,14 +62,34 @@
       <div data-tab-switch-target="panel" data-tab="paste" class="hidden">
         <%= form_with url: episodes_path, local: true, class: "space-y-6" do |f| %>
           <div>
+            <%= f.label :title, "Title (optional)", class: label_classes %>
+            <div class="mt-2">
+              <%= f.text_field :title,
+                  class: input_classes,
+                  placeholder: "Article title" %>
+            </div>
+          </div>
+
+          <div>
+            <%= f.label :author, "Author (optional)", class: label_classes %>
+            <div class="mt-2">
+              <%= f.text_field :author,
+                  class: input_classes,
+                  placeholder: "Author name" %>
+            </div>
+          </div>
+
+          <div>
             <%= f.label :text, "Article Text", class: label_classes %>
-            <%= f.text_area :text,
-                rows: 12,
-                class: input_classes,
-                placeholder: "Paste your article text here...",
-                required: true %>
-            <p class="mt-2 text-sm text-[var(--color-subtext)]">
-              Paste article text. We'll extract the title and author automatically.
+            <div class="mt-2">
+              <%= f.text_area :text,
+                  rows: 12,
+                  class: input_classes,
+                  placeholder: "Paste your article text here...",
+                  required: true %>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              Paste article text. We'll extract the title and author automatically if not provided above.
             </p>
           </div>
 
@@ -79,9 +103,9 @@
       <div data-tab-switch-target="panel" data-tab="file" class="hidden">
         <%= form_with model: @episode, url: episodes_path, local: true, multipart: true, class: "space-y-6" do |f| %>
           <% if @episode.errors.any? %>
-            <div class="border border-[var(--color-red)] rounded-lg p-4 bg-[var(--color-red)]/10">
-              <p class="text-[var(--color-red)] font-medium mb-2">Please fix the following errors:</p>
-              <ul class="list-disc list-inside text-sm text-[var(--color-red)]">
+            <div class="border border-red-600 dark:border-red-400 rounded-lg p-4 bg-red-600/10 dark:bg-red-400/10">
+              <p class="text-red-600 dark:text-red-400 font-medium mb-2">Please fix the following errors:</p>
+              <ul class="list-disc list-inside text-sm text-red-600 dark:text-red-400">
                 <% @episode.errors.full_messages.each do |message| %>
                   <li><%= message %></li>
                 <% end %>
@@ -91,24 +115,30 @@
 
           <div>
             <%= f.label :title, class: label_classes %>
-            <%= f.text_field :title,
-                class: input_classes,
-                placeholder: "My Awesome Episode" %>
+            <div class="mt-2">
+              <%= f.text_field :title,
+                  class: input_classes,
+                  placeholder: "My Awesome Episode" %>
+            </div>
           </div>
 
           <div>
             <%= f.label :author, class: label_classes %>
-            <%= f.text_field :author,
-                class: input_classes,
-                placeholder: "Your Name" %>
+            <div class="mt-2">
+              <%= f.text_field :author,
+                  class: input_classes,
+                  placeholder: "Your Name" %>
+            </div>
           </div>
 
           <div>
             <%= f.label :description, class: label_classes %>
-            <%= f.text_area :description,
-                rows: 3,
-                class: input_classes,
-                placeholder: "A brief description of this episode..." %>
+            <div class="mt-2">
+              <%= f.text_area :description,
+                  rows: 3,
+                  class: input_classes,
+                  placeholder: "A brief description of this episode..." %>
+            </div>
           </div>
 
           <div data-controller="file-upload">
@@ -116,15 +146,21 @@
             <div
               data-file-upload-target="dropzone"
               data-action="click->file-upload#triggerInput dragover->file-upload#handleDragOver dragleave->file-upload#handleDragLeave drop->file-upload#handleDrop"
-              class="border-2 border-dashed border-[var(--color-overlay0)] rounded-lg p-4 sm:p-8 text-center cursor-pointer hover:border-[var(--color-primary)] transition-colors"
+              class="mt-2 flex justify-center rounded-lg border-2 border-dashed border-mist-300 dark:border-mist-700 px-6 py-10 cursor-pointer hover:border-mist-950 dark:hover:border-white transition-colors"
             >
               <%= f.file_field :content,
                   accept: ".md,.markdown,.txt",
                   required: true,
                   data: { file_upload_target: "input", action: "change->file-upload#updateFilename" },
                   class: "hidden" %>
-              <p class="text-[var(--color-subtext)] mb-2">Click to upload or drag and drop<br>(.md or .txt)</p>
-              <p data-file-upload-target="filename" class="hidden text-sm font-medium text-[var(--color-primary)]"></p>
+              <div class="text-center">
+                <svg class="mx-auto size-12 text-mist-300 dark:text-mist-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Zm6.905 9.97a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72V18a.75.75 0 0 0 1.5 0v-4.19l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z" clip-rule="evenodd" />
+                  <path d="M14.25 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 16.5 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z" />
+                </svg>
+                <p class="mt-4 text-sm/6 text-mist-500 dark:text-mist-400">Drag and drop or click to upload<br>(.md or .txt)</p>
+                <p data-file-upload-target="filename" class="hidden mt-2 text-sm/6 font-medium text-mist-950 dark:text-white"></p>
+              </div>
             </div>
           </div>
 

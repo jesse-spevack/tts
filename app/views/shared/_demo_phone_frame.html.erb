@@ -5,18 +5,18 @@
 
 <div class="relative mx-auto" style="width: 160px;">
   <%# Phone outline %>
-  <div class="rounded-[24px] border-4 border-[var(--color-overlay0)] bg-[var(--color-surface0)] overflow-hidden shadow-sm">
+  <div class="rounded-[24px] border-4 border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 overflow-hidden shadow-sm">
     <%# Notch %>
     <div class="flex justify-center py-1">
-      <div class="w-16 h-4 rounded-full bg-[var(--color-overlay0)]"></div>
+      <div class="w-16 h-4 rounded-full bg-mist-200 dark:bg-mist-700"></div>
     </div>
     <%# Screen content %>
-    <div class="px-2 pb-2 bg-[var(--color-base)]" style="min-height: 200px;">
+    <div class="px-2 pb-2 bg-mist-100 dark:bg-mist-950" style="min-height: 200px;">
       <%= yield %>
     </div>
     <%# Home indicator %>
-    <div class="flex justify-center py-2 bg-[var(--color-base)]">
-      <div class="w-12 h-1 rounded-full bg-[var(--color-overlay0)]"></div>
+    <div class="flex justify-center py-2 bg-mist-100 dark:bg-mist-950">
+      <div class="w-12 h-1 rounded-full bg-mist-200 dark:bg-mist-700"></div>
     </div>
   </div>
 </div>

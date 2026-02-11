@@ -1,13 +1,13 @@
 <%# locals: (mode:) %>
-<div class="rounded-2xl p-8 ring-1 ring-[var(--color-overlay0)]">
-  <h3 class="text-lg font-semibold text-[var(--color-text)]">Free</h3>
-  <p class="mt-4 text-sm text-[var(--color-subtext)]">
+<div class="rounded-2xl p-8 ring-1 ring-mist-200 dark:ring-mist-700">
+  <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Free</h3>
+  <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">
     Try it out, no credit card required.
   </p>
 
   <p class="mt-6">
-    <span class="text-4xl font-semibold tracking-tight text-[var(--color-text)]">$0</span>
-    <span class="text-sm text-[var(--color-subtext)]">/month</span>
+    <span class="text-4xl font-semibold tracking-tight text-mist-950 dark:text-white">$0</span>
+    <span class="text-sm text-mist-500 dark:text-mist-400">/month</span>
   </p>
 
   <%= render "shared/signup_cta_button",
@@ -18,7 +18,7 @@
     style: :outline,
     additional_classes: "mt-6" %>
 
-  <ul class="mt-8 space-y-3 text-sm text-[var(--color-subtext)]">
+  <ul class="mt-8 space-y-3 text-sm text-mist-500 dark:text-mist-400">
     <%= render "shared/feature_list_item", text: "Private podcast feed" %>
     <%= render "shared/feature_list_item", text: "Paste links, text, or upload files" %>
     <%= render "shared/feature_list_item", text: "Choose your voice" %>
