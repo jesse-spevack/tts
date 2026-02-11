@@ -68,7 +68,7 @@ class GeneratesRssFeedTest < ActiveSupport::TestCase
   test "atom:link self references public feed URL" do
     result = GeneratesRssFeed.call(podcast: @podcast)
 
-    expected_url = "https://tts.verynormal.dev/feeds/#{@podcast.podcast_id}.xml"
+    expected_url = "https://example.com/feeds/#{@podcast.podcast_id}.xml"
     assert result.include?(%(href="#{expected_url}"))
     assert result.include?('rel="self"')
   end
