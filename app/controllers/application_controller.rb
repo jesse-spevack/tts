@@ -17,6 +17,7 @@ class ApplicationController < ActionController::Base
 
   def redirect_legacy_domain
     return unless request.host == "tts.verynormal.dev"
+    return if request.path.start_with?("/webhooks/", "/api/internal/")
 
     redirect_to "https://#{AppConfig::Domain::HOST}#{request.fullpath}", status: :moved_permanently, allow_other_host: true
   end

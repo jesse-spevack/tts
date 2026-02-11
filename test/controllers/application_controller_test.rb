@@ -22,4 +22,16 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
   end
+
+  test "does not redirect webhook paths on legacy domain" do
+    post "/webhooks/stripe", headers: { "HOST" => "tts.verynormal.dev" }
+
+    assert_response :bad_request  # Stripe signature check fails, but no redirect
+  end
+
+  test "does not redirect internal API paths on legacy domain" do
+    patch "/api/internal/episodes/1", headers: { "HOST" => "tts.verynormal.dev" }
+
+    refute_equal 301, response.status
+  end
 end
