@@ -1,13 +1,13 @@
-<%# locals: (content:, title: "Copy to clipboard", icon: "share", button_class: nil, label: nil) %>
+<%# locals: (content:, title: "Copy to clipboard", icon: "share", icon_class: "size-5", button_class: nil, label: nil) %>
 <button type="button"
         data-controller="clipboard"
         data-clipboard-content-value="<%= content %>"
         data-action="click->clipboard#copy"
         class="<%= button_class || "text-mist-500 dark:text-mist-400 hover:text-mist-950 dark:hover:text-white transition-colors cursor-pointer" %>"
         title="<%= title %>">
-  <span data-clipboard-target="copyIcon"><%= render "shared/icons/#{icon}" %></span>
+  <span data-clipboard-target="copyIcon"><%= render "shared/icons/#{icon}", css_class: icon_class %></span>
   <span data-clipboard-target="checkIcon" class="hidden text-green-600 dark:text-green-400">
-    <%= render "shared/icons/#{icon == "copy" ? "document_check" : "check_circle"}" %>
+    <%= render "shared/icons/#{icon == "copy" ? "document_check" : "check_circle"}", css_class: icon_class %>
   </span>
   <% if label %>
     <span><%= label %></span>
