@@ -78,7 +78,9 @@ Rails.application.configure do
     user_name: "resend",
     password: ENV.fetch("RESEND_API_KEY", ""),
     authentication: :plain,
-    enable_starttls_auto: true
+    enable_starttls_auto: true,
+    open_timeout: 30,
+    read_timeout: 30
   }
 
   config.action_mailer.perform_caching = false
