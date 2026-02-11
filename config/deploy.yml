@@ -23,7 +23,7 @@ servers:
 proxy:
   ssl: true
   hosts:
-    - tts.verynormal.dev
+    - podread.app
 
 # Where you keep your container images.
 registry:
