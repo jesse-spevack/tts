@@ -3,13 +3,23 @@
     <%= render "shared/icons/heart", css_class: "size-8 text-mist-950 dark:text-white" %>
   </div>
 
-  <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-4">
-    Welcome to Premium
-  </h1>
+  <% if Current.user.credit_user? %>
+    <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-4">
+      Credits added!
+    </h1>
 
-  <p class="text-lg text-mist-500 dark:text-mist-400 mb-8">
-    Thank you! Unlimited episodes, up to 50,000 characters each.
-  </p>
+    <p class="text-lg text-mist-500 dark:text-mist-400 mb-8">
+      You now have <strong><%= Current.user.credits_remaining %> episode credits</strong>. Up to 50,000 characters each.
+    </p>
+  <% else %>
+    <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-4">
+      Welcome to Premium
+    </h1>
+
+    <p class="text-lg text-mist-500 dark:text-mist-400 mb-8">
+      Thank you! Unlimited episodes, up to 50,000 characters each.
+    </p>
+  <% end %>
 
   <%= link_to "Start creating episodes", new_episode_path,
     class: button_classes(type: :primary) %>

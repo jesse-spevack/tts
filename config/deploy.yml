@@ -51,6 +51,7 @@ env:
     - STRIPE_WEBHOOK_SECRET
     - STRIPE_PRICE_ID_MONTHLY
     - STRIPE_PRICE_ID_ANNUAL
+    - STRIPE_PRICE_ID_CREDIT_PACK
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.

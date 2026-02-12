@@ -120,4 +120,26 @@ class CreatesFileEpisodeTest < ActiveSupport::TestCase
 
     assert result.data.content_preview.present?
   end
+
+  test "enqueues with priority 0 for premium user" do
+    premium_user = users(:subscriber)
+
+    assert_enqueued_with(job: ProcessesFileEpisodeJob, priority: 0) do
+      CreatesFileEpisode.call(
+        podcast: @podcast, user: premium_user,
+        title: "Test", author: "Author", description: "Desc", content: "A" * 150
+      )
+    end
+  end
+
+  test "enqueues with priority 10 for free user" do
+    free_user = users(:free_user)
+
+    assert_enqueued_with(job: ProcessesFileEpisodeJob, priority: 10) do
+      CreatesFileEpisode.call(
+        podcast: @podcast, user: free_user,
+        title: "Test", author: "Author", description: "Desc", content: "A" * 150
+      )
+    end
+  end
 end

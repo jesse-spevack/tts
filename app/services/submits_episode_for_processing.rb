@@ -18,7 +18,7 @@ class SubmitsEpisodeForProcessing
     wrapped = wrap_content
     episode.update!(source_text: wrapped)
 
-    GeneratesEpisodeAudioJob.perform_later(episode_id: episode.id, action_id: Current.action_id)
+    GeneratesEpisodeAudioJob.set(priority: DeterminesJobPriority.call(user: episode.user)).perform_later(episode_id: episode.id, action_id: Current.action_id)
 
     log_info "audio_generation_enqueued"
   end

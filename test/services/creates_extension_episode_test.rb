@@ -101,4 +101,20 @@ class CreatesExtensionEpisodeTest < ActiveSupport::TestCase
     assert_equal @user, result.data.user
     assert_equal @podcast, result.data.podcast
   end
+
+  test "enqueues with priority 0 for premium user" do
+    premium_user = users(:subscriber)
+
+    assert_enqueued_with(job: ProcessesFileEpisodeJob, priority: 0) do
+      CreatesExtensionEpisode.call(**@valid_params.merge(user: premium_user))
+    end
+  end
+
+  test "enqueues with priority 10 for free user" do
+    free_user = users(:free_user)
+
+    assert_enqueued_with(job: ProcessesFileEpisodeJob, priority: 10) do
+      CreatesExtensionEpisode.call(**@valid_params.merge(user: free_user))
+    end
+  end
 end

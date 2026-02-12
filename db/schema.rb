@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_11_220001) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -57,6 +57,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
     t.integer "user_id", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
+  create_table "credit_balances", force: :cascade do |t|
+    t.integer "balance", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_credit_balances_on_user_id", unique: true
+  end
+
+  create_table "credit_transactions", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.integer "balance_after", null: false
+    t.datetime "created_at", null: false
+    t.integer "episode_id"
+    t.string "stripe_session_id"
+    t.string "transaction_type", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["episode_id"], name: "index_credit_transactions_on_episode_id"
+    t.index ["stripe_session_id"], name: "index_credit_transactions_on_stripe_session_id", unique: true
+    t.index ["transaction_type"], name: "index_credit_transactions_on_transaction_type"
+    t.index ["user_id"], name: "index_credit_transactions_on_user_id"
   end
 
   create_table "episode_usages", force: :cascade do |t|
@@ -195,6 +218,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_26_050817) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "credit_balances", "users"
+  add_foreign_key "credit_transactions", "episodes"
+  add_foreign_key "credit_transactions", "users"
   add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "podcasts"
   add_foreign_key "episodes", "users"

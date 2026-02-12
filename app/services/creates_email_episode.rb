@@ -27,7 +27,7 @@ class CreatesEmailEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessesEmailEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesEmailEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
     log_info "email_episode_created", episode_id: episode.id, text_length: email_body.length
 
     Result.success(episode)

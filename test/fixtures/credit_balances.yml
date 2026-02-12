@@ -1,0 +1,7 @@
+with_credits:
+  user: credit_user
+  balance: 3
+
+empty_balance:
+  user: jesse
+  balance: 0

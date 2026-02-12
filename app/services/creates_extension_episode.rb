@@ -42,7 +42,7 @@ class CreatesExtensionEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessesFileEpisodeJob.perform_later(
+    ProcessesFileEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(
       episode_id: episode.id,
       user_id: episode.user_id,
       action_id: Current.action_id

@@ -1,0 +1,36 @@
+<%# locals: (mode:) %>
+<div class="rounded-2xl p-8 ring-1 ring-mist-200 dark:ring-mist-700">
+  <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Episode Credit Pack</h3>
+
+  <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">
+    Pay as you go — no subscription required.
+  </p>
+
+  <p class="mt-6">
+    <span class="text-4xl font-semibold tracking-tight text-mist-950 dark:text-white"><%= AppConfig::Credits::PACK_PRICE_DISPLAY %></span>
+    <span class="text-sm text-mist-500 dark:text-mist-400">/ <%= AppConfig::Credits::PACK_SIZE %> episodes</span>
+  </p>
+
+  <% if mode == :billing %>
+    <%= form_with url: checkout_path, method: :post, class: "mt-6", data: { turbo: false } do |form| %>
+      <%= form.hidden_field :price_id, value: AppConfig::Stripe::PRICE_ID_CREDIT_PACK %>
+      <%= form.submit "Buy Credit Pack", class: "w-full rounded-lg bg-mist-950 dark:bg-white px-4 py-2.5 text-center text-sm font-semibold text-white dark:text-mist-950 shadow-sm hover:bg-mist-800 dark:hover:bg-mist-200 cursor-pointer" %>
+    <% end %>
+  <% else %>
+    <button
+      type="button"
+      data-action="click->signup-modal#open"
+      data-plan="credit_pack"
+      class="mt-6 block w-full rounded-lg bg-mist-950 dark:bg-white px-4 py-2.5 text-center text-sm font-semibold text-white dark:text-mist-950 shadow-sm hover:bg-mist-800 dark:hover:bg-mist-200"
+    >
+      Buy Credit Pack
+    </button>
+  <% end %>
+
+  <ul class="mt-8 space-y-3 text-sm text-mist-500 dark:text-mist-400">
+    <%= render "shared/feature_list_item", text: "Same features as Premium, per episode:" %>
+    <%= render "shared/feature_list_item", text: "Up to 50,000 characters" %>
+    <%= render "shared/feature_list_item", text: "No subscription needed" %>
+    <%= render "shared/feature_list_item", text: "Credits never expire" %>
+  </ul>
+</div>
