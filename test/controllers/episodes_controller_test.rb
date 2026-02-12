@@ -428,6 +428,21 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-controller='clipboard']"
   end
 
+  test "show displays view original link for unauthenticated user when source_url present" do
+    sign_out
+    episode = episodes(:two)
+    get episode_url(episode.prefix_id)
+    assert_select "a[href=?]", episode.source_url, text: /View Original/
+  end
+
+  test "show does not display view original link for unauthenticated user when source_url blank" do
+    sign_out
+    episode = episodes(:two)
+    episode.update_column(:source_url, nil)
+    get episode_url(episode.prefix_id)
+    assert_select "a", text: /View Original/, count: 0
+  end
+
   test "show with mp3 format redirects to signed GCS URL" do
     episode = episodes(:two)
     signed_url = "https://storage.googleapis.com/test-bucket/test.mp3?signature=abc"
