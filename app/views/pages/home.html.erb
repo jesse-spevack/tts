@@ -118,11 +118,11 @@
   <%= render "shared/marketing/faq_item",
     id: "faq-1",
     question: "Is it really free?",
-    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want unlimited episodes, you can upgrade to Premium for $9/month." %>
+    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want more, you can upgrade to Premium for $9/month or buy a credit pack to pay as you go." %>
   <%= render "shared/marketing/faq_item",
     id: "faq-2",
     question: "Does it sound robotic?",
-    answer: safe_join(["Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. ", tag.button("Hear how it sounds", type: "button", data: { action: "click->sample-modal#open" }, class: "font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300"), "."]) %>
+    answer: safe_join(["Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. ", tag.button("Hear how it sounds", type: "button", data: { action: "click->sample-modal#open" }, class: "inline font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300"), "."]) %>
   <%= render "shared/marketing/faq_item",
     id: "faq-3",
     question: "Which podcast apps work with PodRead?",
