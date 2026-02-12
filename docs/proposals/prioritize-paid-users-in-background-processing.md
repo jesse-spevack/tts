@@ -37,20 +37,22 @@ Use Solid Queue's built-in `priority` column to give paid users' jobs higher pri
 
 ### Priority Scheme
 
-| User Tier | Priority Value | Constant |
-|-----------|---------------|----------|
-| Unlimited | `0` | `UNLIMITED_PRIORITY` |
-| Complimentary | `0` | `COMPLIMENTARY_PRIORITY` |
-| Premium (active subscription) | `0` | `PREMIUM_PRIORITY` |
-| Free | `10` | `FREE_PRIORITY` |
+| User Tier | Priority Value |
+|-----------|---------------|
+| Unlimited | `0` |
+| Complimentary | `0` |
+| Premium (active subscription) | `0` |
+| Free | `10` |
 
 Paid tiers all share priority `0` (highest). Free users get priority `10`. The gap between `0` and `10` leaves room for future granularity (e.g., annual vs. monthly subscribers) without a migration.
 
-### Implementation
+## Implementation Plan
 
-#### 1. Add a `QueuePriority` concern for episode jobs
+### Step 1: Create `QueuePriority` concern
 
-Create `app/jobs/concerns/queue_priority.rb`:
+**New file:** `app/jobs/concerns/queue_priority.rb`
+
+Follows the existing concern pattern (`EpisodeJobLogging`): a module using `ActiveSupport::Concern` with class methods.
 
 ```ruby
 # frozen_string_literal: true
@@ -69,63 +71,343 @@ module QueuePriority
 end
 ```
 
-#### 2. Set priority at enqueue time in each creator service
+This reuses the existing `User#premium?` method which already covers all paid tiers (active subscription, complimentary, unlimited).
 
-The `priority` must be set when the job is enqueued, not declared statically on the job class, because it depends on the user. ActiveJob supports this via `set(priority:)`:
+### Step 2: Include `QueuePriority` in `ApplicationJob`
+
+**Edit:** `app/jobs/application_job.rb`
 
 ```ruby
-# In CreatesUrlEpisode#call (and equivalent in each creator service):
+class ApplicationJob < ActiveJob::Base
+  include QueuePriority
+end
+```
+
+This makes `priority_for_user` available on all job classes, matching the pattern of including `EpisodeJobLogging` directly in each job that needs it.
+
+### Step 3: Set priority in `CreatesUrlEpisode`
+
+**Edit:** `app/services/creates_url_episode.rb` (line 31)
+
+Change:
+```ruby
+ProcessesUrlEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+To:
+```ruby
 ProcessesUrlEpisodeJob
   .set(priority: ProcessesUrlEpisodeJob.priority_for_user(user))
   .perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
 ```
 
-The same pattern applies to all creator services:
-- `CreatesUrlEpisode` → `ProcessesUrlEpisodeJob`
-- `CreatesPasteEpisode` → `ProcessesPasteEpisodeJob`
-- `CreatesFileEpisode` → `ProcessesFileEpisodeJob`
-- `CreatesEmailEpisode` → `ProcessesEmailEpisodeJob`
-- `CreatesExtensionEpisode` → `ProcessesFileEpisodeJob`
+The `user` local variable is already available via the `attr_reader` on line 40.
 
-#### 3. Propagate priority to the audio generation job
+### Step 4: Set priority in `CreatesPasteEpisode`
 
-`SubmitsEpisodeForProcessing` enqueues `GeneratesEpisodeAudioJob` as a second-stage job. It should inherit the same priority:
+**Edit:** `app/services/creates_paste_episode.rb` (line 31)
 
+Same pattern. The `user` local is available via `attr_reader` on line 42.
+
+Change:
 ```ruby
-# In SubmitsEpisodeForProcessing#call:
+ProcessesPasteEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+To:
+```ruby
+ProcessesPasteEpisodeJob
+  .set(priority: ProcessesPasteEpisodeJob.priority_for_user(user))
+  .perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+### Step 5: Set priority in `CreatesFileEpisode`
+
+**Edit:** `app/services/creates_file_episode.rb` (line 35)
+
+Same pattern. The `user` local is available via `attr_reader`.
+
+Change:
+```ruby
+ProcessesFileEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+To:
+```ruby
+ProcessesFileEpisodeJob
+  .set(priority: ProcessesFileEpisodeJob.priority_for_user(user))
+  .perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+### Step 6: Set priority in `CreatesEmailEpisode`
+
+**Edit:** `app/services/creates_email_episode.rb` (line 30)
+
+Same pattern. The `user` local is available via `attr_reader`.
+
+Change:
+```ruby
+ProcessesEmailEpisodeJob.perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+To:
+```ruby
+ProcessesEmailEpisodeJob
+  .set(priority: ProcessesEmailEpisodeJob.priority_for_user(user))
+  .perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+```
+
+### Step 7: Set priority in `CreatesExtensionEpisode`
+
+**Edit:** `app/services/creates_extension_episode.rb` (lines 45-49)
+
+Same pattern. The `user` local is available via `attr_reader`.
+
+Change:
+```ruby
+ProcessesFileEpisodeJob.perform_later(
+  episode_id: episode.id,
+  user_id: episode.user_id,
+  action_id: Current.action_id
+)
+```
+
+To:
+```ruby
+ProcessesFileEpisodeJob
+  .set(priority: ProcessesFileEpisodeJob.priority_for_user(user))
+  .perform_later(
+    episode_id: episode.id,
+    user_id: episode.user_id,
+    action_id: Current.action_id
+  )
+```
+
+### Step 8: Propagate priority in `SubmitsEpisodeForProcessing`
+
+**Edit:** `app/services/submits_episode_for_processing.rb` (line 21)
+
+This service enqueues `GeneratesEpisodeAudioJob` as the second-stage job after content processing. It already accesses `episode.user` (line 34: `episode.user.free?`), so no new association loading is needed.
+
+Change:
+```ruby
+GeneratesEpisodeAudioJob.perform_later(episode_id: episode.id, action_id: Current.action_id)
+```
+
+To:
+```ruby
 GeneratesEpisodeAudioJob
-  .set(priority: QueuePriority.priority_for_user(episode.user))
+  .set(priority: GeneratesEpisodeAudioJob.priority_for_user(episode.user))
   .perform_later(episode_id: episode.id, action_id: Current.action_id)
 ```
 
-This requires `SubmitsEpisodeForProcessing` to load the user association, which it already does (`episode.user.free?` on line 34).
+### Step 9: Add "Priority processing" to premium feature lists
 
-#### 4. No changes to queue configuration
+There are **4 locations** where premium features are listed. Add "Priority processing" to each.
 
-The `config/queue.yml` stays as-is. A single `default` queue with `workers: queues: "*"` already polls by `(priority, job_id)`. No new queues, no worker reconfiguration, no deployment changes.
+#### 9a. Landing page — monthly pricing panel
 
-### Files Changed
+**Edit:** `app/views/pages/home.html.erb` (~line 163)
 
-| File | Change |
-|------|--------|
-| `app/jobs/concerns/queue_priority.rb` | **New.** Defines priority constants and `priority_for_user` class method. |
-| `app/jobs/application_job.rb` | Include `QueuePriority` so all jobs have access. |
-| `app/services/creates_url_episode.rb` | Set priority on `ProcessesUrlEpisodeJob`. |
-| `app/services/creates_paste_episode.rb` | Set priority on `ProcessesPasteEpisodeJob`. |
-| `app/services/creates_file_episode.rb` | Set priority on `ProcessesFileEpisodeJob`. |
-| `app/services/creates_email_episode.rb` | Set priority on `ProcessesEmailEpisodeJob`. |
-| `app/services/creates_extension_episode.rb` | Set priority on `ProcessesFileEpisodeJob`. |
-| `app/services/submits_episode_for_processing.rb` | Set priority on `GeneratesEpisodeAudioJob`. |
+```ruby
+features: [
+  "Everything in Free, plus:",
+  "Unlimited episodes",
+  "Up to 50,000 characters",
+  "Priority processing",
+],
+```
 
-No database migrations. No new gems. No configuration changes.
+#### 9b. Landing page — annual pricing panel
 
-### Tests
+**Edit:** `app/views/pages/home.html.erb` (~line 193)
 
-Add tests to verify:
+Same change — add `"Priority processing"` to the features array.
 
-1. **`QueuePriority` concern**: `priority_for_user` returns `0` for premium/complimentary/unlimited users and `10` for free users.
-2. **Each creator service**: Assert that `perform_later` is called with the correct `priority` via `set`. Use `assert_enqueued_with(job:, priority:)` from `ActiveJob::TestHelper`.
-3. **`SubmitsEpisodeForProcessing`**: Assert `GeneratesEpisodeAudioJob` is enqueued with the correct priority based on the episode's user tier.
+#### 9c. Premium card (billing/upgrade pages)
+
+**Edit:** `app/views/shared/_premium_card.html.erb` (lines 46-50)
+
+```ruby
+<% premium_features = [
+  "Everything in Free, plus:",
+  "Unlimited episodes",
+  "Up to 50,000 characters",
+  "Priority processing"
+] %>
+```
+
+#### 9d. Signup modal premium card (if separate)
+
+Check if the signup modal renders `_premium_card.html.erb` or has its own feature list. If it reuses the partial, 9c covers it.
+
+### Step 10: Add `QueuePriority` concern tests
+
+**New file:** `test/jobs/concerns/queue_priority_test.rb`
+
+Follows the exact pattern of `test/jobs/concerns/episode_job_logging_test.rb` — create a test job class that includes the concern, then test the class method.
+
+```ruby
+# frozen_string_literal: true
+
+class QueuePriorityTest < ActiveSupport::TestCase
+  test "priority_for_user returns PREMIUM_PRIORITY for premium user with active subscription" do
+    user = users(:subscriber)
+    assert_equal QueuePriority::PREMIUM_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+
+  test "priority_for_user returns PREMIUM_PRIORITY for complimentary user" do
+    user = users(:complimentary_user)
+    assert_equal QueuePriority::PREMIUM_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+
+  test "priority_for_user returns PREMIUM_PRIORITY for unlimited user" do
+    user = users(:unlimited_user)
+    assert_equal QueuePriority::PREMIUM_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+
+  test "priority_for_user returns FREE_PRIORITY for free user" do
+    user = users(:free_user)
+    assert_equal QueuePriority::FREE_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+
+  test "priority_for_user returns FREE_PRIORITY for canceled subscriber" do
+    user = users(:canceled_subscriber)
+    assert_equal QueuePriority::FREE_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+
+  test "priority_for_user returns FREE_PRIORITY for past due subscriber" do
+    user = users(:past_due_subscriber)
+    assert_equal QueuePriority::FREE_PRIORITY, ApplicationJob.priority_for_user(user)
+  end
+end
+```
+
+Uses existing fixtures: `subscriber`, `complimentary_user`, `unlimited_user`, `free_user`, `canceled_subscriber`, `past_due_subscriber`.
+
+### Step 11: Update creator service tests to assert priority
+
+Add a test to each creator service test file verifying the correct priority is set. Uses `assert_enqueued_with(job:, priority:)` from `ActiveJob::TestHelper`.
+
+#### 11a. `test/services/creates_url_episode_test.rb`
+
+```ruby
+test "enqueues job with premium priority for premium user" do
+  premium_user = users(:subscriber)
+  assert_enqueued_with(job: ProcessesUrlEpisodeJob, priority: QueuePriority::PREMIUM_PRIORITY) do
+    CreatesUrlEpisode.call(podcast: @podcast, user: premium_user, url: "https://example.com/article")
+  end
+end
+
+test "enqueues job with free priority for free user" do
+  free_user = users(:free_user)
+  assert_enqueued_with(job: ProcessesUrlEpisodeJob, priority: QueuePriority::FREE_PRIORITY) do
+    CreatesUrlEpisode.call(podcast: @podcast, user: free_user, url: "https://example.com/article")
+  end
+end
+```
+
+#### 11b. `test/services/creates_paste_episode_test.rb`
+
+Same pattern with `ProcessesPasteEpisodeJob` and valid paste text.
+
+#### 11c. `test/services/creates_file_episode_test.rb`
+
+Same pattern with `ProcessesFileEpisodeJob` and valid file content.
+
+#### 11d. `test/services/creates_email_episode_test.rb`
+
+Same pattern with `ProcessesEmailEpisodeJob` and valid email body.
+
+#### 11e. `test/services/creates_extension_episode_test.rb`
+
+Same pattern with `ProcessesFileEpisodeJob` and valid extension params.
+
+### Step 12: Update `SubmitsEpisodeForProcessing` test
+
+**Edit:** `test/services/submits_episode_for_processing_test.rb`
+
+Add tests verifying `GeneratesEpisodeAudioJob` is enqueued with the correct priority:
+
+```ruby
+test "enqueues audio job with free priority for free user" do
+  @episode.user.update!(account_type: :standard)
+  assert_enqueued_with(
+    job: GeneratesEpisodeAudioJob,
+    priority: QueuePriority::FREE_PRIORITY,
+    args: [{ episode_id: @episode.id, action_id: nil }]
+  ) do
+    SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+  end
+end
+
+test "enqueues audio job with premium priority for premium user" do
+  @episode.user.update!(account_type: :complimentary)
+  assert_enqueued_with(
+    job: GeneratesEpisodeAudioJob,
+    priority: QueuePriority::PREMIUM_PRIORITY,
+    args: [{ episode_id: @episode.id, action_id: nil }]
+  ) do
+    SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+  end
+end
+```
+
+### Step 13: Add priority to structured job logs
+
+**Edit:** `app/jobs/concerns/episode_job_logging.rb`
+
+Add `priority` to the `log_event` "started" call so we can monitor queue priority distribution in production logs:
+
+Change the `with_episode_logging` method to include priority:
+
+```ruby
+def with_episode_logging(episode_id:, user_id:, action_id: nil)
+  Current.action_id = action_id
+  log_event("started", episode_id: episode_id, user_id: user_id, priority: priority)
+  yield
+  log_event("completed", episode_id: episode_id)
+rescue StandardError => e
+  log_event("failed", episode_id: episode_id, error: e.class, message: e.message)
+  raise
+end
+```
+
+`priority` is available on all ActiveJob instances via `ActiveJob::Base#priority`.
+
+## Files Changed Summary
+
+| File | Type | Change |
+|------|------|--------|
+| `app/jobs/concerns/queue_priority.rb` | **New** | `QueuePriority` concern with constants and `priority_for_user` |
+| `app/jobs/application_job.rb` | Edit | `include QueuePriority` |
+| `app/services/creates_url_episode.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/services/creates_paste_episode.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/services/creates_file_episode.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/services/creates_email_episode.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/services/creates_extension_episode.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/services/submits_episode_for_processing.rb` | Edit | `.set(priority:)` on `perform_later` |
+| `app/jobs/concerns/episode_job_logging.rb` | Edit | Log `priority` in "started" event |
+| `app/views/pages/home.html.erb` | Edit | Add "Priority processing" to 2 premium feature lists |
+| `app/views/shared/_premium_card.html.erb` | Edit | Add "Priority processing" to features array |
+| `test/jobs/concerns/queue_priority_test.rb` | **New** | Tests for all user tiers |
+| `test/services/creates_url_episode_test.rb` | Edit | Assert priority on enqueued job |
+| `test/services/creates_paste_episode_test.rb` | Edit | Assert priority on enqueued job |
+| `test/services/creates_file_episode_test.rb` | Edit | Assert priority on enqueued job |
+| `test/services/creates_email_episode_test.rb` | Edit | Assert priority on enqueued job |
+| `test/services/creates_extension_episode_test.rb` | Edit | Assert priority on enqueued job |
+| `test/services/submits_episode_for_processing_test.rb` | Edit | Assert priority on enqueued job |
+
+**Total: 2 new files, 16 edited files. No migrations. No new gems. No config changes.**
+
+## What Does NOT Change
+
+- `config/queue.yml` — Single `default` queue, already polls by `(priority, job_id)`
+- `db/queue_schema.rb` — `priority` column already exists on `solid_queue_jobs`, `solid_queue_ready_executions`, `solid_queue_blocked_executions`, and `solid_queue_scheduled_executions`
+- Job class files — No changes to `queue_as`, `limits_concurrency`, or `perform` signatures
+- `DeleteEpisodeJob` — No user context at enqueue time; stays at default priority
+- Episode model / status logic — Processing states unchanged
+- ActionCable / Turbo Stream broadcasting — Unchanged
 
 ## Alternatives Considered
 
@@ -140,10 +422,9 @@ workers:
 ```
 
 **Rejected because:**
-- Adds deployment configuration complexity — workers must be reconfigured.
 - Solid Queue workers with ordered queue lists use strict ordering (drain `premium` completely before touching `default`), which could starve free users entirely during sustained load.
 - Priority values within a single queue achieve the same result with proportional fairness — free jobs still run when no premium jobs are waiting.
-- Queue-based separation is better suited for isolating fundamentally different workloads (e.g., email delivery vs. audio processing), not for tiering the same workload.
+- Queue-based separation is better suited for isolating fundamentally different workloads, not tiering the same workload.
 
 ### Priority with Starvation Protection
 
@@ -158,10 +439,4 @@ Add a scheduled job that bumps long-waiting free jobs to a higher priority (e.g.
 
 1. Deploy the code change — it applies to newly enqueued jobs only. Jobs already in the queue continue at their current priority (`0`).
 2. No feature flag needed. The change is low-risk: if the priority values are wrong, the worst case is the prior behavior (FIFO within same priority).
-3. Monitor queue wait times by tier in logs (the `EpisodeJobLogging` concern already logs `user_id` — add `priority` to the structured log payload for observability).
-
-## Future Considerations
-
-- **Starvation monitoring**: Track p95 queue wait time for free-tier jobs. If it exceeds an acceptable threshold, implement the priority escalation mechanism described above.
-- **Finer-grained priorities**: The `0`/`10` gap allows inserting tiers (e.g., `5` for annual subscribers) without touching existing logic.
-- **Worker scaling**: If queue depth grows, increase `JOB_CONCURRENCY` or `threads` in `config/queue.yml` before adding priority complexity.
+3. Monitor `priority` in structured logs to verify correct distribution across tiers.
