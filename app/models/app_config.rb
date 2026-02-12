@@ -38,6 +38,9 @@ class AppConfig
   module Content
     MIN_LENGTH = 100
     MAX_FETCH_BYTES = 10 * 1024 * 1024  # 10MB
+    LOW_QUALITY_EXTRACTION_CHARS = 500
+    LOW_QUALITY_HTML_MIN_BYTES = 10_000
+    JINA_READER_BASE_URL = "https://r.jina.ai"
   end
 
   module Llm
