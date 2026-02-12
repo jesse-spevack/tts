@@ -10,14 +10,16 @@
     { label: "Pricing", href: root_path + "#pricing" },
     { label: "About", href: "#hero" },
   ],
-  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
-    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+  actions: safe_join([
+    link_to("Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white"),
+    tag.button("Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200")
+  ], "\n    ") %>
 
 <%# ===== Hero (two-column with photo) ===== %>
 <%= render "shared/marketing/hero_two_col_photo",
   eyebrow: render("shared/marketing/announcement_badge", text: "Now with premium HD voices", tag: "button", cta: "Hear how it sounds", data: { action: "click->sample-modal#open" }),
   headline: "Articles in. Podcast episodes out.",
-  subheadline: '<p>Podcasts fit into your life &mdash; on commutes, during workouts, while cooking. There&rsquo;s more great writing out there than any of us have time to sit down and read. PodRead bridges the gap: the depth of your favorite writing with the convenience of a podcast.</p>'.html_safe,
+  subheadline: tag.p("Podcasts fit into your life — on commutes, during workouts, while cooking. There\u2019s more great writing out there than any of us have time to sit down and read. PodRead bridges the gap: the depth of your favorite writing with the convenience of a podcast."),
   photo: render("pages/about_hero_illustration") %>
 
 <%# Brands %>
@@ -25,7 +27,7 @@
   id: "brands",
   eyebrow: "Works everywhere",
   headline: "Works with every podcast app.",
-  subheadline: '<p>PodRead creates a private podcast feed that works with every major podcast player. No new apps to install. Just subscribe and listen.</p>'.html_safe
+  subheadline: tag.p("PodRead creates a private podcast feed that works with every major podcast player. No new apps to install. Just subscribe and listen.")
 } do %>
   <%= render "shared/marketing/brands_cards_item",
     text: "Episodes appear alongside your other podcasts. Syncs across iPhone, iPad, Mac, and Apple Watch." do %>
@@ -45,15 +47,15 @@
 <%= render layout: "shared/marketing/features_three_col", locals: {
   id: "features",
   headline: "What I believe in.",
-  subheadline: '<p>PodRead is built on a few simple principles about how I think software should be made.</p>'.html_safe
+  subheadline: tag.p("PodRead is built on a few simple principles about how I think software should be made.")
 } do %>
-  <%= render "shared/marketing/features_three_col_item", headline: "Craft", subheadline: '<p>Take pride in what you do. Natural-sounding voices, clean article extraction, reliable feed. No feature bloat, no shortcuts.</p>'.html_safe do %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Craft", subheadline: tag.p("Take pride in what you do. Natural-sounding voices, clean article extraction, reliable feed. No feature bloat, no shortcuts.") do %>
     <%= render "shared/icons/home", css_class: "size-3.25" %>
   <% end %>
-  <%= render "shared/marketing/features_three_col_item", headline: "Anti-Enshittification", subheadline: '<p>No ads in your feed. No algorithmic recommendations. No dark patterns. PodRead makes money when you pay for it, not when it sells your attention. Your data stays yours.</p>'.html_safe do %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Anti-Enshittification", subheadline: tag.p("No ads in your feed. No algorithmic recommendations. No dark patterns. PodRead makes money when you pay for it, not when it sells your attention. Your data stays yours.") do %>
     <%= render "shared/icons/shield_exclamation", css_class: "size-3.25" %>
   <% end %>
-  <%= render "shared/marketing/features_three_col_item", headline: "Independence", subheadline: '<p>Bootstrapped. No VC funding. No investors to answer to. Built for users, not a board of directors. Cancel anytime, no questions asked.</p>'.html_safe do %>
+  <%= render "shared/marketing/features_three_col_item", headline: "Independence", subheadline: tag.p("Bootstrapped. No VC funding. No investors to answer to. Built for users, not a board of directors. Cancel anytime, no questions asked.") do %>
     <%= render "shared/icons/compass", css_class: "size-3.25" %>
   <% end %>
 <% end %>
@@ -61,11 +63,15 @@
 <%# Call To Action %>
 <%= render "shared/marketing/cta_simple",
   headline: "Ready to listen to your reading list?",
-  subheadline: '<p>Try PodRead free. Two episodes a month, no credit card required. Upgrade anytime for unlimited episodes and premium voices.</p>'.html_safe,
-  cta: '<div class="flex items-center gap-4">
-    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Try PodRead free</button>
-    <a href="/#pricing" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white">View pricing <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" role="image" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
-  </div>'.html_safe %>
+  subheadline: tag.p("Try PodRead free. Two episodes a month, no credit card required. Upgrade anytime for unlimited episodes and premium voices."),
+  cta: tag.div(class: "flex items-center gap-4") do
+    safe_join([
+      tag.button("Try PodRead free", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200"),
+      link_to("/#pricing", class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white") do
+        safe_join(["View pricing ", tag.svg(tag.path(d: "M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z", fill_rule: "evenodd", clip_rule: "evenodd"), width: "5", height: "8", viewBox: "0 0 5 8", fill: "currentColor", role: "image", class: "inline-block shrink-0")])
+      end
+    ])
+  end %>
 
 <%# ===== Footer (link categories) ===== %>
 <%= render "shared/marketing/footer_categories",
@@ -107,4 +113,4 @@
       ]
     },
   ],
-  fineprint: "PodRead is built by Jesse Spevack in Denver, CO. &copy; 2026 PodRead. All rights reserved." %>
+  fineprint: "PodRead is built by Jesse Spevack in Denver, CO. © 2026 PodRead. All rights reserved." %>

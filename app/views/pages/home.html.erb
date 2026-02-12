@@ -11,8 +11,10 @@
     { label: "Pricing", href: "#pricing" },
     { label: "About", href: about_path },
   ],
-  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
-    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+  actions: safe_join([
+    link_to("Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white"),
+    tag.button("Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200")
+  ], "\n    ") %>
 
 <%# ===== Hero (demo on background) ===== %>
 <%= render "shared/marketing/hero_demo_bg",
@@ -23,8 +25,8 @@
     variant: "overlay",
     data: { action: "click->sample-modal#open" }),
   headline: "Turn any article into a podcast episode.",
-  subheadline: '<p>Paste a URL, upload a file, or drop in text. PodRead converts it to audio and delivers it to your private podcast feed. Listen in any podcast app.</p>'.html_safe,
-  cta: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-white text-mist-950 hover:bg-mist-200">Create my feed</button>'.html_safe,
+  subheadline: tag.p("Paste a URL, upload a file, or drop in text. PodRead converts it to audio and delivers it to your private podcast feed. Listen in any podcast app."),
+  cta: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-white text-mist-950 hover:bg-mist-200"),
   demo: render("pages/hero_demo"),
   wallpaper_color: "blue" %>
 
@@ -103,7 +105,7 @@
 
 <%# ===== Testimonial (large quote) ===== %>
 <%= render "shared/marketing/testimonial_large_quote",
-  quote: '<p>I built PodRead because I had dozens of articles open in browser tabs that I never made time to read. Now I listen to them when I\'m doing chores or on a run. It took me a weekend to build the first version, and I\'ve been using it every day since.</p>'.html_safe,
+  quote: tag.p("I built PodRead because I had dozens of articles open in browser tabs that I never made time to read. Now I listen to them when I'm doing chores or on a run. It took me a weekend to build the first version, and I've been using it every day since."),
   name: "Jesse Spevack",
   byline: "Founder of PodRead",
   img_src: "/jesse-profile.jpg" %>
@@ -120,7 +122,7 @@
   <%= render "shared/marketing/faq_item",
     id: "faq-2",
     question: "Does it sound robotic?",
-    answer: "Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. <button type='button' data-action='click->sample-modal#open' class='font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300'>Hear how it sounds</button>.".html_safe %>
+    answer: safe_join(["Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. ", tag.button("Hear how it sounds", type: "button", data: { action: "click->sample-modal#open" }, class: "font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300"), "."]) %>
   <%= render "shared/marketing/faq_item",
     id: "faq-3",
     question: "Which podcast apps work with PodRead?",
@@ -152,7 +154,7 @@
         "2 episodes per month",
         "Up to 15,000 characters",
       ],
-      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
+      cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
 
     <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Premium",
@@ -165,7 +167,7 @@
         "Unlimited episodes",
         "Up to 50,000 characters",
       ],
-      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="premium_monthly" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get Premium</button>'.html_safe %>
+      cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_monthly" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
   </div>
 
   <%# Yearly panel %>
@@ -182,7 +184,7 @@
         "2 episodes per month",
         "Up to 15,000 characters",
       ],
-      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
+      cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
 
     <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Premium",
@@ -195,18 +197,22 @@
         "Unlimited episodes",
         "Up to 50,000 characters",
       ],
-      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="premium_annual" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get Premium</button>'.html_safe %>
+      cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_annual" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
   </div>
 <% end %>
 
 <%# ===== Call to Action ===== %>
 <%= render "shared/marketing/cta_simple",
   headline: "Your reading list isn't going to listen to itself.",
-  subheadline: '<p>Start converting articles into podcast episodes today. Free to try, no credit card required.</p>'.html_safe,
-  cta: '<div class="flex items-center gap-4">
-    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Start listening free</button>
-    <a href="#features" class="inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white">See how it works <svg width="5" height="8" viewBox="0 0 5 8" fill="currentColor" class="inline-block shrink-0"><path fill-rule="evenodd" clip-rule="evenodd" d="M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z" /></svg></a>
-  </div>'.html_safe %>
+  subheadline: tag.p("Start converting articles into podcast episodes today. Free to try, no credit card required."),
+  cta: tag.div(class: "flex items-center gap-4") do
+    safe_join([
+      tag.button("Start listening free", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200"),
+      link_to("#features", class: "inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white") do
+        safe_join(["See how it works ", tag.svg(tag.path(d: "M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z", fill_rule: "evenodd", clip_rule: "evenodd"), width: "5", height: "8", viewBox: "0 0 5 8", fill: "currentColor", class: "inline-block shrink-0")])
+      end
+    ])
+  end %>
 
 <%# ===== Footer (link categories) ===== %>
 <%= render "shared/marketing/footer_categories",

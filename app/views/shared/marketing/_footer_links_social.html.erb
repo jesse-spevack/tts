@@ -23,7 +23,7 @@
     { name: "GitHub", href: "#", icon: "github" },
     { name: "YouTube", href: "#", icon: "youtube" },
   ]
-  fineprint ||= "&copy; #{Date.today.year} PodRead. All rights reserved."
+  fineprint ||= "© #{Date.today.year} PodRead. All rights reserved."
 %>
 
 <footer class="pt-16">
@@ -74,7 +74,7 @@
       </div>
 
       <%# Fineprint %>
-      <div class="text-mist-600 dark:text-mist-500"><%= fineprint.html_safe %></div>
+      <div class="text-mist-600 dark:text-mist-500"><%= fineprint %></div>
     </div>
   </div>
 </footer>

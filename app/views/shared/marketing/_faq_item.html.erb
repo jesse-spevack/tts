@@ -1,5 +1,5 @@
 <%# Individual FAQ item with disclosure toggle %>
-<%# Locals: id (string, unique ID for this FAQ), question (string), answer (html_safe string) %>
+<%# Locals: id (string, unique ID for this FAQ), question (string), answer (string or html-safe content) %>
 <% faq_id = local_assigns[:id] || "faq-#{SecureRandom.hex(4)}" %>
 <div id="<%= faq_id %>">
   <button
