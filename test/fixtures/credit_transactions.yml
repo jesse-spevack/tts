@@ -10,4 +10,3 @@ usage:
   amount: -1
   balance_after: 4
   transaction_type: usage
-  episode: one

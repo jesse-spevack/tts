@@ -13,8 +13,14 @@ class CreditTransactionTest < ActiveSupport::TestCase
     assert_nil transaction.episode
   end
 
-  test "usage transaction references episode" do
-    transaction = credit_transactions(:usage)
+  test "usage transaction can reference episode" do
+    transaction = CreditTransaction.create!(
+      user: users(:credit_user),
+      amount: -1,
+      balance_after: 2,
+      transaction_type: "usage",
+      episode: episodes(:one)
+    )
     assert_equal episodes(:one), transaction.episode
   end
 
