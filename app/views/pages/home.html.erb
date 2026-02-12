@@ -105,7 +105,7 @@
 
 <%# ===== Testimonial (large quote) ===== %>
 <%= render "shared/marketing/testimonial_large_quote",
-  quote: tag.p("I built PodRead because I had dozens of articles open in browser tabs that I never made time to read. Now I listen to them when I'm doing chores or on a run. It took me a weekend to build the first version, and I've been using it every day since."),
+  quote: tag.p("I built PodRead because I had dozens of articles open in browser tabs that I never made time to read. Now I listen to them when I'm doing chores or on a run. I use it every day to stay informed and productive."),
   name: "Jesse Spevack",
   byline: "Founder of PodRead",
   img_src: "/jesse-profile.jpg" %>
@@ -122,7 +122,7 @@
   <%= render "shared/marketing/faq_item",
     id: "faq-2",
     question: "Does it sound robotic?",
-    answer: safe_join(["Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. ", tag.button("Hear how it sounds", type: "button", data: { action: "click->sample-modal#open" }, class: "inline font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300"), "."]) %>
+    answer: tag.p(safe_join(["Not at all. PodRead uses the latest text-to-speech technology. All our voice options sound natural and pleasant to listen to, even for long articles. ", tag.button("Hear how it sounds", type: "button", data: { action: "click->sample-modal#open" }, class: "inline font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300"), "."])) %>
   <%= render "shared/marketing/faq_item",
     id: "faq-3",
     question: "Which podcast apps work with PodRead?",
