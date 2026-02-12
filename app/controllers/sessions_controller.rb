@@ -48,7 +48,7 @@ class SessionsController < ApplicationController
   PLAN_PRICES = {
     "premium_monthly" => AppConfig::Stripe::PRICE_ID_MONTHLY,
     "premium_annual"  => AppConfig::Stripe::PRICE_ID_ANNUAL,
-    "credit_pack"     => AppConfig::Stripe::PRICE_ID_CREDIT_PACK,
+    "credit_pack"     => AppConfig::Stripe::PRICE_ID_CREDIT_PACK
   }.freeze
 
   def checkout_flow?(plan)
