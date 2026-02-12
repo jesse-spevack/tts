@@ -29,6 +29,10 @@ class User < ApplicationRecord
     standard? && !subscription&.active? && !has_credits?
   end
 
+  def credit_user?
+    has_credits? && !premium?
+  end
+
   def voice
     Voice.google_voice_for(voice_preference, is_unlimited: unlimited?)
   end
@@ -39,7 +43,7 @@ class User < ApplicationRecord
 
   def character_limit
     return nil if unlimited?
-    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium? || has_credits?
+    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium? || credit_user?
     AppConfig::Tiers::FREE_CHARACTER_LIMIT
   end
 

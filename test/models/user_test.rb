@@ -121,6 +121,24 @@ class UserTest < ActiveSupport::TestCase
     refute user.free?
   end
 
+  # credit_user? tests
+  test "credit_user? returns true for user with credits and no subscription" do
+    user = users(:credit_user)
+    assert user.credit_user?
+  end
+
+  test "credit_user? returns false for free user" do
+    user = users(:free_user)
+    refute user.credit_user?
+  end
+
+  test "credit_user? returns false for premium user with credits" do
+    user = users(:subscriber)
+    # Give subscriber some credits
+    CreditBalance.create!(user: user, balance: 5)
+    refute user.credit_user?
+  end
+
   # Voice tests
   test "voice returns Standard voice for free user with no preference" do
     user = users(:free_user)

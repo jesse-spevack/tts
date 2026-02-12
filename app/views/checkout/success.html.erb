@@ -3,7 +3,7 @@
     <%= render "shared/icons/heart", css_class: "size-8 text-mist-950 dark:text-white" %>
   </div>
 
-  <% if Current.user.has_credits? && !Current.user.premium? %>
+  <% if Current.user.credit_user? %>
     <h1 class="font-display text-2xl tracking-tight text-mist-950 dark:text-white mb-4">
       Credits added!
     </h1>

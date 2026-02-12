@@ -102,7 +102,7 @@ class EpisodesController < ApplicationController
   end
 
   def deduct_credit_if_needed(episode)
-    return unless Current.user.has_credits? && !Current.user.premium?
+    return unless Current.user.credit_user?
 
     DeductsCredit.call(user: Current.user, episode: episode)
   end

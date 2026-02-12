@@ -1,7 +1,7 @@
 <div class="max-w-2xl mx-auto">
   <%= render "shared/page_header", title: "New Episode" %>
 
-  <% if Current.user.has_credits? && !Current.user.premium? %>
+  <% if Current.user.credit_user? %>
     <div class="mb-6 rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:ring-blue-500/20">
       <p class="text-sm/6 text-blue-700 dark:text-blue-300">
         You have <strong><%= Current.user.credits_remaining %> episode credits</strong> remaining.
