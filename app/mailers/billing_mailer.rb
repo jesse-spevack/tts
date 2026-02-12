@@ -21,6 +21,17 @@ class BillingMailer < ApplicationMailer
     )
   end
 
+  def credit_depleted(user)
+    @user = user
+    @upgrade_url = upgrade_url
+    @credit_pack_count = user.credit_transactions.where(transaction_type: "purchase").count
+
+    mail(
+      to: user.email_address,
+      subject: "Your credits are used up — here's a better deal"
+    )
+  end
+
   def cancellation(user, ends_at:)
     @user = user
     @ends_at = ends_at

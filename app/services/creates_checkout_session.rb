@@ -47,11 +47,15 @@ class CreatesCheckoutSession
   def create_checkout_session(customer_id)
     Stripe::Checkout::Session.create(
       customer: customer_id,
-      mode: "subscription",
+      mode: checkout_mode,
       line_items: [ { price: price_id, quantity: 1 } ],
       success_url: success_url,
       cancel_url: cancel_url,
       metadata: { user_id: user.id }
     )
+  end
+
+  def checkout_mode
+    ValidatesPrice.credit_pack?(price_id) ? "payment" : "subscription"
   end
 end

@@ -17,6 +17,8 @@ class ChecksEpisodeCreationPermission
 
     if remaining > 0
       Result.success(nil, remaining: remaining)
+    elsif user.has_credits?
+      Result.success(nil, using_credit: true)
     else
       Result.failure("Episode limit reached")
     end

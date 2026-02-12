@@ -1,0 +1,13 @@
+purchase:
+  user: credit_user
+  amount: 5
+  balance_after: 5
+  transaction_type: purchase
+  stripe_session_id: cs_test_purchase_001
+
+usage:
+  user: credit_user
+  amount: -1
+  balance_after: 4
+  transaction_type: usage
+  episode: one

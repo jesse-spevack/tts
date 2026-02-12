@@ -92,12 +92,22 @@ class EpisodesController < ApplicationController
   def handle_create_result(result, success_notice)
     if result.success?
       RecordsEpisodeUsage.call(user: Current.user)
+      deduct_credit_if_needed(result.data)
       redirect_to episodes_path, notice: success_notice
     else
       flash.now[:alert] = result.error
       @episode = @podcast.episodes.build
       render :new, status: :unprocessable_entity
     end
+  end
+
+  def deduct_credit_if_needed(episode)
+    return unless Current.user.free? && Current.user.has_credits?
+
+    usage = EpisodeUsage.current_for(Current.user)
+    return unless usage.episode_count > AppConfig::Tiers::FREE_MONTHLY_EPISODES
+
+    DeductsCredit.call(user: Current.user, episode: episode)
   end
 
   def read_uploaded_content
@@ -111,7 +121,7 @@ class EpisodesController < ApplicationController
     return if result.success?
 
     flash[:alert] = "You've used your 2 free episodes this month! " \
-                    "Upgrade to Premium for unlimited episodes."
+                    "Upgrade to Premium for unlimited episodes, or buy a credit pack."
     redirect_to episodes_path
   end
 

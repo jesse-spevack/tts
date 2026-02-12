@@ -12,7 +12,7 @@
           <div class="flex gap-8 max-lg:hidden">
             <%= link_to "Episodes", episodes_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <%= link_to "Settings", settings_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
-            <% if Current.user.free? %>
+            <% if Current.user.free? && !Current.user.has_credits? %>
               <%= link_to "Upgrade", upgrade_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <% else %>
               <%= link_to "Billing", billing_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
@@ -101,7 +101,7 @@
               <%= link_to "Episodes", episodes_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <%= link_to "+ New Episode", new_episode_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <%= link_to "Settings", settings_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
-              <% if Current.user.free? %>
+              <% if Current.user.free? && !Current.user.has_credits? %>
                 <%= link_to "Upgrade", upgrade_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <% else %>
                 <%= link_to "Billing", billing_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>

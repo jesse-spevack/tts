@@ -6,6 +6,8 @@ class User < ApplicationRecord
   has_many :sent_messages, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
   has_one :subscription, dependent: :destroy
+  has_one :credit_balance, dependent: :destroy
+  has_many :credit_transactions, dependent: :destroy
 
   enum :account_type, { standard: 0, complimentary: 1, unlimited: 2 }, default: :standard
 
@@ -37,8 +39,16 @@ class User < ApplicationRecord
 
   def character_limit
     return nil if unlimited?
-    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium?
+    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium? || has_credits?
     AppConfig::Tiers::FREE_CHARACTER_LIMIT
+  end
+
+  def credits_remaining
+    credit_balance&.balance || 0
+  end
+
+  def has_credits?
+    credits_remaining > 0
   end
 
   def email
