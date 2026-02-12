@@ -6,8 +6,8 @@ class PagesController < ApplicationController
 
   def home
     redirect_to new_episode_path if authenticated?
-    @episode_count = Episode.count
-    @user_count = User.count
+    @episode_count = Rails.cache.fetch("home/episode_count", expires_in: 5.minutes) { Episode.count }
+    @user_count = Rails.cache.fetch("home/user_count", expires_in: 5.minutes) { User.count }
   end
 
   def how_it_sounds
