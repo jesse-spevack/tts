@@ -116,7 +116,7 @@
   <%= render "shared/marketing/faq_item",
     id: "faq-1",
     question: "Is it really free?",
-    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want unlimited episodes and premium HD voices, you can upgrade to Premium for $9/month." %>
+    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. Need more? Buy a 5-episode pack for $4.99 with no subscription, or upgrade to Premium for $9/month for unlimited episodes." %>
   <%= render "shared/marketing/faq_item",
     id: "faq-2",
     question: "Does it sound robotic?",
@@ -155,6 +155,18 @@
       cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
 
     <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Episode Pack",
+      price: "$4.99",
+      subheadline: "Pay as you go, no subscription needed.",
+      features: [
+        "5 episodes per pack",
+        "Credits never expire",
+        "Up to 50,000 characters",
+        "Buy more anytime",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" data-heading="Get started with Episode Packs" data-subtext="Create a free account, then buy an episode pack." class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Get started</button>'.html_safe %>
+
+    <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Premium",
       price: "$9",
       period: "/month",
@@ -183,6 +195,18 @@
         "Up to 15,000 characters",
       ],
       cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Create my feed</button>'.html_safe %>
+
+    <%= render "shared/marketing/pricing_hero_multi_plan",
+      name: "Episode Pack",
+      price: "$4.99",
+      subheadline: "Pay as you go, no subscription needed.",
+      features: [
+        "5 episodes per pack",
+        "Credits never expire",
+        "Up to 50,000 characters",
+        "Buy more anytime",
+      ],
+      cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free" data-heading="Get started with Episode Packs" data-subtext="Create a free account, then buy an episode pack." class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Get started</button>'.html_safe %>
 
     <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Premium",

@@ -856,20 +856,32 @@ Add a small info banner above the tab bar:
 
 ### Phase 7: Frontend — Landing Page Pricing
 
-Add a subtle mention of the credit pack option on the landing page pricing section, without competing with the subscription CTA.
+Add a third pricing card — "Episode Pack" — between Free and Premium in both the Monthly and Yearly panels.
 
 #### Update: `app/views/pages/home.html.erb`
 
-Add a line below each pricing panel grid (both monthly and yearly panels):
+Insert a new `pricing_hero_multi_plan` card between the Free and Premium cards in each panel:
 
 ```erb
-<%# After each pricing grid's closing </div>, before the next panel %>
-<p class="mt-4 text-center text-sm text-mist-500 dark:text-mist-400">
-  Not ready to subscribe? <button type="button" data-action="click->signup-modal#open" data-plan="free" class="underline hover:text-mist-700 dark:hover:text-mist-300">Try 2 episodes free</button> or buy a 5-episode pack for $4.99.
-</p>
+<%= render "shared/marketing/pricing_hero_multi_plan",
+  name: "Episode Pack",
+  price: "$4.99",
+  subheadline: "Pay as you go, no subscription needed.",
+  features: [
+    "5 episodes per pack",
+    "Credits never expire",
+    "Up to 50,000 characters",
+    "Buy more anytime",
+  ],
+  cta_html: '<button type="button" data-action="click->signup-modal#open" data-plan="free"
+    data-heading="Get started with Episode Packs"
+    data-subtext="Create a free account, then buy an episode pack."
+    class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15">Get started</button>'.html_safe %>
 ```
 
-This is deliberately understated — we want the subscription to remain primary.
+The card uses the same `pricing_hero_multi_plan` partial as Free and Premium. The grid auto-flows to 3 columns on desktop via `lg:auto-cols-fr lg:grid-flow-col`. The CTA opens the signup modal since users need an account before purchasing credits. The Episode Pack card is identical in both Monthly and Yearly panels since it's a one-time purchase unaffected by billing frequency.
+
+Also update FAQ #1 to mention episode packs: "Need more? Buy a 5-episode pack for $4.99 with no subscription, or upgrade to Premium for $9/month for unlimited episodes."
 
 ---
 
