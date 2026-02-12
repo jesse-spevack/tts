@@ -8,6 +8,20 @@ class EpisodesHelperTest < ActionView::TestCase
     assert_includes result, "text-yellow-500"
   end
 
+  test "status_dot returns ping animation for processing" do
+    result = status_dot("processing")
+    assert_includes result, "animate-ping"
+    assert_includes result, "bg-yellow-400"
+    assert_includes result, "bg-yellow-500"
+  end
+
+  test "status_dot returns simple dot for other statuses" do
+    result = status_dot("complete")
+    assert_includes result, "bg-green-500"
+    assert_includes result, "rounded-full"
+    refute_includes result, "animate-ping"
+  end
+
   test "status_badge returns completed badge with checkmark" do
     result = status_badge("complete")
     assert_includes result, "Completed"
