@@ -43,6 +43,7 @@ jobs:
           echo "STRIPE_WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=stripe-webhook-secret)" >> $GITHUB_ENV
           echo "STRIPE_PRICE_ID_MONTHLY=$(gcloud secrets versions access latest --secret=stripe-price-id-monthly)" >> $GITHUB_ENV
           echo "STRIPE_PRICE_ID_ANNUAL=$(gcloud secrets versions access latest --secret=stripe-price-id-annual)" >> $GITHUB_ENV
+          echo "STRIPE_PRICE_ID_CREDIT_PACK=$(gcloud secrets versions access latest --secret=stripe-price-id-credit-pack)" >> $GITHUB_ENV
           # Generate OAuth2 access token for Artifact Registry (instead of static secret)
           echo "KAMAL_REGISTRY_PASSWORD=$(gcloud auth print-access-token)" >> $GITHUB_ENV
 
@@ -76,6 +77,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
           STRIPE_PRICE_ID_MONTHLY=$STRIPE_PRICE_ID_MONTHLY
           STRIPE_PRICE_ID_ANNUAL=$STRIPE_PRICE_ID_ANNUAL
+          STRIPE_PRICE_ID_CREDIT_PACK=$STRIPE_PRICE_ID_CREDIT_PACK
           KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
           EOF
 
