@@ -77,11 +77,10 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Marketing preview (dev tool for inspecting icons)
-  get "marketing-preview/icons", to: "marketing_preview#icons", as: :marketing_preview_icons
-
-  # Test helpers (only available in development/test)
+  # Dev-only routes (only available in development/test)
   if Rails.env.local?
+    # Marketing preview (dev tool for inspecting icons)
+    get "marketing-preview/icons", to: "marketing_preview#icons", as: :marketing_preview_icons
     get "test/magic_link_token/:email", to: "test_helpers#magic_link_token", constraints: { email: /[^\/]+/ }
     post "test/create_user", to: "test_helpers#create_user"
   end
