@@ -85,6 +85,12 @@ class AppConfig
     PRICE_ID_ANNUAL = ENV.fetch("STRIPE_PRICE_ID_ANNUAL", "test_price_annual")
     PRICE_ID_CREDIT_PACK = ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK", "test_price_credit_pack")
     WEBHOOK_SECRET = ENV.fetch("STRIPE_WEBHOOK_SECRET", "test_webhook_secret")
+
+    PLAN_PRICES = {
+      "premium_monthly" => PRICE_ID_MONTHLY,
+      "premium_annual"  => PRICE_ID_ANNUAL,
+      "credit_pack"     => PRICE_ID_CREDIT_PACK
+    }.freeze
   end
 
   module Credits

@@ -62,6 +62,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
   end
 
+  test "verify with credit_pack plan redirects to checkout without flash" do
+    token = GeneratesAuthToken.call(user: @user)
+
+    get auth_url, params: { token: token, plan: "credit_pack" }
+
+    assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
+    assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
+  end
+
   test "verify without plan redirects to episodes" do
     token = GeneratesAuthToken.call(user: @user)
 
