@@ -45,16 +45,19 @@ class SessionsController < ApplicationController
     end
   end
 
+  PLAN_PRICES = {
+    "premium_monthly" => AppConfig::Stripe::PRICE_ID_MONTHLY,
+    "premium_annual"  => AppConfig::Stripe::PRICE_ID_ANNUAL,
+    "credit_pack"     => AppConfig::Stripe::PRICE_ID_CREDIT_PACK,
+  }.freeze
+
   def checkout_flow?(plan)
-    plan.in?(%w[premium_monthly premium_annual])
+    PLAN_PRICES.key?(plan)
   end
 
   def post_login_path(plan)
-    case plan
-    when "premium_monthly"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
-    when "premium_annual"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+    if (price_id = PLAN_PRICES[plan])
+      checkout_path(price_id: price_id)
     else
       after_authentication_url
     end
