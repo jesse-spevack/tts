@@ -57,6 +57,18 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 10 * 1024 * 1024, AppConfig::Content::MAX_FETCH_BYTES
   end
 
+  test "Content::LOW_QUALITY_EXTRACTION_CHARS is 500" do
+    assert_equal 500, AppConfig::Content::LOW_QUALITY_EXTRACTION_CHARS
+  end
+
+  test "Content::LOW_QUALITY_HTML_MIN_BYTES is 10000" do
+    assert_equal 10_000, AppConfig::Content::LOW_QUALITY_HTML_MIN_BYTES
+  end
+
+  test "Content::JINA_READER_BASE_URL is https://r.jina.ai" do
+    assert_equal "https://r.jina.ai", AppConfig::Content::JINA_READER_BASE_URL
+  end
+
   test "Llm::MAX_TITLE_LENGTH is 255" do
     assert_equal 255, AppConfig::Llm::MAX_TITLE_LENGTH
   end
