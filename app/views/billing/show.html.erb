@@ -88,7 +88,7 @@
           <%= render "upgrade_options" %>
         </div>
       </div>
-    <% elsif Current.user.has_credits? && Current.user.free? %>
+    <% elsif Current.user.has_credits? && !Current.user.premium? %>
       <%# Upgrade section for credit users %>
       <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
         <div>

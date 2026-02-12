@@ -12,7 +12,7 @@
           <div class="flex gap-8 max-lg:hidden">
             <%= link_to "Episodes", episodes_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <%= link_to "Settings", settings_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
-            <% if Current.user.free? && !Current.user.has_credits? %>
+            <% if Current.user.free? %>
               <%= link_to "Upgrade", upgrade_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <% else %>
               <%= link_to "Billing", billing_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>

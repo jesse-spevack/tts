@@ -116,6 +116,11 @@ class UserTest < ActiveSupport::TestCase
     refute user.free?
   end
 
+  test "free? returns false for user with credits" do
+    user = users(:credit_user)
+    refute user.free?
+  end
+
   # Voice tests
   test "voice returns Standard voice for free user with no preference" do
     user = users(:free_user)

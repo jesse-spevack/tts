@@ -1,17 +1,11 @@
 <div class="max-w-2xl mx-auto">
   <%= render "shared/page_header", title: "New Episode" %>
 
-  <% if Current.user.free? && Current.user.has_credits? %>
+  <% if Current.user.has_credits? && !Current.user.premium? %>
     <div class="mb-6 rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:ring-blue-500/20">
       <p class="text-sm/6 text-blue-700 dark:text-blue-300">
         You have <strong><%= Current.user.credits_remaining %> episode credits</strong> remaining.
-        <% usage = EpisodeUsage.current_for(Current.user) %>
-        <% remaining_free = [AppConfig::Tiers::FREE_MONTHLY_EPISODES - usage.episode_count, 0].max %>
-        <% if remaining_free > 0 %>
-          This episode uses your free allowance (<%= remaining_free %> left this month).
-        <% else %>
-          This episode will use 1 credit.
-        <% end %>
+        This episode will use 1 credit.
       </p>
     </div>
   <% end %>

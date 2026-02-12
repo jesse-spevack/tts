@@ -102,10 +102,7 @@ class EpisodesController < ApplicationController
   end
 
   def deduct_credit_if_needed(episode)
-    return unless Current.user.free? && Current.user.has_credits?
-
-    usage = EpisodeUsage.current_for(Current.user)
-    return unless usage.episode_count > AppConfig::Tiers::FREE_MONTHLY_EPISODES
+    return unless Current.user.has_credits? && !Current.user.premium?
 
     DeductsCredit.call(user: Current.user, episode: episode)
   end

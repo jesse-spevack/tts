@@ -81,32 +81,13 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
     assert_equal 2, result.data[:remaining]
   end
 
-  test "returns success for free user with credits at episode limit" do
+  test "returns success for credit user (skips tracking)" do
     credit_user = users(:credit_user)
-    EpisodeUsage.create!(
-      user: credit_user,
-      period_start: Time.current.beginning_of_month.to_date,
-      episode_count: 2
-    )
 
     result = ChecksEpisodeCreationPermission.call(user: credit_user)
 
     assert result.success?
-    assert result.data[:using_credit]
-  end
-
-  test "returns success for free user with credits over episode limit" do
-    credit_user = users(:credit_user)
-    EpisodeUsage.create!(
-      user: credit_user,
-      period_start: Time.current.beginning_of_month.to_date,
-      episode_count: 5
-    )
-
-    result = ChecksEpisodeCreationPermission.call(user: credit_user)
-
-    assert result.success?
-    assert result.data[:using_credit]
+    assert_nil result.data
   end
 
   test "returns failure for free user with zero credits at limit" do

@@ -26,7 +26,7 @@ class User < ApplicationRecord
   end
 
   def free?
-    standard? && !subscription&.active?
+    standard? && !subscription&.active? && !has_credits?
   end
 
   def voice
