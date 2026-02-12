@@ -97,7 +97,17 @@
     </div>
 
     <% if @episode.description.present? %>
-      <p class="text-mist-500 dark:text-mist-400 mb-12"><%= @episode.description %></p>
+      <p class="text-mist-500 dark:text-mist-400 <%= @episode.source_url.present? ? 'mb-4' : 'mb-12' %>"><%= @episode.description %></p>
+    <% end %>
+
+    <% if @episode.source_url.present? %>
+      <div class="mb-12">
+        <%= link_to @episode.source_url, target: "_blank", rel: "noopener",
+          class: "inline-flex items-center gap-1.5 text-sm text-mist-500 dark:text-mist-400 hover:text-mist-950 dark:hover:text-white transition-colors" do %>
+          <%= render "shared/icons/external_link", css_class: "size-4" %>
+          <span>View Original</span>
+        <% end %>
+      </div>
     <% end %>
 
     <%# Sign-up CTA %>
