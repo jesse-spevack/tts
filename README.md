@@ -292,4 +292,4 @@ test/
 
 ## License
 
-This project is licensed under the [O'Saasy License](LICENSE.md). Copyright © 2025, Jesse Spevack.
+This project is licensed under the [O'Saasy License](LICENSE.md). Copyright © 2025-2026, Jesse Spevack.
