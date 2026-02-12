@@ -68,10 +68,11 @@ Users buy episode credits in advance. Reduces per-transaction Stripe fees and cr
 | Pack | Price | Per-Episode | Our COGS | Margin % | Stripe Fee Impact |
 |------|-------|-------------|----------|----------|-------------------|
 | 3 episodes | $2.49 | $0.83 | $0.69 | 72% | $0.30 amortized over 3 |
+| 5 episodes | $4.99 | $1.00 | $1.15 | 74% | $0.30 amortized over 5 |
 | 10 episodes | $6.99 | $0.70 | $2.30 | 67% | $0.30 amortized over 10 |
 | 25 episodes | $14.99 | $0.60 | $5.75 | 62% | $0.30 amortized over 25 |
 
-**Tradeoff:** Better per-transaction economics but lower per-episode margin at high volumes. The 10-pack at $6.99 is dangerously close to the $9 subscription value — requires careful positioning.
+**Recommended: 5-pack at $4.99.** Clean $1.00/episode price point with 74% margin. Two packs/month ($9.98) costs more than the $9 subscription, creating an obvious upsell moment. The 10-pack at $6.99 is dangerously close to the $9 subscription value — requires careful positioning.
 
 ### Option C: Character-Based Metering
 
@@ -217,11 +218,12 @@ A typical 15K-char episode would cost the user $0.30–$0.60. A 50K-char episode
 
 1. **Keep the existing Free / Premium subscription tiers unchanged.** Subscriptions remain the default, most-promoted option.
 
-2. **Add a single credit pack to start:** 5 episodes for $3.99 ($0.80/episode, 72% margin after Stripe fees). This:
-   - Is priced above the per-episode subscription value (~$0.45/episode at 20 episodes/month) to avoid cannibalization
-   - Amortizes Stripe's $0.30 fixed fee reasonably ($0.06/episode vs $0.30/episode for single purchases)
-   - Is low enough to capture casual users who balk at $9/month
-   - Creates a natural upsell: "You've bought 3 credit packs this month — a subscription would save you $X"
+2. **Add a single credit pack to start:** 5 episodes for $4.99 ($1.00/episode, 74% margin after Stripe fees). This:
+   - Clean $1.00/episode price — easy for users to reason about
+   - Two packs/month ($9.98) exceeds the $9 subscription, creating an obvious upsell moment
+   - Amortizes Stripe's $0.30 fixed fee across 5 episodes ($0.09/episode vs $0.30 for single purchases)
+   - Low enough to capture casual users who balk at $9/month
+   - Creates a natural upsell: "You're spending $10/month on packs — upgrade to Premium for $9 and get unlimited episodes"
 
 3. **Credits do not expire.** Keeps things simple and avoids regulatory/trust issues. Revisit if abuse emerges.
 
@@ -240,7 +242,7 @@ A typical 15K-char episode would cost the user $0.30–$0.60. A 50K-char episode
 ### Estimated Revenue Impact
 
 Assuming 100 free-tier users hitting their limit per month:
-- If 10% buy a 5-pack: 10 × $3.99 = **$39.90/month** in new revenue
+- If 10% buy a 5-pack: 10 × $4.99 = **$49.90/month** in new revenue
 - If 20% of those convert to subscription within 90 days: 2 × $9 = **$18/month** incremental recurring revenue
 - Net new revenue: modest but with compounding subscription conversions
 
