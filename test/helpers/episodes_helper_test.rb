@@ -7,9 +7,9 @@ class EpisodesHelperTest < ActionView::TestCase
     refute_includes result, "●"
   end
 
-  test "status_dot returns ping animation for processing" do
+  test "status_dot returns pulse animation for processing" do
     result = status_dot("processing")
-    assert_includes result, "animate-ping"
+    assert_includes result, "animate-pulse"
     assert_includes result, "bg-yellow-500"
   end
 

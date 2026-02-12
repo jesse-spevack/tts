@@ -31,7 +31,7 @@ module EpisodesHelper
     base = "flex size-2 rounded-full flex-shrink-0"
     color = case status
     when "pending"    then "bg-mist-400"
-    when "processing" then "bg-yellow-500 animate-ping"
+    when "processing" then "bg-yellow-500 animate-pulse"
     when "complete"   then "bg-green-500"
     when "failed"     then "bg-rose-500"
     else "bg-mist-400"
