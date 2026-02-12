@@ -2,7 +2,7 @@ class PagesController < ApplicationController
   include Trackable
   allow_unauthenticated_access
 
-  layout "marketing", only: %i[home terms privacy about_02]
+  layout "marketing", only: %i[home terms privacy about]
 
   def home
     redirect_to new_episode_path if authenticated?
@@ -25,6 +25,6 @@ class PagesController < ApplicationController
   def extension_help
   end
 
-  def about_02
+  def about
   end
 end
