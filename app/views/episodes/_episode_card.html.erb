@@ -3,7 +3,7 @@
     <% row_classes = "flex items-center gap-4 py-4 px-2 -mx-2 rounded-lg" %>
     <% if episode.complete? %>
       <%= link_to episode_path(episode.prefix_id), class: "#{row_classes} hover:bg-mist-50 dark:hover:bg-mist-800 group transition-colors", data: { turbo_frame: "_top" } do %>
-        <span class="<%= status_dot_class(episode.status) %>"></span>
+        <%= status_dot(episode.status) %>
         <div class="flex-1 min-w-0">
           <p class="text-sm/6 font-medium text-mist-950 dark:text-white truncate"><%= episode.title %></p>
           <p class="text-sm/6 text-mist-500 dark:text-mist-400 truncate">
@@ -19,7 +19,7 @@
       <% end %>
     <% else %>
       <div class="<%= row_classes %>">
-        <span class="<%= status_dot_class(episode.status) %>"></span>
+        <%= status_dot(episode.status) %>
         <div class="flex-1 min-w-0">
           <p class="text-sm/6 font-medium text-mist-950 dark:text-white truncate"><%= episode.title %></p>
           <p class="text-sm/6 text-mist-500 dark:text-mist-400 truncate">
