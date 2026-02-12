@@ -1,15 +1,4 @@
-<svg aria-hidden="true"
- width="7"
- height="13"
- viewBox="0 0 7 13"
- fill="none"
- stroke-width="1"
- role="image"
- class="inline-block <%= local_assigns[:css_class] %>">
- <path d="M3.5 0.5V12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
- <path
- d="M6.50488 3.50488L3.50488 0.504883L0.504883 3.50488"
- stroke="currentColor"
- stroke-linecap="round"
- stroke-linejoin="round" />
- </svg>
+<svg width="7" height="13" viewBox="0 0 7 13" fill="none" stroke-width="1" role="image" class="<%= local_assigns[:css_class] || 'inline-block' %>">
+  <path d="M3.5 0.5V12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M6.50488 3.50488L3.50488 0.504883L0.504883 3.50488" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
