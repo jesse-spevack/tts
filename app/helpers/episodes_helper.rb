@@ -7,10 +7,7 @@ module EpisodesHelper
         content_tag(:span, "Pending")
       end
     when "processing"
-      content_tag :span, class: "inline-flex items-center gap-1 text-sm" do
-        content_tag(:span, "●", class: "text-yellow-500 dark:text-yellow-300 animate-pulse") +
-        content_tag(:span, "Processing")
-      end
+      content_tag :span, "Processing", class: "text-sm text-mist-500 dark:text-mist-400"
     when "complete"
       content_tag :span, class: "inline-flex items-center gap-1 text-sm" do
         content_tag(:span, "✓", class: "text-green-600 dark:text-green-400") +

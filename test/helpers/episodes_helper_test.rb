@@ -1,11 +1,10 @@
 require "test_helper"
 
 class EpisodesHelperTest < ActionView::TestCase
-  test "status_badge returns processing badge with pulse animation" do
+  test "status_badge returns processing text without dot" do
     result = status_badge("processing")
     assert_includes result, "Processing"
-    assert_includes result, "animate-pulse"
-    assert_includes result, "text-yellow-500"
+    refute_includes result, "●"
   end
 
   test "status_dot returns ping animation for processing" do
