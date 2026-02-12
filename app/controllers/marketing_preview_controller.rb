@@ -4,7 +4,7 @@ class MarketingPreviewController < ApplicationController
 
   # GET /marketing-preview/icons
   def icons
-    icon_dir = Rails.root.join("app/views/shared/marketing/icons")
+    icon_dir = Rails.root.join("app/views/shared/icons")
     @icon_names = Dir.glob(icon_dir.join("_*.html.erb")).map { |f|
       File.basename(f, ".html.erb").delete_prefix("_")
     }.sort
