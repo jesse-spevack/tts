@@ -50,4 +50,20 @@ class SubmitsEpisodeForProcessingTest < ActiveSupport::TestCase
   ensure
     Current.action_id = nil
   end
+
+  test "enqueues with priority 10 for free user" do
+    @episode.user.update!(account_type: :standard)
+
+    assert_enqueued_with(job: GeneratesEpisodeAudioJob, priority: 10) do
+      SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+    end
+  end
+
+  test "enqueues with priority 0 for premium user" do
+    @episode.user.update!(account_type: :complimentary)
+
+    assert_enqueued_with(job: GeneratesEpisodeAudioJob, priority: 0) do
+      SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+    end
+  end
 end
