@@ -4,8 +4,10 @@
     { label: "Pricing", href: root_path + "#pricing" },
     { label: "About", href: about_path },
   ],
-  actions: ('<a href="' + login_path + '" class="text-sm/7 font-medium text-mist-950 dark:text-white">Login</a>
-    <button type="button" data-action="click->signup-modal#open" data-plan="free" class="inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200">Get started</button>').html_safe %>
+  actions: safe_join([
+    link_to("Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white"),
+    tag.button("Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200")
+  ], "\n    ") %>
 
 <div class="max-w-2xl mx-auto px-6 py-16">
   <h1 class="font-display text-3xl tracking-tight text-mist-950 dark:text-white mb-8">Terms of Service</h1>
