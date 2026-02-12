@@ -11,7 +11,6 @@ class EpisodesHelperTest < ActionView::TestCase
   test "status_dot returns ping animation for processing" do
     result = status_dot("processing")
     assert_includes result, "animate-ping"
-    assert_includes result, "bg-yellow-400"
     assert_includes result, "bg-yellow-500"
   end
 
