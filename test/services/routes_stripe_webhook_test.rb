@@ -151,6 +151,43 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     assert_nil result
   end
 
+  test "checkout.session.completed routes credit pack purchase (no subscription field)" do
+    user = users(:one)
+    user.update!(stripe_customer_id: "cus_credit_pack")
+
+    event = OpenStruct.new(
+      type: "checkout.session.completed",
+      data: OpenStruct.new(object: OpenStruct.new(
+        id: "cs_credit_pack_test",
+        customer: "cus_credit_pack",
+        subscription: nil
+      ))
+    )
+
+    result = RoutesStripeWebhook.call(event: event)
+
+    assert result.success?
+    assert_equal AppConfig::Credits::PACK_SIZE, user.credits_remaining
+  end
+
+  test "checkout.session.completed for credit pack does not send welcome email" do
+    user = users(:one)
+    user.update!(stripe_customer_id: "cus_credit_no_email")
+
+    event = OpenStruct.new(
+      type: "checkout.session.completed",
+      data: OpenStruct.new(object: OpenStruct.new(
+        id: "cs_credit_no_email",
+        customer: "cus_credit_no_email",
+        subscription: nil
+      ))
+    )
+
+    assert_no_enqueued_emails do
+      RoutesStripeWebhook.call(event: event)
+    end
+  end
+
   test "ignores unhandled event types" do
     event = OpenStruct.new(
       type: "customer.created",

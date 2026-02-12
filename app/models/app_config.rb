@@ -83,6 +83,13 @@ class AppConfig
   module Stripe
     PRICE_ID_MONTHLY = ENV.fetch("STRIPE_PRICE_ID_MONTHLY", "test_price_monthly")
     PRICE_ID_ANNUAL = ENV.fetch("STRIPE_PRICE_ID_ANNUAL", "test_price_annual")
+    PRICE_ID_CREDIT_PACK = ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK", "test_price_credit_pack")
     WEBHOOK_SECRET = ENV.fetch("STRIPE_WEBHOOK_SECRET", "test_webhook_secret")
+  end
+
+  module Credits
+    PACK_SIZE = 5
+    PACK_PRICE_DISPLAY = "$4.99"
+    PER_EPISODE_DISPLAY = "$1.00"
   end
 end

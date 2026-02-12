@@ -57,6 +57,21 @@
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               Your subscription ended on <%= @subscription.current_period_end.strftime("%B %d, %Y") %>.
             </p>
+
+          <% elsif Current.user.has_credits? %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Free + Credits</h3>
+              <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">Active</span>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              You have <span class="font-medium text-mist-950 dark:text-white"><%= Current.user.credits_remaining %> episode credits</span> remaining.
+            </p>
+            <div class="mt-4">
+              <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
+                <%= form.hidden_field :price_id, value: AppConfig::Stripe::PRICE_ID_CREDIT_PACK %>
+                <%= form.submit "Buy More Credits", class: button_classes(type: :secondary) %>
+              <% end %>
+            </div>
           <% end %>
         </div>
       </div>
@@ -68,6 +83,17 @@
         <div>
           <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Resubscribe</h2>
           <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pick up where you left off with a new subscription.</p>
+        </div>
+        <div class="md:col-span-2">
+          <%= render "upgrade_options" %>
+        </div>
+      </div>
+    <% elsif Current.user.credit_user? %>
+      <%# Upgrade section for credit users %>
+      <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+        <div>
+          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Save with Premium</h2>
+          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Unlimited episodes for less than 2 credit packs per month.</p>
         </div>
         <div class="md:col-span-2">
           <%= render "upgrade_options" %>

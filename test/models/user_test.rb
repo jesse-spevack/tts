@@ -116,6 +116,29 @@ class UserTest < ActiveSupport::TestCase
     refute user.free?
   end
 
+  test "free? returns false for user with credits" do
+    user = users(:credit_user)
+    refute user.free?
+  end
+
+  # credit_user? tests
+  test "credit_user? returns true for user with credits and no subscription" do
+    user = users(:credit_user)
+    assert user.credit_user?
+  end
+
+  test "credit_user? returns false for free user" do
+    user = users(:free_user)
+    refute user.credit_user?
+  end
+
+  test "credit_user? returns false for premium user with credits" do
+    user = users(:subscriber)
+    # Give subscriber some credits
+    CreditBalance.create!(user: user, balance: 5)
+    refute user.credit_user?
+  end
+
   # Voice tests
   test "voice returns Standard voice for free user with no preference" do
     user = users(:free_user)
@@ -239,6 +262,42 @@ class UserTest < ActiveSupport::TestCase
     user = users(:subscriber)
 
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
+  end
+
+  # Credit tests
+  test "credits_remaining returns balance for user with credits" do
+    user = users(:credit_user)
+    assert_equal 3, user.credits_remaining
+  end
+
+  test "credits_remaining returns 0 for user without credit_balance" do
+    user = users(:subscriber)
+    assert_equal 0, user.credits_remaining
+  end
+
+  test "has_credits? returns true for user with positive balance" do
+    user = users(:credit_user)
+    assert user.has_credits?
+  end
+
+  test "has_credits? returns false for user with zero balance" do
+    user = users(:jesse)
+    refute user.has_credits?
+  end
+
+  test "has_credits? returns false for user without credit_balance" do
+    user = users(:subscriber)
+    refute user.has_credits?
+  end
+
+  test "character_limit returns premium limit for free user with credits" do
+    user = users(:credit_user)
+    assert_equal AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT, user.character_limit
+  end
+
+  test "character_limit returns free limit for free user without credits" do
+    user = users(:free_user)
+    assert_equal AppConfig::Tiers::FREE_CHARACTER_LIMIT, user.character_limit
   end
 
   # email_ingest_address tests
