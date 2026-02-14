@@ -55,11 +55,14 @@ class Episode < ApplicationRecord
   end
 
   def broadcast_status_change
-    broadcast_replace_to(
-      "podcast_#{podcast_id}_episodes",
-      target: self,
+    html = ApplicationController.render(
       partial: "episodes/episode_card",
       locals: { episode: self }
+    )
+
+    ActionCable.server.broadcast(
+      "podcast_#{podcast_id}_episodes",
+      turbo_stream_replace(html)
     )
   end
 
@@ -76,5 +79,10 @@ class Episode < ApplicationRecord
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
     errors.add(:source_text, result.error) if result.failure?
+  end
+
+  def turbo_stream_replace(html)
+    target_id = ActionView::RecordIdentifier.dom_id(self)
+    %(<turbo-stream action="replace" target="#{target_id}"><template>#{html}</template></turbo-stream>)
   end
 end

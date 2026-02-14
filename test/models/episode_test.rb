@@ -258,4 +258,44 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert episode.valid?
   end
+
+  test "broadcast_status_change broadcasts to the raw stream name" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_broadcasts(stream_name, 1) do
+      episode.broadcast_status_change
+    end
+  end
+
+  test "broadcast_status_change sends turbo stream replace HTML" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    episode.broadcast_status_change
+
+    broadcasts = ActionCable.server.broadcasts(stream_name)
+    assert_equal 1, broadcasts.size
+    assert_includes broadcasts.first, "<turbo-stream action=\"replace\""
+    assert_includes broadcasts.first, "target=\"episode_#{episode.id}\""
+  end
+
+  test "after_update_commit broadcasts when status changes" do
+    episode = episodes(:one)
+    episode.update!(status: :processing)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_broadcasts(stream_name, 1) do
+      episode.update!(status: :complete, gcs_episode_id: "ep_123")
+    end
+  end
+
+  test "after_update_commit does not broadcast when status unchanged" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_no_broadcasts(stream_name) do
+      episode.update!(title: "Updated Title")
+    end
+  end
 end
