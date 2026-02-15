@@ -1,6 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 import { createConsumer } from "@rails/actioncable"
 
+// Shared consumer singleton — one WebSocket connection for all instances.
+const consumer = createConsumer()
+
 // Subscribes to EpisodesChannel for real-time episode status updates.
 // On subscription, the server broadcasts current state of any in-progress
 // episodes to handle the race condition where status changes may occur
@@ -11,7 +14,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this.subscription = createConsumer().subscriptions.create(
+    this.subscription = consumer.subscriptions.create(
       { channel: "EpisodesChannel", podcast_id: this.podcastIdValue },
       {
         received: this.handleReceived.bind(this)
@@ -22,6 +25,7 @@ export default class extends Controller {
   disconnect() {
     if (this.subscription) {
       this.subscription.unsubscribe()
+      this.subscription = null
     }
   }
 
