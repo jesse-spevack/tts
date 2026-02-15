@@ -15,7 +15,7 @@ class RecalculatesProcessingEstimate
     data_points = episodes.filter_map do |episode|
       x = episode.source_text_length.to_f
       y = (episode.processing_completed_at - episode.processing_started_at).to_f
-      [x, y] if y > 0
+      [ x, y ] if y > 0
     end
 
     filtered = filter_outliers(data_points)
@@ -23,8 +23,8 @@ class RecalculatesProcessingEstimate
 
     slope, intercept = linear_fit(filtered)
 
-    microseconds_per_character = [(slope * 1_000_000).round, 1].max
-    base_seconds = [intercept.round, 0].max
+    microseconds_per_character = [ (slope * 1_000_000).round, 1 ].max
+    base_seconds = [ intercept.round, 0 ].max
 
     ProcessingEstimate.create!(
       base_seconds: base_seconds,
@@ -74,6 +74,6 @@ class RecalculatesProcessingEstimate
 
     intercept = mean_y - slope * mean_x
 
-    [slope, intercept]
+    [ slope, intercept ]
   end
 end
