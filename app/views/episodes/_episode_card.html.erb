@@ -36,6 +36,8 @@
               <% else %>
                 <span class="text-mist-500 dark:text-mist-400">Generating audio...</span>
               <% end %>
+            <% elsif episode.preparing? %>
+              <span class="text-mist-500 dark:text-mist-400">Extracting content...</span>
             <% elsif episode.pending? %>
               <span class="text-mist-500 dark:text-mist-400">Queued...</span>
             <% else %>

@@ -7,7 +7,7 @@ class Episode < ApplicationRecord
 
   delegate :voice, to: :user
 
-  enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
+  enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
   enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
 
   validates :title, presence: true, length: { maximum: 255 }
@@ -43,9 +43,7 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
-  # Broadcast updates when status or title changes (title updates for URL episodes
-  # where the real title arrives after content extraction)
-  after_update_commit :broadcast_status_change, if: :should_broadcast?
+  after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
   def audio_url
     GeneratesEpisodeAudioUrl.call(self)
@@ -65,10 +63,6 @@ class Episode < ApplicationRecord
   end
 
   private
-
-  def should_broadcast?
-    saved_change_to_status? || saved_change_to_title?
-  end
 
   def source_url_required?
     url? || extension?

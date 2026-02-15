@@ -34,6 +34,17 @@ class EpisodesHelperTest < ActionView::TestCase
     assert_includes result, "text-red-600"
   end
 
+  test "status_badge returns preparing text" do
+    result = status_badge("preparing")
+    assert_includes result, "Preparing"
+  end
+
+  test "status_dot returns pulse animation for preparing" do
+    result = status_dot("preparing")
+    assert_includes result, "animate-pulse"
+    assert_includes result, "bg-yellow-500"
+  end
+
   test "status_badge returns pending badge" do
     result = status_badge("pending")
     assert_includes result, "Pending"

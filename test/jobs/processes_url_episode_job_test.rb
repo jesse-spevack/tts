@@ -15,7 +15,7 @@ class ProcessesUrlEpisodeJobTest < ActiveSupport::TestCase
       description: "Placeholder",
       source_type: :url,
       source_url: "https://example.com/article",
-      status: :processing
+      status: :pending
     )
 
     Mocktail.replace(FetchesUrl)

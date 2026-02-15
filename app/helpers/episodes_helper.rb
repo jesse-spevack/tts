@@ -6,6 +6,8 @@ module EpisodesHelper
         content_tag(:span, "●", class: "text-yellow-500 dark:text-yellow-300") +
         content_tag(:span, "Pending")
       end
+    when "preparing"
+      content_tag :span, "Preparing", class: "text-sm text-mist-500 dark:text-mist-400"
     when "processing"
       content_tag :span, "Processing", class: "text-sm text-mist-500 dark:text-mist-400"
     when "complete"
@@ -31,6 +33,7 @@ module EpisodesHelper
     base = "flex size-2 rounded-full flex-shrink-0"
     color = case status
     when "pending"    then "bg-mist-400"
+    when "preparing"  then "bg-yellow-500 animate-pulse"
     when "processing" then "bg-yellow-500 animate-pulse"
     when "complete"   then "bg-green-500"
     when "failed"     then "bg-rose-500"

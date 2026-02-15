@@ -242,11 +242,11 @@ class EpisodeTest < ActiveSupport::TestCase
     assert episode.valid?
   end
 
-  test "broadcasts on title change" do
+  test "does not broadcast on title change alone" do
     episode = episodes(:one)
     episode.update!(status: :processing)
 
-    assert_broadcasts("podcast_#{episode.podcast_id}_episodes", 1) do
+    assert_no_broadcasts("podcast_#{episode.podcast_id}_episodes") do
       episode.update!(title: "Updated Title From URL")
     end
   end
@@ -278,12 +278,21 @@ class EpisodeTest < ActiveSupport::TestCase
     end
   end
 
-  test "after_update_commit broadcasts when title changes" do
+  test "after_update_commit does not broadcast when only title changes" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_no_broadcasts(stream_name) do
+      episode.update!(title: "Updated Title")
+    end
+  end
+
+  test "after_update_commit broadcasts when status changes to preparing" do
     episode = episodes(:one)
     stream_name = "podcast_#{episode.podcast_id}_episodes"
 
     assert_broadcasts(stream_name, 1) do
-      episode.update!(title: "Updated Title")
+      episode.update!(status: :preparing)
     end
   end
 
