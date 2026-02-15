@@ -258,4 +258,23 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert episode.valid?
   end
+
+  test "after_update_commit broadcasts when status changes" do
+    episode = episodes(:one)
+    episode.update!(status: :processing)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_broadcasts(stream_name, 1) do
+      episode.update!(status: :complete, gcs_episode_id: "ep_123")
+    end
+  end
+
+  test "after_update_commit does not broadcast when status unchanged" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_no_broadcasts(stream_name) do
+      episode.update!(title: "Updated Title")
+    end
+  end
 end
