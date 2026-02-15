@@ -3,6 +3,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resource :analytics, only: [ :show ], controller: "analytics"
+    resource :processing_times, only: [ :show ], controller: "processing_times"
   end
 
   resources :episodes, only: [ :index, :new, :create, :show, :destroy ]

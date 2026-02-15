@@ -16,7 +16,7 @@ class SubmitsEpisodeForProcessing
     log_info "submit_episode_for_processing", podcast_id: episode.podcast.podcast_id
 
     wrapped = wrap_content
-    episode.update!(source_text: wrapped)
+    episode.update!(source_text: wrapped, source_text_length: wrapped.length)
 
     GeneratesEpisodeAudioJob.set(priority: DeterminesJobPriority.call(user: episode.user)).perform_later(episode_id: episode.id, action_id: Current.action_id)
 

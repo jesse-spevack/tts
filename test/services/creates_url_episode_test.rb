@@ -10,7 +10,7 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
     @podcast = podcasts(:one)
   end
 
-  test "creates episode with processing status" do
+  test "creates episode with pending status" do
     result = nil
     assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
       result = CreatesUrlEpisode.call(
@@ -22,7 +22,7 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
 
     assert result.success?
     assert result.data.persisted?
-    assert_equal "processing", result.data.status
+    assert_equal "pending", result.data.status
     assert_equal "url", result.data.source_type
     assert_equal "https://example.com/article", result.data.source_url
   end

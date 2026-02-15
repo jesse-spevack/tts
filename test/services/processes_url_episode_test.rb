@@ -15,7 +15,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
       description: "Placeholder",
       source_type: :url,
       source_url: "https://example.com/article",
-      status: :processing
+      status: :pending
     )
 
     Mocktail.replace(FetchesUrl)
@@ -208,7 +208,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
-    assert_equal "processing", @episode.status, "Episode should not have failed; error: #{@episode.error_message}"
+    assert_equal "preparing", @episode.status, "Episode should not have failed; error: #{@episode.error_message}"
 
     # Verify Jina was called as a fallback
     verify { |m| FetchesJinaContent.call(url: @episode.source_url) }
@@ -291,7 +291,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     @episode.reload
 
     # After Jina fallback, the episode should complete successfully
-    assert_equal "processing", @episode.status, "Episode should not have failed; error: #{@episode.error_message}"
+    assert_equal "preparing", @episode.status, "Episode should not have failed; error: #{@episode.error_message}"
 
     # The LLM should receive the Jina markdown as the text to process
     verify { |m| ProcessesWithLlm.call(text: jina_markdown, episode: m.any) }

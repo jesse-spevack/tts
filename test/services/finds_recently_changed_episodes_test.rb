@@ -16,6 +16,14 @@ class FindsRecentlyChangedEpisodesTest < ActiveSupport::TestCase
     assert_includes result, episode
   end
 
+  test "returns episodes with preparing status" do
+    episode = create_episode(status: :preparing, updated_at: 1.hour.ago)
+
+    result = FindsRecentlyChangedEpisodes.call(podcast: @podcast)
+
+    assert_includes result, episode
+  end
+
   test "returns episodes with processing status" do
     episode = create_episode(status: :processing, updated_at: 1.hour.ago)
 

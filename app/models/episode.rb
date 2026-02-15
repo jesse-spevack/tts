@@ -7,7 +7,7 @@ class Episode < ApplicationRecord
 
   delegate :voice, to: :user
 
-  enum :status, { pending: "pending", processing: "processing", complete: "complete", failed: "failed" }
+  enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
   enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
 
   validates :title, presence: true, length: { maximum: 255 }
@@ -43,7 +43,6 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
-  # Broadcast updates when status changes
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
   def audio_url

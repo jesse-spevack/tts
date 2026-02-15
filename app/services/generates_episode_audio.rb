@@ -19,7 +19,7 @@ class GeneratesEpisodeAudio
   def call
     log_info "generate_episode_audio_started"
 
-    @episode.update!(status: :processing)
+    @episode.update!(status: :processing, processing_started_at: Time.current)
 
     log_info "synthesizing_audio", voice: voice_name, text_bytes: content_text.bytesize
     audio_content = synthesize_audio
@@ -36,8 +36,11 @@ class GeneratesEpisodeAudio
       status: :complete,
       gcs_episode_id: gcs_episode_id,
       audio_size_bytes: audio_content.bytesize,
-      duration_seconds: duration_seconds
+      duration_seconds: duration_seconds,
+      processing_completed_at: Time.current
     )
+
+    recalculate_processing_estimate
 
     unless @skip_feed_upload
       log_info "uploading_feed"
@@ -115,6 +118,13 @@ class GeneratesEpisodeAudio
     NotifiesEpisodeCompletion.call(episode: @episode) if @episode.user&.email_address.present?
   rescue StandardError => e
     log_warn "notification_failed", error: e.message
+  end
+
+  def recalculate_processing_estimate
+    log_info "recalculating_processing_estimate"
+    RecalculatesProcessingEstimate.call
+  rescue StandardError => e
+    log_warn "recalculate_processing_estimate_failed", error: e.message
   end
 
   def cleanup_orphaned_audio

@@ -62,7 +62,7 @@ class CreatesUrlEpisode
       description: EpisodePlaceholders.description_for(:url),
       source_type: :url,
       source_url: @normalized_url,
-      status: :processing
+      status: :pending
     )
   end
 end

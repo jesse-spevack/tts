@@ -242,6 +242,15 @@ class EpisodeTest < ActiveSupport::TestCase
     assert episode.valid?
   end
 
+  test "does not broadcast on title change alone" do
+    episode = episodes(:one)
+    episode.update!(status: :processing)
+
+    assert_no_broadcasts("podcast_#{episode.podcast_id}_episodes") do
+      episode.update!(title: "Updated Title From URL")
+    end
+  end
+
   test "unlimited tier has no character limit" do
     user = users(:unlimited_user)
 
@@ -269,12 +278,30 @@ class EpisodeTest < ActiveSupport::TestCase
     end
   end
 
-  test "after_update_commit does not broadcast when status unchanged" do
+  test "after_update_commit does not broadcast when only title changes" do
     episode = episodes(:one)
     stream_name = "podcast_#{episode.podcast_id}_episodes"
 
     assert_no_broadcasts(stream_name) do
       episode.update!(title: "Updated Title")
+    end
+  end
+
+  test "after_update_commit broadcasts when status changes to preparing" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_broadcasts(stream_name, 1) do
+      episode.update!(status: :preparing)
+    end
+  end
+
+  test "after_update_commit does not broadcast when status and title unchanged" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_no_broadcasts(stream_name) do
+      episode.update!(description: "Updated description")
     end
   end
 end

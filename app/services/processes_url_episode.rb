@@ -123,7 +123,8 @@ class ProcessesUrlEpisode
       title: @extract_result.data.title || @llm_result.data.title,
       author: @extract_result.data.author || @llm_result.data.author,
       description: description,
-      content_preview: GeneratesContentPreview.call(content)
+      content_preview: GeneratesContentPreview.call(content),
+      status: :preparing
     )
 
     log_info "episode_metadata_updated"

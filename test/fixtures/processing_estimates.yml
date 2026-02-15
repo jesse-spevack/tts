@@ -1,0 +1,11 @@
+recent:
+  base_seconds: 8
+  microseconds_per_character: 2500
+  episode_count: 100
+  created_at: <%= 1.hour.ago.iso8601 %>
+
+older:
+  base_seconds: 12
+  microseconds_per_character: 4000
+  episode_count: 50
+  created_at: <%= 1.day.ago.iso8601 %>
