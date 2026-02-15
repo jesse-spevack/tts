@@ -23,9 +23,26 @@
         <div class="flex-1 min-w-0">
           <p class="text-sm/6 font-medium text-mist-950 dark:text-white truncate"><%= episode.title %></p>
           <p class="text-sm/6 text-mist-500 dark:text-mist-400 truncate">
-            <%= status_badge(episode.status) %>
-            <% if episode.failed? && episode.error_message.present? %>
-              &mdash; <span class="text-rose-600 dark:text-rose-400"><%= episode.error_message %></span>
+            <% if episode.processing? && episode.processing_started_at.present? %>
+              <% eta_seconds = processing_eta(episode) %>
+              <% if eta_seconds %>
+                <span data-controller="eta-countdown"
+                      data-eta-countdown-estimated-seconds-value="<%= eta_seconds %>"
+                      data-eta-countdown-started-at-value="<%= episode.processing_started_at.iso8601 %>">
+                  <span class="text-mist-500 dark:text-mist-400">Generating audio</span>
+                  &middot;
+                  <span data-eta-countdown-target="display" aria-live="polite" aria-atomic="true" class="text-mist-400 dark:text-mist-500"></span>
+                </span>
+              <% else %>
+                <span class="text-mist-500 dark:text-mist-400">Generating audio...</span>
+              <% end %>
+            <% elsif episode.pending? %>
+              <span class="text-mist-500 dark:text-mist-400">Queued...</span>
+            <% else %>
+              <%= status_badge(episode.status) %>
+              <% if episode.failed? && episode.error_message.present? %>
+                &mdash; <span class="text-rose-600 dark:text-rose-400"><%= episode.error_message %></span>
+              <% end %>
             <% end %>
           </p>
         </div>

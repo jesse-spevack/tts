@@ -43,6 +43,12 @@ module EpisodesHelper
     FormatsDuration.call(duration_seconds)
   end
 
+  def processing_eta(episode)
+    return nil unless episode.source_text_length.present?
+
+    EstimatesProcessingTime.call(source_text_length: episode.source_text_length)
+  end
+
   def deletable?(episode)
     episode.user_id == Current.user&.id
   end

@@ -20,11 +20,15 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
     stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
 
-    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+    freeze_time do
+      GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
 
-    @episode.reload
-    assert_equal "complete", @episode.status
-    assert_not_nil @episode.gcs_episode_id
+      @episode.reload
+      assert_equal "complete", @episode.status
+      assert_not_nil @episode.gcs_episode_id
+      assert_equal Time.current, @episode.processing_started_at
+      assert_equal Time.current, @episode.processing_completed_at
+    end
   end
 
   test "marks episode as failed on error" do
@@ -67,5 +71,52 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     # Need to reload via unscoped since we're using a singleton method
     episode = Episode.unscoped.find(@episode.id)
     assert_equal "failed", episode.status
+  end
+
+  test "recalculates processing estimate after successful completion" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
+
+    Mocktail.replace(RecalculatesProcessingEstimate)
+    stubs { RecalculatesProcessingEstimate.call }.with { nil }
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    assert_equal 1, Mocktail.calls(RecalculatesProcessingEstimate, :call).size
+  end
+
+  test "does not recalculate processing estimate on failure" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS failure" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    Mocktail.replace(RecalculatesProcessingEstimate)
+
+    GeneratesEpisodeAudio.call(episode: @episode)
+
+    assert_equal 0, Mocktail.calls(RecalculatesProcessingEstimate, :call).size
+  end
+
+  test "episode completes successfully even when recalculation raises" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
+
+    Mocktail.replace(RecalculatesProcessingEstimate)
+    stubs { RecalculatesProcessingEstimate.call }.with { raise StandardError, "DB error" }
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    @episode.reload
+    assert_equal "complete", @episode.status
   end
 end

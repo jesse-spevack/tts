@@ -43,8 +43,9 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
-  # Broadcast updates when status changes
-  after_update_commit :broadcast_status_change, if: :saved_change_to_status?
+  # Broadcast updates when status or title changes (title updates for URL episodes
+  # where the real title arrives after content extraction)
+  after_update_commit :broadcast_status_change, if: :should_broadcast?
 
   def audio_url
     GeneratesEpisodeAudioUrl.call(self)
@@ -64,6 +65,10 @@ class Episode < ApplicationRecord
   end
 
   private
+
+  def should_broadcast?
+    saved_change_to_status? || saved_change_to_title?
+  end
 
   def source_url_required?
     url? || extension?

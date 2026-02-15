@@ -242,6 +242,15 @@ class EpisodeTest < ActiveSupport::TestCase
     assert episode.valid?
   end
 
+  test "broadcasts on title change" do
+    episode = episodes(:one)
+    episode.update!(status: :processing)
+
+    assert_broadcasts("podcast_#{episode.podcast_id}_episodes", 1) do
+      episode.update!(title: "Updated Title From URL")
+    end
+  end
+
   test "unlimited tier has no character limit" do
     user = users(:unlimited_user)
 

@@ -49,4 +49,16 @@ class EpisodesHelperTest < ActionView::TestCase
   test "format_duration returns nil for nil input" do
     assert_nil format_duration(nil)
   end
+
+  test "processing_eta returns estimated seconds for episode with source_text_length" do
+    episode = Episode.new(source_text_length: 10_000)
+    result = processing_eta(episode)
+    assert_kind_of Integer, result
+    assert result > 0
+  end
+
+  test "processing_eta returns nil when source_text_length is nil" do
+    episode = Episode.new(source_text_length: nil)
+    assert_nil processing_eta(episode)
+  end
 end

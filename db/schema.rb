@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_11_220001) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_15_054039) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -103,7 +103,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_11_220001) do
     t.text "error_message"
     t.string "gcs_episode_id"
     t.integer "podcast_id", null: false
+    t.datetime "processing_completed_at"
+    t.datetime "processing_started_at"
     t.text "source_text"
+    t.integer "source_text_length"
     t.integer "source_type", default: 0, null: false
     t.string "source_url"
     t.string "status", default: "pending", null: false
@@ -161,6 +164,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_11_220001) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["podcast_id"], name: "index_podcasts_on_podcast_id", unique: true
+  end
+
+  create_table "processing_estimates", force: :cascade do |t|
+    t.integer "base_seconds", null: false
+    t.datetime "created_at", null: false
+    t.integer "episode_count", null: false
+    t.integer "microseconds_per_character", null: false
   end
 
   create_table "sent_messages", force: :cascade do |t|

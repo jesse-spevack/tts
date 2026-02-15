@@ -25,6 +25,13 @@ class SubmitsEpisodeForProcessingTest < ActiveSupport::TestCase
     assert @episode.source_text.include?("Article body.")
   end
 
+  test "sets source_text_length to match source_text length" do
+    SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
+
+    @episode.reload
+    assert_equal @episode.source_text.length, @episode.source_text_length
+  end
+
   test "includes free tier attribution for free users" do
     SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
 
