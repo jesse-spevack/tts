@@ -7,14 +7,6 @@
       <h2 class="text-lg font-semibold mb-4">Processing Time vs. Text Length</h2>
       <% if @chart_points.any? %>
         <%
-          max_length = @chart_points.map { |p| p[:length] }.max.to_f
-          max_seconds = @chart_points.map { |p| p[:seconds] }.max.to_f
-
-          # Calculate outlier threshold (2x median)
-          sorted_seconds = @chart_points.map { |p| p[:seconds] }.sort
-          median_seconds = sorted_seconds[sorted_seconds.length / 2]
-          outlier_threshold = median_seconds * 4
-
           chart_w = 700
           chart_h = 350
           pad_left = 60
@@ -32,7 +24,7 @@
           <!-- Y-axis ticks and labels -->
           <% 5.times do |i| %>
             <%
-              tick_val = (max_seconds / 4.0 * i).round(1)
+              tick_val = (@max_seconds / 4.0 * i).round(1)
               tick_y = chart_h - pad_bottom - (plot_h * i / 4.0)
             %>
             <line x1="<%= pad_left - 4 %>" y1="<%= tick_y %>" x2="<%= pad_left %>" y2="<%= tick_y %>" stroke="currentColor" stroke-opacity="0.3" />
@@ -43,7 +35,7 @@
           <!-- X-axis ticks and labels -->
           <% 5.times do |i| %>
             <%
-              tick_val = (max_length / 4.0 * i).round(0).to_i
+              tick_val = (@max_length / 4.0 * i).round(0).to_i
               tick_x = pad_left + (plot_w * i / 4.0)
             %>
             <line x1="<%= tick_x %>" y1="<%= chart_h - pad_bottom %>" x2="<%= tick_x %>" y2="<%= chart_h - pad_bottom + 4 %>" stroke="currentColor" stroke-opacity="0.3" />
@@ -57,17 +49,16 @@
           <!-- Data points -->
           <% @chart_points.each do |point| %>
             <%
-              x = pad_left + (point[:length] / max_length * plot_w)
-              y = chart_h - pad_bottom - (point[:seconds] / max_seconds * plot_h)
-              is_outlier = point[:seconds] > outlier_threshold
+              x = pad_left + (point[:length] / @max_length * plot_w)
+              y = chart_h - pad_bottom - (point[:seconds] / @max_seconds * plot_h)
             %>
             <circle
               cx="<%= x %>"
               cy="<%= y %>"
-              r="<%= is_outlier ? 5 : 4 %>"
-              fill="<%= is_outlier ? '#ef4444' : '#6366f1' %>"
-              fill-opacity="<%= is_outlier ? 0.5 : 0.6 %>"
-              stroke="<%= is_outlier ? '#ef4444' : '#6366f1' %>"
+              r="<%= point[:outlier] ? 5 : 4 %>"
+              fill="<%= point[:outlier] ? '#ef4444' : '#6366f1' %>"
+              fill-opacity="<%= point[:outlier] ? 0.5 : 0.6 %>"
+              stroke="<%= point[:outlier] ? '#ef4444' : '#6366f1' %>"
               stroke-opacity="0.8"
               stroke-width="1"
             >

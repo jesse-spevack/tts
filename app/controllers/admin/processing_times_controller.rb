@@ -6,6 +6,8 @@ module Admin
       report = BuildsProcessingTimesReport.call
 
       @chart_points = report.chart_points
+      @max_length = report.max_length
+      @max_seconds = report.max_seconds
       @total_episode_count = report.total_episode_count
       @current_estimate = report.current_estimate
       @estimate_history = report.estimate_history

@@ -9,10 +9,13 @@ class BuildsProcessingTimesReport
   end
 
   def call
-    episodes = chart_episodes
+    points = build_chart_points(chart_episodes)
+    outlier_threshold = compute_outlier_threshold(points)
 
     Report.new(
-      chart_points: build_chart_points(episodes),
+      chart_points: points.map { |p| p.merge(outlier: p[:seconds] > outlier_threshold) },
+      max_length: points.map { |p| p[:length] }.max.to_f,
+      max_seconds: points.map { |p| p[:seconds] }.max.to_f,
       total_episode_count: total_episode_count,
       current_estimate: ProcessingEstimate.order(created_at: :desc).first,
       estimate_history: ProcessingEstimate.order(created_at: :desc).limit(HISTORY_LIMIT)
@@ -21,7 +24,9 @@ class BuildsProcessingTimesReport
 
   private
 
-  Report = Data.define(:chart_points, :total_episode_count, :current_estimate, :estimate_history)
+  OUTLIER_MULTIPLIER = 4
+
+  Report = Data.define(:chart_points, :max_length, :max_seconds, :total_episode_count, :current_estimate, :estimate_history)
 
   def chart_episodes
     completed_episodes_with_timing
@@ -47,5 +52,12 @@ class BuildsProcessingTimesReport
       seconds = (ep.processing_completed_at - ep.processing_started_at).to_f
       { length: ep.source_text_length, seconds: seconds, title: ep.title }
     end
+  end
+
+  def compute_outlier_threshold(points)
+    return Float::INFINITY if points.empty?
+
+    sorted = points.map { |p| p[:seconds] }.sort
+    sorted[sorted.length / 2] * OUTLIER_MULTIPLIER
   end
 end
