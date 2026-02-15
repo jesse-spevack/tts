@@ -24,17 +24,17 @@ class BuildsProcessingTimesReport
   Report = Data.define(:chart_points, :total_episode_count, :current_estimate, :estimate_history)
 
   def chart_episodes
-    episodes_scope
+    completed_episodes_with_timing
       .select(:id, :source_text_length, :processing_started_at, :processing_completed_at, :title)
       .order(processing_completed_at: :desc)
       .limit(CHART_LIMIT)
   end
 
   def total_episode_count
-    episodes_scope.count
+    completed_episodes_with_timing.count
   end
 
-  def episodes_scope
+  def completed_episodes_with_timing
     Episode.unscoped
       .where(status: "complete")
       .where.not(processing_started_at: nil)
