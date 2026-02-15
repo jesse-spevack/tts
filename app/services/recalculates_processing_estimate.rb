@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Rebuilds the ETA prediction model from historical processing data.
+# Called after every episode completes.
+#
+# Model: processing_seconds = base_seconds + (source_text_length * microseconds_per_character / 1_000_000)
+#
+# The intercept captures fixed overhead (~10-15s for fetch/LLM/upload),
+# the slope captures per-character TTS cost. Outliers beyond 3 standard
+# deviations are filtered (e.g. stuck/retried episodes). Each recalculation
+# appends a new ProcessingEstimate row for historical tracking.
 class RecalculatesProcessingEstimate
   MINIMUM_EPISODES = 2
   OUTLIER_THRESHOLD = 3
