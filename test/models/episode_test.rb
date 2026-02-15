@@ -278,12 +278,21 @@ class EpisodeTest < ActiveSupport::TestCase
     end
   end
 
-  test "after_update_commit does not broadcast when status unchanged" do
+  test "after_update_commit broadcasts when title changes" do
+    episode = episodes(:one)
+    stream_name = "podcast_#{episode.podcast_id}_episodes"
+
+    assert_broadcasts(stream_name, 1) do
+      episode.update!(title: "Updated Title")
+    end
+  end
+
+  test "after_update_commit does not broadcast when status and title unchanged" do
     episode = episodes(:one)
     stream_name = "podcast_#{episode.podcast_id}_episodes"
 
     assert_no_broadcasts(stream_name) do
-      episode.update!(title: "Updated Title")
+      episode.update!(description: "Updated description")
     end
   end
 end
