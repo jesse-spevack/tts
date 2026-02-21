@@ -14,6 +14,10 @@
     </p>
   </div>
 
+  <%= form_with url: episodes_path, method: :get, data: { controller: "search", turbo_frame: "episodes_list", turbo_action: "advance" } do |f| %>
+    <%= f.search_field :q, value: @query, placeholder: "Search episodes...", class: input_classes, data: { search_target: "input", action: "input->search#search" }, autocomplete: "off" %>
+  <% end %>
+
   <%= turbo_frame_tag "episodes_list" do %>
     <%= render "episodes_list" %>
   <% end %>

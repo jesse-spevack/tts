@@ -5,7 +5,7 @@
   <%# Previous link %>
   <div class="-mt-px flex w-0 flex-1">
     <% if pagy.previous %>
-      <%= link_to episodes_path(page: pagy.previous),
+      <%= link_to episodes_path(page: pagy.previous, q: @query.presence),
             class: "inline-flex items-center border-t-2 border-transparent pt-4 pr-1 text-sm font-medium text-mist-500 hover:border-mist-300 hover:text-mist-700 dark:text-mist-400 dark:hover:border-white/20 dark:hover:text-mist-200",
             data: { turbo_frame: "episodes_list", turbo_action: "advance" } do %>
         <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mr-3 size-5 text-mist-400 dark:text-mist-500">
@@ -33,7 +33,7 @@
   <%# Next link %>
   <div class="-mt-px flex w-0 flex-1 justify-end">
     <% if pagy.next %>
-      <%= link_to episodes_path(page: pagy.next),
+      <%= link_to episodes_path(page: pagy.next, q: @query.presence),
             class: "inline-flex items-center border-t-2 border-transparent pt-4 pl-1 text-sm font-medium text-mist-500 hover:border-mist-300 hover:text-mist-700 dark:text-mist-400 dark:hover:border-white/20 dark:hover:text-mist-200",
             data: { turbo_frame: "episodes_list", turbo_action: "advance" } do %>
         Next

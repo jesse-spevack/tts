@@ -6,7 +6,9 @@ class EpisodesController < ApplicationController
   before_action :load_podcast, except: [ :show ]
 
   def index
-    @pagy, @episodes = pagy(:offset, @podcast.episodes.newest_first)
+    @query = search_query
+    episodes = SearchesEpisodes.call(podcast: @podcast, query: @query)
+    @pagy, @episodes = pagy(:offset, episodes)
   end
 
   def show
@@ -125,6 +127,10 @@ class EpisodesController < ApplicationController
   def load_podcast
     @podcast = Current.user.podcasts.first
     @podcast ||= CreatesDefaultPodcast.call(user: Current.user)
+  end
+
+  def search_query
+    params[:q]
   end
 
   def episode_params

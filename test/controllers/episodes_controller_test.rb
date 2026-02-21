@@ -544,4 +544,78 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_no_match episode.title, response.body
   end
+
+  # Episode search tests
+
+  test "index with q param filters episodes by search query" do
+    @user.podcasts.first.episodes.create!(
+      user: @user, title: "Searchable", author: "Unique Author Name",
+      description: "Test episode", source_type: :url,
+      source_url: "https://example.com/searchable",
+      source_text: "searchable content", status: :complete
+    )
+
+    get episodes_url, params: { q: "Unique Author" }
+
+    assert_response :success
+    assert_includes response.body, "Unique Author Name"
+  end
+
+  test "index without q param returns all episodes" do
+    get episodes_url
+
+    assert_response :success
+    assert_select "[data-testid='episode-card']", count: 10
+  end
+
+  test "index with empty q param returns all episodes" do
+    get episodes_url, params: { q: "" }
+
+    assert_response :success
+    assert_select "[data-testid='episode-card']", count: 10
+  end
+
+  test "index search with no results shows no-match message" do
+    get episodes_url, params: { q: "zzzznoexist" }
+
+    assert_response :success
+    assert_includes response.body, "No episodes match your search"
+  end
+
+  test "index renders search input" do
+    get episodes_url
+
+    assert_response :success
+    assert_select "input[name='q']"
+  end
+
+  test "index preserves query value in search input" do
+    get episodes_url, params: { q: "test" }
+
+    assert_response :success
+    assert_select "input[name='q'][value='test']"
+  end
+
+  test "pagination links preserve q param during search" do
+    # Create enough searchable episodes to paginate (>10)
+    11.times do |i|
+      @user.podcasts.first.episodes.create!(
+        user: @user, title: "Searchable #{i}", author: "Searchable Author",
+        description: "Test episode", source_type: :url,
+        source_url: "https://example.com/search-#{i}",
+        source_text: "searchable content #{i}", status: :complete
+      )
+    end
+
+    get episodes_url, params: { q: "Searchable" }
+
+    assert_response :success
+    assert_select "a[href*='q=Searchable']"
+  end
+
+  test "index handles page beyond max with q param by redirecting to last page with q" do
+    get episodes_url, params: { page: 999, q: "test" }
+    assert_response :redirect
+    assert_includes response.location, "q=test"
+  end
 end
