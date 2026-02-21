@@ -34,6 +34,7 @@ module BuildsProcessingPrompt
   def shared_cleaning_rules
     <<~RULES
       - Expand abbreviations (e.g., "govt" -> "government")
+      - Write "A.I." instead of "AI" so it is pronounced as individual letters
       - Make lists sound natural when read aloud
     RULES
   end
