@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Simulation
+module Simulates
   module AsksLlm
     include StructuredLogging
 
