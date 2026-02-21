@@ -3,6 +3,8 @@
 require "test_helper"
 
 class EpisodeTest < ActiveSupport::TestCase
+  include ActionCable::TestHelper
+
   test "newest_first scope orders by created_at descending" do
     episodes(:one)
     newer_episode = Episode.create!(
