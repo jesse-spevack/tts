@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-if ENV["SIMULATE_EXTERNAL"] == "true"
+Rails.application.config.simulation_mode = ENV["SIMULATE_EXTERNAL"] == "true"
+
+if Rails.application.config.simulation_mode
   Rails.application.config.after_initialize do
     SynthesizesAudio.prepend(Simulates::SynthesizesAudio)
     AsksLlm.prepend(Simulates::AsksLlm)
