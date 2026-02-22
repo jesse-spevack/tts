@@ -21,7 +21,7 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
     assert result.success?
     assert result.data.persisted?
-    assert_equal "processing", result.data.status
+    assert_equal "pending", result.data.status
     assert_equal "email", result.data.source_type
     assert_equal @valid_text, result.data.source_text
   end

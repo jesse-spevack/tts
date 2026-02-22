@@ -27,7 +27,7 @@ class CreatesFileEpisode
       source_type: :file,
       source_text: content,
       content_preview: GeneratesContentPreview.call(plain_text),
-      status: :processing
+      status: :pending
     )
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?

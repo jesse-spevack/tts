@@ -42,7 +42,7 @@ class CreatesFileEpisodeTest < ActiveSupport::TestCase
       content: long_content
     )
 
-    assert_equal "processing", result.data.status
+    assert_equal "pending", result.data.status
   end
 
   test "enqueues ProcessesFileEpisodeJob" do
