@@ -61,13 +61,16 @@
     <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
       <div>
         <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Get the Extension</h2>
-        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Send any article to your TTS podcast with one click.</p>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Send any article to your PodRead podcast feed with one click.</p>
       </div>
       <div class="md:col-span-2">
         <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-          <p class="text-sm/6 text-mist-500 dark:text-mist-400">
-            Chrome Web Store link coming soon.
-          </p>
+          <a href="<%= AppConfig::Extension::CHROME_WEB_STORE_URL %>" class="inline-flex items-center gap-2 text-sm/6 font-medium text-mist-950 hover:underline dark:text-white" target="_blank" rel="noopener noreferrer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            Install from Chrome Web Store
+          </a>
         </div>
       </div>
     </div>

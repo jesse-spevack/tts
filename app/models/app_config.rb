@@ -92,4 +92,8 @@ class AppConfig
     PACK_PRICE_DISPLAY = "$4.99"
     PER_EPISODE_DISPLAY = "$1.00"
   end
+
+  module Extension
+    CHROME_WEB_STORE_URL = ENV.fetch("CHROME_WEB_STORE_URL", "#")
+  end
 end

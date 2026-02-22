@@ -11,7 +11,7 @@
     <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
       <h3 class="text-base font-semibold text-mist-950 dark:text-white">Installation</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
-        <li>Install the extension from the <a href="#" class="text-mist-950 underline dark:text-white">Chrome Web Store</a></li>
+        <li>Install the extension from the <a href="<%= AppConfig::Extension::CHROME_WEB_STORE_URL %>" class="text-mist-950 underline dark:text-white">Chrome Web Store</a></li>
         <li>Click the extension icon in your browser toolbar</li>
         <li>You'll be redirected to connect your account</li>
         <li>Once connected, you're ready to go!</li>
@@ -20,7 +20,7 @@
       <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">How to Use</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li>Navigate to any article or blog post you want to listen to</li>
-        <li>Click the <strong class="text-mist-950 dark:text-white">TTS Podcast</strong> icon in your toolbar</li>
+        <li>Click the <strong class="text-mist-950 dark:text-white">PodRead Extension</strong> icon in your toolbar</li>
         <li>The icon shows a <strong class="text-mist-950 dark:text-white">green checkmark</strong> when the article is sent</li>
         <li>Open your podcast app -- the episode will appear in your feed</li>
       </ol>
@@ -50,7 +50,7 @@
       <p class="mt-3">To disconnect the extension from your account:</p>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li><strong class="text-mist-950 dark:text-white">Right-click</strong> the extension icon</li>
-        <li>Select <strong class="text-mist-950 dark:text-white">Disconnect from TTS</strong></li>
+        <li>Select <strong class="text-mist-950 dark:text-white">Disconnect from PodRead</strong></li>
       </ol>
       <p class="mt-3">
         You can also disconnect from your <%= link_to "account settings", settings_extensions_path, class: "text-mist-950 underline dark:text-white" %>.
