@@ -21,34 +21,27 @@ test.describe('Landing Page Signup Flows', () => {
     // Scroll to pricing section
     await page.goto('/#pricing');
 
-    // Verify annual is selected by default
-    await expect(page.locator('input[value="annual"]')).toBeChecked();
+    // Switch to Yearly tab (Monthly is selected by default)
+    await page.click('el-tab-list button:has-text("Yearly")');
 
-    // Click "Get Premium" button
-    await page.click('button[data-pricing-toggle-target="premiumLink"]');
+    // Click "Get Premium" button (annual plan)
+    await page.click('button[data-plan="premium_annual"]');
 
     // Verify modal opens
     const modal = page.locator('dialog[open]');
     await expect(modal).toBeVisible();
   });
 
-  test('premium monthly signup opens modal after toggle', async ({ page }) => {
-    // Scroll to pricing section
+  test('premium monthly signup opens modal', async ({ page }) => {
+    // Scroll to pricing section (Monthly tab is selected by default)
     await page.goto('/#pricing');
 
-    // Toggle to monthly by clicking the label
-    await page.click('label:has(input[value="monthly"])');
-
-    // Click "Get Premium" button
-    await page.click('button[data-pricing-toggle-target="premiumLink"]');
+    // Click "Get Premium" button (monthly plan)
+    await page.click('button[data-plan="premium_monthly"]');
 
     // Verify modal opens
     const modal = page.locator('dialog[open]');
     await expect(modal).toBeVisible();
-
-    // Verify the button has monthly plan data
-    const premiumButton = page.locator('button[data-pricing-toggle-target="premiumLink"]');
-    await expect(premiumButton).toHaveAttribute('data-plan', 'premium_monthly');
   });
 
   test('modal can be closed by clicking backdrop', async ({ page }) => {
