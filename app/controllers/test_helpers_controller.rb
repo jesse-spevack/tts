@@ -25,6 +25,7 @@ class TestHelpersController < ApplicationController
     end
 
     user = User.find_or_create_by!(email_address: email)
+    user.update!(account_type: params[:account_type]) if params[:account_type].present?
     token = GeneratesAuthToken.call(user: user)
     render json: { token: token, email: email, user_id: user.id }
   end

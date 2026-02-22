@@ -41,7 +41,7 @@ class CreatesExtensionEpisodeTest < ActiveSupport::TestCase
   test "sets episode status to processing" do
     result = CreatesExtensionEpisode.call(**@valid_params)
 
-    assert_equal "processing", result.data.status
+    assert_equal "pending", result.data.status
   end
 
   test "enqueues ProcessesFileEpisodeJob" do

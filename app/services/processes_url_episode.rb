@@ -15,6 +15,7 @@ class ProcessesUrlEpisode
   def call
     log_info "process_url_episode_started", url: episode.source_url
 
+    episode.update!(status: :preparing)
     fetch_url
     extract_content
     attempt_jina_fallback

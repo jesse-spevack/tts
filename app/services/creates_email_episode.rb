@@ -22,7 +22,7 @@ class CreatesEmailEpisode
       description: EpisodePlaceholders.description_for(:email),
       source_type: :email,
       source_text: email_body,
-      status: :processing
+      status: :pending
     )
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?

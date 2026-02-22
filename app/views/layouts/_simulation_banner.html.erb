@@ -1,0 +1,9 @@
+<% if simulation_mode? %>
+  <div class="flex items-center justify-center gap-x-6 bg-amber-600 px-6 py-2.5 sm:px-3.5">
+    <p class="text-sm/6 text-white">
+      <strong class="font-semibold">Simulation Mode</strong>
+      <svg viewBox="0 0 2 2" aria-hidden="true" class="mx-2 inline size-0.5 fill-current"><circle r="1" cx="1" cy="1" /></svg>
+      External services mocked &mdash; GCP TTS, Gemini, Cloud Storage
+    </p>
+  </div>
+<% end %>

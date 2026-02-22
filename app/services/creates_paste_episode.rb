@@ -23,7 +23,7 @@ class CreatesPasteEpisode
       description: EpisodePlaceholders.description_for(:paste),
       source_type: :paste,
       source_text: text,
-      status: :processing
+      status: :pending
     )
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?

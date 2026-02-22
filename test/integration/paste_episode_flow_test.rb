@@ -27,7 +27,7 @@ class PasteEpisodeFlowTest < ActionDispatch::IntegrationTest
     # Find the created episode
     episode = Episode.last
     assert_equal "paste", episode.source_type
-    assert_equal "processing", episode.status
+    assert_equal "pending", episode.status
     assert_equal text, episode.source_text
 
     # Mock LLM response
