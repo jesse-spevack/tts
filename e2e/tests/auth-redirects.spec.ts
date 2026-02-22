@@ -25,11 +25,11 @@ test.describe('Authentication Redirects', () => {
   test('unauthenticated user can access landing page', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL('/');
-    await expect(page.locator('h1')).toContainText('Finally listen to your reading list');
+    await expect(page.locator('h1')).toContainText('Turn any article into a podcast episode');
   });
 
   test('unauthenticated user can access pricing section', async ({ page }) => {
     await page.goto('/#pricing');
-    await expect(page.locator('h2:has-text("Pricing")')).toBeVisible();
+    await expect(page.locator('h1:has-text("Simple, honest pricing")')).toBeVisible();
   });
 });
