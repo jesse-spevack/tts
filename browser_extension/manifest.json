@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TTS Podcast",
-  "version": "0.1.0",
-  "description": "Send any article to your TTS podcast feed with one click",
+  "name": "PodRead Extension",
+  "version": "0.2.0",
+  "description": "Send any article to your PodRead podcast feed with one click",
   "permissions": [
     "activeTab",
     "storage",

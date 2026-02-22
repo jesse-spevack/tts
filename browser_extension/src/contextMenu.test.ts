@@ -45,7 +45,7 @@ describe('contextMenu', () => {
 
       expect(mockContextMenus.create).toHaveBeenCalledWith({
         id: 'disconnect',
-        title: 'Disconnect from TTS',
+        title: 'Disconnect from PodRead',
         contexts: ['action'],
       });
     });

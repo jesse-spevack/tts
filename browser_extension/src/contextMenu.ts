@@ -1,5 +1,5 @@
 /**
- * Context menu management for TTS browser extension
+ * Context menu management for PodRead browser extension
  * Handles right-click menu on extension icon (e.g., disconnect option)
  */
 
@@ -21,7 +21,7 @@ export function setupContextMenu(): void {
   // Create context menu item for disconnecting (appears when right-clicking extension icon)
   chrome.contextMenus.create({
     id: MENU_ITEMS.DISCONNECT,
-    title: 'Disconnect from TTS',
+    title: 'Disconnect from PodRead',
     contexts: ['action'],
   });
 }
@@ -35,7 +35,7 @@ export async function handleContextMenuClick(
   if (info.menuItemId === MENU_ITEMS.DISCONNECT) {
     await clearToken();
     await setIconState('neutral');
-    console.log('TTS Extension: Disconnected');
+    console.log('PodRead Extension: Disconnected');
   }
 }
 

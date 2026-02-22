@@ -1,23 +1,23 @@
 # Chrome Web Store Listing
 
 ## Name
-TTS Podcast
+PodRead Extension
 
 ## Short Description (132 characters max)
-Convert articles to podcast episodes with one click. Listen on the go with Very Normal TTS.
+Convert articles to podcast episodes with one click. Listen on the go with PodRead.
 
-(93 characters)
+(83 characters)
 
 ## Detailed Description
 
 **Turn articles into podcast episodes instantly.**
 
-TTS Podcast is the companion extension for Very Normal TTS — a service that converts web articles into high-quality podcast episodes you can listen to anywhere.
+PodRead Extension is the companion browser extension for PodRead — a service that converts web articles into high-quality podcast episodes you can listen to anywhere.
 
 ### How It Works
 
 1. **Browse** to any article you want to listen to later
-2. **Click** the TTS Podcast icon in your toolbar
+2. **Click** the PodRead Extension icon in your toolbar
 3. **Listen** to your article as a podcast episode in your favorite podcast app
 
 That's it. No copying URLs, no switching tabs, no friction.
@@ -36,7 +36,7 @@ That's it. No copying URLs, no switching tabs, no friction.
 
 ### Requirements
 
-• A Very Normal TTS account (free tier available at podread.app)
+• A PodRead account (free tier available at podread.app)
 • Works with any podcast app that supports custom RSS feeds
 
 ### Privacy
