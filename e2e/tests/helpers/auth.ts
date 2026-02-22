@@ -117,13 +117,21 @@ export async function authenticateWithToken(page: Page, token: string, plan?: st
 /**
  * Creates a fresh test user and returns the auth token.
  * Email must end with @test.example.com for cleanup via rake task.
+ * Optional accountType: 'standard' (default), 'complimentary', or 'unlimited'.
  */
-export async function createTestUser(request: APIRequestContext, email?: string): Promise<{ token: string; email: string }> {
+export async function createTestUser(
+  request: APIRequestContext,
+  email?: string,
+  options?: { accountType?: string }
+): Promise<{ token: string; email: string }> {
   const testEmail = email || `test-${Date.now()}@test.example.com`;
 
-  const response = await request.post('/test/create_user', {
-    data: { email: testEmail }
-  });
+  const data: Record<string, string> = { email: testEmail };
+  if (options?.accountType) {
+    data.account_type = options.accountType;
+  }
+
+  const response = await request.post('/test/create_user', { data });
 
   if (!response.ok()) {
     const body = await response.text();
@@ -136,10 +144,15 @@ export async function createTestUser(request: APIRequestContext, email?: string)
 /**
  * Creates a fresh test user and signs in.
  * Returns the email for reference.
+ * Optional accountType: 'standard' (default), 'complimentary', or 'unlimited'.
  */
-export async function signInAsNewUser(page: Page, emailPrefix: string = 'test'): Promise<string> {
+export async function signInAsNewUser(
+  page: Page,
+  emailPrefix: string = 'test',
+  options?: { accountType?: string }
+): Promise<string> {
   const email = `${emailPrefix}-${Date.now()}@test.example.com`;
-  const { token } = await createTestUser(page.request, email);
+  const { token } = await createTestUser(page.request, email, options);
   await page.goto(`/auth?token=${token}`);
   return email;
 }
