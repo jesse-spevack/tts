@@ -7,9 +7,11 @@ if Rails.application.config.simulation_mode
     SynthesizesAudio.prepend(Simulates::SynthesizesAudio)
     AsksLlm.prepend(Simulates::AsksLlm)
     CloudStorage.prepend(Simulates::CloudStorage)
+    FetchesUrl.prepend(Simulates::FetchesUrl)
+    FetchesJinaContent.prepend(Simulates::FetchesJinaContent)
 
     Rails.logger.warn(
-      "\e[33m⚠️  Simulation mode active — external services mocked (GCP TTS, Gemini, Cloud Storage)\e[0m"
+      "\e[33m⚠️  Simulation mode active — external services mocked (GCP TTS, Gemini, Cloud Storage, URL fetching)\e[0m"
     )
   end
 end

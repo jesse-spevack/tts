@@ -4,7 +4,12 @@ module Simulates
   module AsksLlm
     include StructuredLogging
 
-    SimulatedResponse = Data.define(:content, :input_tokens, :output_tokens)
+    SimulatedResponse = Data.define(:content, :input_tokens, :output_tokens, :model_id)
+    SimulatedModelInfo = Data.define(:input_price_per_million, :output_price_per_million)
+
+    def find_model(_model_id)
+      SimulatedModelInfo.new(input_price_per_million: 0, output_price_per_million: 0)
+    end
 
     def ask(prompt)
       log_info "simulation_llm_started", prompt_length: prompt.length
@@ -26,7 +31,8 @@ module Simulates
       SimulatedResponse.new(
         content: json_response,
         input_tokens: prompt.length,
-        output_tokens: json_response.length
+        output_tokens: json_response.length,
+        model_id: "simulated"
       )
     end
 
