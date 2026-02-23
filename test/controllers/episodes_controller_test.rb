@@ -524,15 +524,12 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(turbo-stream action="update" target="flash-messages")
   end
 
-  test "destroy redirects to last valid page when current page becomes empty" do
-    # Soft delete all but 1 episode to create scenario where only page 1 exists
-    user = users(:one)
-    user.episodes.where.not(id: episodes(:one).id).update_all(deleted_at: Time.current)
+  test "destroy redirects to episodes index when redirect param is present" do
+    episode = episodes(:one)
 
-    # Now we have 1 episode on page 1, try to delete from "page 2" (out of range)
-    delete episode_url(episodes(:one), page: 2), as: :turbo_stream
+    delete episode_url(episode, redirect: true), as: :turbo_stream
 
-    assert_redirected_to episodes_url(page: 1)
+    assert_redirected_to episodes_path
   end
 
   test "deleted episodes do not appear in index" do

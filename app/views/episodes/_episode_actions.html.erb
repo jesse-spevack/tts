@@ -55,7 +55,7 @@
   <% end %>
 
   <% if deletable?(episode) %>
-    <%= button_to episode_path(episode, page: params[:page]),
+    <%= button_to episode_path(episode, redirect: true),
       method: :delete,
       form_class: "contents",
       class: "#{button_classes(type: :danger)} flex items-center justify-center gap-2 w-full transition-colors",
