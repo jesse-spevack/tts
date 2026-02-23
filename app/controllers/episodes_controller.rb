@@ -39,22 +39,7 @@ class EpisodesController < ApplicationController
     @episode = Current.user.episodes.find_by_prefix_id!(params[:id])
     DeleteEpisodeJob.perform_later(episode_id: @episode.id, action_id: Current.action_id)
 
-    respond_to do |format|
-      format.turbo_stream do
-        result = DeterminesDeleteRedirect.call(
-          podcast: @podcast,
-          episode: @episode,
-          current_page: params[:page]
-        )
-
-        if result.data[:redirect_needed]
-          redirect_to episodes_path(page: result.data[:redirect_page]), notice: "Episode deleted."
-        else
-          flash.now[:notice] = "Episode deleted."
-        end
-      end
-      format.html { redirect_to episodes_path(page: params[:page]), notice: "Episode deleted." }
-    end
+    redirect_to episodes_path, notice: "Episode deleted."
   end
 
   private
