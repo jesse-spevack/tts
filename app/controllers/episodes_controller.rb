@@ -40,7 +40,13 @@ class EpisodesController < ApplicationController
     DeleteEpisodeJob.perform_later(episode_id: @episode.id, action_id: Current.action_id)
 
     respond_to do |format|
-      format.turbo_stream { flash.now[:notice] = "Episode deleted." }
+      format.turbo_stream do
+        if params[:redirect]
+          redirect_to episodes_path, notice: "Episode deleted."
+        else
+          flash.now[:notice] = "Episode deleted."
+        end
+      end
       format.html { redirect_to episodes_path, notice: "Episode deleted." }
     end
   end

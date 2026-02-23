@@ -524,6 +524,14 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(turbo-stream action="update" target="flash-messages")
   end
 
+  test "destroy redirects to episodes index when redirect param is present" do
+    episode = episodes(:one)
+
+    delete episode_url(episode, redirect: true), as: :turbo_stream
+
+    assert_redirected_to episodes_path
+  end
+
   test "deleted episodes do not appear in index" do
     episode = episodes(:one)
     episode.soft_delete!
