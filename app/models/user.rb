@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_many :episodes, dependent: :destroy
   has_many :sent_messages, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
+  has_many :device_codes, dependent: :destroy
   has_one :subscription, dependent: :destroy
   has_one :credit_balance, dependent: :destroy
   has_many :credit_transactions, dependent: :destroy
@@ -66,8 +67,6 @@ class User < ApplicationRecord
   def email_ingest_address
     GeneratesEmailIngestAddress.call(user: self)
   end
-
-  private
 
   def effective_tier
     return "unlimited" if unlimited?

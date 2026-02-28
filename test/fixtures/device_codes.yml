@@ -1,0 +1,17 @@
+pending:
+  device_code: ABCDEFGH
+  user_code: pending_user_code_123
+  expires_at: <%= 10.minutes.from_now %>
+
+confirmed:
+  device_code: WXYZJKMN
+  user_code: confirmed_user_code_456
+  user: one
+  token: pk_live_confirmed_test_token
+  expires_at: <%= 10.minutes.from_now %>
+  confirmed_at: <%= 1.minute.ago %>
+
+expired:
+  device_code: QRSTUVWX
+  user_code: expired_user_code_789
+  expires_at: <%= 1.hour.ago %>

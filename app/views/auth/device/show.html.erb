@@ -1,0 +1,46 @@
+<% content_for :title, "Authorize Device" %>
+
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+  <div class="w-full max-w-md text-center">
+    <% if @confirmed %>
+      <!-- Success Icon -->
+      <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600 dark:text-green-400">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+      </div>
+
+      <h1 class="mt-4 text-xl font-semibold text-mist-950 dark:text-white">Device authorized!</h1>
+      <p class="mt-2 text-sm text-mist-500 dark:text-mist-400">
+        You can close this page and return to your terminal.
+      </p>
+    <% else %>
+      <!-- Device Icon -->
+      <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-mist-950/10 dark:bg-white/10">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-mist-950 dark:text-white">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+      </div>
+
+      <h1 class="mt-4 text-xl font-semibold text-mist-950 dark:text-white">Authorize Device</h1>
+      <p class="mt-2 text-sm text-mist-500 dark:text-mist-400">
+        Enter the code shown in your terminal.
+      </p>
+
+      <%= form_with url: auth_device_path, method: :post, class: "mt-6" do |form| %>
+        <div class="space-y-4">
+          <%= form.text_field :code,
+              required: true,
+              autofocus: true,
+              autocomplete: "off",
+              placeholder: "XXXX-XXXX",
+              class: input_classes + " text-center tracking-widest text-lg uppercase",
+              maxlength: 9 %>
+
+          <%= form.submit "Authorize",
+              class: button_classes(type: :primary, full_width: true) %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

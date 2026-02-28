@@ -7,6 +7,7 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     @api_token = GeneratesApiToken.call(user: @user)
     @plain_token = @api_token.plain_token
     @valid_params = {
+      source_type: "extension",
       title: "Test Article",
       author: "Test Author",
       description: "A test article description",

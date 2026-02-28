@@ -35,6 +35,11 @@ class AppConfig
     end
   end
 
+  module Api
+    DEFAULT_PER_PAGE = 20
+    MAX_PER_PAGE = 100
+  end
+
   module Content
     MIN_LENGTH = 100
     MAX_FETCH_BYTES = 10 * 1024 * 1024  # 10MB

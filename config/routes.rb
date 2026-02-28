@@ -35,9 +35,17 @@ Rails.application.routes.draw do
     end
 
     namespace :v1 do
-      resource :extension_token, only: [ :create ]
-      resources :episodes, only: [ :create ]
+      resources :episodes, only: [ :index, :show, :create, :destroy ]
       resources :extension_logs, only: [ :create ]
+      resources :voices, only: [ :index ]
+      resource :feed, only: [ :show ]
+
+      namespace :auth do
+        resource :extension_token, only: [ :create ]
+        resource :device_codes, only: [ :create ]
+        resource :device_tokens, only: [ :create ]
+        resource :status, only: [ :show ]
+      end
     end
   end
 
@@ -48,6 +56,11 @@ Rails.application.routes.draw do
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
+  end
+
+  # Device authorization (CLI login)
+  namespace :auth do
+    resource :device, only: [ :show, :create ], controller: "device"
   end
 
   # Browser extension auth callback
