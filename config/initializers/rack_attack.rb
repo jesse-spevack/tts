@@ -14,6 +14,21 @@ class Rack::Attack
     end
   end
 
+  # Rate limit: 5 device code creations per minute per IP
+  throttle("api/v1/auth/device_codes/create", limit: 5, period: 1.minute) do |req|
+    if req.path == "/api/v1/auth/device_codes" && req.post?
+      req.ip
+    end
+  end
+
+  # Rate limit: 10 device token polls per minute per IP
+  # RFC 8628 suggests 5-second intervals between polls
+  throttle("api/v1/auth/device_tokens/create", limit: 10, period: 1.minute) do |req|
+    if req.path == "/api/v1/auth/device_tokens" && req.post?
+      req.ip
+    end
+  end
+
   # Custom response for throttled requests (429 with Retry-After)
   self.throttled_responder = lambda do |request|
     match_data = request.env["rack.attack.match_data"]

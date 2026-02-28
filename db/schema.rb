@@ -87,7 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_155428) do
     t.datetime "created_at", null: false
     t.string "device_code", null: false
     t.datetime "expires_at", null: false
-    t.string "token"
+    t.string "token_digest"
     t.datetime "updated_at", null: false
     t.string "user_code", null: false
     t.integer "user_id"

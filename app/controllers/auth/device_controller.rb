@@ -13,7 +13,7 @@ module Auth
       end
 
       code = params[:code].to_s.gsub(/[^A-Za-z]/, "").upcase
-      device_code = DeviceCode.find_by(device_code: code)
+      device_code = DeviceCode.find_by(user_code: code)
 
       if device_code.nil?
         flash.now[:alert] = "Code not found. Please check and try again."

@@ -1,44 +1,44 @@
 require "test_helper"
 
 class DeviceCodeTest < ActiveSupport::TestCase
-  test "requires device_code" do
-    dc = DeviceCode.new(user_code: "abc", expires_at: 15.minutes.from_now)
-    refute dc.valid?
-    assert_includes dc.errors[:device_code], "can't be blank"
-  end
-
   test "requires user_code" do
-    dc = DeviceCode.new(device_code: "ABCDEFGH", expires_at: 15.minutes.from_now)
+    dc = DeviceCode.new(device_code: "abc", expires_at: 15.minutes.from_now)
     refute dc.valid?
     assert_includes dc.errors[:user_code], "can't be blank"
   end
 
-  test "requires expires_at" do
-    dc = DeviceCode.new(device_code: "ABCDEFGH", user_code: "abc")
+  test "requires device_code" do
+    dc = DeviceCode.new(user_code: "ABCDEFGH", expires_at: 15.minutes.from_now)
     refute dc.valid?
-    assert_includes dc.errors[:expires_at], "can't be blank"
+    assert_includes dc.errors[:device_code], "can't be blank"
   end
 
-  test "enforces uniqueness of device_code" do
-    existing = device_codes(:pending)
-    duplicate = DeviceCode.new(
-      device_code: existing.device_code,
-      user_code: "unique_code",
-      expires_at: 15.minutes.from_now
-    )
-    refute duplicate.valid?
-    assert_includes duplicate.errors[:device_code], "has already been taken"
+  test "requires expires_at" do
+    dc = DeviceCode.new(user_code: "ABCDEFGH", device_code: "abc")
+    refute dc.valid?
+    assert_includes dc.errors[:expires_at], "can't be blank"
   end
 
   test "enforces uniqueness of user_code" do
     existing = device_codes(:pending)
     duplicate = DeviceCode.new(
-      device_code: "UNIQCODE",
       user_code: existing.user_code,
+      device_code: "unique_code",
       expires_at: 15.minutes.from_now
     )
     refute duplicate.valid?
     assert_includes duplicate.errors[:user_code], "has already been taken"
+  end
+
+  test "enforces uniqueness of device_code" do
+    existing = device_codes(:pending)
+    duplicate = DeviceCode.new(
+      user_code: "UNIQCODE",
+      device_code: existing.device_code,
+      expires_at: 15.minutes.from_now
+    )
+    refute duplicate.valid?
+    assert_includes duplicate.errors[:device_code], "has already been taken"
   end
 
   test "user is optional" do

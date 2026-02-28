@@ -3,8 +3,8 @@ class DeviceCode < ApplicationRecord
 
   belongs_to :user, optional: true
 
-  validates :device_code, presence: true, uniqueness: true
   validates :user_code, presence: true, uniqueness: true
+  validates :device_code, presence: true, uniqueness: true
   validates :expires_at, presence: true
 
   def confirmed?

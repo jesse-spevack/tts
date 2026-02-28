@@ -116,6 +116,48 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
+  # Device code creation rate limiting
+
+  test "allows device code creation under the rate limit" do
+    5.times do
+      post api_v1_auth_device_codes_path
+      assert_response :ok
+    end
+  end
+
+  test "rate limits device code creation" do
+    5.times do
+      post api_v1_auth_device_codes_path
+      assert_response :ok
+    end
+
+    post api_v1_auth_device_codes_path
+    assert_response :too_many_requests
+  end
+
+  # Device token polling rate limiting
+
+  test "allows device token polling under the rate limit" do
+    pending_code = device_codes(:pending)
+
+    10.times do
+      post api_v1_auth_device_tokens_path, params: { device_code: pending_code.device_code }
+      assert_response :bad_request # authorization_pending
+    end
+  end
+
+  test "rate limits device token polling" do
+    pending_code = device_codes(:pending)
+
+    10.times do
+      post api_v1_auth_device_tokens_path, params: { device_code: pending_code.device_code }
+      assert_response :bad_request
+    end
+
+    post api_v1_auth_device_tokens_path, params: { device_code: pending_code.device_code }
+    assert_response :too_many_requests
+  end
+
   private
 
   def auth_header(token)

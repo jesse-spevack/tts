@@ -13,28 +13,28 @@ class CreatesDeviceCodeTest < ActiveSupport::TestCase
     assert result.persisted?
   end
 
-  test "sets device_code as 8 uppercase letters" do
+  test "sets user_code as 8 uppercase letters" do
     result = CreatesDeviceCode.call
-    assert_match(/\A[A-Z]{8}\z/, result.device_code)
+    assert_match(/\A[A-Z]{8}\z/, result.user_code)
   end
 
-  test "excludes ambiguous characters from device_code" do
+  test "excludes ambiguous characters from user_code" do
     # Generate many codes to increase probability of catching bad chars
     100.times do
       result = CreatesDeviceCode.call
-      refute_match(/[OIL01]/, result.device_code)
+      refute_match(/[OIL01]/, result.user_code)
     end
   end
 
-  test "sets a user_code" do
+  test "sets a device_code" do
     result = CreatesDeviceCode.call
-    assert result.user_code.present?
+    assert result.device_code.present?
   end
 
-  test "user_code is a string longer than 10 characters" do
+  test "device_code is a string longer than 10 characters" do
     result = CreatesDeviceCode.call
-    assert_kind_of String, result.user_code
-    assert result.user_code.length > 10
+    assert_kind_of String, result.device_code
+    assert result.device_code.length > 10
   end
 
   test "sets expires_at to 15 minutes from now" do
@@ -49,8 +49,8 @@ class CreatesDeviceCodeTest < ActiveSupport::TestCase
     assert_nil result.user
   end
 
-  test "does not set token" do
+  test "does not set token_digest" do
     result = CreatesDeviceCode.call
-    assert_nil result.token
+    assert_nil result.token_digest
   end
 end

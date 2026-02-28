@@ -14,7 +14,6 @@ class ConfirmsDeviceCodeTest < ActiveSupport::TestCase
     dc.reload
     assert dc.confirmed?
     assert_equal @user, dc.user
-    assert dc.token.present?
   end
 
   test "returns failure for expired device code" do
@@ -35,17 +34,6 @@ class ConfirmsDeviceCodeTest < ActiveSupport::TestCase
     assert_match(/already been used/, result.error)
   end
 
-  test "generates a valid API token" do
-    dc = device_codes(:pending)
-
-    ConfirmsDeviceCode.call(device_code: dc, user: @user)
-
-    dc.reload
-    api_token = FindsApiToken.call(plain_token: dc.token)
-    assert_not_nil api_token
-    assert_equal @user, api_token.user
-  end
-
   test "sets confirmed_at timestamp" do
     dc = device_codes(:pending)
 
@@ -55,5 +43,14 @@ class ConfirmsDeviceCodeTest < ActiveSupport::TestCase
       dc.reload
       assert_equal Time.current, dc.confirmed_at
     end
+  end
+
+  test "does not store plaintext token" do
+    dc = device_codes(:pending)
+
+    ConfirmsDeviceCode.call(device_code: dc, user: @user)
+
+    dc.reload
+    assert_nil dc.token_digest
   end
 end

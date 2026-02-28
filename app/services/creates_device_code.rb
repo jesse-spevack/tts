@@ -18,8 +18,8 @@ class CreatesDeviceCode
 
     loop do
       device_code = DeviceCode.create!(
-        device_code: generate_device_code,
         user_code: generate_user_code,
+        device_code: generate_device_code,
         expires_at: DeviceCode::EXPIRATION.from_now
       )
       break
@@ -35,11 +35,11 @@ class CreatesDeviceCode
 
   private
 
-  def generate_device_code
-    Array.new(8) { SAFE_CHARS.sample }.join
+  def generate_user_code
+    Array.new(8) { SAFE_CHARS[SecureRandom.random_number(SAFE_CHARS.size)] }.join
   end
 
-  def generate_user_code
+  def generate_device_code
     SecureRandom.urlsafe_base64(32)
   end
 end

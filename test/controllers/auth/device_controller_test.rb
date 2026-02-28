@@ -38,13 +38,12 @@ module Auth
       sign_in_as(@user)
       pending_code = device_codes(:pending)
 
-      post auth_device_path, params: { code: pending_code.device_code }
+      post auth_device_path, params: { code: pending_code.user_code }
 
       assert_response :ok
       pending_code.reload
       assert pending_code.confirmed?
       assert_equal @user, pending_code.user
-      assert pending_code.token.present?
     end
 
     test "create shows error for unknown code" do
@@ -59,7 +58,7 @@ module Auth
       sign_in_as(@user)
       expired_code = device_codes(:expired)
 
-      post auth_device_path, params: { code: expired_code.device_code }
+      post auth_device_path, params: { code: expired_code.user_code }
 
       assert_response :unprocessable_entity
     end
@@ -68,7 +67,7 @@ module Auth
       sign_in_as(@user)
       confirmed_code = device_codes(:confirmed)
 
-      post auth_device_path, params: { code: confirmed_code.device_code }
+      post auth_device_path, params: { code: confirmed_code.user_code }
 
       assert_response :unprocessable_entity
     end
@@ -77,7 +76,7 @@ module Auth
       sign_in_as(@user)
       pending_code = device_codes(:pending)
       # Send code without the dash
-      raw_code = pending_code.device_code.delete("-")
+      raw_code = pending_code.user_code.delete("-")
 
       post auth_device_path, params: { code: raw_code }
 
@@ -90,24 +89,11 @@ module Auth
       sign_in_as(@user)
       pending_code = device_codes(:pending)
 
-      post auth_device_path, params: { code: pending_code.device_code.downcase }
+      post auth_device_path, params: { code: pending_code.user_code.downcase }
 
       assert_response :ok
       pending_code.reload
       assert pending_code.confirmed?
-    end
-
-    test "create generates an API token that works for auth" do
-      sign_in_as(@user)
-      pending_code = device_codes(:pending)
-
-      post auth_device_path, params: { code: pending_code.device_code }
-
-      pending_code.reload
-      api_token = FindsApiToken.call(plain_token: pending_code.token)
-      assert_not_nil api_token
-      assert_equal @user, api_token.user
-      assert api_token.active?
     end
   end
 end
