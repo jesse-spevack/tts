@@ -1,0 +1,24 @@
+pending:
+  user_code: ABCDEFGH
+  device_code: pending_device_code_123
+  expires_at: <%= 10.minutes.from_now %>
+
+confirmed:
+  user_code: WXYZJKMN
+  device_code: confirmed_device_code_456
+  user: one
+  expires_at: <%= 10.minutes.from_now %>
+  confirmed_at: <%= 1.minute.ago %>
+
+exchanged:
+  user_code: BCDFGHJK
+  device_code: exchanged_device_code_789
+  user: one
+  token_digest: <%= HashesToken.call(plain_token: "pk_live_exchanged_test_token") %>
+  expires_at: <%= 10.minutes.from_now %>
+  confirmed_at: <%= 2.minutes.ago %>
+
+expired:
+  user_code: QRSTUVWX
+  device_code: expired_device_code_789
+  expires_at: <%= 1.hour.ago %>
