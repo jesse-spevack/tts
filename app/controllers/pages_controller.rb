@@ -2,12 +2,18 @@ class PagesController < ApplicationController
   include Trackable
   allow_unauthenticated_access
 
-  layout "marketing", only: %i[home terms privacy about]
+  layout "marketing", only: %i[home marketing_home terms privacy about]
 
   def home
     redirect_to new_episode_path if authenticated?
     @episode_count = Rails.cache.fetch("home/episode_count", expires_in: 5.minutes) { Episode.count }
     @user_count = Rails.cache.fetch("home/user_count", expires_in: 5.minutes) { User.count }
+  end
+
+  def marketing_home
+    @episode_count = Rails.cache.fetch("home/episode_count", expires_in: 5.minutes) { Episode.count }
+    @user_count = Rails.cache.fetch("home/user_count", expires_in: 5.minutes) { User.count }
+    render :home
   end
 
   def how_it_sounds

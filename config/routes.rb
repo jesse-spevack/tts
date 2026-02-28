@@ -18,6 +18,7 @@ Rails.application.routes.draw do
   get "sign_in", to: redirect("/")
 
   # Static pages
+  get "home", to: "pages#marketing_home"
   get "terms", to: "pages#terms"
   get "privacy", to: "pages#privacy"
   get "about" => "pages#about", as: :about
