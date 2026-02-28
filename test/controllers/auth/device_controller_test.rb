@@ -15,6 +15,13 @@ module Auth
       assert_redirected_to login_path(return_to: auth_device_path)
     end
 
+    test "show preserves code param through login redirect" do
+      get auth_device_path(code: "ABCD-EFGH")
+
+      assert_response :redirect
+      assert_redirected_to login_path(return_to: auth_device_path(code: "ABCD-EFGH"))
+    end
+
     test "show renders form when authenticated" do
       sign_in_as(@user)
 
@@ -23,6 +30,24 @@ module Auth
       assert_response :ok
       assert_select "input[name=code]"
       assert_select "input[type=submit]"
+    end
+
+    test "show prefills code from url param" do
+      sign_in_as(@user)
+
+      get auth_device_path(code: "ABCD-EFGH")
+
+      assert_response :ok
+      assert_select "input[name=code][value='ABCD-EFGH']"
+    end
+
+    test "show renders success when confirmed param is true" do
+      sign_in_as(@user)
+
+      get auth_device_path(confirmed: "true")
+
+      assert_response :ok
+      assert_select "h1", "Device authorized!"
     end
 
     # POST /auth/device
@@ -34,53 +59,55 @@ module Auth
       assert_redirected_to login_path(return_to: auth_device_path)
     end
 
-    test "create confirms a valid pending device code" do
+    test "create confirms a valid pending device code and redirects" do
       sign_in_as(@user)
       pending_code = device_codes(:pending)
 
       post auth_device_path, params: { code: pending_code.user_code }
 
-      assert_response :ok
+      assert_redirected_to auth_device_path(confirmed: "true")
       pending_code.reload
       assert pending_code.confirmed?
       assert_equal @user, pending_code.user
     end
 
-    test "create shows error for unknown code" do
+    test "create redirects with flash for unknown code" do
       sign_in_as(@user)
 
       post auth_device_path, params: { code: "XXXX-YYYY" }
 
-      assert_response :unprocessable_entity
+      assert_redirected_to auth_device_path
+      assert_equal "Code not found. Please check and try again.", flash[:alert]
     end
 
-    test "create shows error for expired code" do
+    test "create redirects with flash for expired code" do
       sign_in_as(@user)
       expired_code = device_codes(:expired)
 
       post auth_device_path, params: { code: expired_code.user_code }
 
-      assert_response :unprocessable_entity
+      assert_redirected_to auth_device_path
+      assert flash[:alert].present?
     end
 
-    test "create shows error for already confirmed code" do
+    test "create redirects with flash for already confirmed code" do
       sign_in_as(@user)
       confirmed_code = device_codes(:confirmed)
 
       post auth_device_path, params: { code: confirmed_code.user_code }
 
-      assert_response :unprocessable_entity
+      assert_redirected_to auth_device_path
+      assert flash[:alert].present?
     end
 
     test "create normalizes code without dash" do
       sign_in_as(@user)
       pending_code = device_codes(:pending)
-      # Send code without the dash
       raw_code = pending_code.user_code.delete("-")
 
       post auth_device_path, params: { code: raw_code }
 
-      assert_response :ok
+      assert_redirected_to auth_device_path(confirmed: "true")
       pending_code.reload
       assert pending_code.confirmed?
     end
@@ -91,7 +118,7 @@ module Auth
 
       post auth_device_path, params: { code: pending_code.user_code.downcase }
 
-      assert_response :ok
+      assert_redirected_to auth_device_path(confirmed: "true")
       pending_code.reload
       assert pending_code.confirmed?
     end

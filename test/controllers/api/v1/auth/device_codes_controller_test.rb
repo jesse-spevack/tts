@@ -23,11 +23,12 @@ module Api
           assert_match(/\A[A-Z]{4}-[A-Z]{4}\z/, json["user_code"])
         end
 
-        test "create returns a verification_url" do
+        test "create returns a verification_url with code param" do
           post api_v1_auth_device_codes_path
 
           json = response.parsed_body
-          assert json["verification_url"].end_with?("/auth/device")
+          assert json["verification_url"].include?("/auth/device?code=")
+          assert_match(/code=[A-Z]{4}-[A-Z]{4}\z/, json["verification_url"])
         end
 
         test "create generates unique codes each time" do
