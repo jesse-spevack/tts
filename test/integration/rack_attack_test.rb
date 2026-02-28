@@ -149,7 +149,7 @@ class RackAttackTest < ActionDispatch::IntegrationTest
   test "rate limits device token polling" do
     pending_code = device_codes(:pending)
 
-    10.times do
+    30.times do
       post api_v1_auth_device_tokens_path, params: { device_code: pending_code.device_code }
       assert_response :bad_request
     end
