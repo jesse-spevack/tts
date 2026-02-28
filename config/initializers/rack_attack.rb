@@ -21,9 +21,9 @@ class Rack::Attack
     end
   end
 
-  # Rate limit: 10 device token polls per minute per IP
-  # RFC 8628 suggests 5-second intervals between polls
-  throttle("api/v1/auth/device_tokens/create", limit: 10, period: 1.minute) do |req|
+  # Rate limit: 30 device token polls per minute per IP
+  # RFC 8628 suggests 5-second intervals (~12 polls/min), so 30 gives headroom
+  throttle("api/v1/auth/device_tokens/create", limit: 30, period: 1.minute) do |req|
     if req.path == "/api/v1/auth/device_tokens" && req.post?
       req.ip
     end
