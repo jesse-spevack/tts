@@ -34,7 +34,7 @@ class CreatesExtensionEpisode
       author: author.presence || extract_domain_from_url,
       description: description,
       source_type: :extension,
-      source_url: url,
+      source_url: StripsUrlTrackingParams.call(url),
       source_text: content,
       content_preview: GeneratesContentPreview.call(plain_text),
       status: :pending
