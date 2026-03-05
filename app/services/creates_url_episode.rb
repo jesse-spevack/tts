@@ -23,7 +23,7 @@ class CreatesUrlEpisode
     normalize_result = NormalizesSubstackUrl.call(url: url)
     return normalize_result if normalize_result.failure?
 
-    @normalized_url = normalize_result.data
+    @normalized_url = StripsUrlTrackingParams.call(normalize_result.data)
 
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
