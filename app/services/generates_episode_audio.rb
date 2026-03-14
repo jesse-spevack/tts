@@ -54,7 +54,11 @@ class GeneratesEpisodeAudio
   rescue StandardError => e
     log_error "generate_episode_audio_failed", error: e.class, message: e.message
     cleanup_orphaned_audio
-    @episode.update!(status: :failed, error_message: e.message)
+    if TransientAudioErrors.transient?(e)
+      raise
+    else
+      @episode.update!(status: :failed, error_message: e.message)
+    end
   end
 
   private
