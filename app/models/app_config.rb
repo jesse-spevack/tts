@@ -16,8 +16,8 @@ class AppConfig
     FREE_MONTHLY_EPISODES = 2
 
     FREE_VOICES = %w[wren felix sloane archer gemma hugo quinn theo].freeze
-    PREMIUM_VOICES = FREE_VOICES
-    UNLIMITED_VOICES = (FREE_VOICES + %w[elara callum lark nash]).freeze
+    PREMIUM_VOICES = (FREE_VOICES + %w[elara callum lark nash]).freeze
+    UNLIMITED_VOICES = PREMIUM_VOICES
 
     def self.character_limit_for(tier)
       case tier.to_s
@@ -29,8 +29,8 @@ class AppConfig
 
     def self.voices_for(tier)
       case tier.to_s
-      when "free", "premium" then FREE_VOICES
-      when "unlimited" then UNLIMITED_VOICES
+      when "free" then FREE_VOICES
+      when "premium", "unlimited" then PREMIUM_VOICES
       end
     end
   end

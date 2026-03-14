@@ -41,12 +41,12 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal AppConfig::Tiers::FREE_VOICES, AppConfig::Tiers.voices_for("free")
   end
 
-  test "voices_for premium tier returns FREE_VOICES" do
-    assert_equal AppConfig::Tiers::FREE_VOICES, AppConfig::Tiers.voices_for("premium")
+  test "voices_for premium tier returns PREMIUM_VOICES" do
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, AppConfig::Tiers.voices_for("premium")
   end
 
-  test "voices_for unlimited tier returns UNLIMITED_VOICES" do
-    assert_equal AppConfig::Tiers::UNLIMITED_VOICES, AppConfig::Tiers.voices_for("unlimited")
+  test "voices_for unlimited tier returns PREMIUM_VOICES" do
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, AppConfig::Tiers.voices_for("unlimited")
   end
 
   test "Content::MIN_LENGTH is 100" do

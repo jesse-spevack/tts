@@ -29,11 +29,11 @@ class Voice
     CATALOG[key]
   end
 
-  def self.google_voice_for(preference, is_unlimited:)
+  def self.google_voice_for(preference, is_premium:)
     if preference.present?
       voice_data = find(preference)
       return voice_data[:google_voice] if voice_data
     end
-    is_unlimited ? DEFAULT_CHIRP : DEFAULT_STANDARD
+    is_premium ? DEFAULT_CHIRP : DEFAULT_STANDARD
   end
 end
