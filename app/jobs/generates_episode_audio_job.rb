@@ -13,9 +13,9 @@ class GeneratesEpisodeAudioJob < ApplicationJob
   def perform(episode_id:, action_id: nil)
     with_episode_logging(episode_id: episode_id, user_id: nil, action_id: action_id) do
       episode = Episode.find(episode_id)
-      ChecksAudioCircuitBreaker.check!(episode.user)
-      GeneratesEpisodeAudio.call(episode: episode)
-      ChecksAudioCircuitBreaker.reset(episode.user)
+      ChecksAudioCircuitBreaker.call(user: episode.user) do
+        GeneratesEpisodeAudio.call(episode: episode)
+      end
     end
   rescue ChecksAudioCircuitBreaker::Tripped => e
     Episode.find_by(id: episode_id)&.update!(status: :failed, error_message: e.message)

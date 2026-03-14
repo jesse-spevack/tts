@@ -13,27 +13,50 @@ class ChecksAudioCircuitBreakerTest < ActiveSupport::TestCase
     Rails.cache = @original_cache
   end
 
-  test "does not raise below threshold" do
+  test "yields block when below threshold" do
     Rails.cache.write("audio_failures:#{@user.id}", 2, expires_in: 1.hour)
 
-    assert_nothing_raised do
-      ChecksAudioCircuitBreaker.check!(@user)
-    end
+    called = false
+    ChecksAudioCircuitBreaker.call(user: @user) { called = true }
+
+    assert called
   end
 
-  test "raises Tripped at threshold" do
+  test "raises Tripped at threshold without yielding" do
     Rails.cache.write("audio_failures:#{@user.id}", 3, expires_in: 1.hour)
 
+    called = false
     error = assert_raises(ChecksAudioCircuitBreaker::Tripped) do
-      ChecksAudioCircuitBreaker.check!(@user)
+      ChecksAudioCircuitBreaker.call(user: @user) { called = true }
     end
+
+    refute called
     assert_match(/temporarily unavailable/, error.message)
   end
 
-  test "does not raise with no prior failures" do
-    assert_nothing_raised do
-      ChecksAudioCircuitBreaker.check!(@user)
+  test "resets failure count on successful block" do
+    Rails.cache.write("audio_failures:#{@user.id}", 2, expires_in: 1.hour)
+
+    ChecksAudioCircuitBreaker.call(user: @user) { "success" }
+
+    assert_nil Rails.cache.read("audio_failures:#{@user.id}")
+  end
+
+  test "does not reset on block failure" do
+    Rails.cache.write("audio_failures:#{@user.id}", 1, expires_in: 1.hour)
+
+    assert_raises(StandardError) do
+      ChecksAudioCircuitBreaker.call(user: @user) { raise StandardError, "boom" }
     end
+
+    assert_equal 1, Rails.cache.read("audio_failures:#{@user.id}")
+  end
+
+  test "works with no prior failures" do
+    called = false
+    ChecksAudioCircuitBreaker.call(user: @user) { called = true }
+
+    assert called
   end
 
   test "increment tracks failure count" do
@@ -42,13 +65,5 @@ class ChecksAudioCircuitBreakerTest < ActiveSupport::TestCase
 
     ChecksAudioCircuitBreaker.increment(@user)
     assert_equal 2, Rails.cache.read("audio_failures:#{@user.id}")
-  end
-
-  test "reset clears failure count" do
-    Rails.cache.write("audio_failures:#{@user.id}", 2, expires_in: 1.hour)
-
-    ChecksAudioCircuitBreaker.reset(@user)
-
-    assert_nil Rails.cache.read("audio_failures:#{@user.id}")
   end
 end
