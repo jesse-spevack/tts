@@ -16,11 +16,7 @@ class ProcessesUrlEpisode
     log_info "process_url_episode_started", url: episode.source_url
 
     episode.update!(status: :preparing)
-    fetch_url
-    unless @extract_result
-      extract_content
-      attempt_jina_fallback
-    end
+    fetch_and_extract
     check_character_limit
     process_with_llm
     update_and_enqueue
@@ -38,21 +34,22 @@ class ProcessesUrlEpisode
 
   attr_reader :episode, :user
 
-  def fetch_url
+  def fetch_and_extract
     log_info "url_fetch_started", url: episode.source_url
 
-    @fetch_result = FetchesUrl.call(url: episode.source_url)
-    if @fetch_result.failure?
-      log_warn "url_fetch_failed", error: @fetch_result.error
-      attempt_jina_fetch_fallback
+    fetch_result = FetchesUrl.call(url: episode.source_url)
 
-      return
+    if fetch_result.success?
+      log_info "url_fetch_completed", bytes: fetch_result.data.bytesize
+      @extract_result = extract_content(fetch_result.data)
+      attempt_jina_extraction_fallback(fetch_result) if low_quality_extraction?(@extract_result, fetch_result)
+    else
+      log_warn "url_fetch_failed", error: fetch_result.error
+      @extract_result = fetch_via_jina
     end
-
-    log_info "url_fetch_completed", bytes: @fetch_result.data.bytesize
   end
 
-  def attempt_jina_fetch_fallback
+  def fetch_via_jina
     log_info "jina_fetch_fallback_started", url: episode.source_url
 
     jina_result = FetchesJinaContent.call(url: episode.source_url)
@@ -63,41 +60,44 @@ class ProcessesUrlEpisode
     end
 
     log_info "jina_fetch_fallback_success", url: episode.source_url, chars: jina_result.data.length
-    @extract_result = Result.success(
+    Result.success(
       ExtractsArticle::ArticleData.new(text: jina_result.data, title: nil, author: nil)
     )
   end
 
-  def extract_content
+  def extract_content(html)
     log_info "article_extraction_started"
 
-    @extract_result = ExtractsArticle.call(html: @fetch_result.data)
-    if @extract_result.failure?
-      log_warn "article_extraction_failed", error: @extract_result.error
-
-      raise EpisodeErrorHandling::ProcessingError, @extract_result.error
+    result = ExtractsArticle.call(html: html)
+    if result.failure?
+      log_warn "article_extraction_failed", error: result.error
+      raise EpisodeErrorHandling::ProcessingError, result.error
     end
 
-    log_info "article_extraction_completed", characters: @extract_result.data.character_count
+    log_info "article_extraction_completed", characters: result.data.character_count
+    result
   end
 
-  def attempt_jina_fallback
-    extracted_chars = @extract_result.data.character_count
-    html_bytes = @fetch_result.data.bytesize
+  def low_quality_extraction?(extract_result, fetch_result)
+    extract_result.data.character_count < AppConfig::Content::LOW_QUALITY_EXTRACTION_CHARS &&
+      fetch_result.data.bytesize > AppConfig::Content::LOW_QUALITY_HTML_MIN_BYTES
+  end
 
-    return unless extracted_chars < AppConfig::Content::LOW_QUALITY_EXTRACTION_CHARS &&
-                  html_bytes > AppConfig::Content::LOW_QUALITY_HTML_MIN_BYTES
-
-    log_info "low_quality_extraction_detected", extracted_chars: extracted_chars, html_bytes: html_bytes
+  def attempt_jina_extraction_fallback(fetch_result)
+    log_info "low_quality_extraction_detected",
+      extracted_chars: @extract_result.data.character_count,
+      html_bytes: fetch_result.data.bytesize
 
     jina_result = FetchesJinaContent.call(url: episode.source_url)
 
     if jina_result.success?
       log_info "jina_fallback_success", chars: jina_result.data.length
-      original_title = @extract_result.data.title
-      original_author = @extract_result.data.author
       @extract_result = Result.success(
-        ExtractsArticle::ArticleData.new(text: jina_result.data, title: original_title, author: original_author)
+        ExtractsArticle::ArticleData.new(
+          text: jina_result.data,
+          title: @extract_result.data.title,
+          author: @extract_result.data.author
+        )
       )
     else
       log_warn "jina_fallback_failed", error: jina_result.error
