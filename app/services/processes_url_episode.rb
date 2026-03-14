@@ -16,9 +16,7 @@ class ProcessesUrlEpisode
     log_info "process_url_episode_started", url: episode.source_url
 
     episode.update!(status: :preparing)
-    fetch_url
-    extract_content
-    attempt_jina_fallback
+    fetch_and_extract
     check_character_limit
     process_with_llm
     update_and_enqueue
@@ -36,52 +34,11 @@ class ProcessesUrlEpisode
 
   attr_reader :episode, :user
 
-  def fetch_url
-    log_info "url_fetch_started", url: episode.source_url
+  def fetch_and_extract
+    @extract_result = FetchesArticleContent.call(url: episode.source_url)
 
-    @fetch_result = FetchesUrl.call(url: episode.source_url)
-    if @fetch_result.failure?
-      log_warn "url_fetch_failed", error: @fetch_result.error
-
-      raise EpisodeErrorHandling::ProcessingError, @fetch_result.error
-    end
-
-    log_info "url_fetch_completed", bytes: @fetch_result.data.bytesize
-  end
-
-  def extract_content
-    log_info "article_extraction_started"
-
-    @extract_result = ExtractsArticle.call(html: @fetch_result.data)
     if @extract_result.failure?
-      log_warn "article_extraction_failed", error: @extract_result.error
-
       raise EpisodeErrorHandling::ProcessingError, @extract_result.error
-    end
-
-    log_info "article_extraction_completed", characters: @extract_result.data.character_count
-  end
-
-  def attempt_jina_fallback
-    extracted_chars = @extract_result.data.character_count
-    html_bytes = @fetch_result.data.bytesize
-
-    return unless extracted_chars < AppConfig::Content::LOW_QUALITY_EXTRACTION_CHARS &&
-                  html_bytes > AppConfig::Content::LOW_QUALITY_HTML_MIN_BYTES
-
-    log_info "low_quality_extraction_detected", extracted_chars: extracted_chars, html_bytes: html_bytes
-
-    jina_result = FetchesJinaContent.call(url: episode.source_url)
-
-    if jina_result.success?
-      log_info "jina_fallback_success", chars: jina_result.data.length
-      original_title = @extract_result.data.title
-      original_author = @extract_result.data.author
-      @extract_result = Result.success(
-        ExtractsArticle::ArticleData.new(text: jina_result.data, title: original_title, author: original_author)
-      )
-    else
-      log_warn "jina_fallback_failed", error: jina_result.error
     end
   end
 
