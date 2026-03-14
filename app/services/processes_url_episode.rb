@@ -17,8 +17,10 @@ class ProcessesUrlEpisode
 
     episode.update!(status: :preparing)
     fetch_url
-    extract_content
-    attempt_jina_fallback
+    unless @extract_result
+      extract_content
+      attempt_jina_fallback
+    end
     check_character_limit
     process_with_llm
     update_and_enqueue
@@ -42,11 +44,28 @@ class ProcessesUrlEpisode
     @fetch_result = FetchesUrl.call(url: episode.source_url)
     if @fetch_result.failure?
       log_warn "url_fetch_failed", error: @fetch_result.error
+      attempt_jina_fetch_fallback
 
-      raise EpisodeErrorHandling::ProcessingError, @fetch_result.error
+      return
     end
 
     log_info "url_fetch_completed", bytes: @fetch_result.data.bytesize
+  end
+
+  def attempt_jina_fetch_fallback
+    log_info "jina_fetch_fallback_started", url: episode.source_url
+
+    jina_result = FetchesJinaContent.call(url: episode.source_url)
+
+    if jina_result.failure?
+      log_warn "jina_fetch_fallback_failed", url: episode.source_url
+      raise EpisodeErrorHandling::ProcessingError, "Could not fetch URL"
+    end
+
+    log_info "jina_fetch_fallback_success", url: episode.source_url, chars: jina_result.data.length
+    @extract_result = Result.success(
+      ExtractsArticle::ArticleData.new(text: jina_result.data, title: nil, author: nil)
+    )
   end
 
   def extract_content

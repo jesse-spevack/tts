@@ -47,13 +47,42 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed on fetch error" do
+    Mocktail.replace(FetchesJinaContent)
+
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.failure("Could not fetch URL") }
+    stubs { |m| FetchesJinaContent.call(url: m.any) }.with { Result.failure("Could not fetch content from reader service") }
 
     ProcessesUrlEpisode.call(episode: @episode)
 
     @episode.reload
     assert_equal "failed", @episode.status
     assert_equal "Could not fetch URL", @episode.error_message
+  end
+
+  test "falls back to Jina when direct fetch fails" do
+    Mocktail.replace(FetchesJinaContent)
+
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.failure("Could not fetch URL") }
+
+    jina_markdown = "# Article Title\n\nFull article content fetched via Jina reader."
+    stubs { |m| FetchesJinaContent.call(url: m.any) }.with { Result.success(jina_markdown) }
+
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
+      title: "Article Title",
+      author: "Author",
+      description: "Description.",
+      content: "Full article content."
+    ))
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stub_gcs_and_tasks
+
+    ProcessesUrlEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "preparing", @episode.status, "Episode should succeed via Jina fallback; error: #{@episode.error_message}"
+    verify { |m| FetchesJinaContent.call(url: @episode.source_url) }
+    verify { |m| ProcessesWithLlm.call(text: jina_markdown, episode: m.any) }
   end
 
   test "marks episode as failed when content too long for tier" do
