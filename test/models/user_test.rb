@@ -154,6 +154,27 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
   end
 
+  test "voice returns Chirp3-HD voice for premium subscriber with no preference" do
+    user = users(:subscriber)
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+  end
+
+  test "voice returns Chirp3-HD voice for complimentary user with no preference" do
+    user = users(:complimentary_user)
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+  end
+
+  test "voice returns Chirp3-HD voice for credit user with no preference" do
+    user = users(:credit_user)
+    user.voice_preference = nil
+
+    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
+  end
+
   test "voice_preference validates inclusion in Voice::ALL" do
     user = users(:one)
     user.voice_preference = "invalid_voice"
@@ -252,14 +273,26 @@ class UserTest < ActiveSupport::TestCase
     assert_equal AppConfig::Tiers::FREE_VOICES, user.available_voices
   end
 
-  test "available_voices returns UNLIMITED_VOICES for unlimited user" do
+  test "available_voices returns PREMIUM_VOICES for unlimited user" do
     user = users(:unlimited_user)
 
-    assert_equal AppConfig::Tiers::UNLIMITED_VOICES, user.available_voices
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
 
   test "available_voices returns PREMIUM_VOICES for premium user" do
     user = users(:subscriber)
+
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
+  end
+
+  test "available_voices returns PREMIUM_VOICES for credit user" do
+    user = users(:credit_user)
+
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
+  end
+
+  test "available_voices returns PREMIUM_VOICES for complimentary user" do
+    user = users(:complimentary_user)
 
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end

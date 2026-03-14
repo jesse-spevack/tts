@@ -35,7 +35,7 @@ class User < ApplicationRecord
   end
 
   def voice
-    Voice.google_voice_for(voice_preference, is_unlimited: unlimited?)
+    Voice.google_voice_for(voice_preference, is_premium: premium? || credit_user?)
   end
 
   def available_voices
@@ -70,7 +70,7 @@ class User < ApplicationRecord
 
   def effective_tier
     return "unlimited" if unlimited?
-    return "premium" if premium?
+    return "premium" if premium? || credit_user?
     "free"
   end
 end
