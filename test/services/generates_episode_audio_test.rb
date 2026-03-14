@@ -31,7 +31,7 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     end
   end
 
-  test "marks episode as failed on error" do
+  test "marks episode as failed on permanent error" do
     mock_synthesizer = Mocktail.of(SynthesizesAudio)
     stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
@@ -41,6 +41,36 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     @episode.reload
     assert_equal "failed", @episode.status
     assert_equal "TTS API error", @episode.error_message
+  end
+
+  test "re-raises transient errors for job retry" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with {
+      raise Google::Cloud::DeadlineExceededError, "timeout"
+    }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_raises(Google::Cloud::DeadlineExceededError) do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    @episode.reload
+    assert_equal "processing", @episode.status
+  end
+
+  test "re-raises Faraday transient errors for job retry" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with {
+      raise Faraday::TimeoutError, "connection timed out"
+    }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_raises(Faraday::TimeoutError) do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    @episode.reload
+    assert_equal "processing", @episode.status
   end
 
   test "cleans up uploaded audio if episode update fails" do
