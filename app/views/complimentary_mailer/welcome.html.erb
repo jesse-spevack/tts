@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #179299; color: white; text-decoration: none; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to PodRead!</h1>
+
+    <p>Someone thinks you'd enjoy this — you've been given a complimentary PodRead account.</p>
+
+    <p>PodRead turns articles, blog posts, and notes into audio — and creates a personal podcast feed you can listen to in your favorite podcast app. Here's what's included with your account:</p>
+    <ul>
+      <li><strong>Unlimited episodes</strong> each month</li>
+      <li><strong>Up to 50,000 characters</strong> per episode</li>
+      <li><strong>12 voices</strong> to choose from, including our highest quality voices</li>
+      <li><strong>Share and download</strong> your episodes</li>
+    </ul>
+
+    <p>
+      <a href="<%= @magic_link_url %>" class="button">Log in and get started</a>
+    </p>
+
+    <p>To create a new episode, just paste a URL, paste text, or upload a file at <a href="https://podread.app">podread.app</a>.</p>
+
+    <p>This link expires in 30 minutes. Once you're in, you can request a new login link anytime from the home page.</p>
+
+    <p>We hope you love it. And if you do, tell your friends!</p>
+  </div>
+</body>
+</html>
