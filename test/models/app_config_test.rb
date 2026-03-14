@@ -31,10 +31,10 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal %w[wren felix sloane archer gemma hugo quinn theo], AppConfig::Tiers::FREE_VOICES
   end
 
-  test "UNLIMITED_VOICES contains all twelve voices" do
-    assert_equal 12, AppConfig::Tiers::UNLIMITED_VOICES.length
-    assert_includes AppConfig::Tiers::UNLIMITED_VOICES, "wren"
-    assert_includes AppConfig::Tiers::UNLIMITED_VOICES, "elara"
+  test "PREMIUM_VOICES contains all twelve voices" do
+    assert_equal 12, AppConfig::Tiers::PREMIUM_VOICES.length
+    assert_includes AppConfig::Tiers::PREMIUM_VOICES, "wren"
+    assert_includes AppConfig::Tiers::PREMIUM_VOICES, "elara"
   end
 
   test "voices_for free tier returns FREE_VOICES" do

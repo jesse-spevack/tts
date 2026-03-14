@@ -273,10 +273,10 @@ class UserTest < ActiveSupport::TestCase
     assert_equal AppConfig::Tiers::FREE_VOICES, user.available_voices
   end
 
-  test "available_voices returns UNLIMITED_VOICES for unlimited user" do
+  test "available_voices returns PREMIUM_VOICES for unlimited user" do
     user = users(:unlimited_user)
 
-    assert_equal AppConfig::Tiers::UNLIMITED_VOICES, user.available_voices
+    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
 
   test "available_voices returns PREMIUM_VOICES for premium user" do

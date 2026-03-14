@@ -42,10 +42,10 @@ module Api
 
         assert_response :success
         voices = response.parsed_body["voices"]
-        assert_equal AppConfig::Tiers::UNLIMITED_VOICES.length, voices.length
+        assert_equal AppConfig::Tiers::PREMIUM_VOICES.length, voices.length
 
         voice_ids = voices.map { |v| v["id"] }
-        AppConfig::Tiers::UNLIMITED_VOICES.each do |key|
+        AppConfig::Tiers::PREMIUM_VOICES.each do |key|
           assert_includes voice_ids, key
         end
       end

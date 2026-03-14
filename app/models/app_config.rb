@@ -16,8 +16,9 @@ class AppConfig
     FREE_MONTHLY_EPISODES = 2
 
     FREE_VOICES = %w[wren felix sloane archer gemma hugo quinn theo].freeze
-    PREMIUM_VOICES = (FREE_VOICES + %w[elara callum lark nash]).freeze
-    UNLIMITED_VOICES = PREMIUM_VOICES
+    # ChirpHD voices — higher cost per character than Standard
+    CHIRPHD_VOICES = %w[elara callum lark nash].freeze
+    PREMIUM_VOICES = (FREE_VOICES + CHIRPHD_VOICES).freeze
 
     def self.character_limit_for(tier)
       case tier.to_s
