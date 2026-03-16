@@ -34,8 +34,16 @@
     </p>
   </div>
 
-  <%# Audio player %>
-  <div class="mt-6">
-    <%= render "shared/audio_player", source: "/sample-standard-d.mp3", label: "Sample audio" %>
+  <%# Audio players %>
+  <div class="mt-6 space-y-4">
+    <%= render "shared/audio_player", source: "/sample-standard-d.mp3", label: "Standard voice" %>
+
+    <% premium_label = capture do %>
+      <span class="inline-flex items-center gap-0.5">
+        <%= render "shared/icons/sparkles", css_class: "size-3" %>
+        Premium voice
+      </span>
+    <% end %>
+    <%= render "shared/audio_player", source: "/sample-chirp3-hd-enceladus.mp3", label: premium_label %>
   </div>
 </dialog>
