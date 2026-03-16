@@ -83,3 +83,7 @@ jobs:
 
       - name: Deploy with Kamal
         run: bin/kamal deploy
+
+      - name: Prune old Docker images on server
+        if: success()
+        run: ssh jesse@34.106.61.4 "docker image prune -a --filter 'until=72h' -f"
