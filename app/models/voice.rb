@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class Voice
+  Entry = Struct.new(:key, :name, :accent, :gender, :google_voice, :sample_url, keyword_init: true) do
+    def chirphd?
+      AppConfig::Tiers::CHIRPHD_VOICES.include?(key)
+    end
+  end
+
   CATALOG = {
     "wren"    => { name: "Wren",    accent: "British",  gender: "Female", google_voice: "en-GB-Standard-C" },
     "felix"   => { name: "Felix",   accent: "British",  gender: "Male",   google_voice: "en-GB-Standard-D" },
@@ -21,22 +27,21 @@ class Voice
   DEFAULT_STANDARD = "en-GB-Standard-D"
   DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"
 
-  def self.chirphd?(key)
-    AppConfig::Tiers::CHIRPHD_VOICES.include?(key)
+  def self.find(key)
+    data = CATALOG[key]
+    return nil unless data
+
+    Entry.new(key: key, sample_url: sample_url(key), **data)
   end
 
   def self.sample_url(key)
     AppConfig::Storage.voice_sample_url(key)
   end
 
-  def self.find(key)
-    CATALOG[key]
-  end
-
   def self.google_voice_for(preference, is_premium:)
     if preference.present?
-      voice_data = find(preference)
-      return voice_data[:google_voice] if voice_data
+      voice = find(preference)
+      return voice.google_voice if voice
     end
     is_premium ? DEFAULT_CHIRP : DEFAULT_STANDARD
   end

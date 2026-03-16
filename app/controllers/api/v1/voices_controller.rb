@@ -2,15 +2,13 @@ module Api
   module V1
     class VoicesController < BaseController
       def index
-        voice_keys = current_user.available_voices
-
-        voices = voice_keys.map do |key|
-          data = Voice.find(key)
+        voices = current_user.available_voices.map do |key|
+          voice = Voice.find(key)
           {
-            id: key,
-            name: data[:name],
-            accent: data[:accent],
-            gender: data[:gender]
+            id: voice.key,
+            name: voice.name,
+            accent: voice.accent,
+            gender: voice.gender
           }
         end
 
