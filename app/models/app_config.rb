@@ -100,6 +100,6 @@ class AppConfig
   end
 
   module Extension
-    CHROME_WEB_STORE_URL = ENV.fetch("CHROME_WEB_STORE_URL", "#")
+    CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/podread-extension/icgbgfaelfomnobbkecaegeecjpdcdhd"
   end
 end
