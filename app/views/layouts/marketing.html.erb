@@ -9,6 +9,15 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <meta property="og:title" content="<%= content_for(:title) || "PodRead" %>">
+    <meta property="og:description" content="Turn any article into a podcast episode. Listen in your favorite podcast app.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://podread.app/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://podread.app/og-image.png">
+
     <%= yield :head %>
 
     <link rel="icon" href="/icon.png" type="image/png">

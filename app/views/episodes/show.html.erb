@@ -5,11 +5,13 @@
   <meta property="og:description" content="Transcribed for podcast by PodRead.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="<%= episode_url(@episode.prefix_id) %>">
-  <meta property="og:image" content="https://podread.app/icon.png">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://podread.app/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="<%= @episode.title %>">
   <meta name="twitter:description" content="Transcribed for podcast by PodRead.">
-  <meta name="twitter:image" content="https://podread.app/icon.png">
+  <meta name="twitter:image" content="https://podread.app/og-image.png">
 <% end %>
 
 <% if authenticated? %>
