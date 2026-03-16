@@ -9,22 +9,37 @@ class VoiceTest < ActiveSupport::TestCase
     assert_includes Voice::ALL, "elara"
   end
 
-  test "find returns voice data for valid key" do
+  test "find returns voice entry for valid key" do
     voice = Voice.find("wren")
 
-    assert_equal "Wren", voice[:name]
-    assert_equal "British", voice[:accent]
-    assert_equal "Female", voice[:gender]
-    assert_equal "en-GB-Standard-C", voice[:google_voice]
+    assert_instance_of Voice::Entry, voice
+    assert_equal "wren", voice.key
+    assert_equal "Wren", voice.name
+    assert_equal "British", voice.accent
+    assert_equal "Female", voice.gender
+    assert_equal "en-GB-Standard-C", voice.google_voice
+  end
+
+  test "find includes sample_url" do
+    voice = Voice.find("wren")
+    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/voices/wren.mp3"
+    assert_equal expected, voice.sample_url
   end
 
   test "find returns nil for invalid key" do
     assert_nil Voice.find("invalid")
   end
 
-  test "sample_url returns GCS URL for voice" do
-    expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/voices/wren.mp3"
-    assert_equal expected, Voice.sample_url("wren")
+  test "chirphd? returns true for ChirpHD voices" do
+    assert Voice.find("elara").chirphd?
+    assert Voice.find("callum").chirphd?
+    assert Voice.find("lark").chirphd?
+    assert Voice.find("nash").chirphd?
+  end
+
+  test "chirphd? returns false for standard voices" do
+    refute Voice.find("wren").chirphd?
+    refute Voice.find("felix").chirphd?
   end
 
   test "google_voice_for returns google_voice for valid preference" do

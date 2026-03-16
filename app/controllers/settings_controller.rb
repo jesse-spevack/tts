@@ -4,9 +4,7 @@ class SettingsController < ApplicationController
   before_action :require_authentication
 
   def show
-    @voices = Current.user.available_voices.map do |key|
-      Voice.find(key).merge(key: key, sample_url: Voice.sample_url(key))
-    end
+    @voices = Current.user.available_voices.map { |key| Voice.find(key) }
     @selected_voice = Current.user.voice_preference
     @email_ingest_address = Current.user.email_ingest_address
   end
