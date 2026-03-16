@@ -21,6 +21,10 @@ class Voice
   DEFAULT_STANDARD = "en-GB-Standard-D"
   DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"
 
+  def self.chirphd?(key)
+    AppConfig::Tiers::CHIRPHD_VOICES.include?(key)
+  end
+
   def self.sample_url(key)
     AppConfig::Storage.voice_sample_url(key)
   end

@@ -19,7 +19,15 @@
                          <%= "checked" if @selected_voice == voice[:key] %>
                          class="peer sr-only">
                   <span class="flex flex-1 flex-col">
-                    <span class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= voice[:name] %></span>
+                    <span class="text-sm/6 font-medium text-mist-950 dark:text-white">
+                      <%= voice[:name] %>
+                      <% if Voice.chirphd?(voice[:key]) %>
+                        <span class="inline-flex items-center gap-0.5 text-mist-400 ml-1">
+                          <%= render "shared/icons/sparkles", css_class: "size-3" %>
+                          <span class="text-xs">premium</span>
+                        </span>
+                      <% end %>
+                    </span>
                     <span class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">
                       <%= voice[:accent] %> &middot; <%= voice[:gender] %>
                     </span>
