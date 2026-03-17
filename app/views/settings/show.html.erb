@@ -104,10 +104,10 @@
 
             <div class="flex items-center gap-2 mb-4">
               <code class="flex-1 rounded-md border border-mist-200 bg-white px-3 py-2 font-mono text-sm break-all dark:border-mist-700 dark:bg-mist-800">
-                <%= @email_ingest_address %>
-              </code>
+                •••••••••
+              </code> <%# HIDDEN: @email_ingest_address %>
               <%= render "shared/clipboard_button",
-                content: @email_ingest_address,
+                content: "hidden",
                 title: "Copy email address",
                 icon: "copy",
                 button_class: "text-mist-500 dark:text-mist-400 hover:text-mist-950 dark:hover:text-white transition-colors cursor-pointer flex-shrink-0"
