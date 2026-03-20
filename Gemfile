@@ -59,7 +59,7 @@ gem "faraday-follow_redirects"
 gem "rack-attack"
 
 # Pagination
-gem "pagy", "~> 43.3"
+gem "pagy", "~> 43.4"
 
 # Prefixed IDs for public URLs
 gem "prefixed_ids"
