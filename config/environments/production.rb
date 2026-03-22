@@ -38,6 +38,8 @@ Rails.application.configure do
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT as JSON for Cloud Logging structured logging.
+  # Explicit require for Docker build (asset precompilation runs before autoloading).
+  require_relative "../../lib/cloud_logging_formatter"
   config.log_tags = [ :request_id ]
   cloud_logger = ActiveSupport::Logger.new(STDOUT)
   cloud_logger.formatter = CloudLoggingFormatter.new
