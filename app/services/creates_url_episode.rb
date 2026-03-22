@@ -3,8 +3,6 @@
 class CreatesUrlEpisode
   include StructuredLogging
 
-  UNSUPPORTED_HOSTS = %w[twitter.com x.com].freeze
-
   def self.call(podcast:, user:, url:)
     new(podcast: podcast, user: user, url: url).call
   end
@@ -17,13 +15,13 @@ class CreatesUrlEpisode
 
   def call
     return Result.failure("Invalid URL") unless valid_url?
-    return Result.failure(unsupported_site_message) if unsupported_site?
 
     log_info "url_normalization_started", url: url
-    normalize_result = NormalizesSubstackUrl.call(url: url)
-    return normalize_result if normalize_result.failure?
 
-    @normalized_url = StripsUrlTrackingParams.call(normalize_result.data)
+    normalized = normalize_url
+    return normalized if normalized.failure?
+
+    @normalized_url = StripsUrlTrackingParams.call(normalized.data)
 
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
@@ -43,15 +41,12 @@ class CreatesUrlEpisode
     ValidatesUrl.call(url)
   end
 
-  def unsupported_site?
-    host = URI.parse(url).host&.downcase
-    UNSUPPORTED_HOSTS.any? { |h| host == h || host&.end_with?(".#{h}") }
-  rescue URI::InvalidURIError
-    false
-  end
-
-  def unsupported_site_message
-    "Twitter/X links aren't supported — copy and paste the tweet text instead"
+  def normalize_url
+    if NormalizesTwitterUrl.twitter_url?(url)
+      NormalizesTwitterUrl.call(url: url)
+    else
+      NormalizesSubstackUrl.call(url: url)
+    end
   end
 
   def create_episode
