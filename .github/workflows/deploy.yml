@@ -58,7 +58,7 @@ jobs:
           bundler-cache: true
 
       - name: Add VM to known_hosts
-        run: ssh-keyscan 34.106.61.4 >> ~/.ssh/known_hosts
+        run: ssh-keyscan 34.63.167.166 >> ~/.ssh/known_hosts
 
       - name: Write Kamal secrets
         run: |
@@ -86,4 +86,4 @@ jobs:
 
       - name: Prune old Docker images on server
         if: success()
-        run: ssh jesse@34.106.61.4 "docker image prune -a --filter 'until=72h' -f"
+        run: ssh jesse@34.63.167.166 "docker image prune -a --filter 'until=72h' -f"
