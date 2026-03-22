@@ -20,9 +20,13 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     @original_cache = Rack::Attack.cache.store
     Rack::Attack.cache.store = @memory_store
     Rack::Attack.reset!
+
+    # Freeze time so rate limit windows don't shift mid-test
+    freeze_time
   end
 
   teardown do
+    unfreeze_time
     Rack::Attack.reset!
     Rack::Attack.cache.store = @original_cache
   end
