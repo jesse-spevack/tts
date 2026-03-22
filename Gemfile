@@ -45,7 +45,7 @@ gem "stripe"
 
 # Google Cloud services
 gem "google-cloud-storage", "~> 1.58"
-gem "google-cloud-text_to_speech", "~> 2.0"
+gem "google-cloud-text_to_speech", "~> 2.1"
 
 # Audio processing
 gem "ruby-mp3info"
@@ -59,7 +59,7 @@ gem "faraday-follow_redirects"
 gem "rack-attack"
 
 # Pagination
-gem "pagy", "~> 43.3"
+gem "pagy", "~> 43.4"
 
 # Prefixed IDs for public URLs
 gem "prefixed_ids"
