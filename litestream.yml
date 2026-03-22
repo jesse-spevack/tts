@@ -1,0 +1,15 @@
+dbs:
+  - path: /rails/storage/production.sqlite3
+    replicas:
+      - type: gcs
+        bucket: verynormal-sqlite-backups
+        path: tts/production.sqlite3
+        retention: 72h
+        sync-interval: 1s
+  - path: /rails/storage/production_queue.sqlite3
+    replicas:
+      - type: gcs
+        bucket: verynormal-sqlite-backups
+        path: tts/production_queue.sqlite3
+        retention: 24h
+        sync-interval: 5s
