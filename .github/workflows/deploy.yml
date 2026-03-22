@@ -29,23 +29,35 @@ jobs:
 
       - name: Fetch secrets from Secret Manager
         run: |
-          echo "RAILS_MASTER_KEY=$(gcloud secrets versions access latest --secret=rails-master-key)" >> $GITHUB_ENV
-          echo "RESEND_API_KEY=$(gcloud secrets versions access latest --secret=resend-api-key)" >> $GITHUB_ENV
-          echo "RESEND_WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=resend-webhook-secret)" >> $GITHUB_ENV
-          echo "APP_HOST=$(gcloud secrets versions access latest --secret=mailer-host)" >> $GITHUB_ENV
-          echo "MAILER_FROM_ADDRESS=$(gcloud secrets versions access latest --secret=mailer-from-address)" >> $GITHUB_ENV
-          echo "GOOGLE_CLOUD_BUCKET=$(gcloud secrets versions access latest --secret=google-cloud-bucket)" >> $GITHUB_ENV
-          echo "GOOGLE_CLOUD_PROJECT=$(gcloud secrets versions access latest --secret=google-cloud-project)" >> $GITHUB_ENV
-          echo "SERVICE_ACCOUNT_EMAIL=$(gcloud secrets versions access latest --secret=service-account-email)" >> $GITHUB_ENV
-          echo "VERTEX_AI_LOCATION=$(gcloud secrets versions access latest --secret=vertex-ai-location)" >> $GITHUB_ENV
-          echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=stripe-secret-key)" >> $GITHUB_ENV
-          echo "STRIPE_PUBLISHABLE_KEY=$(gcloud secrets versions access latest --secret=stripe-publishable-key)" >> $GITHUB_ENV
-          echo "STRIPE_WEBHOOK_SECRET=$(gcloud secrets versions access latest --secret=stripe-webhook-secret)" >> $GITHUB_ENV
-          echo "STRIPE_PRICE_ID_MONTHLY=$(gcloud secrets versions access latest --secret=stripe-price-id-monthly)" >> $GITHUB_ENV
-          echo "STRIPE_PRICE_ID_ANNUAL=$(gcloud secrets versions access latest --secret=stripe-price-id-annual)" >> $GITHUB_ENV
-          echo "STRIPE_PRICE_ID_CREDIT_PACK=$(gcloud secrets versions access latest --secret=stripe-price-id-credit-pack)" >> $GITHUB_ENV
-          # Generate OAuth2 access token for Artifact Registry (instead of static secret)
-          echo "KAMAL_REGISTRY_PASSWORD=$(gcloud auth print-access-token)" >> $GITHUB_ENV
+          fetch_secret() {
+            local name=$1
+            local secret_name=$2
+            local value
+            value=$(gcloud secrets versions access latest --secret="$secret_name")
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+          }
+
+          fetch_secret RAILS_MASTER_KEY rails-master-key
+          fetch_secret RESEND_API_KEY resend-api-key
+          fetch_secret RESEND_WEBHOOK_SECRET resend-webhook-secret
+          fetch_secret APP_HOST mailer-host
+          fetch_secret MAILER_FROM_ADDRESS mailer-from-address
+          fetch_secret GOOGLE_CLOUD_BUCKET google-cloud-bucket
+          fetch_secret GOOGLE_CLOUD_PROJECT google-cloud-project
+          fetch_secret SERVICE_ACCOUNT_EMAIL service-account-email
+          fetch_secret VERTEX_AI_LOCATION vertex-ai-location
+          fetch_secret STRIPE_SECRET_KEY stripe-secret-key
+          fetch_secret STRIPE_PUBLISHABLE_KEY stripe-publishable-key
+          fetch_secret STRIPE_WEBHOOK_SECRET stripe-webhook-secret
+          fetch_secret STRIPE_PRICE_ID_MONTHLY stripe-price-id-monthly
+          fetch_secret STRIPE_PRICE_ID_ANNUAL stripe-price-id-annual
+          fetch_secret STRIPE_PRICE_ID_CREDIT_PACK stripe-price-id-credit-pack
+
+          # Generate OAuth2 access token for Artifact Registry
+          KAMAL_TOKEN=$(gcloud auth print-access-token)
+          echo "::add-mask::$KAMAL_TOKEN"
+          echo "KAMAL_REGISTRY_PASSWORD=$KAMAL_TOKEN" >> "$GITHUB_ENV"
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.10.0
@@ -58,7 +70,7 @@ jobs:
           bundler-cache: true
 
       - name: Add VM to known_hosts
-        run: ssh-keyscan 34.106.61.4 >> ~/.ssh/known_hosts
+        run: ssh-keyscan 34.63.167.166 >> ~/.ssh/known_hosts
 
       - name: Write Kamal secrets
         run: |
@@ -86,4 +98,4 @@ jobs:
 
       - name: Prune old Docker images on server
         if: success()
-        run: ssh jesse@34.106.61.4 "docker image prune -a --filter 'until=72h' -f"
+        run: ssh jesse@34.63.167.166 "docker image prune -a --filter 'until=72h' -f"
