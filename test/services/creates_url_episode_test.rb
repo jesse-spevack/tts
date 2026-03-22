@@ -126,36 +126,49 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "https://author.substack.com/p/title", result.data.source_url
   end
 
-  test "fails on twitter.com URL with helpful message" do
+  test "accepts twitter.com URL and creates episode" do
     result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://twitter.com/user/status/123456789"
     )
 
-    assert result.failure?
-    assert_match(/Twitter\/X links aren't supported/, result.error)
+    assert result.success?
+    assert result.data.persisted?
+    assert_equal "https://x.com/user/status/123456789", result.data.source_url
   end
 
-  test "fails on x.com URL with helpful message" do
+  test "accepts x.com URL and creates episode" do
     result = CreatesUrlEpisode.call(
       podcast: @podcast,
       user: @user,
       url: "https://x.com/user/status/123456789"
     )
 
-    assert result.failure?
-    assert_match(/Twitter\/X links aren't supported/, result.error)
+    assert result.success?
+    assert result.data.persisted?
+    assert_equal "https://x.com/user/status/123456789", result.data.source_url
   end
 
-  test "does not enqueue job for twitter URL" do
-    assert_no_enqueued_jobs do
+  test "enqueues job for twitter URL" do
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
       CreatesUrlEpisode.call(
         podcast: @podcast,
         user: @user,
         url: "https://x.com/user/status/123456789"
       )
     end
+  end
+
+  test "normalizes twitter URL before storing" do
+    result = CreatesUrlEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      url: "https://mobile.twitter.com/user/status/123456789?s=20&t=abc"
+    )
+
+    assert result.success?
+    assert_equal "https://x.com/user/status/123456789", result.data.source_url
   end
 
   test "enqueues with priority 0 for premium user" do
