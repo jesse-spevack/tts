@@ -14,6 +14,8 @@ class FetchesArticleContent
   def call
     log_info "url_fetch_started", url: url
 
+    return fetch_twitter_content if twitter_url?
+
     fetch_result = FetchesUrl.call(url: url)
 
     if fetch_result.success?
@@ -32,6 +34,15 @@ class FetchesArticleContent
   private
 
   attr_reader :url
+
+  def twitter_url?
+    NormalizesTwitterUrl.twitter_url?(url)
+  end
+
+  def fetch_twitter_content
+    log_info "twitter_fetch_started", url: url
+    FetchesTwitterContent.call(url: url)
+  end
 
   def extract_content(html)
     log_info "article_extraction_started"
