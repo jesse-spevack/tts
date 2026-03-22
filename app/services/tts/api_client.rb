@@ -54,7 +54,7 @@ module Tts
       response.audio_content
     rescue StandardError => e
       safe_message = e.message.encode("UTF-8", invalid: :replace, undef: :replace, replace: "?")
-      log_error "tts_api_call_failed", error: safe_message
+      log_error "tts_api_call_failed", error: safe_message, exception: e
       raise
     end
 

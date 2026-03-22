@@ -52,7 +52,7 @@ class GeneratesEpisodeAudio
     log_info "notifying_user"
     notify_user
   rescue StandardError => e
-    log_error "generate_episode_audio_failed", error: e.class, message: e.message
+    log_error "generate_episode_audio_failed", error: e.class, message: e.message, exception: e
     cleanup_orphaned_audio
     if TransientAudioErrors.transient?(e)
       raise

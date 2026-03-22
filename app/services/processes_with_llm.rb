@@ -30,15 +30,15 @@ class ProcessesWithLlm
 
     Result.success(LlmData.new(**validated))
   rescue RubyLLM::Error => e
-    log_error "llm_api_error", error: e.class, message: e.message
+    log_error "llm_api_error", error: e.class, message: e.message, exception: e
 
     Result.failure("Failed to process content")
   rescue JSON::ParserError => e
-    log_error "llm_json_parse_error", error: e.message
+    log_error "llm_json_parse_error", error: e.message, exception: e
 
     Result.failure("Failed to process content")
   rescue ValidationError => e
-    log_error "llm_validation_error", error: e.message
+    log_error "llm_validation_error", error: e.message, exception: e
 
     Result.failure("Failed to process content")
   end

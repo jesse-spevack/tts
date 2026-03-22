@@ -25,7 +25,7 @@ class ProcessesUrlEpisode
   rescue EpisodeErrorHandling::ProcessingError => e
     fail_episode(e.message)
   rescue StandardError => e
-    log_error "process_url_episode_error", error: e.class, message: e.message
+    log_error "process_url_episode_error", error: e.class, message: e.message, exception: e
 
     fail_episode(e.message)
   end

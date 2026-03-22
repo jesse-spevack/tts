@@ -82,7 +82,7 @@ module Tts
         log_warn "tts_chunk_skipped", chunk: chunk_num, total: total, reason: "content_filter"
         skipped_chunks << chunk_num
       else
-        log_error "tts_chunk_failed", chunk: chunk_num, total: total, error: safe_message
+        log_error "tts_chunk_failed", chunk: chunk_num, total: total, error: safe_message, exception: error
         raise
       end
     end

@@ -38,10 +38,10 @@ module Webhooks
 
       head :ok
     rescue JSON::ParserError => e
-      log_error "resend_webhook_invalid_json", error: e.message
+      log_error "resend_webhook_invalid_json", error: e.message, exception: e
       head :bad_request
     rescue StandardError => e
-      log_error "resend_webhook_error", error_class: e.class.name, error: e.message
+      log_error "resend_webhook_error", error_class: e.class.name, error: e.message, exception: e
       head :internal_server_error
     end
 

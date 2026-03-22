@@ -88,6 +88,10 @@ volumes:
 # version inside the asset_path.
 asset_path: /rails/public/assets
 
+logging:
+  driver: gcplogs
+  options:
+    gcp-project: very-normal
 
 # Configure the image builder.
 builder:
