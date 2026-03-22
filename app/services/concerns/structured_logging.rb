@@ -13,6 +13,7 @@ module StructuredLogging
     Rails.logger.warn build_log_message(event, attrs)
   end
 
+  # Pass exception: to include backtrace for Cloud Error Reporting
   def log_error(event, **attrs)
     Rails.logger.error build_log_message(event, attrs)
   end
@@ -22,9 +23,16 @@ module StructuredLogging
   end
 
   def build_log_message(event, attrs)
+    exception = attrs.delete(:exception)
     context = default_log_context.merge(attrs)
     parts = [ "event=#{event}" ]
     context.each { |k, v| parts << "#{k}=#{v}" if v.present? }
-    parts.join(" ")
+    message = parts.join(" ")
+
+    if exception.respond_to?(:backtrace) && exception.backtrace
+      message = "#{message}\n#{exception.class}: #{exception.message}\n#{exception.backtrace.join("\n")}"
+    end
+
+    message
   end
 end

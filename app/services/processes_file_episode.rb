@@ -19,7 +19,7 @@ class ProcessesFileEpisode
 
     log_info "process_file_episode_completed"
   rescue StandardError => e
-    log_error "process_file_episode_error", error: e.class, message: e.message
+    log_error "process_file_episode_error", error: e.class, message: e.message, exception: e
     fail_episode(e.message)
   end
 
