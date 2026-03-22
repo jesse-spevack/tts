@@ -3,6 +3,17 @@
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
+
+  # Restore database from Litestream backup if storage dir is empty (fresh deploy)
+  if [ -f /rails/litestream.yml ] && [ ! -f /rails/storage/production.sqlite3 ]; then
+    echo "Restoring database from Litestream backup..."
+    litestream restore -config /rails/litestream.yml /rails/storage/production.sqlite3 || true
+  fi
+
+  # Start app wrapped by Litestream for continuous replication
+  if [ -f /rails/litestream.yml ]; then
+    exec litestream replicate -config /rails/litestream.yml -exec "${*}"
+  fi
 fi
 
 exec "${@}"
