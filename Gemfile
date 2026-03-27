@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.2"
+gem "rails", "~> 8.1.3"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use sqlite3 as the database for Active Record
@@ -44,7 +44,7 @@ gem "bcrypt"
 gem "stripe"
 
 # Google Cloud services
-gem "google-cloud-storage", "~> 1.58"
+gem "google-cloud-storage", "~> 1.59"
 gem "google-cloud-text_to_speech", "~> 2.1"
 
 # Audio processing
