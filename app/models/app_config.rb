@@ -49,12 +49,11 @@ class AppConfig
     JINA_READER_BASE_URL = "https://r.jina.ai"
 
     KNOWN_AUTHORS = {
-      "www.seangoedecke.com" => "Sean Goedecke",
       "seangoedecke.com" => "Sean Goedecke"
     }.freeze
 
     def self.known_author_for_url(url)
-      host = URI.parse(url).host&.downcase
+      host = URI.parse(url).host&.downcase&.delete_prefix("www.")
       KNOWN_AUTHORS[host]
     rescue URI::InvalidURIError
       nil
