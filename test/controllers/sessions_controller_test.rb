@@ -62,12 +62,53 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
   end
 
+  test "verify with credit_pack plan redirects to checkout without flash" do
+    token = GeneratesAuthToken.call(user: @user)
+
+    get auth_url, params: { token: token, plan: "credit_pack" }
+
+    assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
+    assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
+  end
+
   test "verify without plan redirects to episodes" do
     token = GeneratesAuthToken.call(user: @user)
 
     get auth_url, params: { token: token }
 
     assert_redirected_to new_episode_path
+  end
+
+  test "all checkout price IDs have a corresponding plan redirect" do
+    # Map every PRICE_ID_* constant to its plan name
+    plan_names = {
+      AppConfig::Stripe::PRICE_ID_MONTHLY => "premium_monthly",
+      AppConfig::Stripe::PRICE_ID_ANNUAL => "premium_annual",
+      AppConfig::Stripe::PRICE_ID_CREDIT_PACK => "credit_pack"
+    }
+
+    # If a new PRICE_ID_* constant is added to AppConfig::Stripe, this test
+    # will fail until its plan redirect is added to SessionsController
+    stripe_price_constants = AppConfig::Stripe.constants.select { |c| c.to_s.start_with?("PRICE_ID_") }
+    mapped_price_ids = plan_names.keys
+
+    stripe_price_constants.each do |const|
+      price_id = AppConfig::Stripe.const_get(const)
+      assert_includes mapped_price_ids, price_id,
+        "AppConfig::Stripe::#{const} (#{price_id}) has no plan mapping in this test — " \
+        "add it to plan_names and ensure SessionsController#post_login_path handles it"
+    end
+
+    # Verify each plan actually redirects to checkout
+    plan_names.each do |price_id, plan|
+      # Log out so the authenticated? guard doesn't short-circuit
+      delete session_url if cookies[:session_id].present?
+
+      token = GeneratesAuthToken.call(user: @user)
+      get auth_url, params: { token: token, plan: plan }
+      assert_redirected_to checkout_path(price_id: price_id),
+        "Plan '#{plan}' should redirect to checkout with price_id=#{price_id}"
+    end
   end
 
   test "create passes plan param to magic link" do

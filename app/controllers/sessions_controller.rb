@@ -46,7 +46,7 @@ class SessionsController < ApplicationController
   end
 
   def checkout_flow?(plan)
-    plan.in?(%w[premium_monthly premium_annual])
+    plan.in?(%w[premium_monthly premium_annual credit_pack])
   end
 
   def post_login_path(plan)
@@ -55,6 +55,8 @@ class SessionsController < ApplicationController
       checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
     when "premium_annual"
       checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+    when "credit_pack"
+      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
     else
       after_authentication_url
     end
