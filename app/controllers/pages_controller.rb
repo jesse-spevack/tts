@@ -29,6 +29,12 @@ class PagesController < ApplicationController
   def extension_help
   end
 
+  def cli_help
+  end
+
+  def claude_code_help
+  end
+
   def about
   end
 
