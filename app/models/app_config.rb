@@ -51,13 +51,6 @@ class AppConfig
     KNOWN_AUTHORS = {
       "seangoedecke.com" => "Sean Goedecke"
     }.freeze
-
-    def self.known_author_for_url(url)
-      host = URI.parse(url).host&.downcase&.delete_prefix("www.")
-      KNOWN_AUTHORS[host]
-    rescue URI::InvalidURIError
-      nil
-    end
   end
 
   module Llm
