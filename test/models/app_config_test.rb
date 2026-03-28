@@ -106,4 +106,17 @@ class AppConfigTest < ActiveSupport::TestCase
     expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/podcast_abc123/feed.xml"
     assert_equal expected, result
   end
+
+  test "known_author_for_url returns author for known domain" do
+    assert_equal "Sean Goedecke", AppConfig::Content.known_author_for_url("https://www.seangoedecke.com/some-article")
+    assert_equal "Sean Goedecke", AppConfig::Content.known_author_for_url("https://seangoedecke.com/other")
+  end
+
+  test "known_author_for_url returns nil for unknown domain" do
+    assert_nil AppConfig::Content.known_author_for_url("https://example.com/article")
+  end
+
+  test "known_author_for_url returns nil for invalid URL" do
+    assert_nil AppConfig::Content.known_author_for_url("not a url %%%")
+  end
 end
