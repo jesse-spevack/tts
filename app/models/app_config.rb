@@ -47,6 +47,18 @@ class AppConfig
     LOW_QUALITY_EXTRACTION_CHARS = 500
     LOW_QUALITY_HTML_MIN_BYTES = 10_000
     JINA_READER_BASE_URL = "https://r.jina.ai"
+
+    KNOWN_AUTHORS = {
+      "www.seangoedecke.com" => "Sean Goedecke",
+      "seangoedecke.com" => "Sean Goedecke"
+    }.freeze
+
+    def self.known_author_for_url(url)
+      host = URI.parse(url).host&.downcase
+      KNOWN_AUTHORS[host]
+    rescue URI::InvalidURIError
+      nil
+    end
   end
 
   module Llm

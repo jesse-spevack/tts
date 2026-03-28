@@ -79,7 +79,7 @@ class ProcessesUrlEpisode
 
     episode.update!(
       title: @extract_result.data.title || @llm_result.data.title,
-      author: @extract_result.data.author || @llm_result.data.author,
+      author: @extract_result.data.author || AppConfig::Content.known_author_for_url(episode.source_url) || @llm_result.data.author,
       description: description,
       content_preview: GeneratesContentPreview.call(content),
       status: :preparing
