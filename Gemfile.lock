@@ -168,7 +168,7 @@ GEM
       retriable (~> 3.1)
     google-apis-iamcredentials_v1 (0.26.0)
       google-apis-core (>= 0.15.0, < 2.a)
-    google-apis-storage_v1 (0.58.0)
+    google-apis-storage_v1 (0.61.0)
       google-apis-core (>= 0.15.0, < 2.a)
     google-cloud-core (1.8.0)
       google-cloud-env (>= 1.0, < 3.a)
@@ -177,7 +177,7 @@ GEM
       base64 (~> 0.2)
       faraday (>= 1.0, < 3.a)
     google-cloud-errors (1.6.0)
-    google-cloud-storage (1.58.0)
+    google-cloud-storage (1.59.0)
       addressable (~> 2.8)
       digest-crc (~> 0.4)
       google-apis-core (>= 0.18, < 2)
@@ -348,7 +348,7 @@ GEM
       racc (~> 1.4)
     os (1.1.4)
     ostruct (0.6.3)
-    pagy (43.4.2)
+    pagy (43.4.4)
       json
       uri
       yaml
@@ -430,7 +430,7 @@ GEM
       uber (< 0.2.0)
     resend (1.0.1)
       httparty (>= 0.21.0)
-    retriable (3.1.2)
+    retriable (3.4.1)
     rexml (3.4.4)
     rubocop (1.81.7)
       json (~> 2.3)
@@ -535,10 +535,10 @@ GEM
     tailwindcss-ruby (4.1.16-x86_64-linux-gnu)
     tailwindcss-ruby (4.1.16-x86_64-linux-musl)
     thor (1.5.0)
-    thruster (0.1.19)
-    thruster (0.1.19-aarch64-linux)
-    thruster (0.1.19-arm64-darwin)
-    thruster (0.1.19-x86_64-linux)
+    thruster (0.1.20)
+    thruster (0.1.20-aarch64-linux)
+    thruster (0.1.20-arm64-darwin)
+    thruster (0.1.20-x86_64-linux)
     timeout (0.6.1)
     trailblazer-option (0.1.2)
     tsort (0.2.0)
@@ -591,7 +591,7 @@ DEPENDENCIES
   debug
   faraday
   faraday-follow_redirects
-  google-cloud-storage (~> 1.58)
+  google-cloud-storage (~> 1.59)
   google-cloud-text_to_speech (~> 2.1)
   image_processing (~> 1.2)
   importmap-rails
