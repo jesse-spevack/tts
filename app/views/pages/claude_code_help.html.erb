@@ -1,0 +1,78 @@
+<div class="max-w-2xl mx-auto">
+  <%= render "shared/page_header", title: "Help", size: "2xl" %>
+  <%= render "shared/help_nav", current: :claude_code_help %>
+
+  <section class="pb-12">
+    <h2 class="text-lg/8 font-semibold text-mist-950 dark:text-white">Claude Code Plugin</h2>
+    <p class="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">
+      Ask Claude to create podcast episodes for you using the PodRead plugin for
+      <a href="https://code.claude.com" class="text-mist-950 underline dark:text-white">Claude Code</a>.
+    </p>
+
+    <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
+      <h3 class="text-base font-semibold text-mist-950 dark:text-white">What Is It?</h3>
+      <p class="mt-3">
+        The PodRead plugin teaches Claude Code how to use the
+        <a href="https://github.com/jesse-spevack/podread-cli" class="text-mist-950 underline dark:text-white">podread CLI</a>.
+        Once installed, you can ask Claude to turn articles or text into podcast episodes in natural language &mdash;
+        no commands to memorize.
+      </p>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Prerequisites</h3>
+      <ol class="mt-3 list-decimal list-inside space-y-2">
+        <li><a href="https://code.claude.com" class="text-mist-950 underline dark:text-white">Claude Code</a> installed</li>
+        <li>The <strong class="text-mist-950 dark:text-white">podread</strong> CLI installed (<%= link_to "see CLI help", help_cli_path, class: "text-mist-950 underline dark:text-white" %>)</li>
+        <li>Logged in to PodRead via <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">podread auth login</code></li>
+      </ol>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Install the Plugin</h3>
+      <p class="mt-3">In Claude Code, run:</p>
+      <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>/plugin install podread@podread-cli</code></pre>
+
+      <p class="mt-4">If Claude Code doesn't find it, add the marketplace first:</p>
+      <ol class="mt-3 list-decimal list-inside space-y-2">
+        <li>Type <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">/plugin</code></li>
+        <li>Select <strong class="text-mist-950 dark:text-white">Add marketplace</strong></li>
+        <li>Enter <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">jesse-spevack/podread-cli</code></li>
+        <li>Then install with <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">/plugin install podread@podread-cli</code></li>
+      </ol>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Usage</h3>
+      <p class="mt-3">Just ask Claude in natural language:</p>
+      <ul class="mt-3 space-y-3">
+        <li class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-mist-100 dark:bg-mist-800 text-xs font-medium text-mist-500 dark:text-mist-400 shrink-0">&raquo;</span>
+          <span>&ldquo;Turn this article into a podcast: https://example.com/article&rdquo;</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-mist-100 dark:bg-mist-800 text-xs font-medium text-mist-500 dark:text-mist-400 shrink-0">&raquo;</span>
+          <span>&ldquo;Create a podcast episode from these meeting notes&rdquo;</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-mist-100 dark:bg-mist-800 text-xs font-medium text-mist-500 dark:text-mist-400 shrink-0">&raquo;</span>
+          <span>&ldquo;What episodes do I have in PodRead?&rdquo;</span>
+        </li>
+      </ul>
+      <p class="mt-3">
+        Claude handles authentication checks, command construction, and waiting for processing automatically.
+      </p>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
+
+      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">&ldquo;podread: command not found&rdquo;</h4>
+      <p class="mt-2">
+        The CLI isn't installed. See the <%= link_to "CLI help page", help_cli_path, class: "text-mist-950 underline dark:text-white" %> for install instructions.
+      </p>
+
+      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">&ldquo;not logged in&rdquo;</h4>
+      <p class="mt-2">
+        Run <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">podread auth login</code> in your terminal to connect your account.
+      </p>
+
+      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">Claude doesn't recognize podread commands</h4>
+      <p class="mt-2">
+        Make sure the plugin is installed. In Claude Code, run <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">/plugin list</code> and check that <strong class="text-mist-950 dark:text-white">podread</strong> appears.
+      </p>
+    </div>
+  </section>
+</div>
