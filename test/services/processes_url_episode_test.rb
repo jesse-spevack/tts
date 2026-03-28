@@ -428,6 +428,30 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     verify { |m| ProcessesWithLlm.call(text: "E" * 200, episode: m.any) }
   end
 
+  test "uses known author mapping when HTML and extraction have no author" do
+    html = "<article><p>Article content here that is long enough to pass the minimum character requirement for extraction. This paragraph contains substantial content to be processed.</p></article>"
+
+    @episode.update!(source_url: "https://www.seangoedecke.com/some-article")
+
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+
+    mock_llm_result = Result.success(ProcessesWithLlm::LlmData.new(
+      title: "Some Article",
+      author: "Unknown",
+      description: "A blog post.",
+      content: "Article content here."
+    ))
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
+    stub_gcs_and_tasks
+
+    ProcessesUrlEpisode.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "Sean Goedecke", @episode.author,
+      "Should use known author mapping when HTML extraction returns no author"
+  end
+
   teardown do
     Mocktail.reset
   end

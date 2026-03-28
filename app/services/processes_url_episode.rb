@@ -79,7 +79,7 @@ class ProcessesUrlEpisode
 
     episode.update!(
       title: @extract_result.data.title || @llm_result.data.title,
-      author: @extract_result.data.author || @llm_result.data.author,
+      author: @extract_result.data.author || known_author || @llm_result.data.author,
       description: description,
       content_preview: GeneratesContentPreview.call(content),
       status: :preparing
@@ -88,5 +88,12 @@ class ProcessesUrlEpisode
     log_info "episode_metadata_updated"
 
     SubmitsEpisodeForProcessing.call(episode: episode, content: content)
+  end
+
+  def known_author
+    host = URI.parse(episode.source_url).host&.downcase&.delete_prefix("www.")
+    AppConfig::Content::KNOWN_AUTHORS[host]
+  rescue URI::InvalidURIError
+    nil
   end
 end
