@@ -5,6 +5,9 @@ Rails.application.routes.draw do
     skip_controllers :applications, :authorized_applications
   end
 
+  # Dynamic Client Registration (RFC 7591) for MCP clients
+  post "oauth/register", to: "oauth/register#create"
+
   # Remote MCP endpoint (streamable HTTP)
   match "mcp", to: "mcp#handle", via: [ :get, :post, :delete ]
 
