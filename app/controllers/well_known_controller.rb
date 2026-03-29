@@ -30,6 +30,7 @@ class WellKnownController < ActionController::API
       issuer: base_url,
       authorization_endpoint: "#{base_url}/oauth/authorize",
       token_endpoint: "#{base_url}/oauth/token",
+      registration_endpoint: "#{base_url}/oauth/register",
       revocation_endpoint: "#{base_url}/oauth/revoke",
       introspection_endpoint: "#{base_url}/oauth/introspect",
       scopes_supported: doorkeeper_scopes,
