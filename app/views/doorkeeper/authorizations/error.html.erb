@@ -1,0 +1,17 @@
+<% content_for :title, "Authorization Error" %>
+
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+  <div class="w-full max-w-md text-center">
+    <!-- Error icon -->
+    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600 dark:text-red-400">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+      </svg>
+    </div>
+
+    <h1 class="mt-4 text-xl font-semibold text-mist-950 dark:text-white">Authorization Error</h1>
+    <p class="mt-2 text-sm text-mist-500 dark:text-mist-400">
+      <%= (local_assigns[:error_response] ? error_response : @pre_auth.error_response).body[:error_description] %>
+    </p>
+  </div>
+</div>
