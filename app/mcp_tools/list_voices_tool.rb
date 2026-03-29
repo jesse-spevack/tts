@@ -4,7 +4,7 @@ class ListVoicesTool < MCP::Tool
   extend McpToolHelpers
 
   tool_name "list_voices"
-  description "List available voices for podcast episodes. Results are filtered by the user's subscription tier."
+  description "List available voices for podcast episodes. Results are filtered by the user's subscription tier. To change your default voice, visit Settings at podread.app/settings."
 
   input_schema({
     type: "object",

@@ -12,7 +12,7 @@ module McpToolHelpers
     )
   end
 
-  def check_creation_prerequisites(user:, voice: nil)
+  def check_creation_prerequisites(user:)
     permission = ChecksEpisodeCreationPermission.call(user: user)
     unless permission.success?
       return error_response("tier_limit", "You've used all your free episodes this month. Upgrade at #{AppConfig::Domain::BASE_URL}/upgrade")
@@ -21,12 +21,6 @@ module McpToolHelpers
     rate_limit = ChecksEpisodeRateLimit.call(user: user)
     unless rate_limit.success?
       return error_response("rate_limited", rate_limit.error)
-    end
-
-    if voice.present?
-      unless user.available_voices.include?(voice)
-        return error_response("invalid_voice", "Unknown voice '#{voice}'. Use list_voices to see available options.")
-      end
     end
 
     nil

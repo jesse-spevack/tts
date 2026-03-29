@@ -344,20 +344,6 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_equal "rate_limited", data["error"]
   end
 
-  test "create_episode_from_url returns invalid voice error" do
-    initialize_session!
-
-    post "/mcp",
-      params: jsonrpc_tool_call("create_episode_from_url", { url: "https://example.com/article", voice: "nonexistent_voice" }),
-      headers: mcp_headers(token: @token.token)
-
-    assert_response :success
-    result = parse_tool_result
-    data = JSON.parse(result)
-    assert_equal "invalid_voice", data["error"]
-    assert_match "list_voices", data["message"]
-  end
-
   private
 
   def jsonrpc_request(method, params = nil)
