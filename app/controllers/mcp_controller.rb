@@ -17,24 +17,9 @@ class McpController < ActionController::API
   private
 
   def transport
-    @transport ||= MCP::Server::Transports::StreamableHTTPTransport.new(mcp_server, stateless: true)
-  end
-
-  def mcp_server
-    @mcp_server ||= MCP::Server.new(
-      name: "podread",
-      version: "1.0.0",
-      instructions: "PodRead converts articles and text into podcast episodes. Use these tools to create episodes, check their status, and manage the user's podcast feed.",
-      tools: [
-        CreateEpisodeFromUrlTool,
-        CreateEpisodeFromTextTool,
-        ListEpisodesTool,
-        GetEpisodeTool,
-        DeleteEpisodeTool,
-        GetFeedUrlTool,
-        ListVoicesTool
-      ],
-      server_context: { user: current_resource_owner }
+    @transport ||= MCP::Server::Transports::StreamableHTTPTransport.new(
+      BuildsMcpServer.call(user: current_resource_owner),
+      stateless: true
     )
   end
 
