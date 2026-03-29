@@ -14,10 +14,10 @@
 
       <ol class="mt-3 list-decimal pl-5 space-y-3">
         <li>
-          Open <strong class="text-mist-950 dark:text-white">Claude Settings</strong> and find the <strong class="text-mist-950 dark:text-white">Integrations</strong> section.
+          Open <strong class="text-mist-950 dark:text-white">Claude Settings</strong> and go to <strong class="text-mist-950 dark:text-white">Connectors</strong>.
         </li>
         <li>
-          Click <strong class="text-mist-950 dark:text-white">Add Integration</strong> (or "Add MCP Server") and enter:
+          Click <strong class="text-mist-950 dark:text-white">Add custom connector</strong> and enter:
           <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code><%= AppConfig::Domain::BASE_URL %>/mcp</code></pre>
         </li>
         <li>
@@ -59,14 +59,14 @@
       <div class="mt-3 space-y-4">
         <div>
           <p class="font-medium text-mist-950 dark:text-white">Claude says it can't access PodRead</p>
-          <p class="mt-1">Re-authorize the integration by removing and re-adding it in Claude Settings. This generates a fresh token.</p>
+          <p class="mt-1">Re-authorize by removing the connector in Claude Settings &rarr; Connectors, then adding it again. This generates a fresh token.</p>
         </div>
 
         <div>
           <p class="font-medium text-mist-950 dark:text-white">Want to disconnect?</p>
           <p class="mt-1">
             Go to your <a href="<%= settings_path %>" class="text-mist-950 underline dark:text-white">PodRead Settings</a> page and click "Disconnect" next to Claude in the Connected Apps section.
-            You can also remove the integration from Claude Settings.
+            You can also remove the connector from Claude Settings &rarr; Connectors.
           </p>
         </div>
 
