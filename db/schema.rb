@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_155428) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -147,6 +147,50 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_155428) do
     t.index ["episode_id"], name: "index_llm_usages_on_episode_id"
   end
 
+  create_table "oauth_access_grants", force: :cascade do |t|
+    t.integer "application_id", null: false
+    t.string "code_challenge"
+    t.string "code_challenge_method"
+    t.datetime "created_at", null: false
+    t.integer "expires_in", null: false
+    t.text "redirect_uri", null: false
+    t.integer "resource_owner_id", null: false
+    t.datetime "revoked_at"
+    t.string "scopes", default: "", null: false
+    t.string "token", null: false
+    t.index ["application_id"], name: "index_oauth_access_grants_on_application_id"
+    t.index ["resource_owner_id"], name: "index_oauth_access_grants_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_grants_on_token", unique: true
+  end
+
+  create_table "oauth_access_tokens", force: :cascade do |t|
+    t.integer "application_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "expires_in"
+    t.string "previous_refresh_token", default: "", null: false
+    t.string "refresh_token"
+    t.integer "resource_owner_id"
+    t.datetime "revoked_at"
+    t.string "scopes"
+    t.string "token", null: false
+    t.index ["application_id"], name: "index_oauth_access_tokens_on_application_id"
+    t.index ["refresh_token"], name: "index_oauth_access_tokens_on_refresh_token", unique: true
+    t.index ["resource_owner_id"], name: "index_oauth_access_tokens_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_tokens_on_token", unique: true
+  end
+
+  create_table "oauth_applications", force: :cascade do |t|
+    t.boolean "confidential", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "redirect_uri", null: false
+    t.string "scopes", default: "", null: false
+    t.string "secret"
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
+  end
+
   create_table "page_views", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "path", null: false
@@ -250,6 +294,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_155428) do
   add_foreign_key "episodes", "podcasts"
   add_foreign_key "episodes", "users"
   add_foreign_key "llm_usages", "episodes"
+  add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
+  add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id"
   add_foreign_key "podcast_memberships", "podcasts"
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sent_messages", "users"

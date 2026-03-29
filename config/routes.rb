@@ -1,4 +1,17 @@
 Rails.application.routes.draw do
+  # OAuth 2.1 endpoints (Doorkeeper)
+  # Skip applications controller — OAuth clients are pre-seeded, no admin UI
+  use_doorkeeper do
+    skip_controllers :applications, :authorized_applications
+  end
+
+  # Remote MCP endpoint (streamable HTTP)
+  match "mcp", to: "mcp#handle", via: [ :get, :post, :delete ]
+
+  # Well-known OAuth metadata (MCP spec requirement)
+  get ".well-known/oauth-protected-resource", to: "well_known#oauth_protected_resource"
+  get ".well-known/oauth-authorization-server", to: "well_known#oauth_authorization_server"
+
   root "pages#home"
 
   namespace :admin do
@@ -28,6 +41,7 @@ Rails.application.routes.draw do
   get "help/extension", to: "pages#extension_help", as: :help_extension
   get "help/cli", to: "pages#cli_help", as: :help_cli
   get "help/claude-code", to: "pages#claude_code_help", as: :help_claude_code
+  get "help/claude", to: "pages#claude_help", as: :help_claude
 
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
@@ -60,6 +74,7 @@ Rails.application.routes.draw do
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
+    resources :connected_apps, only: [ :destroy ]
   end
 
   # Device authorization (CLI login)

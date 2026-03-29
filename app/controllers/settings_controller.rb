@@ -7,6 +7,7 @@ class SettingsController < ApplicationController
     @voices = Current.user.available_voices.map { |key| Voice.find(key) }
     @selected_voice = Current.user.voice_preference
     @email_ingest_address = Current.user.email_ingest_address
+    @connected_apps = ListsConnectedOauthApplications.call(user: Current.user)
   end
 
   def update

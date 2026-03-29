@@ -1,0 +1,83 @@
+<div class="max-w-2xl mx-auto">
+  <%= render "shared/page_header", title: "Help", size: "2xl" %>
+  <%= render "shared/help_nav", current: :claude_help %>
+
+  <section class="pb-12">
+    <h2 class="text-lg/8 font-semibold text-mist-950 dark:text-white">Connect PodRead to Claude</h2>
+    <p class="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">
+      Use PodRead directly from <strong class="text-mist-950 dark:text-white">Claude Desktop</strong> or <strong class="text-mist-950 dark:text-white">claude.ai</strong>.
+      Just tell Claude to turn an article into a podcast episode and it handles the rest.
+    </p>
+
+    <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
+      <h3 class="text-base font-semibold text-mist-950 dark:text-white">Setup</h3>
+
+      <ol class="mt-3 list-decimal pl-5 space-y-3">
+        <li>
+          Open <strong class="text-mist-950 dark:text-white">Claude Settings</strong> and find the <strong class="text-mist-950 dark:text-white">Integrations</strong> section.
+        </li>
+        <li>
+          Click <strong class="text-mist-950 dark:text-white">Add Integration</strong> (or "Add MCP Server") and enter:
+          <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code><%= AppConfig::Domain::BASE_URL %>/mcp</code></pre>
+        </li>
+        <li>
+          A browser window opens asking you to authorize Claude to access your PodRead account. Click <strong class="text-mist-950 dark:text-white">Allow</strong>.
+        </li>
+        <li>
+          Done. Claude can now create podcast episodes for you.
+        </li>
+      </ol>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Example Prompts</h3>
+      <div class="mt-3 space-y-3">
+        <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>Turn this article into a podcast episode: https://example.com/article</code></pre>
+
+        <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>Create a podcast episode from this text: [paste your text]</code></pre>
+
+        <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>Show me my recent episodes</code></pre>
+
+        <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>What voices are available?</code></pre>
+
+        <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>What's my podcast feed URL?</code></pre>
+      </div>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Available Tools</h3>
+      <p class="mt-3">Claude has access to these PodRead tools:</p>
+
+      <ul class="mt-3 space-y-2">
+        <li><strong class="text-mist-950 dark:text-white">create_episode_from_url</strong> &mdash; Convert an article URL to a podcast episode</li>
+        <li><strong class="text-mist-950 dark:text-white">create_episode_from_text</strong> &mdash; Convert text content to a podcast episode</li>
+        <li><strong class="text-mist-950 dark:text-white">list_episodes</strong> &mdash; See your recent episodes</li>
+        <li><strong class="text-mist-950 dark:text-white">get_episode</strong> &mdash; Check an episode's processing status</li>
+        <li><strong class="text-mist-950 dark:text-white">delete_episode</strong> &mdash; Remove an episode from your feed</li>
+        <li><strong class="text-mist-950 dark:text-white">get_feed_url</strong> &mdash; Get your podcast RSS feed URL</li>
+        <li><strong class="text-mist-950 dark:text-white">list_voices</strong> &mdash; See available voice options (change your default voice in <a href="<%= settings_path %>" class="text-mist-950 underline dark:text-white">Settings</a>)</li>
+      </ul>
+
+      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
+
+      <div class="mt-3 space-y-4">
+        <div>
+          <p class="font-medium text-mist-950 dark:text-white">Claude says it can't access PodRead</p>
+          <p class="mt-1">Re-authorize the integration by removing and re-adding it in Claude Settings. This generates a fresh token.</p>
+        </div>
+
+        <div>
+          <p class="font-medium text-mist-950 dark:text-white">Want to disconnect?</p>
+          <p class="mt-1">
+            Go to your <a href="<%= settings_path %>" class="text-mist-950 underline dark:text-white">PodRead Settings</a> page and click "Disconnect" next to Claude in the Connected Apps section.
+            You can also remove the integration from Claude Settings.
+          </p>
+        </div>
+
+        <div>
+          <p class="font-medium text-mist-950 dark:text-white">Episode limit reached?</p>
+          <p class="mt-1">
+            Free accounts can create <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes per month.
+            <a href="<%= upgrade_path %>" class="text-mist-950 underline dark:text-white">Upgrade</a> for unlimited episodes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

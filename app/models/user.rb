@@ -6,6 +6,14 @@ class User < ApplicationRecord
   has_many :sent_messages, dependent: :destroy
   has_many :api_tokens, dependent: :destroy
   has_many :device_codes, dependent: :destroy
+  has_many :oauth_access_grants,
+    class_name: "Doorkeeper::AccessGrant",
+    foreign_key: :resource_owner_id,
+    dependent: :destroy
+  has_many :oauth_access_tokens,
+    class_name: "Doorkeeper::AccessToken",
+    foreign_key: :resource_owner_id,
+    dependent: :destroy
   has_one :subscription, dependent: :destroy
   has_one :credit_balance, dependent: :destroy
   has_many :credit_transactions, dependent: :destroy

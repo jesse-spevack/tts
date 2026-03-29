@@ -55,6 +55,12 @@ gem "ruby_llm"
 gem "faraday"
 gem "faraday-follow_redirects"
 
+# OAuth 2.1 provider (authorization code + PKCE)
+gem "doorkeeper", "~> 5.9.0"
+
+# Model Context Protocol server (remote MCP for Claude Desktop + claude.ai)
+gem "mcp", "~> 0.9.2"
+
 # API rate limiting
 gem "rack-attack"
 

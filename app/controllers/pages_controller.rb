@@ -35,6 +35,9 @@ class PagesController < ApplicationController
   def claude_code_help
   end
 
+  def claude_help
+  end
+
   def about
   end
 

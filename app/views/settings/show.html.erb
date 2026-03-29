@@ -89,6 +89,43 @@
       </div>
     </div>
 
+    <%# Connected Apps section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Connected Apps</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Apps authorized to access your PodRead account via OAuth.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <% if @connected_apps.any? %>
+            <ul class="divide-y divide-mist-200 dark:divide-mist-700">
+              <% @connected_apps.each do |connected| %>
+                <li class="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                  <div>
+                    <p class="text-sm font-medium text-mist-950 dark:text-white"><%= connected[:app].name %></p>
+                    <p class="text-xs text-mist-500 dark:text-mist-400">
+                      Connected <%= time_ago_in_words(connected[:authorized_at]) %> ago
+                    </p>
+                  </div>
+                  <%= button_to "Disconnect",
+                      settings_connected_app_path(connected[:app]),
+                      method: :delete,
+                      class: button_classes(type: :danger),
+                      data: { turbo_confirm: "Disconnect #{connected[:app].name}? You'll need to re-authorize to use it again." } %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="text-sm text-mist-500 dark:text-mist-400">
+              No apps connected. You can connect apps like
+              <a href="<%= help_claude_path %>" class="text-mist-950 underline dark:text-white">Claude</a>
+              to create podcast episodes from chat.
+            </p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
     <%# Email to Podcast section %>
     <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
       <div>

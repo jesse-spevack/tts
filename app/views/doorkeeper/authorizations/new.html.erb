@@ -1,0 +1,82 @@
+<% content_for :title, "Authorize #{@pre_auth.client.name}" %>
+
+<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+  <div class="w-full max-w-md">
+    <!-- App icon -->
+    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-mist-950/10 dark:bg-white/10">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-mist-950 dark:text-white">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+      </svg>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="mt-4 text-xl font-semibold text-mist-950 dark:text-white text-center">
+      Connect to <%= @pre_auth.client.name %>
+    </h1>
+
+    <!-- Description -->
+    <p class="mt-2 text-sm text-mist-500 dark:text-mist-400 text-center">
+      <strong class="text-mist-950 dark:text-white"><%= @pre_auth.client.name %></strong>
+      wants to access your PodRead account.
+    </p>
+
+    <!-- Permissions -->
+    <div class="mt-6 rounded-lg border border-mist-200 dark:border-mist-700 p-4">
+      <p class="text-sm font-medium text-mist-950 dark:text-white mb-3">This will allow <%= @pre_auth.client.name %> to:</p>
+      <ul class="space-y-2 text-sm text-mist-600 dark:text-mist-300">
+        <li class="flex items-start gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 mt-0.5 text-green-600 dark:text-green-400 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          Create podcast episodes from articles and text
+        </li>
+        <li class="flex items-start gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 mt-0.5 text-green-600 dark:text-green-400 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          View your episodes and feed
+        </li>
+        <li class="flex items-start gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 mt-0.5 text-green-600 dark:text-green-400 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          Check your account status
+        </li>
+      </ul>
+    </div>
+
+    <!-- Signed in as -->
+    <p class="mt-4 text-xs text-mist-500 dark:text-mist-400 text-center">
+      Signed in as <strong class="text-mist-950 dark:text-white"><%= Current.user&.email %></strong>
+    </p>
+
+    <!-- Buttons -->
+    <div class="mt-6 space-y-3">
+      <%= form_tag oauth_authorization_path, method: :post do %>
+        <%= hidden_field_tag :client_id, @pre_auth.client.uid, id: nil %>
+        <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri, id: nil %>
+        <%= hidden_field_tag :state, @pre_auth.state, id: nil %>
+        <%= hidden_field_tag :response_type, @pre_auth.response_type, id: nil %>
+        <%= hidden_field_tag :response_mode, @pre_auth.response_mode, id: nil %>
+        <%= hidden_field_tag :scope, @pre_auth.scope, id: nil %>
+        <%= hidden_field_tag :code_challenge, @pre_auth.code_challenge, id: nil %>
+        <%= hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method, id: nil %>
+        <%= submit_tag "Allow",
+            class: button_classes(type: :primary, full_width: true) %>
+      <% end %>
+
+      <%= form_tag oauth_authorization_path, method: :delete do %>
+        <%= hidden_field_tag :client_id, @pre_auth.client.uid, id: nil %>
+        <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri, id: nil %>
+        <%= hidden_field_tag :state, @pre_auth.state, id: nil %>
+        <%= hidden_field_tag :response_type, @pre_auth.response_type, id: nil %>
+        <%= hidden_field_tag :response_mode, @pre_auth.response_mode, id: nil %>
+        <%= hidden_field_tag :scope, @pre_auth.scope, id: nil %>
+        <%= hidden_field_tag :code_challenge, @pre_auth.code_challenge, id: nil %>
+        <%= hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method, id: nil %>
+        <%= submit_tag "Deny",
+            class: button_classes(type: :secondary, full_width: true) %>
+      <% end %>
+    </div>
+  </div>
+</div>
