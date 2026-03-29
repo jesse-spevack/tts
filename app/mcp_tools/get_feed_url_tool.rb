@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class GetFeedUrlTool < MCP::Tool
+  extend McpToolHelpers
+
   tool_name "get_feed_url"
   description "Get the user's podcast RSS feed URL. This URL can be added to any podcast app to listen to episodes."
 
@@ -15,6 +17,6 @@ class GetFeedUrlTool < MCP::Tool
     podcast = GetsDefaultPodcastForUser.call(user: user)
     feed_url = GeneratesPodcastFeedUrl.call(podcast)
 
-    MCP::Tool::Response.new([ { type: "text", text: { feed_url: feed_url }.to_json } ])
+    success_response({ feed_url: feed_url })
   end
 end

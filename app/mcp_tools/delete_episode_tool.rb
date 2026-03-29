@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DeleteEpisodeTool < MCP::Tool
+  extend McpToolHelpers
+
   tool_name "delete_episode"
   description "Delete a podcast episode. The episode will be removed from the feed."
 
@@ -16,16 +18,10 @@ class DeleteEpisodeTool < MCP::Tool
     user = server_context[:user]
 
     episode = user.episodes.find_by_prefix_id(id)
-
-    unless episode
-      return MCP::Tool::Response.new(
-        [ { type: "text", text: { error: "not_found", message: "Episode not found" }.to_json } ],
-        error: true
-      )
-    end
+    return error_response("not_found", "Episode not found") unless episode
 
     DeleteEpisodeJob.perform_later(episode_id: episode.id)
 
-    MCP::Tool::Response.new([ { type: "text", text: { deleted: true }.to_json } ])
+    success_response({ deleted: true })
   end
 end

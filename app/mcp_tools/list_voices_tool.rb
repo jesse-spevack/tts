@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ListVoicesTool < MCP::Tool
+  extend McpToolHelpers
+
   tool_name "list_voices"
   description "List available voices for podcast episodes. Results are filtered by the user's subscription tier."
 
@@ -13,7 +15,7 @@ class ListVoicesTool < MCP::Tool
     user = server_context[:user]
 
     available_keys = user.available_voices
-    voices = available_keys.map do |key|
+    voices = available_keys.filter_map do |key|
       voice = Voice.find(key)
       next unless voice
 
@@ -23,8 +25,8 @@ class ListVoicesTool < MCP::Tool
         accent: voice.accent,
         gender: voice.gender
       }
-    end.compact
+    end
 
-    MCP::Tool::Response.new([ { type: "text", text: { voices: voices }.to_json } ])
+    success_response({ voices: voices })
   end
 end

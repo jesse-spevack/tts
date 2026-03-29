@@ -17,6 +17,10 @@ Doorkeeper.configure do
   # --- Tokens ---
   access_token_expires_in 1.hour
   use_refresh_token
+  # Note: Doorkeeper 5.9 doesn't support time-based refresh token expiry.
+  # Refresh tokens are invalidated via rotation (old token revoked when new one
+  # issued) and explicit revocation (user disconnects from Settings). This is
+  # sufficient — Claude's MCP client auto-refreshes, so tokens stay fresh.
 
   # Authorization codes expire after 10 minutes (default)
   authorization_code_expires_in 10.minutes
@@ -33,10 +37,10 @@ Doorkeeper.configure do
   # Current.user is set by the Authentication concern via resume_session.
   # If not logged in, redirect to login page with return_to pointing back here.
   resource_owner_authenticator do
-    # We skip ApplicationController's require_authentication for Doorkeeper controllers
-    # (see doorkeeper_auth_skip.rb), so we need to manually resume the session here.
-    # This mirrors what the Authentication concern does in resume_session.
-    Current.session ||= Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+    # Doorkeeper controllers skip require_authentication (see doorkeeper_auth_skip.rb),
+    # so we call resume_session to restore Current.session from the cookie.
+    # This is defined in the Authentication concern included in ApplicationController.
+    resume_session
 
     Current.user || begin
       session[:return_to_after_authenticating] = request.fullpath

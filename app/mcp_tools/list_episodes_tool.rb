@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ListEpisodesTool < MCP::Tool
+  extend McpToolHelpers
+
   tool_name "list_episodes"
   description "List the user's podcast episodes, newest first. Supports pagination."
 
@@ -22,12 +24,10 @@ class ListEpisodesTool < MCP::Tool
     total = episodes.count
     episodes = episodes.offset((page - 1) * limit).limit(limit)
 
-    data = {
+    success_response({
       episodes: episodes.map { |ep| serialize_episode(ep) },
       meta: { page: page, limit: limit, total: total }
-    }
-
-    MCP::Tool::Response.new([ { type: "text", text: data.to_json } ])
+    })
   end
 
   private

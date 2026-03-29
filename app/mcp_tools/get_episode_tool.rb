@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class GetEpisodeTool < MCP::Tool
+  extend McpToolHelpers
+
   tool_name "get_episode"
   description "Get details about a specific episode, including its processing status."
 
@@ -16,15 +18,9 @@ class GetEpisodeTool < MCP::Tool
     user = server_context[:user]
 
     episode = user.episodes.find_by_prefix_id(id)
+    return error_response("not_found", "Episode not found") unless episode
 
-    unless episode
-      return MCP::Tool::Response.new(
-        [ { type: "text", text: { error: "not_found", message: "Episode not found" }.to_json } ],
-        error: true
-      )
-    end
-
-    data = {
+    success_response({
       id: episode.prefix_id,
       title: episode.title,
       author: episode.author,
@@ -35,8 +31,6 @@ class GetEpisodeTool < MCP::Tool
       duration_seconds: episode.duration_seconds,
       error_message: episode.error_message,
       created_at: episode.created_at.iso8601
-    }
-
-    MCP::Tool::Response.new([ { type: "text", text: data.to_json } ])
+    })
   end
 end
