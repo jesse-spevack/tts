@@ -6,7 +6,7 @@ Rails.application.routes.draw do
   end
 
   # Remote MCP endpoint (streamable HTTP)
-  match "mcp", to: "mcp#handle", via: [:get, :post, :delete]
+  match "mcp", to: "mcp#handle", via: [ :get, :post, :delete ]
 
   # Well-known OAuth metadata (MCP spec requirement)
   get ".well-known/oauth-protected-resource", to: "well_known#oauth_protected_resource"
