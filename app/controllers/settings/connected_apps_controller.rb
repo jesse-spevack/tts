@@ -12,14 +12,7 @@ module Settings
         return
       end
 
-      # Revoke all access tokens and grants for this user + app
-      Doorkeeper::AccessToken
-        .where(resource_owner_id: Current.user.id, application_id: app.id)
-        .update_all(revoked_at: Time.current)
-
-      Doorkeeper::AccessGrant
-        .where(resource_owner_id: Current.user.id, application_id: app.id)
-        .update_all(revoked_at: Time.current)
+      DisconnectsOauthApplication.call(user: Current.user, application: app)
 
       redirect_to settings_path, notice: "#{app.name} has been disconnected."
     end
