@@ -1,6 +1,6 @@
 <% content_for :title, "Authorize #{@pre_auth.client.name}" %>
 
-<div class="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+<div class="flex justify-center mt-8">
   <div class="w-full max-w-md">
     <!-- App icon -->
     <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-mist-950/10 dark:bg-white/10">
@@ -52,7 +52,7 @@
 
     <!-- Buttons -->
     <div class="mt-6 space-y-3">
-      <%= form_tag oauth_authorization_path, method: :post do %>
+      <%= form_tag oauth_authorization_path, method: :post, data: { turbo: false } do %>
         <%= hidden_field_tag :client_id, @pre_auth.client.uid, id: nil %>
         <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri, id: nil %>
         <%= hidden_field_tag :state, @pre_auth.state, id: nil %>
@@ -65,7 +65,7 @@
             class: button_classes(type: :primary, full_width: true) %>
       <% end %>
 
-      <%= form_tag oauth_authorization_path, method: :delete do %>
+      <%= form_tag oauth_authorization_path, method: :delete, data: { turbo: false } do %>
         <%= hidden_field_tag :client_id, @pre_auth.client.uid, id: nil %>
         <%= hidden_field_tag :redirect_uri, @pre_auth.redirect_uri, id: nil %>
         <%= hidden_field_tag :state, @pre_auth.state, id: nil %>
