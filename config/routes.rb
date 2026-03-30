@@ -45,6 +45,7 @@ Rails.application.routes.draw do
   get "help/cli", to: "pages#cli_help", as: :help_cli
   get "help/claude-code", to: "pages#claude_code_help", as: :help_claude_code
   get "help/claude", to: "pages#claude_help", as: :help_claude
+  get "help/chatgpt", to: "pages#chatgpt_help", as: :help_chatgpt
 
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
@@ -59,6 +60,7 @@ Rails.application.routes.draw do
       resources :extension_logs, only: [ :create ]
       resources :voices, only: [ :index ]
       resource :feed, only: [ :show ]
+      get "openapi.json", to: "openapi#show", as: :openapi
 
       namespace :auth do
         resource :extension_token, only: [ :create ]

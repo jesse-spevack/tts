@@ -38,6 +38,9 @@ class PagesController < ApplicationController
   def claude_help
   end
 
+  def chatgpt_help
+  end
+
   def about
   end
 

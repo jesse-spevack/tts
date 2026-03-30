@@ -14,3 +14,23 @@ Doorkeeper::Application.find_or_create_by!(uid: "claude") do |app|
   app.confidential = false
   # No secret for public clients — PKCE handles security
 end
+
+# ChatGPT (custom GPT Action) — confidential client, PKCE not required.
+# Doorkeeper 5.9's force_pkce only enforces PKCE for non-confidential clients,
+# so making this confidential automatically skips PKCE enforcement.
+# ChatGPT sends client_secret in token requests (server-side flow).
+#
+# IMPORTANT: After creating the GPT in ChatGPT's editor, replace CHATGPT_GPT_ID
+# with the actual GPT ID (visible in the URL bar, e.g. "g-abc123"). Both domains
+# are registered because ChatGPT uses chatgpt.com on web and chat.openai.com on mobile.
+chatgpt_gpt_id = ENV.fetch("CHATGPT_GPT_ID", "g-PLACEHOLDER")
+Doorkeeper::Application.find_or_create_by!(uid: "chatgpt") do |app|
+  app.name = "ChatGPT"
+  app.redirect_uri = [
+    "https://chatgpt.com/aip/#{chatgpt_gpt_id}/oauth/callback",
+    "https://chat.openai.com/aip/#{chatgpt_gpt_id}/oauth/callback"
+  ].join("\n")
+  app.scopes = "podread"
+  app.confidential = true
+  app.secret = ENV.fetch("CHATGPT_OAUTH_SECRET") { SecureRandom.hex(32) }
+end
