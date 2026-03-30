@@ -1,6 +1,4 @@
-<div class="max-w-2xl mx-auto">
-  <%= render "shared/page_header", title: "Help", size: "2xl" %>
-  <%= render "shared/help_nav", current: :claude_help %>
+<%= render layout: "shared/help_layout", locals: { current: :claude_help } do %>
 
   <section class="pb-12">
     <h2 class="text-lg/8 font-semibold text-mist-950 dark:text-white">Connect PodRead to Claude</h2>
@@ -81,4 +79,4 @@
       </div>
     </div>
   </section>
-</div>
+<% end %>

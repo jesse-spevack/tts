@@ -1,21 +1,40 @@
 <%# locals: (current:) %>
 <%
-  links = [
-    { label: "How It Sounds", path: how_it_sounds_path, key: :how_it_sounds },
-    { label: "Add RSS Feed", path: help_add_rss_feed_path, key: :add_rss_feed },
-    { label: "Browser Extension", path: help_extension_path, key: :extension_help },
-    { label: "CLI", path: help_cli_path, key: :cli_help },
-    { label: "Claude Code", path: help_claude_code_path, key: :claude_code_help },
-    { label: "Claude", path: help_claude_path, key: :claude_help },
-    { label: "ChatGPT", path: help_chatgpt_path, key: :chatgpt_help }
+  sections = [
+    {
+      heading: "Getting Started",
+      links: [
+        { label: "How It Sounds", path: how_it_sounds_path, key: :how_it_sounds },
+        { label: "Add RSS Feed", path: help_add_rss_feed_path, key: :add_rss_feed }
+      ]
+    },
+    {
+      heading: "Integrations",
+      links: [
+        { label: "Claude", path: help_claude_path, key: :claude_help },
+        { label: "ChatGPT", path: help_chatgpt_path, key: :chatgpt_help },
+        { label: "Claude Code", path: help_claude_code_path, key: :claude_code_help },
+        { label: "Browser Extension", path: help_extension_path, key: :extension_help },
+        { label: "CLI", path: help_cli_path, key: :cli_help }
+      ]
+    }
   ]
 %>
-<nav class="mb-8 flex gap-4 text-sm font-medium">
-  <% links.each do |link| %>
-    <% if link[:key] == current %>
-      <span class="text-mist-950 dark:text-white"><%= link[:label] %></span>
-    <% else %>
-      <%= link_to link[:label], link[:path], class: "text-mist-500 hover:text-mist-700 dark:text-mist-400 dark:hover:text-mist-200" %>
-    <% end %>
+<nav class="space-y-6 text-sm">
+  <% sections.each do |section| %>
+    <div>
+      <h3 class="font-semibold text-mist-950 dark:text-white mb-2"><%= section[:heading] %></h3>
+      <ul class="space-y-1">
+        <% section[:links].each do |link| %>
+          <li>
+            <% if link[:key] == current %>
+              <span class="block rounded-md bg-mist-200/50 dark:bg-mist-800 px-3 py-1.5 font-medium text-mist-950 dark:text-white"><%= link[:label] %></span>
+            <% else %>
+              <%= link_to link[:label], link[:path], class: "block rounded-md px-3 py-1.5 text-mist-500 hover:text-mist-700 hover:bg-mist-100 dark:text-mist-400 dark:hover:text-mist-200 dark:hover:bg-mist-800/50" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
 </nav>

@@ -1,6 +1,4 @@
-<div class="max-w-2xl mx-auto">
-  <%= render "shared/page_header", title: "Help", size: "2xl" %>
-  <%= render "shared/help_nav", current: :cli_help %>
+<%= render layout: "shared/help_layout", locals: { current: :cli_help } do %>
 
   <section class="pb-12">
     <h2 class="text-lg/8 font-semibold text-mist-950 dark:text-white">Command-Line Interface</h2>
@@ -59,4 +57,4 @@ podread episode delete &lt;id&gt;</code></pre>
       </p>
     </div>
   </section>
-</div>
+<% end %>
