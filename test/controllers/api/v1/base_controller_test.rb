@@ -153,6 +153,134 @@ module Api
           assert_response :unauthorized
         end
       end
+
+      # === Doorkeeper OAuth token fallback ===
+
+      test "authenticate_token! succeeds with valid Doorkeeper token" do
+        app = Doorkeeper::Application.create!(
+          name: "Test OAuth App",
+          uid: "test_oauth",
+          redirect_uri: "https://example.com/callback",
+          scopes: "podread",
+          confidential: true
+        )
+        doorkeeper_token = Doorkeeper::AccessToken.create!(
+          application: app,
+          resource_owner_id: @user.id,
+          scopes: "podread",
+          expires_in: 1.hour
+        )
+
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{doorkeeper_token.token}"
+            }
+          assert_response :success
+          assert_equal @user.email_address, response.parsed_body["user_email"]
+        end
+      end
+
+      test "authenticate_token! rejects revoked Doorkeeper token" do
+        app = Doorkeeper::Application.create!(
+          name: "Test OAuth App",
+          uid: "test_oauth_revoked",
+          redirect_uri: "https://example.com/callback",
+          scopes: "podread",
+          confidential: true
+        )
+        doorkeeper_token = Doorkeeper::AccessToken.create!(
+          application: app,
+          resource_owner_id: @user.id,
+          scopes: "podread",
+          expires_in: 1.hour
+        )
+        doorkeeper_token.revoke
+
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{doorkeeper_token.token}"
+            }
+          assert_response :unauthorized
+        end
+      end
+
+      test "authenticate_token! rejects expired Doorkeeper token" do
+        app = Doorkeeper::Application.create!(
+          name: "Test OAuth App",
+          uid: "test_oauth_expired",
+          redirect_uri: "https://example.com/callback",
+          scopes: "podread",
+          confidential: true
+        )
+        doorkeeper_token = Doorkeeper::AccessToken.create!(
+          application: app,
+          resource_owner_id: @user.id,
+          scopes: "podread",
+          expires_in: 0,
+          created_at: 2.hours.ago
+        )
+
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{doorkeeper_token.token}"
+            }
+          assert_response :unauthorized
+        end
+      end
+
+      test "authenticate_token! prefers API token over Doorkeeper token" do
+        # If a token matches both an API token and a Doorkeeper token,
+        # the API token should win (preserves backwards compatibility)
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{@plain_token}"
+            }
+          assert_response :success
+          # Verify it used the API token path (last_used_at is updated)
+          @api_token.reload
+          assert_not_nil @api_token.last_used_at
+        end
+      end
     end
   end
 end
