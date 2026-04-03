@@ -59,7 +59,7 @@ gem "faraday-follow_redirects"
 gem "doorkeeper", "~> 5.9.0"
 
 # Model Context Protocol server (remote MCP for Claude Desktop + claude.ai)
-gem "mcp", "~> 0.9.2"
+gem "mcp", "~> 0.10.0"
 
 # API rate limiting
 gem "rack-attack"
