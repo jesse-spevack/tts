@@ -47,9 +47,18 @@ module Api
 
       def extract_bearer_token
         header = request.headers["Authorization"]
-        return nil unless header&.start_with?("Bearer ")
+        return nil if header.blank?
 
-        header.split(" ", 2).last
+        # Support RFC 9110 comma-separated schemes:
+        # Authorization: Bearer <token>, Payment <credential>
+        header.split(",").each do |part|
+          part = part.strip
+          if part.start_with?("Bearer ")
+            return part.split(" ", 2).last
+          end
+        end
+
+        nil
       end
     end
   end
