@@ -42,4 +42,14 @@ class BillingMailer < ApplicationMailer
       subject: "You're all set"
     )
   end
+
+  def subscription_ended(user)
+    @user = user
+    @settings_url = settings_url
+
+    mail(
+      to: user.email_address,
+      subject: "Thanks for giving PodRead a spin"
+    )
+  end
 end
