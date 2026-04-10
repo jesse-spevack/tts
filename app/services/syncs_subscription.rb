@@ -37,7 +37,8 @@ class SyncsSubscription
       )
 
       # Send cancellation email when subscription transitions to pending cancellation
-      if was_not_canceling && new_cancel_at.present?
+      # (skip if subscription is also ending in this same sync — the ended email covers it)
+      if was_not_canceling && new_cancel_at.present? && !subscription.canceled?
         SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at)
       end
 
