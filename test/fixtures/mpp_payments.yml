@@ -1,0 +1,33 @@
+one:
+  public_id: mpp_test_fixture_one
+  amount_cents: 100
+  currency: usd
+  status: pending
+  user: one
+
+completed:
+  public_id: mpp_test_fixture_completed
+  amount_cents: 100
+  currency: usd
+  status: completed
+  stripe_payment_intent_id: "pi_test_completed_123"
+  tx_hash: "0xabc123def456"
+  user: one
+
+refunded:
+  public_id: mpp_test_fixture_refunded
+  amount_cents: 100
+  currency: usd
+  status: refunded
+  stripe_payment_intent_id: "pi_test_refunded_456"
+  tx_hash: "0xabc123def789"
+  user: one
+
+completed_for_narration:
+  public_id: mpp_test_fixture_narration
+  amount_cents: 100
+  currency: usd
+  status: completed
+  stripe_payment_intent_id: "pi_test_narration_789"
+  tx_hash: "0xabc123def012"
+  user: one

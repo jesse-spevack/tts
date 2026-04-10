@@ -152,19 +152,19 @@ module Api
 
       # === CREATE (existing extension flow) ===
 
-      test "create returns 401 without token" do
+      test "create returns 402 without token (MPP challenge)" do
         post api_v1_episodes_path, params: @valid_params, as: :json
 
-        assert_response :unauthorized
+        assert_response :payment_required
       end
 
-      test "create returns 401 with invalid token" do
+      test "create returns 402 with invalid token (MPP challenge)" do
         post api_v1_episodes_path,
           params: @valid_params,
           headers: auth_header("invalid_token"),
           as: :json
 
-        assert_response :unauthorized
+        assert_response :payment_required
       end
 
       test "create creates episode with valid token and params" do
@@ -242,7 +242,7 @@ module Api
         assert_response :unprocessable_entity
       end
 
-      test "create returns 403 when user exceeds free tier limit" do
+      test "create returns 402 when user exceeds free tier limit (MPP challenge)" do
         # Use a free user and max out their episode count
         free_user = users(:free_user)
         token = GeneratesApiToken.call(user: free_user)
@@ -258,8 +258,7 @@ module Api
           headers: auth_header(token.plain_token),
           as: :json
 
-        assert_response :forbidden
-        assert_equal "Episode limit reached. Please upgrade your plan.", response.parsed_body["error"]
+        assert_response :payment_required
       end
 
       test "create records episode usage for free user" do

@@ -106,4 +106,15 @@ class AppConfig
   module Extension
     CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/podread-extension/icgbgfaelfomnobbkecaegeecjpdcdhd"
   end
+
+  module Mpp
+    SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
+    PRICE_CENTS = ENV.fetch("MPP_PRICE_CENTS", 100).to_i
+    CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
+    CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
+    TEMPO_CHAIN_ID = ENV.fetch("TEMPO_CHAIN_ID", 42431).to_i
+    TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
+    RECIPIENT_ADDRESS = ENV.fetch("MPP_RECIPIENT_ADDRESS", "")
+  end
 end

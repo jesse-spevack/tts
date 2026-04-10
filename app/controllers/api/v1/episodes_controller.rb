@@ -1,6 +1,8 @@
 module Api
   module V1
     class EpisodesController < BaseController
+      include MppPayable
+
       before_action :check_episode_creation_permission, only: [ :create ]
       before_action :check_episode_rate_limit, only: [ :create ]
 

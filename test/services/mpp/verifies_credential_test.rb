@@ -1,0 +1,396 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
+  TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+  setup do
+    @amount_cents = 100
+    @currency = "usd"
+    @recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x1234567890abcdef1234567890abcdef12345678"
+    @tx_hash = "0x#{SecureRandom.hex(32)}"
+    @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
+
+    # Generate a valid challenge using the real service
+    freeze_time do
+      challenge_result = Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        recipient: @recipient
+      )
+      @challenge = challenge_result.data
+    end
+
+    # Cache the deposit address so cache-check passes
+    # The deposit address is stored in the challenge's request payload
+    request_data = JSON.parse(Base64.decode64(@challenge[:request]))
+    cache_key = "mpp:deposit_address:#{@deposit_address}"
+    Rails.cache.write(cache_key, @deposit_address, expires_in: 5.minutes)
+
+    # Build a valid credential: echoed challenge fields + payment payload
+    @valid_credential_hash = {
+      challenge: {
+        id: @challenge[:id],
+        realm: @challenge[:realm],
+        method: @challenge[:method],
+        intent: @challenge[:intent],
+        request: @challenge[:request],
+        expires: @challenge[:expires]
+      },
+      payload: {
+        type: "hash",
+        hash: @tx_hash,
+        deposit_address: @deposit_address
+      }
+    }
+
+    @valid_credential = Base64.strict_encode64(JSON.generate(@valid_credential_hash))
+  end
+
+  # --- HMAC verification tests ---
+
+  test "returns failure when credential is nil" do
+    result = Mpp::VerifiesCredential.call(credential: nil)
+
+    assert result.failure?
+  end
+
+  test "returns failure when credential is empty string" do
+    result = Mpp::VerifiesCredential.call(credential: "")
+
+    assert result.failure?
+  end
+
+  test "returns failure when credential has invalid format" do
+    result = Mpp::VerifiesCredential.call(credential: "not-valid-base64!!!")
+
+    assert result.failure?
+  end
+
+  test "returns failure when credential is valid base64 but not JSON" do
+    result = Mpp::VerifiesCredential.call(credential: Base64.strict_encode64("not json"))
+
+    assert result.failure?
+  end
+
+  test "returns failure when challenge ID does not match recomputed HMAC" do
+    tampered = @valid_credential_hash.deep_dup
+    tampered[:challenge][:id] = "a" * 64
+
+    credential = Base64.strict_encode64(JSON.generate(tampered))
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when challenge is expired" do
+    # Generate a challenge that's already expired
+    expired_challenge = nil
+    travel_to(10.minutes.ago) do
+      challenge_result = Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        recipient: @recipient
+      )
+      expired_challenge = challenge_result.data
+    end
+
+    credential_hash = {
+      challenge: {
+        id: expired_challenge[:id],
+        realm: expired_challenge[:realm],
+        method: expired_challenge[:method],
+        intent: expired_challenge[:intent],
+        request: expired_challenge[:request],
+        expires: expired_challenge[:expires]
+      },
+      payload: {
+        type: "hash",
+        hash: @tx_hash,
+        deposit_address: @deposit_address
+      }
+    }
+    credential = Base64.strict_encode64(JSON.generate(credential_hash))
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when deposit address not found in cache" do
+    # Clear the cache so the deposit address lookup fails
+    Rails.cache.clear
+
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  # --- On-chain verification tests ---
+
+  test "returns failure when tx_hash is missing from payload" do
+    no_hash = @valid_credential_hash.deep_dup
+    no_hash[:payload].delete(:hash)
+
+    credential = Base64.strict_encode64(JSON.generate(no_hash))
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when Tempo RPC returns error" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        error: { code: -32_000, message: "Internal error" }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when transaction not found with null receipt" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: nil
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when transaction reverted with status not 0x1" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x0",
+          logs: []
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when no matching Transfer event in logs" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: []
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when Transfer event has wrong recipient" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: [
+            {
+              address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+              topics: [
+                TRANSFER_TOPIC,
+                pad_address("0xsender"),
+                pad_address("0xwrong_recipient")
+              ],
+              data: amount_to_hex(@amount_cents)
+            }
+          ]
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when Transfer event has wrong amount" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: [
+            {
+              address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+              topics: [
+                TRANSFER_TOPIC,
+                pad_address("0xsender"),
+                pad_address(@deposit_address)
+              ],
+              data: amount_to_hex(9999)
+            }
+          ]
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns failure when Transfer event has wrong token contract" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: [
+            {
+              address: "0xwrongtoken0000000000000000000000000000",
+              topics: [
+                TRANSFER_TOPIC,
+                pad_address("0xsender"),
+                pad_address(@deposit_address)
+              ],
+              data: amount_to_hex(@amount_cents)
+            }
+          ]
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "returns success when all verification passes" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.success?
+  end
+
+  test "successful result includes tx_hash" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert_equal @tx_hash, result.data[:tx_hash]
+  end
+
+  test "successful result includes amount" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert_equal @amount_cents, result.data[:amount]
+  end
+
+  test "successful result includes recipient" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert_equal @deposit_address, result.data[:recipient]
+  end
+
+  test "successful result includes challenge_id" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert_equal @challenge[:id], result.data[:challenge_id]
+  end
+
+  # --- Replay protection tests ---
+
+  test "returns failure when tx_hash already used" do
+    # Create an existing MppPayment with the same tx_hash
+    MppPayment.create!(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      tx_hash: @tx_hash,
+      status: :completed
+    )
+
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+  end
+
+  test "records tx_hash after successful verification" do
+    stub_tempo_rpc_success
+
+    assert_difference -> { MppPayment.where(tx_hash: @tx_hash).count }, 1 do
+      Mpp::VerifiesCredential.call(credential: @valid_credential)
+    end
+  end
+
+  # --- RPC request format test ---
+
+  test "sends correct JSON-RPC request to Tempo RPC endpoint" do
+    stub_tempo_rpc_success
+
+    Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert_requested(:post, AppConfig::Mpp::TEMPO_RPC_URL) { |req|
+      body = JSON.parse(req.body)
+      body["jsonrpc"] == "2.0" &&
+        body["method"] == "eth_getTransactionReceipt" &&
+        body["params"] == [@tx_hash] &&
+        body["id"] == 1
+    }
+  end
+
+  private
+
+  def stub_tempo_rpc_success
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: [
+            {
+              address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+              topics: [
+                TRANSFER_TOPIC,
+                pad_address("0xsender"),
+                pad_address(@deposit_address)
+              ],
+              data: amount_to_hex(@amount_cents)
+            }
+          ]
+        }
+      }.to_json)
+  end
+
+  # Pad an address to 32 bytes (64 hex chars) as Ethereum log topics
+  def pad_address(address)
+    clean = address.delete_prefix("0x").downcase
+    "0x" + clean.rjust(64, "0")
+  end
+
+  # Convert integer amount to 32-byte hex data field
+  def amount_to_hex(amount)
+    "0x" + amount.to_s(16).rjust(64, "0")
+  end
+end

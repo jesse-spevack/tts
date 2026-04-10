@@ -3,6 +3,7 @@ class Episode < ApplicationRecord
 
   belongs_to :podcast
   belongs_to :user
+  belongs_to :mpp_payment, optional: true
   has_one :llm_usage, dependent: :destroy
 
   delegate :voice, to: :user
@@ -43,6 +44,7 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
+  after_update :refund_mpp_payment_on_failure, if: :should_refund_mpp_payment?
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
   def audio_url
@@ -75,5 +77,13 @@ class Episode < ApplicationRecord
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
     errors.add(:source_text, result.error) if result.failure?
+  end
+
+  def should_refund_mpp_payment?
+    saved_change_to_status? && failed? && mpp_payment.present?
+  end
+
+  def refund_mpp_payment_on_failure
+    Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
   end
 end
