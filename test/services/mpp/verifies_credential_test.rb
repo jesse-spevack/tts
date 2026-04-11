@@ -11,6 +11,7 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     @recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x1234567890abcdef1234567890abcdef12345678"
     @tx_hash = "0x#{SecureRandom.hex(32)}"
     @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
+    Stripe.api_key = "sk_test_fake"
 
     # Generate a valid challenge using the real service
     freeze_time do
@@ -22,11 +23,27 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       @challenge = challenge_result.data
     end
 
-    # Cache the deposit address so cache-check passes
-    # The deposit address is stored in the challenge's request payload
-    request_data = JSON.parse(Base64.decode64(@challenge[:request]))
-    cache_key = "mpp:deposit_address:#{@deposit_address}"
-    Rails.cache.write(cache_key, @deposit_address, expires_in: 5.minutes)
+    # Populate the cache and pending MppPayment row via the real writer
+    # path (M1). Going through CreatesDepositAddress ensures tests use the
+    # same key format as production, so the B2-class cache-key regression
+    # can't slip past CI again.
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_verifies_#{SecureRandom.hex(4)}",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: @deposit_address }
+            }
+          }
+        }
+      }.to_json, headers: { "Content-Type" => "application/json" })
+
+    Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      challenge_id: @challenge[:id]
+    )
 
     # Build a valid credential: echoed challenge fields + payment payload
     @valid_credential_hash = {

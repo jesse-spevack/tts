@@ -46,16 +46,24 @@ module Api
       end
 
       def extract_bearer_token
+        extract_auth_scheme("Bearer")
+      end
+
+      def extract_payment_credential
+        extract_auth_scheme("Payment")
+      end
+
+      # Parse a single auth scheme value from the Authorization header.
+      # Supports RFC 9110 comma-separated schemes, e.g.
+      #   Authorization: Bearer <token>, Payment <credential>
+      def extract_auth_scheme(scheme)
         header = request.headers["Authorization"]
         return nil if header.blank?
 
-        # Support RFC 9110 comma-separated schemes:
-        # Authorization: Bearer <token>, Payment <credential>
+        prefix = "#{scheme} "
         header.split(",").each do |part|
           part = part.strip
-          if part.start_with?("Bearer ")
-            return part.split(" ", 2).last
-          end
+          return part.split(" ", 2).last if part.start_with?(prefix)
         end
 
         nil

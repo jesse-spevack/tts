@@ -59,7 +59,7 @@ module MppPayable
   # but we override check_episode_creation_permission to return 402 instead
   # of 403 when the user can pay via MPP.
   def handle_mpp_auth
-    bearer_token = extract_bearer_token_from_header
+    bearer_token = extract_bearer_token
     payment_credential = extract_payment_credential
 
     if bearer_token.present?
@@ -78,39 +78,6 @@ module MppPayable
     else
       render_402_challenge
     end
-  end
-
-  # ── Bearer token parsing ──────────────────────────────────────────────
-
-  # Parse bearer token from potentially comma-separated Authorization header.
-  # Per RFC 9110: Authorization: Bearer <token>, Payment <credential>
-  def extract_bearer_token_from_header
-    header = request.headers["Authorization"]
-    return nil if header.blank?
-
-    header.split(",").each do |part|
-      part = part.strip
-      if part.start_with?("Bearer ")
-        return part.split(" ", 2).last
-      end
-    end
-
-    nil
-  end
-
-  # Parse Payment credential from Authorization header.
-  def extract_payment_credential
-    header = request.headers["Authorization"]
-    return nil if header.blank?
-
-    header.split(",").each do |part|
-      part = part.strip
-      if part.start_with?("Payment ")
-        return part.split(" ", 2).last
-      end
-    end
-
-    nil
   end
 
   # Authenticate a bearer token via the existing base controller methods.
