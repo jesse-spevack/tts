@@ -354,7 +354,7 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       body = JSON.parse(req.body)
       body["jsonrpc"] == "2.0" &&
         body["method"] == "eth_getTransactionReceipt" &&
-        body["params"] == [@tx_hash] &&
+        body["params"] == [ @tx_hash ] &&
         body["id"] == 1
     }
   end
