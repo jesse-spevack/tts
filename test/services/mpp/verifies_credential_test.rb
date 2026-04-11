@@ -8,25 +8,13 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
   setup do
     @amount_cents = 100
     @currency = "usd"
-    @recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x1234567890abcdef1234567890abcdef12345678"
     @tx_hash = "0x#{SecureRandom.hex(32)}"
     @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
     Stripe.api_key = "sk_test_fake"
 
-    # Generate a valid challenge using the real service
-    freeze_time do
-      challenge_result = Mpp::GeneratesChallenge.call(
-        amount_cents: @amount_cents,
-        currency: @currency,
-        recipient: @recipient
-      )
-      @challenge = challenge_result.data
-    end
-
-    # Populate the cache and pending MppPayment row via the real writer
-    # path (M1). Going through CreatesDepositAddress ensures tests use the
-    # same key format as production, so the B2-class cache-key regression
-    # can't slip past CI again.
+    # Exercise the production sequencing: provision deposit address first,
+    # then sign the challenge with that address as recipient, then persist
+    # the MppPayment row linking challenge_id ↔ deposit_address.
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
       .to_return(status: 200, body: {
         id: "pi_verifies_#{SecureRandom.hex(4)}",
@@ -39,13 +27,33 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
         }
       }.to_json, headers: { "Content-Type" => "application/json" })
 
-    Mpp::CreatesDepositAddress.call(
+    deposit_result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency
+    )
+    payment_intent_id = deposit_result.data[:payment_intent_id]
+
+    freeze_time do
+      challenge_result = Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        recipient: @deposit_address
+      )
+      @challenge = challenge_result.data
+    end
+
+    MppPayment.create!(
       amount_cents: @amount_cents,
       currency: @currency,
-      challenge_id: @challenge[:id]
+      challenge_id: @challenge[:id],
+      deposit_address: @deposit_address,
+      stripe_payment_intent_id: payment_intent_id,
+      status: :pending
     )
 
-    # Build a valid credential: echoed challenge fields + payment payload
+    # Build a valid credential: echoed challenge fields + payment payload.
+    # Payload carries only the tx hash — deposit_address is resolved from
+    # the DB row by challenge_id at verification time.
     @valid_credential_hash = {
       challenge: {
         id: @challenge[:id],
@@ -57,8 +65,7 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       },
       payload: {
         type: "hash",
-        hash: @tx_hash,
-        deposit_address: @deposit_address
+        hash: @tx_hash
       }
     }
 
@@ -102,16 +109,27 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
   end
 
   test "returns failure when challenge is expired" do
-    # Generate a challenge that's already expired
+    # Generate a challenge that's already expired, signed with the same
+    # deposit_address so we reach the expires check rather than failing
+    # earlier on HMAC mismatch or unknown challenge.
     expired_challenge = nil
     travel_to(10.minutes.ago) do
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
         currency: @currency,
-        recipient: @recipient
+        recipient: @deposit_address
       )
       expired_challenge = challenge_result.data
     end
+
+    MppPayment.create!(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      challenge_id: expired_challenge[:id],
+      deposit_address: @deposit_address,
+      stripe_payment_intent_id: "pi_expired_#{SecureRandom.hex(4)}",
+      status: :pending
+    )
 
     credential_hash = {
       challenge: {
@@ -124,8 +142,7 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       },
       payload: {
         type: "hash",
-        hash: @tx_hash,
-        deposit_address: @deposit_address
+        hash: @tx_hash
       }
     }
     credential = Base64.strict_encode64(JSON.generate(credential_hash))
@@ -434,20 +451,13 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     end
   end
 
-  # --- Integration test: CreatesDepositAddress → VerifiesCredential ---
+  # --- Integration test: CreatesDepositAddress → GeneratesChallenge → VerifiesCredential ---
 
-  test "integration: cache written by CreatesDepositAddress is read by VerifiesCredential" do
+  test "integration: deposit address flows from Stripe → challenge → verifier" do
     Stripe.api_key = "sk_test_fake"
     integration_deposit_address = "0xintegration#{SecureRandom.hex(16)}"
 
-    # Generate a fresh challenge and let CreatesDepositAddress do the real
-    # write (no pre-populated cache). This asserts the writer/reader key
-    # format matches — the exact regression B2 shipped.
-    challenge = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents,
-      currency: @currency,
-      recipient: @recipient
-    ).data
+    Rails.cache.clear
 
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
       .to_return(status: 200, body: {
@@ -461,12 +471,27 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
         }
       }.to_json, headers: { "Content-Type" => "application/json" })
 
-    Rails.cache.clear
+    # Production sequencing: deposit address first, then sign challenge
+    # with it as recipient, then persist the MppPayment row.
+    deposit_result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency
+    )
+    payment_intent_id = deposit_result.data[:payment_intent_id]
 
-    Mpp::CreatesDepositAddress.call(
+    challenge = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      challenge_id: challenge[:id]
+      recipient: integration_deposit_address
+    ).data
+
+    MppPayment.create!(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      challenge_id: challenge[:id],
+      deposit_address: integration_deposit_address,
+      stripe_payment_intent_id: payment_intent_id,
+      status: :pending
     )
 
     credential_hash = {
@@ -480,8 +505,7 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       },
       payload: {
         type: "hash",
-        hash: "0x#{SecureRandom.hex(32)}",
-        deposit_address: integration_deposit_address
+        hash: "0x#{SecureRandom.hex(32)}"
       }
     }
     credential = Base64.strict_encode64(JSON.generate(credential_hash))

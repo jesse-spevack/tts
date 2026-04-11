@@ -19,7 +19,6 @@ module Api
 
         @amount_cents = AppConfig::Mpp::PRICE_CENTS
         @currency = AppConfig::Mpp::CURRENCY
-        @recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x1234567890abcdef1234567890abcdef12345678"
         @tx_hash = "0x#{SecureRandom.hex(32)}"
         @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
 
@@ -301,6 +300,113 @@ module Api
           "Expired credential should yield 402 (new challenge)"
       end
 
+      test "two in-flight 402s: credential echoing challenge A with tx-to address B is rejected (B5 regression)" do
+        # Reproduces the B5 race: two 402s in flight (client retry) create
+        # two MppPayment rows with distinct deposit addresses. Under the
+        # old placeholder-recipient design, a client could submit challenge
+        # A's HMAC with a Transfer event that paid deposit address B, and
+        # the verifier would trust the client-supplied deposit_address and
+        # mark the wrong MppPayment completed. Under Option B, deposit
+        # address is resolved from the DB by challenge_id (HMAC-bound) and
+        # the on-chain log must match address A — the attack fails at the
+        # Transfer-event verification step.
+
+        deposit_address_a = "0xaaaa#{SecureRandom.hex(18)}"
+        deposit_address_b = "0xbbbb#{SecureRandom.hex(18)}"
+
+        # Provision two independent 402 challenges + MppPayment rows.
+        stub_stripe_deposit_address(address: deposit_address_a)
+        Mpp::CreatesDepositAddress.call(amount_cents: @amount_cents, currency: @currency)
+        challenge_a = Mpp::GeneratesChallenge.call(
+          amount_cents: @amount_cents,
+          currency: @currency,
+          recipient: deposit_address_a
+        ).data
+        MppPayment.create!(
+          amount_cents: @amount_cents,
+          currency: @currency,
+          challenge_id: challenge_a[:id],
+          deposit_address: deposit_address_a,
+          stripe_payment_intent_id: "pi_a_#{SecureRandom.hex(4)}",
+          status: :pending
+        )
+
+        stub_stripe_deposit_address(address: deposit_address_b)
+        Mpp::CreatesDepositAddress.call(amount_cents: @amount_cents, currency: @currency)
+        challenge_b = Mpp::GeneratesChallenge.call(
+          amount_cents: @amount_cents,
+          currency: @currency,
+          recipient: deposit_address_b
+        ).data
+        MppPayment.create!(
+          amount_cents: @amount_cents,
+          currency: @currency,
+          challenge_id: challenge_b[:id],
+          deposit_address: deposit_address_b,
+          stripe_payment_intent_id: "pi_b_#{SecureRandom.hex(4)}",
+          status: :pending
+        )
+
+        # Client pays to deposit_address_b on chain, but submits a
+        # credential echoing challenge_a. Payload no longer carries a
+        # deposit_address — the verifier resolves it from challenge_a's
+        # MppPayment row (= deposit_address_a), so the Transfer log
+        # (which references deposit_address_b) won't match.
+        credential_hash = {
+          challenge: {
+            id: challenge_a[:id],
+            realm: challenge_a[:realm],
+            method: challenge_a[:method],
+            intent: challenge_a[:intent],
+            request: challenge_a[:request],
+            expires: challenge_a[:expires]
+          },
+          payload: {
+            type: "hash",
+            hash: @tx_hash
+          }
+        }
+        credential = Base64.strict_encode64(JSON.generate(credential_hash))
+
+        # RPC returns a Transfer event paying deposit_address_b (the other
+        # challenge's address). Under Option B the verifier requires it to
+        # match the stored address for challenge_a (= deposit_address_a).
+        stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+          .to_return(status: 200, body: {
+            jsonrpc: "2.0",
+            id: 1,
+            result: {
+              status: "0x1",
+              logs: [
+                {
+                  address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+                  topics: [
+                    TRANSFER_TOPIC,
+                    pad_address("0xsender"),
+                    pad_address(deposit_address_b)
+                  ],
+                  data: amount_to_hex(@amount_cents)
+                }
+              ]
+            }
+          }.to_json)
+
+        post api_v1_episodes_path,
+          params: @valid_params,
+          headers: payment_only_header(credential),
+          as: :json
+
+        assert_response :payment_required,
+          "Credential referencing challenge A with on-chain payment to " \
+            "address B must be rejected (B5 regression)"
+
+        # Neither MppPayment should be marked completed.
+        payment_a = MppPayment.find_by!(challenge_id: challenge_a[:id])
+        payment_b = MppPayment.find_by!(challenge_id: challenge_b[:id])
+        assert_equal "pending", payment_a.status
+        assert_equal "pending", payment_b.status
+      end
+
       test "returns 402 when Payment credential tx_hash fails on-chain verification" do
         credential = valid_credential
 
@@ -382,25 +488,45 @@ module Api
       # Challenge / credential helpers
       # -----------------------------------------------------------------------
 
-      def valid_challenge
-        result = Mpp::GeneratesChallenge.call(
+      # Simulate the production 402 flow: provision a deposit address, sign
+      # a challenge with it as recipient, persist the MppPayment row. Returns
+      # the challenge hash so credential builders can echo its fields.
+      def provision_challenge(deposit_address: @deposit_address, expires_offset: nil)
+        Mpp::CreatesDepositAddress.call(
+          amount_cents: @amount_cents,
+          currency: @currency
+        )
+
+        challenge = if expires_offset
+          travel_to(expires_offset) do
+            Mpp::GeneratesChallenge.call(
+              amount_cents: @amount_cents,
+              currency: @currency,
+              recipient: deposit_address
+            ).data
+          end
+        else
+          Mpp::GeneratesChallenge.call(
+            amount_cents: @amount_cents,
+            currency: @currency,
+            recipient: deposit_address
+          ).data
+        end
+
+        MppPayment.create!(
           amount_cents: @amount_cents,
           currency: @currency,
-          recipient: @recipient
+          challenge_id: challenge[:id],
+          deposit_address: deposit_address,
+          stripe_payment_intent_id: "pi_test_#{SecureRandom.hex(8)}",
+          status: :pending
         )
-        result.data
+
+        challenge
       end
 
       def valid_credential
-        challenge = valid_challenge
-
-        # Exercise the real cache writer + MppPayment persistence path, so
-        # tests catch key-mismatch bugs (B2 class).
-        Mpp::CreatesDepositAddress.call(
-          amount_cents: @amount_cents,
-          currency: @currency,
-          challenge_id: challenge[:id]
-        )
+        challenge = provision_challenge
 
         credential_hash = {
           challenge: {
@@ -413,8 +539,7 @@ module Api
           },
           payload: {
             type: "hash",
-            hash: @tx_hash,
-            deposit_address: @deposit_address
+            hash: @tx_hash
           }
         }
 
@@ -422,7 +547,7 @@ module Api
       end
 
       def build_credential_with_tampered_hmac
-        challenge = valid_challenge
+        challenge = provision_challenge
 
         credential_hash = {
           challenge: {
@@ -435,8 +560,7 @@ module Api
           },
           payload: {
             type: "hash",
-            hash: @tx_hash,
-            deposit_address: @deposit_address
+            hash: @tx_hash
           }
         }
 
@@ -444,14 +568,7 @@ module Api
       end
 
       def build_expired_credential
-        expired_challenge = nil
-        travel_to(10.minutes.ago) do
-          expired_challenge = Mpp::GeneratesChallenge.call(
-            amount_cents: @amount_cents,
-            currency: @currency,
-            recipient: @recipient
-          ).data
-        end
+        expired_challenge = provision_challenge(expires_offset: 10.minutes.ago)
 
         credential_hash = {
           challenge: {
@@ -464,8 +581,7 @@ module Api
           },
           payload: {
             type: "hash",
-            hash: @tx_hash,
-            deposit_address: @deposit_address
+            hash: @tx_hash
           }
         }
 

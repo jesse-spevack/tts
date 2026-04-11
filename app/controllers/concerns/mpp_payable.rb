@@ -198,27 +198,12 @@ module MppPayable
   def render_402_challenge
     amount_cents = AppConfig::Mpp::PRICE_CENTS
     currency = AppConfig::Mpp::CURRENCY
-    placeholder_recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence ||
-      "0x0000000000000000000000000000000000000000"
 
-    # Step 1: generate the HMAC challenge. The challenge's recipient field
-    # is a placeholder (hashed into the HMAC for integrity); the real on-chain
-    # recipient is the Stripe-issued deposit_address below, which the verifier
-    # looks up via cache at verification time.
-    challenge_result = Mpp::GeneratesChallenge.call(
-      amount_cents: amount_cents,
-      currency: currency,
-      recipient: placeholder_recipient
-    )
-    challenge = challenge_result.data
-
-    # Step 2: provision a Stripe PaymentIntent + deposit address, cache it,
-    # and persist a pending MppPayment row linked to this challenge_id so
-    # refunds can find the stripe_payment_intent_id later (B3).
+    # Step 1: provision a Stripe PaymentIntent + deposit address FIRST so
+    # the real on-chain recipient is known before we sign anything.
     deposit_result = Mpp::CreatesDepositAddress.call(
       amount_cents: amount_cents,
-      currency: currency,
-      challenge_id: challenge[:id]
+      currency: currency
     )
 
     unless deposit_result.success?
@@ -228,6 +213,30 @@ module MppPayable
     end
 
     deposit_address = deposit_result.data[:deposit_address]
+    payment_intent_id = deposit_result.data[:payment_intent_id]
+
+    # Step 2: sign the HMAC challenge with the real deposit_address as
+    # recipient. This binds the on-chain destination into the HMAC so it
+    # cannot be swapped at verification time.
+    challenge_result = Mpp::GeneratesChallenge.call(
+      amount_cents: amount_cents,
+      currency: currency,
+      recipient: deposit_address
+    )
+    challenge = challenge_result.data
+
+    # Step 3: persist a pending MppPayment row linking challenge_id to the
+    # deposit_address and stripe_payment_intent_id. VerifiesCredential
+    # resolves deposit_address from this row (not client payload) at
+    # verification time; refund accounting uses stripe_payment_intent_id.
+    MppPayment.create!(
+      amount_cents: amount_cents,
+      currency: currency,
+      challenge_id: challenge[:id],
+      deposit_address: deposit_address,
+      stripe_payment_intent_id: payment_intent_id,
+      status: :pending
+    )
 
     response.headers["WWW-Authenticate"] = challenge[:header_value]
 

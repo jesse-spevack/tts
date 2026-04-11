@@ -36,8 +36,17 @@ module Mpp
       end
       return Result.failure("Challenge has expired") if expires < Time.current
 
-      # Extract deposit address from payload and verify it exists in cache
-      deposit_address = payload["deposit_address"]
+      # Look up deposit_address from the MppPayment row created at 402
+      # challenge time. The challenge_id is HMAC-bound (unforgeable), so
+      # the DB row is the authority for which deposit_address belongs to
+      # this challenge — never trust the client payload for this value.
+      mpp_payment = MppPayment.find_by(challenge_id: challenge["id"])
+      return Result.failure("Unknown challenge") unless mpp_payment
+      deposit_address = mpp_payment.deposit_address
+
+      # Cache check remains as a freshness short-circuit: the cache entry
+      # expires with CHALLENGE_TTL_SECONDS, so a miss means the challenge
+      # is stale even if the DB row still exists.
       cache_key = "mpp:deposit_address:#{deposit_address}"
       return Result.failure("Deposit address not found in cache") unless Rails.cache.read(cache_key)
 
