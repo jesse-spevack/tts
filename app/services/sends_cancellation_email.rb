@@ -16,6 +16,8 @@ class SendsCancellationEmail
     user.sent_messages.create!(message_type: message_type)
 
     Result.success
+  rescue ActiveRecord::RecordNotUnique
+    Result.failure("Already sent")
   end
 
   private

@@ -35,4 +35,29 @@ class SendsCancellationEmailTest < ActiveSupport::TestCase
       assert_match(/Already sent/, result.error)
     end
   end
+
+  test "returns failure when create! raises RecordNotUnique from a race" do
+    # Simulate a concurrent-webhook TOCTOU race: two threads pass `already_sent?`,
+    # both reach `create!`, and the DB unique index raises on the loser. The stub
+    # returns an object that lies about `exists?` (to bypass `already_sent?`) and
+    # raises from `create!`. Scoped per-instance so no global state leaks.
+    raising_collection = Object.new
+    raising_collection.define_singleton_method(:exists?) { |**| false }
+    raising_collection.define_singleton_method(:create!) { |**| raise ActiveRecord::RecordNotUnique.new("simulated race") }
+
+    with_stubbed_sent_messages(@user, raising_collection) do
+      result = SendsCancellationEmail.call(user: @user, subscription: @subscription, ends_at: @ends_at)
+      refute result.success?, "Expected Result.failure when create! raises RecordNotUnique"
+      assert_match(/Already sent/, result.error)
+    end
+  end
+
+  private
+
+  def with_stubbed_sent_messages(user, replacement)
+    user.define_singleton_method(:sent_messages) { replacement }
+    yield
+  ensure
+    user.singleton_class.remove_method(:sent_messages)
+  end
 end

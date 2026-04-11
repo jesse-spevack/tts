@@ -321,6 +321,145 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     end
   end
 
+  test "persists cancel_at when SendsCancellationEmail raises RecordNotUnique" do
+    @user.update!(stripe_customer_id: "cus_cancel_race")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_cancel_race",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now,
+      cancel_at: nil
+    )
+
+    stub_stripe_subscription(
+      id: "sub_cancel_race",
+      customer: "cus_cancel_race",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i,
+      cancel_at_period_end: true
+    )
+
+    Mocktail.replace(SendsCancellationEmail)
+    stubs { |m| SendsCancellationEmail.call(user: m.any, subscription: m.any, ends_at: m.any) }
+      .with { raise ActiveRecord::RecordNotUnique.new("duplicate key") }
+
+    begin
+      SyncsSubscription.call(stripe_subscription_id: "sub_cancel_race")
+    rescue ActiveRecord::RecordNotUnique
+      # Pre-fix: exception bubbles out past the transaction rescue.
+      # Post-fix: email service returns Result.failure and no exception escapes.
+    end
+
+    persisted = Subscription.find_by(stripe_subscription_id: "sub_cancel_race")
+    assert_not_nil persisted.cancel_at,
+      "Expected cancel_at to persist even when SendsCancellationEmail raises RecordNotUnique"
+  end
+
+  test "persists canceled status when SendsSubscriptionEndedEmail raises RecordNotUnique" do
+    @user.update!(stripe_customer_id: "cus_ended_race")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_ended_race",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.day.ago
+    )
+
+    stub_stripe_subscription(
+      id: "sub_ended_race",
+      customer: "cus_ended_race",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    Mocktail.replace(SendsSubscriptionEndedEmail)
+    stubs { |m| SendsSubscriptionEndedEmail.call(user: m.any, subscription: m.any) }
+      .with { raise ActiveRecord::RecordNotUnique.new("duplicate key") }
+
+    begin
+      SyncsSubscription.call(stripe_subscription_id: "sub_ended_race")
+    rescue ActiveRecord::RecordNotUnique
+      # See note on sibling test above.
+    end
+
+    persisted = Subscription.find_by(stripe_subscription_id: "sub_ended_race")
+    assert persisted.canceled?,
+      "Expected canceled status to persist even when SendsSubscriptionEndedEmail raises RecordNotUnique"
+  end
+
+  test "dispatches cancellation email after transaction commits" do
+    @user.update!(stripe_customer_id: "cus_cancel_commit")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_cancel_commit",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now,
+      cancel_at: nil
+    )
+
+    stub_stripe_subscription(
+      id: "sub_cancel_commit",
+      customer: "cus_cancel_commit",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i,
+      cancel_at_period_end: true
+    )
+
+    # Transactional fixtures wrap every test in one transaction, so baseline
+    # open_transactions == 1. If SyncsSubscription still wraps the email
+    # dispatch in its own transaction, open_transactions will be >= 2 at the
+    # moment the email service is called. Post-fix it must equal 1.
+    observed_open_transactions = nil
+    Mocktail.replace(SendsCancellationEmail)
+    stubs { |m| SendsCancellationEmail.call(user: m.any, subscription: m.any, ends_at: m.any) }
+      .with do
+        observed_open_transactions = ActiveRecord::Base.connection.open_transactions
+        Result.success
+      end
+
+    SyncsSubscription.call(stripe_subscription_id: "sub_cancel_commit")
+
+    assert_equal 1, observed_open_transactions,
+      "Expected SendsCancellationEmail to be invoked after SyncsSubscription's transaction committed"
+  end
+
+  test "dispatches subscription ended email after transaction commits" do
+    @user.update!(stripe_customer_id: "cus_ended_commit")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_ended_commit",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.day.ago
+    )
+
+    stub_stripe_subscription(
+      id: "sub_ended_commit",
+      customer: "cus_ended_commit",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    observed_open_transactions = nil
+    Mocktail.replace(SendsSubscriptionEndedEmail)
+    stubs { |m| SendsSubscriptionEndedEmail.call(user: m.any, subscription: m.any) }
+      .with do
+        observed_open_transactions = ActiveRecord::Base.connection.open_transactions
+        Result.success
+      end
+
+    SyncsSubscription.call(stripe_subscription_id: "sub_ended_commit")
+
+    assert_equal 1, observed_open_transactions,
+      "Expected SendsSubscriptionEndedEmail to be invoked after SyncsSubscription's transaction committed"
+  end
+
   private
 
   def stub_stripe_subscription(id:, customer:, status:, price_id:, current_period_end:, cancel_at_period_end: false, cancel_at: nil)

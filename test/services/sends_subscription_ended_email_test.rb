@@ -34,4 +34,26 @@ class SendsSubscriptionEndedEmailTest < ActiveSupport::TestCase
       assert_match(/Already sent/, result.error)
     end
   end
+
+  test "returns failure when create! raises RecordNotUnique from a race" do
+    # See SendsCancellationEmailTest for the rationale on this pattern.
+    raising_collection = Object.new
+    raising_collection.define_singleton_method(:exists?) { |**| false }
+    raising_collection.define_singleton_method(:create!) { |**| raise ActiveRecord::RecordNotUnique.new("simulated race") }
+
+    with_stubbed_sent_messages(@user, raising_collection) do
+      result = SendsSubscriptionEndedEmail.call(user: @user, subscription: @subscription)
+      refute result.success?, "Expected Result.failure when create! raises RecordNotUnique"
+      assert_match(/Already sent/, result.error)
+    end
+  end
+
+  private
+
+  def with_stubbed_sent_messages(user, replacement)
+    user.define_singleton_method(:sent_messages) { replacement }
+    yield
+  ensure
+    user.singleton_class.remove_method(:sent_messages)
+  end
 end

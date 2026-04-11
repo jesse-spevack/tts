@@ -15,6 +15,9 @@ class SyncsSubscription
     stripe_subscription = Stripe::Subscription.retrieve(stripe_subscription_id)
     user = User.find_by!(stripe_customer_id: stripe_subscription.customer)
 
+    subscription = nil
+    post_commit_actions = []
+
     ActiveRecord::Base.transaction do
       subscription = Subscription.find_or_initialize_by(
         stripe_subscription_id: stripe_subscription.id
@@ -39,16 +42,18 @@ class SyncsSubscription
       # Send cancellation email when subscription transitions to pending cancellation
       # (skip if subscription is also ending in this same sync — the ended email covers it)
       if was_not_canceling && new_cancel_at.present? && !subscription.canceled?
-        SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at)
+        post_commit_actions << -> { SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at) }
       end
 
       # Send subscription ended email when subscription transitions to canceled
       if was_persisted_and_not_canceled && subscription.canceled?
-        SendsSubscriptionEndedEmail.call(user: user, subscription: subscription)
+        post_commit_actions << -> { SendsSubscriptionEndedEmail.call(user: user, subscription: subscription) }
       end
-
-      Result.success(subscription)
     end
+
+    post_commit_actions.each(&:call)
+
+    Result.success(subscription)
   rescue Stripe::StripeError => e
     Result.failure("Stripe API error: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e
