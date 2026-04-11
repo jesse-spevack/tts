@@ -27,8 +27,13 @@ module Mpp
       hmac_result = verify_hmac(challenge)
       return hmac_result if hmac_result&.failure?
 
-      # Check expiration
-      expires = Time.iso8601(challenge["expires"])
+      # Check expiration. Untrusted client input — never let a malformed
+      # timestamp bubble up as a 500.
+      begin
+        expires = Time.iso8601(challenge["expires"])
+      rescue ArgumentError, TypeError
+        return Result.failure("Invalid expires timestamp")
+      end
       return Result.failure("Challenge has expired") if expires < Time.current
 
       # Extract deposit address from payload and verify it exists in cache
@@ -118,12 +123,33 @@ module Mpp
         id: 1
       }.to_json
 
-      response = Net::HTTP.post(uri, request_body, "Content-Type" => "application/json")
+      http = Net::HTTP.new(uri.hostname, uri.port)
+      http.use_ssl = (uri.scheme == "https")
+      http.open_timeout = AppConfig::Mpp::TEMPO_RPC_OPEN_TIMEOUT_SECONDS
+      http.read_timeout = AppConfig::Mpp::TEMPO_RPC_READ_TIMEOUT_SECONDS
+
+      request = Net::HTTP::Post.new(uri.request_uri, "Content-Type" => "application/json")
+      request.body = request_body
+
+      response = http.request(request)
+
+      # Net::HTTP does not raise on non-2xx; check explicitly before parsing.
+      unless response.is_a?(Net::HTTPSuccess)
+        return Result.failure("RPC HTTP error: #{response.code}")
+      end
+
       body = JSON.parse(response.body)
 
-      return Result.failure("RPC error: #{body["error"]["message"]}") if body["error"]
+      if (error = body["error"])
+        message = error.is_a?(Hash) ? error["message"] : error.to_s
+        return Result.failure("RPC error: #{message}")
+      end
 
       body["result"]
+    rescue Net::OpenTimeout, Net::ReadTimeout
+      Result.failure("RPC timeout")
+    rescue JSON::ParserError
+      Result.failure("RPC returned invalid JSON")
     end
 
     def verify_transfer_log(receipt, deposit_address, expected_cents)
