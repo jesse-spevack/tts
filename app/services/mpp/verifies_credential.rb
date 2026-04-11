@@ -126,9 +126,16 @@ module Mpp
       body["result"]
     end
 
-    def verify_transfer_log(receipt, deposit_address, expected_amount)
+    def verify_transfer_log(receipt, deposit_address, expected_cents)
       logs = receipt["logs"] || []
       token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
+
+      # Convert fiat cents -> token base units. The on-chain Transfer event's
+      # data field is a uint256 in the token's smallest unit (6 decimals for
+      # pathUSD / USDC), so comparing cents directly against it always fails
+      # on a real chain. 100 cents = 1 USD = 1_000_000 base units.
+      decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
+      expected_base_units = (expected_cents * (10**decimals)) / 100
 
       matching_log = logs.find do |log|
         topics = log["topics"] || []
@@ -142,9 +149,9 @@ module Mpp
         clean_deposit = deposit_address.delete_prefix("0x").downcase.rjust(40, "0")[-40..]
         next false unless log_recipient == clean_deposit
 
-        # Verify amount: data field is hex uint256
+        # Verify amount: data field is hex uint256 in token base units
         log_amount = log["data"].delete_prefix("0x").to_i(16)
-        log_amount == expected_amount
+        log_amount == expected_base_units
       end
 
       return Result.failure("No matching Transfer event found") unless matching_log
