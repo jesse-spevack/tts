@@ -6,7 +6,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
   setup do
     @amount_cents = 100
     @currency = "usd"
-    @recipient = "0x1234567890abcdef1234567890abcdef12345678"
+    @challenge_id = "ch_#{SecureRandom.hex(16)}"
     Stripe.api_key = "sk_test_fake"
   end
 
@@ -33,7 +33,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert result.success?
@@ -57,7 +57,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert_equal deposit_address, result.data[:deposit_address]
@@ -79,13 +79,13 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert_equal "pi_test_456", result.data[:payment_intent_id]
   end
 
-  test "caches the deposit address in Rails cache" do
+  test "caches the payment_intent_id keyed by deposit_address" do
     deposit_address = "0xcached_address_789"
 
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
@@ -103,12 +103,61 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
-    # Verify the address was cached — the cache key should include the payment intent id
-    cached = Rails.cache.read("mpp:deposit_address:pi_test_cache")
-    assert_equal deposit_address, cached
+    # Cache is keyed by deposit_address (the value the client echoes back)
+    # and stores the payment_intent_id for later Stripe linkage.
+    cached = Rails.cache.read("mpp:deposit_address:#{deposit_address}")
+    assert_equal "pi_test_cache", cached
+  end
+
+  test "persists a pending MppPayment row linked to challenge_id and payment_intent_id" do
+    deposit_address = "0xpersist_addr_abc"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_test_persist",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: deposit_address }
+            }
+          }
+        }
+      }.to_json)
+
+    assert_difference "MppPayment.count", 1 do
+      Mpp::CreatesDepositAddress.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        challenge_id: @challenge_id
+      )
+    end
+
+    payment = MppPayment.find_by!(challenge_id: @challenge_id)
+    assert_equal "pending", payment.status
+    assert_equal "pi_test_persist", payment.stripe_payment_intent_id
+    assert_equal deposit_address, payment.deposit_address
+    assert_equal @amount_cents, payment.amount_cents
+    assert_equal @currency, payment.currency
+  end
+
+  test "does not persist MppPayment when Stripe response is missing deposit address" do
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_test_no_addr",
+        status: "requires_payment_method"
+      }.to_json)
+
+    assert_no_difference "MppPayment.count" do
+      result = Mpp::CreatesDepositAddress.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        challenge_id: @challenge_id
+      )
+      assert result.failure?
+    end
   end
 
   test "fails when Stripe returns unexpected structure without next_action" do
@@ -121,7 +170,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert result.failure?
@@ -143,7 +192,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert result.failure?
@@ -158,7 +207,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     assert result.failure?
@@ -180,7 +229,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      challenge_id: @challenge_id
     )
 
     # Verify the request included the expected parameters

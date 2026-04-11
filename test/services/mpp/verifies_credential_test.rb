@@ -335,12 +335,91 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     assert result.failure?
   end
 
-  test "records tx_hash after successful verification" do
+  test "does not create or update MppPayment rows (pure verification)" do
     stub_tempo_rpc_success
 
-    assert_difference -> { MppPayment.where(tx_hash: @tx_hash).count }, 1 do
+    assert_no_difference "MppPayment.count" do
       Mpp::VerifiesCredential.call(credential: @valid_credential)
     end
+  end
+
+  # --- Integration test: CreatesDepositAddress → VerifiesCredential ---
+
+  test "integration: cache written by CreatesDepositAddress is read by VerifiesCredential" do
+    Stripe.api_key = "sk_test_fake"
+    integration_deposit_address = "0xintegration#{SecureRandom.hex(16)}"
+
+    # Generate a fresh challenge and let CreatesDepositAddress do the real
+    # write (no pre-populated cache). This asserts the writer/reader key
+    # format matches — the exact regression B2 shipped.
+    challenge = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      recipient: @recipient
+    ).data
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_integration_#{SecureRandom.hex(4)}",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: integration_deposit_address }
+            }
+          }
+        }
+      }.to_json, headers: { "Content-Type" => "application/json" })
+
+    Rails.cache.clear
+
+    Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      challenge_id: challenge[:id]
+    )
+
+    credential_hash = {
+      challenge: {
+        id: challenge[:id],
+        realm: challenge[:realm],
+        method: challenge[:method],
+        intent: challenge[:intent],
+        request: challenge[:request],
+        expires: challenge[:expires]
+      },
+      payload: {
+        type: "hash",
+        hash: "0x#{SecureRandom.hex(32)}",
+        deposit_address: integration_deposit_address
+      }
+    }
+    credential = Base64.strict_encode64(JSON.generate(credential_hash))
+
+    # Stub the Tempo RPC with a matching Transfer event
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          status: "0x1",
+          logs: [
+            {
+              address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+              topics: [
+                TRANSFER_TOPIC,
+                pad_address("0xsender"),
+                pad_address(integration_deposit_address)
+              ],
+              data: amount_to_hex(@amount_cents)
+            }
+          ]
+        }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.success?, "Integration verification failed: #{result.error}"
+    assert_equal integration_deposit_address, result.data[:recipient]
   end
 
   # --- RPC request format test ---

@@ -58,15 +58,9 @@ module Mpp
       transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount)
       return transfer_result if transfer_result&.failure?
 
-      # Record the payment
-      MppPayment.create!(
-        amount_cents: expected_amount,
-        currency: request_data["currency"],
-        tx_hash: tx_hash,
-        challenge_id: challenge["id"],
-        status: :completed
-      )
-
+      # Pure verification — persistence is the caller's responsibility.
+      # The caller looks up the pending MppPayment by challenge_id (created
+      # by CreatesDepositAddress at challenge time) and marks it completed.
       Result.success(
         tx_hash: tx_hash,
         amount: expected_amount,

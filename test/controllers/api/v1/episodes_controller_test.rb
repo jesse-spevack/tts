@@ -15,6 +15,21 @@ module Api
           content: "This is the full content of the article. " * 50,
           url: "https://example.com/article"
         }
+
+        # The 402 challenge path calls Stripe to provision a deposit address.
+        # Stub it so tests that exercise the 402 branch don't hit real Stripe.
+        Stripe.api_key = "sk_test_fake"
+        stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+          .to_return(status: 200, body: {
+            id: "pi_test_#{SecureRandom.hex(8)}",
+            next_action: {
+              crypto_display_details: {
+                deposit_addresses: {
+                  tempo: { address: "0xtest_deposit_#{SecureRandom.hex(8)}" }
+                }
+              }
+            }
+          }.to_json, headers: { "Content-Type" => "application/json" })
       end
 
       # === INDEX ===

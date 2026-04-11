@@ -22,6 +22,13 @@ module Api
         @recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x1234567890abcdef1234567890abcdef12345678"
         @tx_hash = "0x#{SecureRandom.hex(32)}"
         @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
+
+        Stripe.api_key = "sk_test_fake"
+
+        # Every 402 challenge response calls CreatesDepositAddress, which hits
+        # Stripe. Stub the endpoint globally so 402 paths don't need per-test
+        # wiring. Individual tests override via `valid_credential` / helpers.
+        stub_stripe_deposit_address(address: @deposit_address)
       end
 
       # =========================================================================
@@ -136,7 +143,7 @@ module Api
         assert_response :created
       end
 
-      test "authenticated non-subscriber with valid Payment credential creates MppPayment linked to user" do
+      test "authenticated non-subscriber with valid Payment credential completes MppPayment linked to user" do
         user = users(:free_user)
         token = GeneratesApiToken.call(user: user)
         exhaust_free_tier(user)
@@ -144,7 +151,10 @@ module Api
 
         stub_tempo_rpc_success
 
-        assert_difference "MppPayment.count", 1 do
+        # MppPayment row is created pending by CreatesDepositAddress (inside
+        # valid_credential above); the POST transitions it to completed and
+        # links it to the user. No new row.
+        assert_no_difference "MppPayment.count" do
           post api_v1_episodes_path,
             params: @valid_params,
             headers: combined_auth_header(token.plain_token, credential),
@@ -153,6 +163,8 @@ module Api
 
         payment = MppPayment.last
         assert_equal user.id, payment.user_id
+        assert_equal "completed", payment.status
+        assert_equal @tx_hash, payment.tx_hash
       end
 
       test "authenticated non-subscriber with valid Payment credential gets Payment-Receipt header" do
@@ -210,12 +222,14 @@ module Api
         assert_response :created
       end
 
-      test "anonymous request with valid Payment credential creates MppPayment" do
+      test "anonymous request with valid Payment credential completes MppPayment (no user link)" do
         credential = valid_credential
 
         stub_tempo_rpc_success
 
-        assert_difference "MppPayment.count", 1 do
+        # Pending row was created by valid_credential via CreatesDepositAddress;
+        # the POST just transitions it to completed.
+        assert_no_difference "MppPayment.count" do
           post api_v1_episodes_path,
             params: @valid_params,
             headers: payment_only_header(credential),
@@ -224,6 +238,8 @@ module Api
 
         payment = MppPayment.last
         assert_nil payment.user_id, "Anonymous payment should not be linked to a user"
+        assert_equal "completed", payment.status
+        assert_equal @tx_hash, payment.tx_hash
       end
 
       test "anonymous request with valid Payment credential gets Payment-Receipt header" do
@@ -378,9 +394,13 @@ module Api
       def valid_credential
         challenge = valid_challenge
 
-        # Cache the deposit address so VerifiesCredential's cache check passes
-        cache_key = "mpp:deposit_address:#{@deposit_address}"
-        Rails.cache.write(cache_key, @deposit_address, expires_in: 5.minutes)
+        # Exercise the real cache writer + MppPayment persistence path, so
+        # tests catch key-mismatch bugs (B2 class).
+        Mpp::CreatesDepositAddress.call(
+          amount_cents: @amount_cents,
+          currency: @currency,
+          challenge_id: challenge[:id]
+        )
 
         credential_hash = {
           challenge: {
