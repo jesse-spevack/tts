@@ -210,6 +210,117 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     end
   end
 
+  test "sends subscription ended email when active subscription transitions to canceled" do
+    @user.update!(stripe_customer_id: "cus_ended")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_ended",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.day.ago
+    )
+
+    stub_stripe_subscription(
+      id: "sub_ended",
+      customer: "cus_ended",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    assert_enqueued_emails 1 do
+      SyncsSubscription.call(stripe_subscription_id: "sub_ended")
+    end
+  end
+
+  test "does not send subscription ended email when subscription was already canceled" do
+    @user.update!(stripe_customer_id: "cus_already_canceled")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_already_canceled",
+      stripe_price_id: "price_monthly",
+      status: :canceled,
+      current_period_end: 1.day.ago
+    )
+
+    stub_stripe_subscription(
+      id: "sub_already_canceled",
+      customer: "cus_already_canceled",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    assert_no_enqueued_emails do
+      SyncsSubscription.call(stripe_subscription_id: "sub_already_canceled")
+    end
+  end
+
+  test "sends subscription ended email when past_due subscription transitions to canceled" do
+    @user.update!(stripe_customer_id: "cus_past_due_ended")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_past_due_ended",
+      stripe_price_id: "price_monthly",
+      status: :past_due,
+      current_period_end: 1.day.ago
+    )
+
+    stub_stripe_subscription(
+      id: "sub_past_due_ended",
+      customer: "cus_past_due_ended",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    assert_enqueued_emails 1 do
+      SyncsSubscription.call(stripe_subscription_id: "sub_past_due_ended")
+    end
+  end
+
+  test "sends only ended email when subscription is immediately canceled with cancel_at" do
+    @user.update!(stripe_customer_id: "cus_immediate")
+    Subscription.create!(
+      user: @user,
+      stripe_subscription_id: "sub_immediate",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.day.ago,
+      cancel_at: nil
+    )
+
+    stub_stripe_subscription(
+      id: "sub_immediate",
+      customer: "cus_immediate",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i,
+      cancel_at: 1.day.ago.to_i
+    )
+
+    # Should send only the ended email, not both cancellation and ended
+    assert_enqueued_emails 1 do
+      SyncsSubscription.call(stripe_subscription_id: "sub_immediate")
+    end
+  end
+
+  test "does not send subscription ended email for new subscription that starts canceled" do
+    @user.update!(stripe_customer_id: "cus_new_canceled")
+
+    stub_stripe_subscription(
+      id: "sub_new_canceled",
+      customer: "cus_new_canceled",
+      status: "canceled",
+      price_id: "price_monthly",
+      current_period_end: 1.day.ago.to_i
+    )
+
+    assert_no_enqueued_emails do
+      SyncsSubscription.call(stripe_subscription_id: "sub_new_canceled")
+    end
+  end
+
   private
 
   def stub_stripe_subscription(id:, customer:, status:, price_id:, current_period_end:, cancel_at_period_end: false, cancel_at: nil)
