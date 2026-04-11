@@ -37,40 +37,23 @@ class SendsSubscriptionEndedEmailTest < ActiveSupport::TestCase
 
   test "returns failure when create! raises RecordNotUnique from a race" do
     # See SendsCancellationEmailTest for the rationale on this pattern.
-    message_type = "subscription_ended_#{@subscription.stripe_subscription_id}"
-    @user.sent_messages.create!(message_type: message_type)
+    raising_collection = Object.new
+    raising_collection.define_singleton_method(:exists?) { |**| false }
+    raising_collection.define_singleton_method(:create!) { |**| raise ActiveRecord::RecordNotUnique.new("simulated race") }
 
-    with_already_sent_stubbed_false(SendsSubscriptionEndedEmail) do
-      with_sent_message_uniqueness_disabled do
-        result = SendsSubscriptionEndedEmail.call(user: @user, subscription: @subscription)
-        refute result.success?, "Expected Result.failure when create! raises RecordNotUnique"
-        assert_match(/Already sent/, result.error)
-      end
+    with_stubbed_sent_messages(@user, raising_collection) do
+      result = SendsSubscriptionEndedEmail.call(user: @user, subscription: @subscription)
+      refute result.success?, "Expected Result.failure when create! raises RecordNotUnique"
+      assert_match(/Already sent/, result.error)
     end
   end
 
   private
 
-  def with_already_sent_stubbed_false(service_class)
-    stub_module = Module.new do
-      define_method(:already_sent?) { false }
-    end
-    service_class.prepend(stub_module)
+  def with_stubbed_sent_messages(user, replacement)
+    user.define_singleton_method(:sent_messages) { replacement }
     yield
   ensure
-    stub_module.module_eval do
-      remove_method(:already_sent?)
-      define_method(:already_sent?) { super() }
-    end
-  end
-
-  def with_sent_message_uniqueness_disabled
-    SentMessage.clear_validators!
-    SentMessage.validates :message_type, presence: true
-    yield
-  ensure
-    SentMessage.clear_validators!
-    SentMessage.validates :message_type, presence: true
-    SentMessage.validates :message_type, uniqueness: { scope: :user_id }
+    user.singleton_class.remove_method(:sent_messages)
   end
 end
