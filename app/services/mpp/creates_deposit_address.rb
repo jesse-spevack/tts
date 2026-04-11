@@ -8,10 +8,10 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:, recipient:)
+    def initialize(amount_cents:, currency:, challenge_id:)
       @amount_cents = amount_cents
       @currency = currency
-      @recipient = recipient
+      @challenge_id = challenge_id
     end
 
     STRIPE_API_VERSION = "2026-03-04.preview"
@@ -27,7 +27,25 @@ module Mpp
 
       payment_intent_id = payment_intent["id"]
 
-      Rails.cache.write("mpp:deposit_address:#{payment_intent_id}", deposit_address, expires_in: 5.minutes)
+      # Cache by deposit_address — that is the value the client echoes back
+      # in the payment credential, so it must be the lookup key.
+      Rails.cache.write(
+        "mpp:deposit_address:#{deposit_address}",
+        payment_intent_id,
+        expires_in: AppConfig::Mpp::CHALLENGE_TTL_SECONDS
+      )
+
+      # Persist a pending MppPayment row now so stripe_payment_intent_id is
+      # linked to challenge_id up-front. VerifiesCredential will later look
+      # this row up by challenge_id and mark it completed.
+      MppPayment.create!(
+        amount_cents: amount_cents,
+        currency: currency,
+        challenge_id: challenge_id,
+        deposit_address: deposit_address,
+        stripe_payment_intent_id: payment_intent_id,
+        status: :pending
+      )
 
       Result.success(
         deposit_address: deposit_address,
@@ -39,7 +57,7 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency, :recipient
+    attr_reader :amount_cents, :currency, :challenge_id
 
     def create_payment_intent
       client = Stripe::StripeClient.new(Stripe.api_key)

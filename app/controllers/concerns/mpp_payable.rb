@@ -136,6 +136,10 @@ module MppPayable
     end
 
     mpp_payment = MppPayment.find_by!(challenge_id: verification.data[:challenge_id])
+    mpp_payment.update!(
+      status: :completed,
+      tx_hash: verification.data[:tx_hash]
+    )
 
     narration = create_narration(mpp_payment)
     receipt = generate_receipt(verification.data[:tx_hash], mpp_payment)
@@ -155,7 +159,11 @@ module MppPayable
     end
 
     mpp_payment = MppPayment.find_by!(challenge_id: verification.data[:challenge_id])
-    mpp_payment.update!(user_id: current_user.id)
+    mpp_payment.update!(
+      status: :completed,
+      tx_hash: verification.data[:tx_hash],
+      user_id: current_user.id
+    )
 
     # Create the episode using the existing controller flow
     create_episode_via_mpp(mpp_payment, verification)
@@ -223,15 +231,36 @@ module MppPayable
   def render_402_challenge
     amount_cents = AppConfig::Mpp::PRICE_CENTS
     currency = AppConfig::Mpp::CURRENCY
-    recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence || "0x0000000000000000000000000000000000000000"
+    placeholder_recipient = AppConfig::Mpp::RECIPIENT_ADDRESS.presence ||
+      "0x0000000000000000000000000000000000000000"
 
+    # Step 1: generate the HMAC challenge. The challenge's recipient field
+    # is a placeholder (hashed into the HMAC for integrity); the real on-chain
+    # recipient is the Stripe-issued deposit_address below, which the verifier
+    # looks up via cache at verification time.
     challenge_result = Mpp::GeneratesChallenge.call(
       amount_cents: amount_cents,
       currency: currency,
-      recipient: recipient
+      recipient: placeholder_recipient
+    )
+    challenge = challenge_result.data
+
+    # Step 2: provision a Stripe PaymentIntent + deposit address, cache it,
+    # and persist a pending MppPayment row linked to this challenge_id so
+    # refunds can find the stripe_payment_intent_id later (B3).
+    deposit_result = Mpp::CreatesDepositAddress.call(
+      amount_cents: amount_cents,
+      currency: currency,
+      challenge_id: challenge[:id]
     )
 
-    challenge = challenge_result.data
+    unless deposit_result.success?
+      render json: { error: "Payment provisioning failed: #{deposit_result.error}" },
+        status: :service_unavailable
+      return
+    end
+
+    deposit_address = deposit_result.data[:deposit_address]
 
     response.headers["WWW-Authenticate"] = challenge[:header_value]
 
@@ -243,7 +272,8 @@ module MppPayable
         currency: currency,
         methods: [ "tempo" ],
         realm: challenge[:realm],
-        expires: challenge[:expires]
+        expires: challenge[:expires],
+        deposit_address: deposit_address
       }
     }, status: :payment_required
   end
