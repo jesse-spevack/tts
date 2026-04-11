@@ -34,4 +34,43 @@ class SendsSubscriptionEndedEmailTest < ActiveSupport::TestCase
       assert_match(/Already sent/, result.error)
     end
   end
+
+  test "returns failure when create! raises RecordNotUnique from a race" do
+    # See SendsCancellationEmailTest for the rationale on this pattern.
+    message_type = "subscription_ended_#{@subscription.stripe_subscription_id}"
+    @user.sent_messages.create!(message_type: message_type)
+
+    with_already_sent_stubbed_false(SendsSubscriptionEndedEmail) do
+      with_sent_message_uniqueness_disabled do
+        result = SendsSubscriptionEndedEmail.call(user: @user, subscription: @subscription)
+        refute result.success?, "Expected Result.failure when create! raises RecordNotUnique"
+        assert_match(/Already sent/, result.error)
+      end
+    end
+  end
+
+  private
+
+  def with_already_sent_stubbed_false(service_class)
+    stub_module = Module.new do
+      define_method(:already_sent?) { false }
+    end
+    service_class.prepend(stub_module)
+    yield
+  ensure
+    stub_module.module_eval do
+      remove_method(:already_sent?)
+      define_method(:already_sent?) { super() }
+    end
+  end
+
+  def with_sent_message_uniqueness_disabled
+    SentMessage.clear_validators!
+    SentMessage.validates :message_type, presence: true
+    yield
+  ensure
+    SentMessage.clear_validators!
+    SentMessage.validates :message_type, presence: true
+    SentMessage.validates :message_type, uniqueness: { scope: :user_id }
+  end
 end
