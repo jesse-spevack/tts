@@ -125,6 +125,10 @@ class AppConfig
     # both of which hardcode 6. On-chain Transfer event `data` is in these
     # base units, so we convert cents -> base units before comparing.
     TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
+    # Timeouts for the Tempo JSON-RPC call. A slow or hung RPC must not
+    # block a Rails thread indefinitely.
+    TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
+    TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
     RECIPIENT_ADDRESS = ENV.fetch("MPP_RECIPIENT_ADDRESS", "")
   end
 end

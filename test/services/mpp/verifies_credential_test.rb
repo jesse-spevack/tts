@@ -129,6 +129,37 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     assert result.failure?
   end
 
+  test "returns failure with clean error when expires is malformed (H1)" do
+    bad_expires = @valid_credential_hash.deep_dup
+    bad_expires[:challenge][:expires] = "not-a-timestamp"
+    # Recompute HMAC for the tampered expires so we reach the parse step
+    challenge = bad_expires[:challenge]
+    request_json = Base64.decode64(challenge[:request])
+    hmac_data = "#{challenge[:realm]}|#{challenge[:method]}|#{challenge[:intent]}|#{request_json}|#{challenge[:expires]}"
+    bad_expires[:challenge][:id] = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, hmac_data)
+
+    credential = Base64.strict_encode64(JSON.generate(bad_expires))
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/Invalid expires timestamp/, result.error)
+  end
+
+  test "returns failure with clean error when expires is nil (H1)" do
+    bad_expires = @valid_credential_hash.deep_dup
+    bad_expires[:challenge][:expires] = nil
+    challenge = bad_expires[:challenge]
+    request_json = Base64.decode64(challenge[:request])
+    hmac_data = "#{challenge[:realm]}|#{challenge[:method]}|#{challenge[:intent]}|#{request_json}|"
+    bad_expires[:challenge][:id] = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, hmac_data)
+
+    credential = Base64.strict_encode64(JSON.generate(bad_expires))
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/Invalid expires timestamp/, result.error)
+  end
+
   # --- On-chain verification tests ---
 
   test "returns failure when tx_hash is missing from payload" do
@@ -141,13 +172,56 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     assert result.failure?
   end
 
-  test "returns failure when Tempo RPC returns error" do
+  test "returns failure when Tempo RPC returns error (hash shape)" do
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
       .to_return(status: 200, body: {
         jsonrpc: "2.0",
         id: 1,
         error: { code: -32_000, message: "Internal error" }
       }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+    assert_match(/Internal error/, result.error)
+  end
+
+  test "returns failure when RPC error body is a string, not a hash (H3)" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        error: "rate limited"
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+    assert_match(/rate limited/, result.error)
+  end
+
+  test "returns failure when RPC returns non-2xx HTTP status (H3)" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 502, body: "Bad Gateway")
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+    assert_match(/502/, result.error)
+  end
+
+  test "returns failure on RPC open timeout (H2)" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL).to_timeout
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    assert result.failure?
+    assert_match(/timeout/i, result.error)
+  end
+
+  test "returns failure when RPC returns unparseable body (H3)" do
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: "<html>error</html>")
 
     result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
