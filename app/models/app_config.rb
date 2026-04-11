@@ -115,6 +115,11 @@ class AppConfig
     TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
     TEMPO_CHAIN_ID = ENV.fetch("TEMPO_CHAIN_ID", 42431).to_i
     TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
+    # Decimals for the Tempo stablecoin (pathUSD / USDC). Confirmed by pympp
+    # (mpp/methods/tempo/intents.py) and Stripe's machine-payments sample,
+    # both of which hardcode 6. On-chain Transfer event `data` is in these
+    # base units, so we convert cents -> base units before comparing.
+    TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
     RECIPIENT_ADDRESS = ENV.fetch("MPP_RECIPIENT_ADDRESS", "")
   end
 end

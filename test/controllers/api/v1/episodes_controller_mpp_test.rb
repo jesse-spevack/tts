@@ -523,9 +523,12 @@ module Api
         "0x" + clean.rjust(64, "0")
       end
 
-      # Convert integer amount to 32-byte hex data field
-      def amount_to_hex(amount)
-        "0x" + amount.to_s(16).rjust(64, "0")
+      # Convert a cents value to the 32-byte hex uint256 the on-chain
+      # Transfer event's `data` field carries. Matches production:
+      # cents -> fiat USD -> token base units (6 decimals).
+      def amount_to_hex(amount_cents)
+        base_units = (amount_cents * (10**AppConfig::Mpp::TEMPO_TOKEN_DECIMALS)) / 100
+        "0x" + base_units.to_s(16).rjust(64, "0")
       end
     end
   end
