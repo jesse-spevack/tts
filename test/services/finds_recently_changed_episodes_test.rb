@@ -73,7 +73,6 @@ class FindsRecentlyChangedEpisodesTest < ActiveSupport::TestCase
   end
 
   test "excludes episodes from other podcasts" do
-    podcasts(:two)
     other_episode = episodes(:two)
     other_episode.update_column(:updated_at, 10.seconds.ago)
 

@@ -9,12 +9,6 @@ class CloudStorage
     @storage = build_storage_client
   end
 
-  def upload_staging_file(content:, filename:)
-    full_path = "podcasts/#{@podcast_id}/staging/#{filename}"
-    bucket.create_file(StringIO.new(content), full_path)
-    "staging/#{filename}"
-  end
-
   def upload_content(content:, remote_path:)
     full_path = scoped_path(remote_path)
     file = bucket.create_file(StringIO.new(content), full_path)
