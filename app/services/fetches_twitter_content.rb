@@ -73,7 +73,7 @@ class FetchesTwitterContent
   rescue JSON::ParserError
     log_warn "twitter_fxtwitter_json_parse_error", url: url
     Result.failure(FAILURE_MESSAGE)
-  rescue Faraday::TimeoutError => e
+  rescue Faraday::TimeoutError
     log_warn "twitter_fxtwitter_timeout", url: url
     Result.failure(FAILURE_MESSAGE)
   rescue Faraday::ConnectionFailed => e

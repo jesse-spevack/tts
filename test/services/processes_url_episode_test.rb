@@ -81,7 +81,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
 
     @episode.reload
     assert_equal "preparing", @episode.status, "Episode should succeed via Jina fallback; error: #{@episode.error_message}"
-    verify { |m| FetchesJinaContent.call(url: @episode.source_url) }
+    verify { |_m| FetchesJinaContent.call(url: @episode.source_url) }
     verify { |m| ProcessesWithLlm.call(text: jina_markdown, episode: m.any) }
   end
 
@@ -240,7 +240,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     assert_equal "preparing", @episode.status, "Episode should not have failed; error: #{@episode.error_message}"
 
     # Verify Jina was called as a fallback
-    verify { |m| FetchesJinaContent.call(url: @episode.source_url) }
+    verify { |_m| FetchesJinaContent.call(url: @episode.source_url) }
   end
 
   test "Jina fallback content is passed to LLM processing" do
@@ -377,7 +377,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     @episode.reload
 
     # 1. Jina fallback was triggered (low-quality extraction detected)
-    verify { |m| FetchesJinaContent.call(url: @episode.source_url) }
+    verify { |_m| FetchesJinaContent.call(url: @episode.source_url) }
 
     # 2. Episode did not fail
     assert_not_equal "failed", @episode.status,

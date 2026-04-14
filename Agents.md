@@ -551,6 +551,73 @@ Internal API (`/api/internal/episodes`) requires `X-Generator-Secret` header mat
 | Add background job | `app/jobs/` |
 | Write tests | `test/` (mirrors `app/` structure) |
 
+## Dead Code
+
+This repo runs dead code detection in CI. Two tools, one philosophy: **additive
+changes are easy; subtractive cleanup is forgotten**. These checks make
+unreferenced code visible before it ships.
+
+### Tools
+
+1. **debride** (`bundle exec rake code_quality:debride`) — finds methods that
+   look unreachable by static analysis. Uses a **ratchet**: a baseline count
+   lives in `lib/tasks/dead_code.rake`, and CI fails only when findings
+   increase. This lets us block new dead code without gating on a full cleanup
+   of the current backlog.
+2. **RuboCop Lint cops** (`bin/rubocop`) — `Lint/UnusedMethodArgument`,
+   `Lint/UnusedBlockArgument`, `Lint/UnreachableCode`, `Lint/UselessAssignment`,
+   and `Lint/UselessMethodDefinition` catch intra-method dead code.
+
+### When the ratchet fires (findings exceed baseline)
+
+You have three options, in order of preference:
+
+1. **Delete** — if the code is genuinely unused, remove it. Run the full test
+   suite (`bin/rails test`) before committing.
+2. **Wire it up** — if the code should be reached but isn't, connect it to the
+   caller that was missed. Common cases: a new service not yet invoked; a
+   helper method referenced only in a template that debride doesn't parse.
+3. **Whitelist** — if debride is wrong (the method is reached via Rails magic
+   debride can't see), add the method name to `.debride_whitelist` with a
+   comment explaining why. **Every entry must have a justification comment.**
+
+Common Rails false positives (already whitelisted or covered by `--rails`):
+
+- ActiveRecord association reader methods (`has_many :foo` → `foo`)
+- Controller actions referenced only in `config/routes.rb`
+- Concern / module methods included dynamically at load time
+- Rake task methods
+- Serializer attribute methods
+- Callback methods referenced by symbol (e.g. `before_action :require_admin`)
+- `attr_accessor` writers on PORO config objects
+
+### When RuboCop Lint cops fire
+
+- `UnusedMethodArgument` / `UnusedBlockArgument`: prefix the name with `_`
+  (e.g. `_episode_id`) to signal intentional non-use. **Exception:** keyword
+  arguments are part of the public interface — renaming them breaks callers.
+  The config enables `AllowUnusedKeywordArguments: true`, so keyword args
+  don't need underscoring.
+- `UselessAssignment`: remove the assignment, or use `_ =` if you want to
+  explicitly discard.
+- `UnreachableCode`: the code after `return`/`raise` can't run — delete it.
+- `UselessMethodDefinition`: an override that only calls `super` with no
+  other logic — remove it.
+
+### Commands
+
+```bash
+bin/rubocop                              # Lint (includes dead-code cops)
+bundle exec rake code_quality:debride    # Dead method detection (ratchet)
+```
+
+### Adjusting the baseline
+
+If you clean up dead code and the debride count drops below baseline, the
+rake task prints a note suggesting a new baseline. Lower the
+`debride_baseline` value in `lib/tasks/dead_code.rake` to match, so the
+ratchet stays tight.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

@@ -82,6 +82,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Dead code detection [https://github.com/seattlerb/debride]
+  gem "debride", require: false
 end
 
 group :development do

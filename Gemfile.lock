@@ -110,6 +110,10 @@ GEM
     crass (1.0.6)
     csv (3.3.5)
     date (3.5.1)
+    debride (1.15.1)
+      path_expander (~> 2.0)
+      prism (~> 1.7)
+      sexp_processor (~> 4.17)
     debug (1.11.1)
       irb (~> 1.10)
       reline (>= 0.3.8)
@@ -363,6 +367,7 @@ GEM
     parser (3.3.10.0)
       ast (~> 2.4.1)
       racc
+    path_expander (2.0.1)
     pp (0.6.3)
       prettyprint
     prefixed_ids (1.8.1)
@@ -491,6 +496,7 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
+    sexp_processor (4.17.5)
     signet (0.21.0)
       addressable (~> 2.8)
       faraday (>= 0.17.5, < 3.a)
@@ -597,6 +603,7 @@ DEPENDENCIES
   brakeman
   bundler-audit
   capybara
+  debride
   debug
   doorkeeper (~> 5.9.0)
   faraday
