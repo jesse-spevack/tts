@@ -27,7 +27,7 @@ class ProcessesEmailEpisodeJobTest < ActiveSupport::TestCase
 
     ProcessesEmailEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
 
-    verify { |m| ProcessesEmailEpisode.call(episode: @episode) }
+    verify { |_m| ProcessesEmailEpisode.call(episode: @episode) }
     assert true
   end
 

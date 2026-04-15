@@ -64,6 +64,21 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  dead-code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Detect dead code with debride (ratchet)
+        run: bundle exec rake code_quality:debride
+
   test:
     runs-on: ubuntu-latest
 
