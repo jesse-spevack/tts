@@ -41,7 +41,7 @@ class EpisodesChannelTest < ActionCable::Channel::TestCase
     @podcast.episodes.update_all(status: :complete, updated_at: 1.hour.ago)
 
     # Create a processing episode that should be broadcast
-    episode = Episode.create!(
+    Episode.create!(
       podcast: @podcast,
       user: @user,
       title: "Test Processing Episode",

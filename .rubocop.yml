@@ -6,3 +6,23 @@ inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
 # Layout/SpaceInsideArrayLiteralBrackets:
 #   Enabled: false
+
+# Dead-code Lint cops.
+# rubocop-rails-omakase disables the entire Lint department by default, so
+# we explicitly re-enable the cops that catch dead or unreachable code.
+Lint/UnusedMethodArgument:
+  Enabled: true
+  # Keyword arguments are part of the public interface. Renaming `voice:` to
+  # `_voice:` would break keyword-arg callers. Allow unused keyword args.
+  AllowUnusedKeywordArguments: true
+Lint/UnusedBlockArgument:
+  Enabled: true
+  # Same reasoning for block keyword args (e.g. `limits_concurrency` key
+  # lambdas that must accept all job keyword args even if only some are used).
+  AllowUnusedKeywordArguments: true
+Lint/UnreachableCode:
+  Enabled: true
+Lint/UselessAssignment:
+  Enabled: true
+Lint/UselessMethodDefinition:
+  Enabled: true

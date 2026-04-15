@@ -135,7 +135,7 @@ class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
 
     ProcessesPasteEpisode.call(episode: @episode)
 
-    verify { |m| SubmitsEpisodeForProcessing.call(episode: @episode, content: cleaned_content) }
+    verify { |_m| SubmitsEpisodeForProcessing.call(episode: @episode, content: cleaned_content) }
     assert true
   end
 
