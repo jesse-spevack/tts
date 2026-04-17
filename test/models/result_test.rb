@@ -85,16 +85,4 @@ class ResultTest < ActiveSupport::TestCase
     assert_equal "error", result.error
     assert_equal "User message", result.message
   end
-
-  test "flash_type returns notice for success" do
-    result = Result.success("data")
-
-    assert_equal :notice, result.flash_type
-  end
-
-  test "flash_type returns alert for failure" do
-    result = Result.failure("error")
-
-    assert_equal :alert, result.flash_type
-  end
 end

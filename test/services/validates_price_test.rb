@@ -38,12 +38,4 @@ class ValidatesPriceTest < ActiveSupport::TestCase
   test "credit_pack? returns false for subscription price" do
     refute ValidatesPrice.credit_pack?(AppConfig::Stripe::PRICE_ID_MONTHLY)
   end
-
-  test "subscription? returns true for monthly price" do
-    assert ValidatesPrice.subscription?(AppConfig::Stripe::PRICE_ID_MONTHLY)
-  end
-
-  test "subscription? returns false for credit pack price" do
-    refute ValidatesPrice.subscription?(AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
-  end
 end

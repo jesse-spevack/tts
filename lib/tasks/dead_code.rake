@@ -24,8 +24,10 @@ namespace :code_quality do
   # Updated 2026-04-17 after installing debride-erb, which makes ERB helper
   # calls visible to debride (EpisodesHelper, UiHelper, etc. no longer false
   # positives).
+  # Updated 2026-04-17 after removing Result#flash_type, LlmUsage#cost_dollars,
+  # and ValidatesPrice.subscription? (all only referenced by their own tests).
   # Count includes both unused methods and unused constants.
-  debride_baseline = 63
+  debride_baseline = 60
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
