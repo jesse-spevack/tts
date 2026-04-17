@@ -27,8 +27,4 @@ class Result
   def failure?
     !@success
   end
-
-  def flash_type
-    @success ? :notice : :alert
-  end
 end

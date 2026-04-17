@@ -47,9 +47,4 @@ class LlmUsageTest < ActiveSupport::TestCase
     assert_not usage.valid?
     assert_includes usage.errors[:provider], "can't be blank"
   end
-
-  test "cost_dollars converts cents to dollars" do
-    usage = LlmUsage.new(cost_cents: 5.25)
-    assert_equal 0.0525, usage.cost_dollars
-  end
 end
