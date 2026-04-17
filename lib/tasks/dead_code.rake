@@ -103,6 +103,11 @@ namespace :code_quality do
   partial_baseline = 0
 
   desc "Detect unused view partials (ratchet: fails if count > baseline #{partial_baseline})"
+  # Depends on :environment (unlike :debride above) because this task calls
+  # CodeQuality::UnusedPartials directly in-process. The class lives under
+  # `lib/code_quality/` and is picked up by `config.autoload_lib`, which
+  # requires Rails to be booted. The :debride task shells out to the debride
+  # binary via Open3 and so needs no Rails env.
   task unused_partials: :environment do
     views_root = Rails.root.join("app/views").to_s
     source_roots = [

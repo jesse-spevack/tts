@@ -243,6 +243,41 @@ class CodeQuality::UnusedPartialsTest < ActiveSupport::TestCase
       "any partial whose name starts with the interpolation prefix `shared/icons/` must be exempt"
   end
 
+  test "exempts all partials under a dynamic prefix expressed via partial: kwarg" do
+    # Mirrors a future `broadcast_replace_to(..., partial: "shared/icons/#{name}")` site.
+    # Today PodRead's only dynamic-interpolation sites use `render "..."` form,
+    # but the detector must symmetrically handle the `partial:` kwarg form so
+    # new Hotwire broadcast/render-to-string call sites don't silently orphan
+    # every partial under their prefix.
+    write("app/views/shared/icons/_check.html.erb", "check")
+    write("app/views/shared/icons/_x_mark.html.erb", "x")
+    # Plus a non-icon orphan that should still be flagged
+    write("app/views/shared/_orphan.html.erb", "orphan")
+
+    write(
+      "app/models/episode.rb",
+      <<~RUBY
+        class Episode < ApplicationRecord
+          after_update_commit do
+            broadcast_replace_to(
+              "episodes",
+              partial: "shared/icons/\#{name}",
+              locals: { name: "check" }
+            )
+          end
+        end
+      RUBY
+    )
+
+    # Top-level template exists but doesn't mention any icon partial.
+    write("app/views/pages/home.html.erb", "<p>home</p>")
+
+    result = run_detector(extra_source_roots: [ "app/models" ])
+
+    assert_equal [ "shared/orphan" ], result[:unused],
+      "all partials under shared/icons/ should be exempted by the dynamic partial: kwarg prefix; only shared/orphan remains unused"
+  end
+
   # ---------------------------------------------------------------------------
   # Behavior 8: ERB comment stripping
   # ---------------------------------------------------------------------------

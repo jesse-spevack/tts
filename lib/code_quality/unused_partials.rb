@@ -23,33 +23,37 @@ module CodeQuality
   #     (directory-relative path minus leading underscore and `.html.erb`).
   #   - Scans `.erb` and `.rb` files under source_roots for references.
   #   - Strips ERB comments (`<%#...%>`) before scanning.
-  #   - Recognizes `render "x/y"`, `render partial: "x/y"`, `render layout: "x/y"`,
-  #     and `partial: "x/y"` in arbitrary Ruby calls (e.g. `broadcast_replace_to`).
-  #   - Resolves relative bare-name refs (`render "foo"` with no slash) against
+  #   - Recognizes `render 'x/y'`, `render partial: 'x/y'`, `render layout: 'x/y'`,
+  #     and `partial: 'x/y'` in arbitrary Ruby calls (e.g. `broadcast_replace_to`).
+  #     (Examples use single quotes so they don't match our own regexes when
+  #     `lib/` is scanned — `.rb` files are not subject to ERB-comment stripping.)
+  #   - Resolves relative bare-name refs (`render 'foo'` with no slash) against
   #     the referring template's directory.
   #   - Treats any partial whose render-form name starts with a dynamic-prefix
-  #     (LHS of `#{`) as referenced (e.g. `render "shared/icons/#{name}"`).
+  #     (LHS of `#{`) as referenced (e.g. `render 'shared/icons/#{name}'`).
   #   - Walks partial-to-partial references transitively to fixed point.
   class UnusedPartials
     # ERB comments: `<%# ... %>`. Stripped before scanning so that usage
     # examples embedded in partial docs don't register as references.
     ERB_COMMENT = /<%#.*?%>/m
 
-    # Static string render forms: `render "x/y"`, `render("x/y")`,
-    # and `render layout: "x/y"`. Captures the path literal.
+    # Static string render forms: `render 'x/y'`, `render('x/y')`,
+    # and `render layout: 'x/y'`. Captures the path literal.
     # Rejects strings containing `#` (dynamic interpolation is handled
     # separately by DYNAMIC_PREFIX).
     RENDER_STRING = /render(?:\s+|\s*\(\s*)(?:layout:\s*)?"([^"#]+)"/
 
-    # Explicit `partial:` kwarg form — covers `render partial: "x/y"` as well
-    # as Ruby calls like `broadcast_replace_to(..., partial: "x/y", ...)`.
+    # Explicit `partial:` kwarg form — covers `render partial: 'x/y'` as well
+    # as Ruby calls like `broadcast_replace_to(..., partial: 'x/y', ...)`.
     PARTIAL_KWARG = /partial:\s*"([^"#]+)"/
 
-    # Dynamic interpolation: `render "prefix/#{expr}"`. Captures the static
-    # prefix (everything before the first `#{`). The prefix is used as a
-    # substring match against all partial names — e.g. `shared/icons/` exempts
-    # every partial under `shared/icons/`.
-    DYNAMIC_PREFIX = /render\s*\(?\s*"([^"]*?)#\{/
+    # Dynamic interpolation: `render 'prefix/#{expr}'` or `partial: 'prefix/#{expr}'`.
+    # Captures the static prefix (everything before the first `#{`). The prefix
+    # is used as a substring match against all partial names — e.g. `shared/icons/`
+    # exempts every partial under `shared/icons/`. Covers both the `render '...'`
+    # form (ERB templates) and the `partial:` kwarg form (Ruby calls like
+    # `broadcast_replace_to(..., partial: 'shared/icons/#{name}')`).
+    DYNAMIC_PREFIX = /(?:render\s*\(?\s*|partial:\s*)"([^"]*?)#\{/
 
     def initialize(views_root:, source_roots:)
       @views_root = views_root
@@ -125,7 +129,7 @@ module CodeQuality
       end
     end
 
-    # Pull every `render "x/y"` and `partial: "x/y"` literal out of content.
+    # Pull every `render 'x/y'` and `partial: 'x/y'` literal out of content.
     # Bare-name refs (no slash) are resolved against the referring template's
     # directory when that template lives under views_root.
     def extract_refs(content, source_path)
@@ -147,7 +151,7 @@ module CodeQuality
     end
 
     # If a render ref has no slash, resolve it against the source file's dir.
-    # `render "episode_card"` from `app/views/episodes/_episodes_list.html.erb`
+    # `render 'episode_card'` from `app/views/episodes/_episodes_list.html.erb`
     # resolves to `episodes/episode_card`.
     def resolve(ref, source_path)
       return ref if ref.include?("/")
