@@ -21,8 +21,11 @@ namespace :code_quality do
   # Baseline captured 2026-04-14 after initial install (`--rails` + whitelist).
   # Updated 2026-04-14 after removing Tts::Config attr_accessor writers and
   # CloudStorage#upload_staging_file (both confirmed dead by grep).
+  # Updated 2026-04-17 after installing debride-erb, which makes ERB helper
+  # calls visible to debride (EpisodesHelper, UiHelper, etc. no longer false
+  # positives).
   # Count includes both unused methods and unused constants.
-  debride_baseline = 83
+  debride_baseline = 63
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do

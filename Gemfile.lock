@@ -114,6 +114,9 @@ GEM
       path_expander (~> 2.0)
       prism (~> 1.7)
       sexp_processor (~> 4.17)
+    debride-erb (1.0.3)
+      debride (~> 1.15)
+      erubi (~> 1.10)
     debug (1.11.1)
       irb (~> 1.10)
       reline (>= 0.3.8)
@@ -605,6 +608,7 @@ DEPENDENCIES
   bundler-audit
   capybara
   debride
+  debride-erb
   debug
   doorkeeper (~> 5.9.0)
   faraday
