@@ -85,6 +85,10 @@ group :development, :test do
 
   # Dead code detection [https://github.com/seattlerb/debride]
   gem "debride", require: false
+
+  # Extends debride to compile ERB templates so helper calls from views are
+  # visible as references. Auto-loads via debride's plugin system.
+  gem "debride-erb", require: false
 end
 
 group :development do
