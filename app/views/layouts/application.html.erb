@@ -9,6 +9,9 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
+
     <meta property="og:title" content="<%= content_for(:title) || "PodRead" %>">
     <meta property="og:description" content="Turn any article into a podcast episode. Listen in your favorite podcast app.">
     <meta property="og:type" content="website">
