@@ -68,7 +68,8 @@ class EpisodesController < ApplicationController
       user: Current.user,
       text: params[:text],
       title: params[:title],
-      author: params[:author]
+      author: params[:author],
+      source_url: params[:source_url]
     )
     handle_create_result(result, "Processing pasted text...")
   end

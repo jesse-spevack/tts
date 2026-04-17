@@ -90,6 +90,52 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
     assert_equal "Processing...", result.data.author
   end
 
+  test "stores source_url when provided" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      source_url: "https://example.com/article"
+    )
+
+    assert result.success?
+    assert_equal "https://example.com/article", result.data.source_url
+  end
+
+  test "leaves source_url nil when not provided" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text
+    )
+
+    assert result.success?
+    assert_nil result.data.source_url
+  end
+
+  test "treats blank source_url as not provided" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      source_url: "  "
+    )
+
+    assert result.success?
+    assert_nil result.data.source_url
+  end
+
+  test "fails when source_url is malformed" do
+    result = CreatesPasteEpisode.call(
+      podcast: @podcast,
+      user: @user,
+      text: @valid_text,
+      source_url: "not-a-url"
+    )
+
+    assert result.failure?
+  end
+
   test "fails on empty text" do
     result = CreatesPasteEpisode.call(
       podcast: @podcast,

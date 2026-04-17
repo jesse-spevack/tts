@@ -3,16 +3,17 @@
 class CreatesPasteEpisode
   include StructuredLogging
 
-  def self.call(podcast:, user:, text:, title: nil, author: nil)
-    new(podcast: podcast, user: user, text: text, title: title, author: author).call
+  def self.call(podcast:, user:, text:, title: nil, author: nil, source_url: nil)
+    new(podcast: podcast, user: user, text: text, title: title, author: author, source_url: source_url).call
   end
 
-  def initialize(podcast:, user:, text:, title: nil, author: nil)
+  def initialize(podcast:, user:, text:, title: nil, author: nil, source_url: nil)
     @podcast = podcast
     @user = user
     @text = text
     @title = title.presence
     @author = author.presence
+    @source_url = source_url.presence
   end
 
   def call
@@ -23,6 +24,7 @@ class CreatesPasteEpisode
       description: EpisodePlaceholders.description_for(:paste),
       source_type: :paste,
       source_text: text,
+      source_url: @source_url,
       status: :pending
     )
 
