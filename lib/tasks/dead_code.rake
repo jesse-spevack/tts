@@ -80,4 +80,101 @@ namespace :code_quality do
       puts "OK: debride findings at baseline."
     end
   end
+
+  # Unused Rails view partial detection via CodeQuality::UnusedPartials.
+  #
+  # Same RATCHET approach as :debride above — capture current unused count as
+  # a baseline, fail only if the count grows. Prevents agents/humans from
+  # accreting new orphan partials while the existing ones get cleaned up over
+  # time.
+  #
+  # Adjustments to the baseline:
+  #   - If you delete an unused partial, the count drops. Lower
+  #     partial_baseline to the new count so the ratchet stays tight.
+  #   - If a partial is genuinely used but the detector can't see it (e.g.
+  #     rendered via a gem's generator, pulled in by a JS component, or
+  #     named dynamically beyond a simple `"prefix/#{var}"` pattern), add its
+  #     render-form name to `.partial_whitelist` with a comment explaining
+  #     why — don't raise the baseline.
+  #
+  # Baseline captured 2026-04-17 after initial detector implementation and
+  # cleanup of 36 truly-unused partials (ported marketing-kit UI components
+  # with zero call sites in templates, Ruby, routes, or docs).
+  partial_baseline = 0
+
+  desc "Detect unused view partials (ratchet: fails if count > baseline #{partial_baseline})"
+  task unused_partials: :environment do
+    views_root = Rails.root.join("app/views").to_s
+    source_roots = [
+      views_root,
+      Rails.root.join("app/models").to_s,
+      Rails.root.join("app/controllers").to_s,
+      Rails.root.join("app/helpers").to_s,
+      Rails.root.join("app/jobs").to_s,
+      Rails.root.join("app/mailers").to_s,
+      Rails.root.join("app/channels").to_s,
+      Rails.root.join("app/services").to_s,
+      Rails.root.join("lib").to_s
+    ]
+
+    # Crash guard: the detector is pure Ruby (no subprocess), so "crash"
+    # means an exception. Rescue at the top level so a regex bug or
+    # file-system hiccup fails loudly rather than computing a bogus 0.
+    begin
+      result = CodeQuality::UnusedPartials.new(
+        views_root: views_root,
+        source_roots: source_roots
+      ).call
+    rescue => e
+      puts "---"
+      puts "FAIL: CodeQuality::UnusedPartials raised #{e.class}: #{e.message}"
+      puts e.backtrace.first(10).join("\n")
+      puts "Fix the detector or report upstream — do not edit the ratchet."
+      exit 1
+    end
+
+    whitelist_path = Rails.root.join(".partial_whitelist")
+    whitelist = if File.exist?(whitelist_path)
+      File.readlines(whitelist_path).map { |l| l.sub(/#.*/, "").strip }.reject(&:empty?).to_set
+    else
+      Set.new
+    end
+
+    unused = result[:unused].reject { |name| whitelist.include?(name) }
+    count = unused.length
+
+    # Parser-regression guard: if the views tree has partials but the detector
+    # reports a total of 0, enumeration is broken — fail loudly.
+    if result[:total].zero? && Dir.glob(File.join(views_root, "**", "_*.html.erb")).any?
+      puts "---"
+      puts "FAIL: detector reported 0 partials but app/views has _*.html.erb files."
+      puts "The enumeration logic may be broken. Inspect lib/code_quality/unused_partials.rb."
+      exit 1
+    end
+
+    puts "Total partials:    #{result[:total]}"
+    puts "Referenced:        #{result[:referenced]}"
+    puts "Unused:            #{count}"
+    unless unused.empty?
+      puts
+      puts "Unused partials:"
+      unused.each { |p| puts "  #{p}" }
+    end
+
+    puts "---"
+    puts "Unused partials: #{count} (baseline: #{partial_baseline})"
+
+    if count > partial_baseline
+      puts "FAIL: unused partial count (#{count}) exceeds baseline (#{partial_baseline})."
+      puts "Either delete the new orphan partial, wire it up, or add an entry to"
+      puts ".partial_whitelist with a comment explaining why the detector can't see it."
+      exit 1
+    elsif count < partial_baseline
+      puts "NOTE: unused partial count (#{count}) is below baseline (#{partial_baseline})."
+      puts "Consider lowering partial_baseline in lib/tasks/dead_code.rake to #{count}"
+      puts "to keep the ratchet tight."
+    else
+      puts "OK: unused partial count at baseline."
+    end
+  end
 end
