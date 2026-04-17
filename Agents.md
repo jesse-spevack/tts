@@ -567,6 +567,11 @@ unreferenced code visible before it ships.
 2. **RuboCop Lint cops** (`bin/rubocop`) — `Lint/UnusedMethodArgument`,
    `Lint/UnusedBlockArgument`, `Lint/UnreachableCode`, `Lint/UselessAssignment`,
    and `Lint/UselessMethodDefinition` catch intra-method dead code.
+3. **unused partials** (`bundle exec rake code_quality:unused_partials`) —
+   finds `app/views/**/_*.html.erb` partials that are never rendered. Pure-Ruby
+   detector lives at `lib/code_quality/unused_partials.rb`. Same ratchet
+   pattern: baseline in `lib/tasks/dead_code.rake`, `.partial_whitelist` for
+   cases the detector can't see.
 
 ### When the ratchet fires (findings exceed baseline)
 
@@ -591,6 +596,40 @@ Common Rails false positives (already whitelisted or covered by `--rails`):
 - Callback methods referenced by symbol (e.g. `before_action :require_admin`)
 - `attr_accessor` writers on PORO config objects
 
+### When the unused-partials ratchet fires
+
+Same three-option decision tree as debride, adapted to partials:
+
+1. **Delete** — if the partial is truly orphaned, remove the file. Before
+   deleting, confirm with `grep -rn "<partial-name>"` across `app/ lib/
+   config/ test/ docs/ Agents.md` that nothing references it (including
+   comments) and run `bin/rails test` after deletion.
+2. **Wire it up** — if the partial is meant to be rendered from a template
+   but isn't, add the `render` call to the appropriate place.
+3. **Whitelist** — if the partial IS used but the detector can't see the ref
+   (e.g. rendered from a gem's generator, or referenced via a dynamic name
+   beyond the simple `"prefix/#{var}"` pattern the detector supports), add
+   the render-form name to `.partial_whitelist` with a comment explaining
+   why. **Every entry must have a justification comment.**
+
+Common Rails false-positive categories the detector already handles:
+
+- Dynamic interpolation: `render "shared/icons/#{name}"` — all partials under
+  the static prefix are exempted.
+- `broadcast_replace_to(..., partial: "x/y")` in Ruby files — scanned.
+- Relative bare-name: `render "foo"` (no slash) from `app/views/<dir>/...` —
+  resolved against the referring template's directory.
+- Layout form: `render layout: "x/y" do ... end` — matched.
+- ERB comments: `<%# render "..." %>` — stripped before scanning, so usage
+  examples in partial docstrings don't register as references.
+- Transitive chains: partial A renders B renders C — all reachable iff A is
+  reachable from a top-level template.
+
+If a case comes up that doesn't fit any of the above (e.g. `render @model`
+implicit-object form, or `render template: "..."`), update the detector in
+`lib/code_quality/unused_partials.rb` rather than whitelisting one-off
+false positives.
+
 ### When RuboCop Lint cops fire
 
 - `UnusedMethodArgument` / `UnusedBlockArgument`: prefix the name with `_`
@@ -607,16 +646,17 @@ Common Rails false positives (already whitelisted or covered by `--rails`):
 ### Commands
 
 ```bash
-bin/rubocop                              # Lint (includes dead-code cops)
-bundle exec rake code_quality:debride    # Dead method detection (ratchet)
+bin/rubocop                                     # Lint (includes dead-code cops)
+bundle exec rake code_quality:debride           # Dead method detection (ratchet)
+bundle exec rake code_quality:unused_partials   # Unused partial detection (ratchet)
 ```
 
 ### Adjusting the baseline
 
-If you clean up dead code and the debride count drops below baseline, the
-rake task prints a note suggesting a new baseline. Lower the
-`debride_baseline` value in `lib/tasks/dead_code.rake` to match, so the
-ratchet stays tight.
+If you clean up dead code and the count drops below baseline, the rake task
+prints a note suggesting a new baseline. Lower the corresponding variable
+(`debride_baseline` or `partial_baseline`) in `lib/tasks/dead_code.rake` to
+match, so the ratchet stays tight.
 
 ## Landing the Plane (Session Completion)
 
