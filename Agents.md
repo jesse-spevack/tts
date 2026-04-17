@@ -630,6 +630,42 @@ implicit-object form, or `render template: "..."`), update the detector in
 `lib/code_quality/unused_partials.rb` rather than whitelisting one-off
 false positives.
 
+### Scaffolding a new partial
+
+The unused-partials ratchet is at baseline **0** — a new partial that isn't
+rendered anywhere fails CI immediately. This is intentional (tightest
+anti-accretion posture), but means a workflow decision if you want to
+create the partial file before wiring up its caller.
+
+**Option 1 — Commit partial + caller together (preferred).** Write the
+partial and add the `render` call in the same commit. The ratchet sees the
+reference and the new partial simultaneously. No friction. This should be
+your default.
+
+**Option 2 — Add a scaffolding whitelist entry (preferred for WIP PRs).** If
+the partial and its caller genuinely need to land in separate commits (e.g.
+a WIP PR that only includes the partial file for review), add an entry to
+`.partial_whitelist`:
+
+```
+# scaffolding: wired up in follow-up work — remove when <caller> lands
+my_namespace/new_feature
+```
+
+Remove the whitelist entry in the same commit that adds the caller. The
+justification-comment rule still applies — `# scaffolding` is the acceptable
+shorthand here.
+
+**Option 3 — Bump `partial_baseline` temporarily.** Only if the partial is
+expected to stay unreferenced for several PRs (rare — usually a smell).
+Increment `partial_baseline` in `lib/tasks/dead_code.rake` by 1 when you
+add the partial, decrement when the caller lands. Mention the offset in
+the PR description so it's easy to reverse.
+
+**Anti-pattern:** do NOT commit the partial, let CI fail, and plan to "fix
+it in the follow-up PR." The ratchet is a gate, not a suggestion — unblock
+yourself through one of the three options above.
+
 ### When RuboCop Lint cops fire
 
 - `UnusedMethodArgument` / `UnusedBlockArgument`: prefix the name with `_`
