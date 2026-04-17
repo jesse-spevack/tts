@@ -5,8 +5,4 @@ class LlmUsage < ApplicationRecord
   validates :provider, presence: true
   validates :input_tokens, presence: true
   validates :output_tokens, presence: true
-
-  def cost_dollars
-    (cost_cents || 0) / 100.0
-  end
 end
