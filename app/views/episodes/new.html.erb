@@ -89,6 +89,18 @@
           </div>
 
           <div>
+            <%= f.label :source_url, "Source URL (optional)", class: label_classes %>
+            <div class="mt-2">
+              <%= f.url_field :source_url,
+                  class: input_classes,
+                  placeholder: "https://example.com/article" %>
+            </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              Link back to the original article (useful for paywalled content).
+            </p>
+          </div>
+
+          <div>
             <%= f.label :text, "Article Text", class: label_classes %>
             <div class="mt-2">
               <%= f.text_area :text,
