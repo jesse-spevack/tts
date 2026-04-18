@@ -20,7 +20,7 @@ module Extension
 
       assert_response :success
       # Check that a token starting with prefix is present in the page (passed to extension via JS)
-      assert_match(/pk_live_/, response.body)
+      assert_match(/sk_live_/, response.body)
     end
 
     test "show generates a valid API token" do
@@ -31,7 +31,7 @@ module Extension
       end
 
       # Extract token from response body
-      token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
+      token_match = response.body.match(/sk_live_[A-Za-z0-9_-]+/)
       assert token_match, "Expected to find token in response"
 
       token = token_match[0]
@@ -41,26 +41,55 @@ module Extension
       assert api_token.active?
     end
 
-    test "show revokes previous tokens for user" do
+    test "show revokes previous extension tokens for user" do
       sign_in_as(@user)
 
-      # Generate first token
+      # First reconnect — generate extension token
       get extension_connect_path
-      first_token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
+      first_token_match = response.body.match(/sk_live_[A-Za-z0-9_-]+/)
       first_api_token = FindsApiToken.call(plain_token: first_token_match[0])
       assert first_api_token.active?
+      assert_equal "extension", first_api_token.source
 
-      # Generate second token
+      # Second reconnect — should revoke the first and issue a new one
       get extension_connect_path
-      second_token_match = response.body.match(/pk_live_[A-Za-z0-9_-]+/)
+      second_token_match = response.body.match(/sk_live_[A-Za-z0-9_-]+/)
 
-      # First token should now be revoked
       first_api_token.reload
       assert first_api_token.revoked?
 
-      # Second token should be active
       second_api_token = FindsApiToken.call(plain_token: second_token_match[0])
       assert second_api_token.active?
+      assert_equal "extension", second_api_token.source
+    end
+
+    test "show does not revoke user-created tokens when reconnecting" do
+      sign_in_as(@user)
+
+      user_created_token = api_tokens(:user_created_token)
+      assert user_created_token.active?
+      assert_equal "user", user_created_token.source
+
+      get extension_connect_path
+
+      user_created_token.reload
+      assert user_created_token.active?,
+        "user-created tokens must survive an extension reconnect"
+    end
+
+    test "show does not revoke OTHER users' extension tokens" do
+      other_user = users(:two)
+      other_user_extension_token = api_tokens(:recently_used_token)
+      assert_equal other_user, other_user_extension_token.user
+      assert other_user_extension_token.source_extension?
+      assert other_user_extension_token.active?
+
+      sign_in_as(@user)
+      get extension_connect_path
+
+      other_user_extension_token.reload
+      assert other_user_extension_token.active?,
+        "reconnecting user A must never touch user B's extension tokens"
     end
 
     test "show includes data attribute for extension to read" do

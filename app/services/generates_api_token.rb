@@ -3,35 +3,38 @@
 class GeneratesApiToken
   include StructuredLogging
 
-  TOKEN_PREFIX = "pk_live_"
+  TOKEN_PREFIX = "sk_live_"
+  # Number of chars from the random portion to expose in token_prefix for
+  # display (settings UI, logs). 4 chars of url-safe-base64 is ~24 bits —
+  # enough to visually distinguish tokens without narrowing the keyspace.
+  DISPLAY_PREFIX_CHARS = 4
 
-  def self.call(user:)
-    new(user: user).call
+  def self.call(user:, source: "user")
+    new(user: user, source: source).call
   end
 
-  def initialize(user:)
+  def initialize(user:, source: "user")
     @user = user
+    @source = source
   end
 
   def call
-    # Revoke any existing active tokens for this user
-    @user.api_tokens.active.find_each do |token|
-      token.update!(revoked_at: Time.current)
-    end
+    random = SecureRandom.urlsafe_base64(32)
+    raw_token = "#{TOKEN_PREFIX}#{random}"
+    token_prefix = "#{TOKEN_PREFIX}#{random[0, DISPLAY_PREFIX_CHARS]}"
 
-    # Generate a secure random token
-    raw_token = "#{TOKEN_PREFIX}#{SecureRandom.urlsafe_base64(32)}"
-
-    # Create the token record
     token = ApiToken.create!(
       user: @user,
-      token_digest: HashesToken.call(plain_token: raw_token)
+      source: @source,
+      token_digest: HashesToken.call(plain_token: raw_token),
+      token_prefix: token_prefix
     )
-
-    # Set the plain token so it can be returned to the caller once
     token.plain_token = raw_token
 
-    log_info "api_token_generated", user_id: @user.id
+    log_info "api_token_generated",
+      user_id: @user.id,
+      source: @source,
+      token_prefix: token_prefix
 
     token
   end

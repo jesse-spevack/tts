@@ -6,8 +6,12 @@ import {
   validateToken,
 } from './auth';
 
-// Valid test token matching the required format: pk_live_ + 32-64 chars
-const VALID_TOKEN = 'pk_live_abcdefghij1234567890abcdefghij12';
+// Valid test token matching the required format: sk_live_ + 32-64 chars.
+// The literal "EXAMPLE_FIXTURE" substring keeps GitHub secret scanning
+// and Gitleaks from flagging these as real Stripe-format keys.
+const VALID_TOKEN = 'sk_live_EXAMPLE_FIXTURE_abcdefghij1234567890';
+// Legacy pk_live_ tokens must still validate during the migration window
+const LEGACY_TOKEN = 'pk_live_EXAMPLE_FIXTURE_abcdefghij1234567890';
 
 describe('auth', () => {
   beforeEach(() => {
@@ -16,13 +20,17 @@ describe('auth', () => {
   });
 
   describe('validateToken', () => {
-    it('accepts valid pk_live_ token', () => {
+    it('accepts valid sk_live_ token', () => {
       expect(() => validateToken(VALID_TOKEN)).not.toThrow();
+    });
+
+    it('accepts legacy pk_live_ token during migration', () => {
+      expect(() => validateToken(LEGACY_TOKEN)).not.toThrow();
     });
 
     it('accepts token with 64 character suffix', () => {
       const longToken =
-        'pk_live_' + 'a'.repeat(64);
+        'sk_live_' + 'a'.repeat(64);
       expect(() => validateToken(longToken)).not.toThrow();
     });
 
@@ -44,25 +52,25 @@ describe('auth', () => {
         'Invalid token format'
       );
       // pk_test_ is no longer valid
-      expect(() => validateToken('pk_test_abcdefghij1234567890abcdefghij12')).toThrow(
+      expect(() => validateToken('pk_test_EXAMPLE_FIXTURE_abcdefghij1234567890')).toThrow(
         'Invalid token format'
       );
     });
 
     it('rejects token with suffix too short', () => {
       // Only 31 chars after prefix
-      const shortToken = 'pk_live_' + 'a'.repeat(31);
+      const shortToken = 'sk_live_' + 'a'.repeat(31);
       expect(() => validateToken(shortToken)).toThrow('Invalid token format');
     });
 
     it('rejects token with suffix too long', () => {
       // 65 chars after prefix
-      const longToken = 'pk_live_' + 'a'.repeat(65);
+      const longToken = 'sk_live_' + 'a'.repeat(65);
       expect(() => validateToken(longToken)).toThrow('Invalid token format');
     });
 
     it('rejects token with invalid characters', () => {
-      const invalidToken = 'pk_live_abcdefghij1234567890abcd!@#$';
+      const invalidToken = 'sk_live_EXAMPLE_FIXTURE_abcdefghij12!@#$';
       expect(() => validateToken(invalidToken)).toThrow('Invalid token format');
     });
   });

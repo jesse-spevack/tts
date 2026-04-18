@@ -68,7 +68,6 @@ Rails.application.routes.draw do
       get "openapi.json", to: "openapi#show", as: :openapi
 
       namespace :auth do
-        resource :extension_token, only: [ :create ]
         resource :device_codes, only: [ :create ]
         resource :device_tokens, only: [ :create ]
         resource :status, only: [ :show ]
@@ -84,6 +83,8 @@ Rails.application.routes.draw do
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
     resources :connected_apps, only: [ :destroy ]
+    resources :api_tokens, only: [ :index, :create, :destroy ]
+    resource :api_token_reveal, only: [ :show ]
   end
 
   # Device authorization (CLI login)

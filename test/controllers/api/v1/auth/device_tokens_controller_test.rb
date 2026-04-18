@@ -40,7 +40,7 @@ module Api
           assert_response :ok
           json = response.parsed_body
           assert json["access_token"].present?
-          assert json["access_token"].start_with?("pk_live_")
+          assert json["access_token"].start_with?("sk_live_")
           assert_equal users(:one).email_address, json["user_email"]
         end
 

@@ -1,13 +1,25 @@
 active_token:
   user: one
   token_digest: active_token_digest_12345
+  source: extension
+  token_prefix: pk_live_????
 
 revoked_token:
   user: one
   token_digest: revoked_token_digest_67890
   revoked_at: <%= 1.day.ago %>
+  source: extension
+  token_prefix: pk_live_????
 
 recently_used_token:
   user: two
   token_digest: recently_used_digest_abcde
   last_used_at: <%= 1.hour.ago %>
+  source: extension
+  token_prefix: pk_live_????
+
+user_created_token:
+  user: one
+  token_digest: user_created_digest_fghij
+  source: user
+  token_prefix: sk_live_u123

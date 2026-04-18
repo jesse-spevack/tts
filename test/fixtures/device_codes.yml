@@ -14,7 +14,7 @@ exchanged:
   user_code: BCDFGHJK
   device_code: exchanged_device_code_789
   user: one
-  token_digest: <%= HashesToken.call(plain_token: "pk_live_exchanged_test_token") %>
+  token_digest: <%= HashesToken.call(plain_token: "sk_live_EXAMPLE_FIXTURE_exchanged_test_token") %>
   expires_at: <%= 10.minutes.from_now %>
   confirmed_at: <%= 2.minutes.ago %>
 
