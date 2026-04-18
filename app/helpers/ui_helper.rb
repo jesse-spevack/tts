@@ -51,6 +51,13 @@ module UiHelper
     subscription&.canceled? ? "Resubscribe" : "Manage Billing"
   end
 
+  def credits_card_variant(user)
+    return :balance if user.has_credits?
+    return nil if user.premium?
+    return :canceled_grace if user.subscription&.canceled?
+    :empty_state
+  end
+
   def oauth_app_badge(app)
     slug = app.name.to_s.parameterize
     svg_path = Rails.root.join("app/assets/images/oauth_apps/#{slug}.svg") if slug.present?

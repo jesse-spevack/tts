@@ -124,48 +124,7 @@
         </section>
       <% end %>
 
-      <%# Credits section %>
-      <% if Current.user.has_credits? || !Current.user.premium? %>
-        <section id="credits" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
-          <div>
-            <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Credits</h2>
-            <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pay-as-you-go episode packs.</p>
-          </div>
-          <div class="md:col-span-2">
-            <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="space-y-1">
-                  <% if Current.user.has_credits? %>
-                    <p class="text-sm text-mist-500 dark:text-mist-400">
-                      You have <span class="font-medium text-mist-950 dark:text-white"><%= pluralize(Current.user.credits_remaining, "episode credit") %></span> remaining.
-                    </p>
-                    <p class="text-sm text-mist-500 dark:text-mist-400">Credits never expire.</p>
-                  <% elsif Current.user.subscription&.canceled? %>
-                    <p class="text-sm text-mist-500 dark:text-mist-400">
-                      Your subscription ended on <%= Current.user.subscription.current_period_end.strftime("%B %-d, %Y") %>.
-                    </p>
-                    <p class="text-sm text-mist-500 dark:text-mist-400">
-                      Pay-as-you-go is available if you'd like to keep creating episodes.
-                    </p>
-                  <% else %>
-                    <p class="text-sm font-medium text-mist-950 dark:text-white">
-                      Pay as you go — no subscription required.
-                    </p>
-                    <p class="text-sm text-mist-500 dark:text-mist-400">
-                      <%= AppConfig::Credits::PACK_SIZE %> episodes per pack for <%= AppConfig::Credits::PACK_PRICE_DISPLAY %>. Credits never expire.
-                    </p>
-                  <% end %>
-                </div>
-                <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
-                  <%= form.hidden_field :price_id, value: AppConfig::Stripe::PRICE_ID_CREDIT_PACK %>
-                  <%= form.submit(Current.user.has_credits? ? "Buy More Credits" : "Buy Credit Pack",
-                                  class: "#{button_classes(type: :secondary)} self-start sm:self-auto") %>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </section>
-      <% end %>
+      <%= render "credits_section" %>
 
       <%# Browser Extension section %>
       <section id="extension" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">

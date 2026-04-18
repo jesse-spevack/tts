@@ -83,6 +83,49 @@ class UiHelperTest < ActionView::TestCase
     assert_equal "Manage Billing", manage_billing_cta_label(nil)
   end
 
+  # --- credits_card_variant ---
+  #
+  # Drives the Credits section on /settings. Returns:
+  #   :balance       — user has credits (any tier); show balance + "Buy More Credits".
+  #   :canceled_grace — !premium, 0 credits, most recent subscription is canceled.
+  #   :empty_state   — !premium, 0 credits, no canceled subscription (free user, including past_due).
+  #   nil            — hide the card entirely (premium with 0 credits).
+
+  test "credits_card_variant returns :balance for user with credits" do
+    assert_equal :balance, credits_card_variant(users(:credit_user))
+  end
+
+  test "credits_card_variant returns :balance for premium user with rollover credits" do
+    user = users(:annual_subscriber)
+    CreditBalance.for(user).add!(3)
+    assert_equal :balance, credits_card_variant(user)
+  end
+
+  test "credits_card_variant returns nil for premium subscriber with zero credits" do
+    assert_nil credits_card_variant(users(:subscriber))
+  end
+
+  test "credits_card_variant returns nil for complimentary user with zero credits" do
+    assert_nil credits_card_variant(users(:complimentary_user))
+  end
+
+  test "credits_card_variant returns nil for unlimited user with zero credits" do
+    assert_nil credits_card_variant(users(:unlimited_user))
+  end
+
+  test "credits_card_variant returns :canceled_grace for canceled subscriber with zero credits" do
+    assert_equal :canceled_grace, credits_card_variant(users(:canceled_subscriber))
+  end
+
+  test "credits_card_variant returns :empty_state for free user (never subscribed)" do
+    assert_equal :empty_state, credits_card_variant(users(:one))
+  end
+
+  test "credits_card_variant returns :empty_state for past-due subscriber (A1 — grace-period alt path)" do
+    # Past-due is Stripe dunning; premium? = false, subscription.canceled? = false → empty_state.
+    assert_equal :empty_state, credits_card_variant(users(:past_due_subscriber))
+  end
+
   # --- oauth_app_badge (agent-team-3d9) ---
   #
   # Badge is a size-9 rounded-lg container that renders either:
