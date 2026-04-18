@@ -94,6 +94,25 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal "test_price_annual", AppConfig::Stripe::PRICE_ID_ANNUAL
   end
 
+  # --- PLAN_INFO map (agent-team-bwz) ---
+  # Behavior is primarily tested via Subscription#plan_name and
+  # Subscription#plan_display_price. These tests assert the module contract:
+  # a frozen lookup keyed by Stripe price ID that returns nil for unknown keys.
+
+  test "PLAN_INFO is a frozen hash" do
+    assert_kind_of Hash, AppConfig::Stripe::PLAN_INFO
+    assert AppConfig::Stripe::PLAN_INFO.frozen?, "PLAN_INFO must be frozen"
+  end
+
+  test "PLAN_INFO is keyed by stripe price id" do
+    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_MONTHLY
+    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_ANNUAL
+  end
+
+  test "PLAN_INFO returns nil for unknown price id" do
+    assert_nil AppConfig::Stripe::PLAN_INFO["price_does_not_exist"]
+  end
+
   test "Storage.public_feed_url returns branded URL" do
     result = AppConfig::Storage.public_feed_url("podcast_abc123")
 

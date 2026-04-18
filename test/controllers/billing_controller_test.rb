@@ -34,4 +34,27 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "Renews on", response.body
   end
+
+  # --- Gate widening for non-premium subscription states (agent-team-bwz) ---
+
+  test "show renders for past_due subscriber (no credits, not premium)" do
+    # Pre-bwz this redirected to /upgrade because free? = true. Now that
+    # subscription.present? keeps them on /billing, they should land on the
+    # past_due branch with Fix Payment button.
+    sign_in_as(users(:past_due_subscriber))
+    get billing_path
+    assert_response :success
+    assert_match "Past Due", response.body
+    assert_match "Fix Payment", response.body
+  end
+
+  test "show renders for canceled subscriber (no credits, not premium)" do
+    # Pre-bwz this redirected to /upgrade. Now that subscription.present? keeps
+    # them on /billing, they should see the canceled branch + Resubscribe section.
+    sign_in_as(users(:canceled_subscriber))
+    get billing_path
+    assert_response :success
+    assert_match "Canceled", response.body
+    assert_match "Resubscribe", response.body
+  end
 end
