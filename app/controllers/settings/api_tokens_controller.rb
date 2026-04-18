@@ -16,10 +16,23 @@ module Settings
     end
 
     def create
-      @api_token = GeneratesApiToken.call(user: Current.user, source: "user")
-      # Renders create.html.erb with the plain token visible once. The plain
-      # token lives only on the service's @api_token.plain_token attr_accessor
-      # in memory for this request — never persisted, never retrievable again.
+      api_token = GeneratesApiToken.call(user: Current.user, source: "user")
+      # PRG (POST → redirect → GET) so a browser refresh on the reveal page
+      # does NOT re-submit and create a duplicate token. The plain token
+      # rides along in flash (encrypted + signed session, cleared after the
+      # next request), which is acceptable as a one-shot transport.
+      flash[:reveal_plain_token] = api_token.plain_token
+      flash[:reveal_token_prefix] = api_token.token_prefix
+      redirect_to reveal_settings_api_tokens_path
+    end
+
+    def reveal
+      @plain_token = flash[:reveal_plain_token]
+      @token_prefix = flash[:reveal_token_prefix]
+
+      if @plain_token.blank?
+        redirect_to settings_api_tokens_path and return
+      end
     end
 
     def destroy

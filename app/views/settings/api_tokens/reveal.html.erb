@@ -21,7 +21,7 @@
       <div class="flex items-center justify-between gap-3 mb-3">
         <h2 class="text-sm font-semibold text-mist-950 dark:text-white">Your new token</h2>
         <%= render "shared/clipboard_button",
-                   content: @api_token.plain_token,
+                   content: @plain_token,
                    title: "Copy token to clipboard",
                    icon: "copy",
                    icon_class: "size-4",
@@ -29,10 +29,10 @@
                    button_class: "inline-flex items-center gap-1.5 rounded-md bg-mist-950/5 px-2.5 py-1.5 text-xs font-medium text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 cursor-pointer transition-colors" %>
       </div>
 
-      <pre class="overflow-x-auto rounded-lg bg-mist-950 p-4 font-mono text-sm text-mist-100 dark:bg-mist-950 dark:ring-1 dark:ring-white/10"><code><%= @api_token.plain_token %></code></pre>
+      <pre class="overflow-x-auto rounded-lg bg-mist-950 p-4 font-mono text-sm text-mist-100 dark:bg-mist-950 dark:ring-1 dark:ring-white/10"><code><%= @plain_token %></code></pre>
 
       <p class="mt-4 text-xs/6 text-mist-500 dark:text-mist-400">
-        Prefix <code class="ic"><%= @api_token.token_prefix %></code> — this is how you'll identify the token in the tokens list.
+        Prefix <code class="ic"><%= @token_prefix %></code> — this is how you'll identify the token in the tokens list.
       </p>
     </div>
 
