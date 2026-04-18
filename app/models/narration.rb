@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 class Narration < ApplicationRecord
+  has_prefix_id :nar
+
   belongs_to :mpp_payment
 
   enum :source_type, { url: 0, text: 1 }
   enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
 
-  validates :public_id, presence: true, uniqueness: true
   validates :title, presence: true
   validates :source_type, presence: true
   validates :expires_at, presence: true
 
-  before_validation :generate_public_id, on: :create
   before_validation :set_default_voice, on: :create
 
   after_update :refund_mpp_payment_on_failure, if: :should_refund_mpp_payment?
@@ -31,10 +31,6 @@ class Narration < ApplicationRecord
   end
 
   private
-
-  def generate_public_id
-    self.public_id ||= "nar_#{SecureRandom.hex(12)}"
-  end
 
   def set_default_voice
     self.voice ||= Voice::DEFAULT_STANDARD

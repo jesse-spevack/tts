@@ -75,13 +75,13 @@ class Mpp::GeneratesReceiptTest < ActiveSupport::TestCase
     assert_match(/sig=/, header_value)
   end
 
-  test "receipt includes payment public_id" do
+  test "receipt includes payment prefix_id" do
     result = Mpp::GeneratesReceipt.call(
       tx_hash: @tx_hash,
       mpp_payment: @mpp_payment
     )
 
     receipt = result.data[:receipt]
-    assert_includes receipt, @mpp_payment.public_id
+    assert_includes receipt, @mpp_payment.prefix_id
   end
 end

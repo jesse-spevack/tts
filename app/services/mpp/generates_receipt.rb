@@ -14,10 +14,10 @@ module Mpp
     end
 
     def call
-      sig_data = "#{tx_hash}|#{mpp_payment.public_id}"
+      sig_data = "#{tx_hash}|#{mpp_payment.prefix_id}"
       sig = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, sig_data)
 
-      receipt = "tx=#{tx_hash}, payment=#{mpp_payment.public_id}, sig=#{sig}"
+      receipt = "tx=#{tx_hash}, payment=#{mpp_payment.prefix_id}, sig=#{sig}"
       header_value = receipt
 
       Result.success(
