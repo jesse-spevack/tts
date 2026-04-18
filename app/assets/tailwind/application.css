@@ -87,3 +87,24 @@
   color: var(--color-mist-300);
 }
 
+/*
+ * .ic — inline code token.
+ *
+ * Extracted from ~30 repeated class strings in /docs/mpp. Pill-shaped mono
+ * span with mist-on-light in light mode, light-on-mist in dark mode.
+ * Sized relative to surrounding prose via em.
+ */
+@utility ic {
+  border-radius: var(--radius-sm);
+  background-color: var(--color-mist-100);
+  padding-inline: --spacing(1.5);
+  padding-block: --spacing(0.5);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--color-mist-900);
+  @variant dark {
+    background-color: var(--color-mist-800);
+    color: var(--color-mist-100);
+  }
+}
+
