@@ -10,7 +10,11 @@ class ApiToken < ApplicationRecord
 
   scope :active, -> { where(revoked_at: nil) }
 
-  # Virtual attribute to hold the plain token temporarily after generation
+  # Virtual attribute to hold the plain token temporarily after generation.
+  # Never persisted, never retrievable after the request that minted it.
+  # ActiveRecord's default #inspect and #as_json only serialize DB
+  # attributes, not instance variables, so the plaintext cannot leak via
+  # those paths. Tests below enforce this as a regression guard.
   attr_accessor :plain_token
 
   # Check if this token is revoked

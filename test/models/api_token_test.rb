@@ -222,4 +222,32 @@ class ApiTokenTest < ActiveSupport::TestCase
     token = api_tokens(:user_created_token)
     assert_equal "sk_live_u123", token.token_prefix
   end
+
+  # Plain token leak prevention
+  test "#inspect does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.inspect, plain,
+      "plain_token must not appear in #inspect output (leaks via logger.debug, pp, exception messages)"
+  end
+
+  test "#to_json does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.to_json, plain,
+      "plain_token must not appear in #to_json (leaks via API responses, cache writes)"
+  end
+
+  test "#attributes does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.attributes.values.map(&:to_s).join, plain,
+      "plain_token is a virtual attr and must not appear in the attributes hash"
+  end
 end
