@@ -120,18 +120,7 @@
 
       <%= render "credits_section" %>
 
-      <%# Browser Extension section %>
-      <section id="extension" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
-        <div>
-          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Browser Extension</h2>
-          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Send articles to your podcast from any webpage.</p>
-        </div>
-        <div class="md:col-span-2">
-          <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-            <%= link_to "Manage Extension", settings_extensions_path, class: button_classes(type: :secondary) %>
-          </div>
-        </div>
-      </section>
+      <%= render "browser_extension_section" %>
 
       <%# Connected Apps section %>
       <section id="connected-apps" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">

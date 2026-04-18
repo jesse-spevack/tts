@@ -103,6 +103,27 @@ async function handleTokenReceived(token: string): Promise<void> {
 checkForExtensionToken();
 
 /**
+ * Announce the extension's presence to the page on load so Rails-side
+ * controllers (e.g. the /settings Browser Extension card) can detect
+ * whether the extension is installed. Scoped by manifest host_permissions
+ * to podread.app + localhost, so this only fires on trusted origins.
+ *
+ * Belt-and-suspenders: dispatch a CustomEvent AND write a data attribute
+ * on document.documentElement. Stimulus controllers that register their
+ * listener before this module runs receive the event; controllers that
+ * connect late (slow bundle / CSP stall / Turbo lag) still pick up the
+ * state synchronously from the dataset. Mirrors the token-capture pattern
+ * used for /extension/connect (see checkForExtensionToken above).
+ */
+window.dispatchEvent(
+  new CustomEvent('podread:extension-ready', {
+    detail: { extensionVersion: chrome.runtime.getManifest().version },
+  })
+);
+document.documentElement.dataset.podreadExtensionVersion =
+  chrome.runtime.getManifest().version;
+
+/**
  * Handle messages from background script
  */
 chrome.runtime.onMessage.addListener(
