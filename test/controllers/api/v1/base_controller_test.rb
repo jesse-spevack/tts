@@ -281,6 +281,149 @@ module Api
           assert_not_nil @api_token.last_used_at
         end
       end
+
+      # === Structured logging (token_prefix) ===
+
+      test "successful PAT auth logs token_prefix in structured log payload" do
+        logs = capture_logs do
+          with_routing do |set|
+            set.draw do
+              namespace :api do
+                namespace :v1 do
+                  get "test_auth", to: "test#index"
+                end
+              end
+            end
+
+            get "/api/v1/test_auth",
+              headers: {
+                "Content-Type" => "application/json",
+                "Authorization" => "Bearer #{@plain_token}"
+              }
+            assert_response :success
+          end
+        end
+
+        assert_match(/event=api_request_authenticated/, logs)
+        assert_match(/api_token_prefix=#{Regexp.escape(@api_token.token_prefix)}/, logs)
+      end
+
+      test "token_digest never appears in logs on successful auth" do
+        logs = capture_logs do
+          with_routing do |set|
+            set.draw do
+              namespace :api do
+                namespace :v1 do
+                  get "test_auth", to: "test#index"
+                end
+              end
+            end
+
+            get "/api/v1/test_auth",
+              headers: {
+                "Content-Type" => "application/json",
+                "Authorization" => "Bearer #{@plain_token}"
+              }
+          end
+        end
+
+        assert_no_match(/token_digest/, logs)
+        assert_no_match(/#{Regexp.escape(@api_token.token_digest)}/, logs)
+      end
+
+      test "token_digest never appears in logs on failed auth" do
+        logs = capture_logs do
+          with_routing do |set|
+            set.draw do
+              namespace :api do
+                namespace :v1 do
+                  get "test_auth", to: "test#index"
+                end
+              end
+            end
+
+            get "/api/v1/test_auth",
+              headers: {
+                "Content-Type" => "application/json",
+                "Authorization" => "Bearer invalid_token_here"
+              }
+            assert_response :unauthorized
+          end
+        end
+
+        assert_no_match(/token_digest/, logs)
+      end
+
+      test "unauthenticated requests do not emit api_token_prefix in logs" do
+        logs = capture_logs do
+          with_routing do |set|
+            set.draw do
+              namespace :api do
+                namespace :v1 do
+                  get "test_auth", to: "test#index"
+                end
+              end
+            end
+
+            get "/api/v1/test_auth",
+              headers: { "Content-Type" => "application/json" }
+            assert_response :unauthorized
+          end
+        end
+
+        assert_no_match(/api_token_prefix=/, logs)
+        assert_no_match(/event=api_request_authenticated/, logs)
+      end
+
+      test "Doorkeeper OAuth auth does not emit api_token_prefix in logs" do
+        app = Doorkeeper::Application.create!(
+          name: "Test OAuth App",
+          uid: "test_oauth_log",
+          redirect_uri: "https://example.com/callback",
+          scopes: "podread",
+          confidential: true
+        )
+        doorkeeper_token = Doorkeeper::AccessToken.create!(
+          application: app,
+          resource_owner_id: @user.id,
+          scopes: "podread",
+          expires_in: 1.hour
+        )
+
+        logs = capture_logs do
+          with_routing do |set|
+            set.draw do
+              namespace :api do
+                namespace :v1 do
+                  get "test_auth", to: "test#index"
+                end
+              end
+            end
+
+            get "/api/v1/test_auth",
+              headers: {
+                "Content-Type" => "application/json",
+                "Authorization" => "Bearer #{doorkeeper_token.token}"
+              }
+            assert_response :success
+          end
+        end
+
+        assert_no_match(/api_token_prefix=/, logs)
+        assert_no_match(/event=api_request_authenticated/, logs)
+      end
+
+      private
+
+      def capture_logs
+        output = StringIO.new
+        original_logger = Rails.logger
+        Rails.logger = Logger.new(output)
+        yield
+        output.string
+      ensure
+        Rails.logger = original_logger
+      end
     end
   end
 end
