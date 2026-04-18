@@ -6,10 +6,12 @@ module Mpp
   # challenge against that address, and persists a pending MppPayment
   # row that binds challenge_id ↔ deposit_address ↔ payment_intent_id.
   #
-  # Returns Result.success(challenge:, deposit_address:) on success.
-  # Controller owns the response rendering (WWW-Authenticate header
-  # + 402 JSON body); this service owns the business logic.
+  # Returns Result.success(Provisioned) on success. Controller owns
+  # the response rendering (WWW-Authenticate header + 402 JSON body);
+  # this service owns the business logic.
   class ProvisionsChallenge
+    Provisioned = Data.define(:challenge, :deposit_address)
+
     def self.call(**kwargs)
       new(**kwargs).call
     end
@@ -55,7 +57,7 @@ module Mpp
         status: :pending
       )
 
-      Result.success(challenge: challenge, deposit_address: deposit_address)
+      Result.success(Provisioned.new(challenge: challenge, deposit_address: deposit_address))
     end
 
     private

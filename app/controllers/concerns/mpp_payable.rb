@@ -169,8 +169,8 @@ module MppPayable
       return
     end
 
-    challenge = result.data[:challenge]
-    deposit_address = result.data[:deposit_address]
+    challenge = result.data.challenge
+    deposit_address = result.data.deposit_address
 
     response.headers["WWW-Authenticate"] = challenge[:header_value]
 
