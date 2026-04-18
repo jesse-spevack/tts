@@ -2,7 +2,7 @@
 
 ## Overview
 
-PodRead converts articles and text into podcast-style audio. The Micropayment Protocol (MPP) lets callers pay $1.00 per conversion using on-chain stablecoin (pathUSD) on the Tempo network, without needing a PodRead account. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing. The protocol uses a challenge-response flow: the server returns a 402 with payment instructions, the caller sends stablecoin to a one-time deposit address, and retries the request with a credential proving payment.
+PodRead converts articles and text into podcast-style audio. The [Machine Payments Protocol](http://mpp.dev/) (MPP) lets callers pay $1.00 per conversion using on-chain stablecoin (pathUSD) on the Tempo network, without needing a PodRead account. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing. The protocol uses a challenge-response flow: the server returns a 402 with payment instructions, the caller sends stablecoin to a one-time deposit address, and retries the request with a credential proving payment.
 
 ## Quick Start
 
@@ -147,7 +147,7 @@ curl https://verynormal.dev/api/v1/narrations/nar_a1b2c3d4e5f6a1b2c3d4e5f6
 
 ```json
 {
-  "public_id": "nar_a1b2c3d4e5f6a1b2c3d4e5f6",
+  "id": "nar_aB3xK9mQ2pL7",
   "status": "pending",
   "title": "Example Article",
   "author": "Jane Doe",
@@ -159,7 +159,7 @@ curl https://verynormal.dev/api/v1/narrations/nar_a1b2c3d4e5f6a1b2c3d4e5f6
 
 ```json
 {
-  "public_id": "nar_a1b2c3d4e5f6a1b2c3d4e5f6",
+  "id": "nar_aB3xK9mQ2pL7",
   "status": "processing",
   "title": "Example Article",
   "author": "Jane Doe",
@@ -173,7 +173,7 @@ When status is `"complete"`, the response includes an `audio_url`:
 
 ```json
 {
-  "public_id": "nar_a1b2c3d4e5f6a1b2c3d4e5f6",
+  "id": "nar_aB3xK9mQ2pL7",
   "status": "complete",
   "title": "Example Article",
   "author": "Jane Doe",
@@ -246,6 +246,7 @@ Narrations expire after 24 hours.
 | `title` | string | No | Episode title (defaults to `"Untitled"`) |
 | `author` | string | No | Author name |
 | `description` | string | No | Episode description |
+| `voice` | string | No | Voice catalog key. Anonymous (Narration) path only — see [Voices](#voices). Authenticated Episode path ignores this param and uses the user's stored voice preference. |
 
 **402 Payment Required response:**
 
@@ -274,7 +275,7 @@ Body:
 
 ```json
 {
-  "narration_id": "nar_<24-hex-chars>"
+  "narration_id": "nar_<opaque-id>"
 }
 ```
 
@@ -282,7 +283,7 @@ Body:
 
 ```json
 {
-  "id": "ep_<prefix-id>"
+  "id": "ep_<opaque-id>"
 }
 ```
 
@@ -290,7 +291,7 @@ Body:
 
 ```json
 {
-  "id": "ep_<prefix-id>"
+  "id": "ep_<opaque-id>"
 }
 ```
 
@@ -302,6 +303,12 @@ Body:
 }
 ```
 
+```json
+{
+  "error": "Invalid voice: <voice-key>"
+}
+```
+
 **503 Service Unavailable (Stripe provisioning failure):**
 
 ```json
@@ -310,15 +317,15 @@ Body:
 }
 ```
 
-### GET /api/v1/narrations/:public_id
+### GET /api/v1/narrations/:prefix_id
 
-No authentication required. The `public_id` is the `narration_id` returned from the creation endpoint.
+No authentication required. The `:prefix_id` path segment is the `narration_id` returned from the creation endpoint (e.g. `nar_aB3xK9mQ2pL7`).
 
 **Response body:**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `public_id` | string | The narration identifier |
+| `id` | string | The narration identifier (e.g. `nar_aB3xK9mQ2pL7`) |
 | `status` | string | One of: `pending`, `preparing`, `processing`, `complete`, `failed` |
 | `title` | string | Narration title |
 | `author` | string or null | Author name |
@@ -341,12 +348,37 @@ The `amount` in the 402 response body is in **cents** (100 = $1.00). The `amount
 
 If narration processing fails, the payment is automatically refunded.
 
+## Voices
+
+Callers on the anonymous MPP (Narration) path may select a voice by passing a `voice` catalog key in the request body. All catalog voices are available — MPP payment unlocks the premium (Chirp3-HD) tier.
+
+If `voice` is omitted, the default is `"callum"` (British male, Chirp3-HD).
+
+If `voice` is supplied but is not one of the keys below, the request returns **422** with `{"error": "Invalid voice: <key>"}`.
+
+| Key | Name | Accent | Gender | Tier |
+|-----|------|--------|--------|------|
+| `wren` | Wren | British | Female | Standard |
+| `felix` | Felix | British | Male | Standard |
+| `sloane` | Sloane | American | Female | Standard |
+| `archer` | Archer | American | Male | Standard |
+| `gemma` | Gemma | British | Female | Standard |
+| `hugo` | Hugo | British | Male | Standard |
+| `quinn` | Quinn | American | Female | Standard |
+| `theo` | Theo | American | Male | Standard |
+| `elara` | Elara | British | Female | Chirp3-HD |
+| `callum` | Callum | British | Male | Chirp3-HD (default) |
+| `lark` | Lark | American | Female | Chirp3-HD |
+| `nash` | Nash | American | Male | Chirp3-HD |
+
+The authenticated Episode path (Bearer + Payment) ignores the `voice` param and uses the user's stored voice preference instead. To change the voice for an authenticated MPP request, update the user's profile voice first.
+
 ## Rate Limits
 
 | Endpoint | Limit | Window | Key |
 |----------|-------|--------|-----|
 | `POST /api/v1/episodes` | 20 requests | 1 hour | Bearer token |
-| `GET /api/v1/narrations/:public_id` | 60 requests | 1 minute | IP address |
+| `GET /api/v1/narrations/:prefix_id` | 60 requests | 1 minute | IP address |
 
 Throttled requests return **429 Too Many Requests** with a `Retry-After` header:
 
