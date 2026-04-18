@@ -149,11 +149,20 @@
               <ul role="list" class="divide-y divide-mist-200 dark:divide-mist-700">
                 <% @connected_apps.each do |connected| %>
                   <li class="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div>
-                      <p class="text-sm font-medium text-mist-950 dark:text-white"><%= connected[:app].name %></p>
-                      <p class="text-xs text-mist-500 dark:text-mist-400">
-                        Connected <%= time_ago_in_words(connected[:authorized_at]) %> ago
-                      </p>
+                    <div class="flex items-center gap-3">
+                      <%= oauth_app_badge(connected[:app]) %>
+                      <div>
+                        <p class="text-sm font-medium text-mist-950 dark:text-white"><%= connected[:app].name %></p>
+                        <p class="text-xs text-mist-500 dark:text-mist-400">
+                          Connected
+                          <time datetime="<%= connected[:authorized_at].iso8601 %>"
+                                title="<%= connected[:authorized_at].strftime("%B %-d, %Y at %-I:%M %p") %>"
+                                aria-label="Connected <%= connected[:authorized_at].strftime("%B %-d, %Y at %-I:%M %p") %>"
+                                class="underline decoration-dotted decoration-mist-400 dark:decoration-mist-600 underline-offset-2 cursor-help">
+                            <%= time_ago_in_words(connected[:authorized_at]) %> ago
+                          </time>
+                        </p>
+                      </div>
                     </div>
                     <%= button_to "Disconnect",
                         settings_connected_app_path(connected[:app]),
