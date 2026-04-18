@@ -62,7 +62,7 @@ module Settings
       assert_select "td", text: api_tokens(:user_created_token).token_prefix.to_s, count: 0
     end
 
-    # Create + Reveal (PRG)
+    # Create (PRG — reveal page covered by Settings::ApiTokenRevealsControllerTest)
     test "create generates a new user-sourced token and redirects to reveal" do
       sign_in_as(@user)
 
@@ -70,51 +70,13 @@ module Settings
         post settings_api_tokens_path
       end
 
-      assert_redirected_to reveal_settings_api_tokens_path
+      assert_redirected_to settings_api_token_reveal_path
       new_token = @user.api_tokens.source_user.order(created_at: :desc).first
       assert_equal "user", new_token.source
       assert_equal new_token.token_prefix, flash[:reveal_token_prefix]
       # The plain token ridden in flash must hash to the persisted digest
       assert_equal new_token.token_digest,
         HashesToken.call(plain_token: flash[:reveal_plain_token])
-    end
-
-    test "reveal renders the plain token passed through flash" do
-      sign_in_as(@user)
-
-      post settings_api_tokens_path
-      follow_redirect!
-
-      assert_response :success
-      new_token = @user.api_tokens.source_user.order(created_at: :desc).first
-
-      # Plain token is never stored — assert the rendered body contains a
-      # string that hashes to the DB digest (proves the reveal action
-      # genuinely exposed the freshly-minted plain token).
-      rendered = response.body.match(/sk_live_[A-Za-z0-9_-]+/)&.to_s
-      assert rendered, "reveal page must contain an sk_live_ token in the response body"
-      assert_equal new_token.token_digest, HashesToken.call(plain_token: rendered)
-      assert_includes response.body, new_token.token_prefix
-    end
-
-    test "reveal redirects to index when visited directly without a token in flash" do
-      sign_in_as(@user)
-
-      get reveal_settings_api_tokens_path
-
-      assert_redirected_to settings_api_tokens_path
-    end
-
-    test "reveal does not re-show the token after the flash has been consumed" do
-      sign_in_as(@user)
-
-      # Create → reveal → follow to index (which clears the flash) → revisit reveal
-      post settings_api_tokens_path
-      follow_redirect! # reveal
-      get settings_api_tokens_path # consumes flash
-      get reveal_settings_api_tokens_path
-
-      assert_redirected_to settings_api_tokens_path
     end
 
     test "create does not revoke user's other active tokens" do

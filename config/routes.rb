@@ -83,9 +83,8 @@ Rails.application.routes.draw do
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
     resources :connected_apps, only: [ :destroy ]
-    resources :api_tokens, only: [ :index, :create, :destroy ] do
-      get :reveal, on: :collection
-    end
+    resources :api_tokens, only: [ :index, :create, :destroy ]
+    resource :api_token_reveal, only: [ :show ]
   end
 
   # Device authorization (CLI login)

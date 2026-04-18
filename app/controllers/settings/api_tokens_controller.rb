@@ -23,16 +23,7 @@ module Settings
       # next request), which is acceptable as a one-shot transport.
       flash[:reveal_plain_token] = api_token.plain_token
       flash[:reveal_token_prefix] = api_token.token_prefix
-      redirect_to reveal_settings_api_tokens_path
-    end
-
-    def reveal
-      @plain_token = flash[:reveal_plain_token]
-      @token_prefix = flash[:reveal_token_prefix]
-
-      if @plain_token.blank?
-        redirect_to settings_api_tokens_path and return
-      end
+      redirect_to settings_api_token_reveal_path
     end
 
     def destroy
