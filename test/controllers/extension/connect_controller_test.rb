@@ -77,6 +77,21 @@ module Extension
         "user-created tokens must survive an extension reconnect"
     end
 
+    test "show does not revoke OTHER users' extension tokens" do
+      other_user = users(:two)
+      other_user_extension_token = api_tokens(:recently_used_token)
+      assert_equal other_user, other_user_extension_token.user
+      assert other_user_extension_token.source_extension?
+      assert other_user_extension_token.active?
+
+      sign_in_as(@user)
+      get extension_connect_path
+
+      other_user_extension_token.reload
+      assert other_user_extension_token.active?,
+        "reconnecting user A must never touch user B's extension tokens"
+    end
+
     test "show includes data attribute for extension to read" do
       sign_in_as(@user)
 

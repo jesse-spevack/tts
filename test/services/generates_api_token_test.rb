@@ -69,6 +69,25 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
     assert_equal api_token.id, found_token.id
   end
 
+  test "call emits structured log with event, user_id, source, and token_prefix" do
+    output = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(output)
+    begin
+      token = GeneratesApiToken.call(user: @user, source: "extension")
+    ensure
+      Rails.logger = original_logger
+    end
+
+    logs = output.string
+    assert_match(/event=api_token_generated/, logs)
+    assert_match(/user_id=#{@user.id}/, logs)
+    assert_match(/source=extension/, logs)
+    assert_match(/token_prefix=#{Regexp.escape(token.token_prefix)}/, logs)
+    refute_match(/token_digest/, logs, "token_digest must never appear in logs")
+    refute_match(Regexp.new(Regexp.escape(token.plain_token)), logs, "plain token must never appear in logs")
+  end
+
   test "call creates token with correct digest" do
     api_token = GeneratesApiToken.call(user: @user)
 
