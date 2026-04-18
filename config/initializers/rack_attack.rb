@@ -22,6 +22,20 @@ class Rack::Attack
     end
   end
 
+  # Rate limit: 10 unauthenticated episode creations per minute per IP
+  # Protects the MPP 402 challenge endpoint from being flooded with requests
+  # that each create a Stripe PaymentIntent and pending MppPayment row.
+  # Authenticated requests (valid Bearer token) are excluded — they have their
+  # own per-token throttle above.
+  throttle("api/v1/episodes/create/unauthenticated", limit: 10, period: 1.minute) do |req|
+    if req.path == "/api/v1/episodes" && req.post?
+      auth_header = req.get_header("HTTP_AUTHORIZATION")
+      has_bearer = auth_header&.match?(/\ABearer\s+\S/)
+
+      req.ip unless has_bearer
+    end
+  end
+
   # Rate limit: 5 device code creations per minute per IP
   throttle("api/v1/auth/device_codes/create", limit: 5, period: 1.minute) do |req|
     if req.path == "/api/v1/auth/device_codes" && req.post?
