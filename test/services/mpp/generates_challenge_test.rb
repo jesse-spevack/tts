@@ -172,10 +172,10 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     challenge = result.data
 
     # The challenge should support serialization to a WWW-Authenticate header
-    # Expected format: PaymentRequired id="...", realm="...", method="tempo", intent="charge", request="...", expires="..."
+    # Expected format: Payment id="...", realm="...", method="tempo", intent="charge", request="...", expires="..."
     header_value = challenge[:header_value]
     assert header_value.present?
-    assert header_value.start_with?("PaymentRequired")
+    assert header_value.start_with?("Payment ")
     assert_includes header_value, "id="
     assert_includes header_value, "realm="
     assert_includes header_value, 'method="tempo"'

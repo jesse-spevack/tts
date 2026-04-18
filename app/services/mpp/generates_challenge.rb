@@ -25,7 +25,7 @@ module Mpp
       hmac_data = "#{realm}|#{method}|#{intent}|#{request_json}|#{expires}"
       id = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, hmac_data)
 
-      header_value = "PaymentRequired " \
+      header_value = "Payment " \
         "id=\"#{id}\", " \
         "realm=\"#{realm}\", " \
         "method=\"#{method}\", " \

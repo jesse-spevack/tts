@@ -40,7 +40,7 @@ module Api
         assert_response :payment_required
         assert response.headers["WWW-Authenticate"].present?,
           "Expected WWW-Authenticate header in 402 response"
-        assert_match(/PaymentRequired/, response.headers["WWW-Authenticate"])
+        assert_match(/Payment /, response.headers["WWW-Authenticate"])
       end
 
       test "402 response body includes challenge details" do
