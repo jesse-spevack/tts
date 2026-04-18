@@ -63,7 +63,7 @@ module Api
       private
 
       def episode_params
-        params.permit(:title, :author, :description, :content, :url, :source_type, :text)
+        params.permit(:title, :author, :description, :content, :url, :source_type, :text, :voice)
       end
 
       def create_from_url(podcast)
