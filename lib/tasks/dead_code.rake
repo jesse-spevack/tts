@@ -26,8 +26,12 @@ namespace :code_quality do
   # positives).
   # Updated 2026-04-17 after removing Result#flash_type, LlmUsage#cost_dollars,
   # and ValidatesPrice.subscription? (all only referenced by their own tests).
+  # Updated 2026-04-18 (+3) for MPP additions: Api::V1::NarrationsController#show,
+  # CleanupStaleMppPaymentsJob#perform, ProcessesNarrationJob#perform. All three
+  # are Rails-invoked (routing + Active Job) — same category as existing entries
+  # already counted in the baseline (e.g. ProcessesUrlEpisodeJob#perform).
   # Count includes both unused methods and unused constants.
-  debride_baseline = 60
+  debride_baseline = 63
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
