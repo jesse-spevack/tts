@@ -67,7 +67,6 @@ Rails.application.routes.draw do
       get "openapi.json", to: "openapi#show", as: :openapi
 
       namespace :auth do
-        resource :extension_token, only: [ :create ]
         resource :device_codes, only: [ :create ]
         resource :device_tokens, only: [ :create ]
         resource :status, only: [ :show ]
