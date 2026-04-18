@@ -340,4 +340,146 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
       assert_select "*", text: /\$9\/mo/, count: 0
     end
   end
+
+  # --- Credits section ---
+  #
+  # New <section id="credits"> between Billing and Browser Extension.
+  # Visibility: show when has_credits? || !premium?; hide when premium? && !has_credits?.
+  # Three render paths:
+  #   - has_credits? (any tier): balance + "Buy More Credits" form POST /checkout.
+  #   - subscription&.canceled? (no credits): grace branch — "Your subscription ended on <date>"
+  #     + softened "Pay-as-you-go is available..." + "Buy Credit Pack" CTA.
+  #   - !premium? && !has_credits? (free, never bought): empty-state acquisition card
+  #     with "Buy Credit Pack" CTA.
+
+  test "credits card renders for credit_user with balance and Buy More Credits CTA" do
+    sign_in_as(users(:credit_user))
+    balance = credit_balances(:with_credits).balance # 3
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 1
+    assert_select "section#credits h2", text: /Credits/
+    assert_select "section#credits" do
+      assert_select "*", text: /#{balance}/
+      assert_select "form[action=?][method=?]", checkout_path, "post" do
+        assert_select "input[type=hidden][name=?][value=?]", "price_id", AppConfig::Stripe::PRICE_ID_CREDIT_PACK
+        assert_select "input[type=submit][value=?]", "Buy More Credits"
+      end
+    end
+  end
+
+  test "credits card renders empty-state for free user (no subscription, no credits)" do
+    # @user is users(:one) — standard, no subscription, no credit_balance (free).
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 1
+    assert_select "section#credits h2", text: /Credits/
+    assert_select "section#credits" do
+      # Empty-state copy — loose match on any of the expected phrases.
+      assert_select "*", text: /Pay as you go|no subscription required/i
+      assert_select "input[type=submit][value=?]", "Buy Credit Pack"
+      # "credits remaining" phrasing belongs to the has_credits? path only.
+      assert_select "*", text: /credits remaining/, count: 0
+    end
+  end
+
+  test "credits card does NOT render for premium subscriber with zero credits" do
+    # users(:subscriber) has active_subscription fixture — premium? = true, has_credits? = false.
+    sign_in_as(users(:subscriber))
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 0
+    # Sanity: Billing card still renders for this premium user.
+    assert_select "section#billing"
+  end
+
+  test "credits card renders for premium user with leftover credits (rollover case)" do
+    # Premium + credits > 0 — covers the "bought pack, then subscribed" edge case.
+    user = users(:annual_subscriber)
+    CreditBalance.for(user).add!(3)
+    sign_in_as(user)
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 1
+    assert_select "section#credits" do
+      assert_select "*", text: /3/
+      assert_select "input[type=submit][value=?]", "Buy More Credits"
+    end
+  end
+
+  test "credits card pluralizes 'episode credit' for balance of 1" do
+    user = users(:credit_user)
+    user.credit_balance.update!(balance: 1)
+    sign_in_as(user)
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits *", text: /1 episode credit\b/
+    # Plural form must NOT appear for a balance of 1.
+    assert_select "section#credits *", text: /1 episode credits/, count: 0
+  end
+
+  test "credits card renders grace branch for canceled subscriber with zero credits" do
+    user = users(:canceled_subscriber)
+    sign_in_as(user)
+    expected_date = subscriptions(:canceled_subscription).current_period_end.strftime("%B %-d, %Y")
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 1
+    assert_select "section#credits" do
+      assert_select "*", text: /Your subscription ended on #{Regexp.escape(expected_date)}/
+      assert_select "*", text: /Pay-as-you-go is available/i
+      assert_select "input[type=submit][value=?]", "Buy Credit Pack"
+      # Must NOT show the default empty-state marketing phrasing.
+      assert_select "*", text: /no subscription required/, count: 0
+      # Must NOT show the has_credits? branch.
+      assert_select "*", text: /credits remaining/, count: 0
+    end
+  end
+
+  test "credits card renders empty-state for past-due subscriber (A1 — grace-period alt path)" do
+    # Past-due sub is in Stripe's dunning grace (status=1, retrying payment).
+    # premium? returns false, so user falls into the empty-state branch by design.
+    # Lock this in explicitly so it doesn't drift.
+    sign_in_as(users(:past_due_subscriber))
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 1
+    assert_select "section#credits" do
+      assert_select "*", text: /Pay as you go|no subscription required/i
+      assert_select "input[type=submit][value=?]", "Buy Credit Pack"
+    end
+  end
+
+  test "credits card does NOT render for complimentary user with zero credits" do
+    # Complimentary users are premium? = true → card hides unless they have credits.
+    sign_in_as(users(:complimentary_user))
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 0
+  end
+
+  test "credits card does NOT render for unlimited user with zero credits" do
+    # Unlimited users are premium? = true → card hides unless they have credits.
+    sign_in_as(users(:unlimited_user))
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits", count: 0
+  end
 end
