@@ -13,9 +13,6 @@
         <li><a href="#extension" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Browser Extension</a></li>
         <li><a href="#connected-apps" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Connected Apps</a></li>
         <li><a href="#email" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Email to Podcast</a></li>
-        <% if Current.user_admin? %>
-          <li><a href="#demo" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Demo Mode</a></li>
-        <% end %>
       </ul>
     </nav>
 
@@ -28,9 +25,6 @@
       <a href="#extension" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Extension</a>
       <a href="#connected-apps" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Connected</a>
       <a href="#email" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Email</a>
-      <% if Current.user_admin? %>
-        <a href="#demo" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Demo</a>
-      <% end %>
     </nav>
 
     <div class="space-y-12">
@@ -250,22 +244,6 @@
         </div>
       </section>
 
-      <% if Current.user_admin? %>
-        <%# Demo Mode section %>
-        <section id="demo" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-mist-950/10 pt-12 md:grid-cols-3 dark:border-white/10">
-          <div>
-            <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Demo Mode</h2>
-            <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Hide personal info like email and RSS feed ID for screen recordings.</p>
-          </div>
-          <div class="md:col-span-2">
-            <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-              <%= button_to settings_demo_mode_path, method: :post, class: "#{button_classes(type: demo_mode? ? :danger : :primary)}" do %>
-                <%= demo_mode? ? 'Disable Demo Mode' : 'Enable Demo Mode' %>
-              <% end %>
-            </div>
-          </div>
-        </section>
-      <% end %>
     </div>
   </div>
 </div>
