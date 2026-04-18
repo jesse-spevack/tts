@@ -61,6 +61,7 @@ module MppPayable
   def handle_mpp_auth
     bearer_token = extract_bearer_token
     payment_credential = extract_payment_credential
+    Rails.logger.info "[MPP DEBUG] Auth header present: #{request.headers['Authorization'].present?}, bearer: #{bearer_token.present?}, payment_credential: #{payment_credential.present?}, raw_header_prefix: #{request.headers['Authorization']&.first(30)}"
 
     if bearer_token.present?
       # Try authenticating the bearer token
@@ -95,7 +96,16 @@ module MppPayable
 
   # Anonymous user with Payment credential: verify and create Narration
   def handle_anonymous_mpp_payment(credential)
+    Rails.logger.info "[MPP DEBUG] Verifying credential (first 80 chars): #{credential.first(80)}"
+    begin
+      decoded = Base64.urlsafe_decode64(credential)
+      parsed = JSON.parse(decoded)
+      Rails.logger.info "[MPP DEBUG] Credential payload keys: #{parsed['payload']&.keys}, payload: #{parsed['payload'].to_json.first(200)}"
+    rescue => e
+      Rails.logger.info "[MPP DEBUG] Could not decode credential: #{e.message}"
+    end
     verification = Mpp::VerifiesCredential.call(credential: credential)
+    Rails.logger.info "[MPP DEBUG] Verification result: success=#{verification.success?}, error=#{verification.error rescue 'n/a'}"
 
     unless verification.success?
       render_402_challenge
