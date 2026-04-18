@@ -16,3 +16,6 @@ production:
   cleanup_expired_device_codes:
     class: CleanupExpiredDeviceCodesJob
     schedule: every day at 3am
+  cleanup_stale_mpp_payments:
+    class: CleanupStaleMppPaymentsJob
+    schedule: every hour
