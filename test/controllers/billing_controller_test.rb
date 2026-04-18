@@ -57,4 +57,30 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
     assert_match "Canceled", response.body
     assert_match "Resubscribe", response.body
   end
+
+  # --- Free + Credits card pluralization (agent-team-01q.5) ---
+
+  test "Free + Credits card pluralizes 'episode credit' for balance of 1" do
+    user = users(:credit_user)
+    user.credit_balance.update!(balance: 1)
+    sign_in_as(user)
+
+    get billing_path
+
+    assert_response :success
+    assert_select "*", text: /1 episode credit remaining/
+    # Plural form must NOT appear for a balance of 1.
+    assert_select "*", text: /1 episode credits remaining/, count: 0
+  end
+
+  test "Free + Credits card uses plural 'episode credits' for balance of 2" do
+    user = users(:credit_user)
+    user.credit_balance.update!(balance: 2)
+    sign_in_as(user)
+
+    get billing_path
+
+    assert_response :success
+    assert_select "*", text: /2 episode credits remaining/
+  end
 end

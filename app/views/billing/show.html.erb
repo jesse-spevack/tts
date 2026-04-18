@@ -64,7 +64,7 @@
               <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">Active</span>
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
-              You have <span class="font-medium text-mist-950 dark:text-white"><%= Current.user.credits_remaining %> episode credits</span> remaining.
+              You have <span class="font-medium text-mist-950 dark:text-white"><%= pluralize(Current.user.credits_remaining, "episode credit") %></span> remaining.
             </p>
             <div class="mt-4">
               <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
