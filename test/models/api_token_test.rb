@@ -55,7 +55,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     token = GeneratesApiToken.call(user: user)
 
     assert token.persisted?
-    assert token.plain_token.start_with?("pk_live_")
+    assert token.plain_token.start_with?("sk_live_")
   end
 
   test "GeneratesApiToken returns plain_token which is not stored in database" do

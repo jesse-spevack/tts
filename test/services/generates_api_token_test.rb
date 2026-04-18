@@ -16,7 +16,7 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
 
     assert api_token.is_a?(ApiToken)
     assert api_token.plain_token.present?
-    assert api_token.plain_token.start_with?("pk_live_")
+    assert api_token.plain_token.start_with?("sk_live_")
   end
 
   test "call creates token associated with user" do

@@ -23,7 +23,7 @@ module Api
           assert_response :success
           json = response.parsed_body
           assert json["token"].present?
-          assert json["token"].start_with?("pk_live_")
+          assert json["token"].start_with?("sk_live_")
         end
 
         test "create generates a valid token that can be used for API auth" do

@@ -21,7 +21,7 @@ describe('errorHandling', () => {
     jest.clearAllMocks();
     mockIcons.setIconState.mockResolvedValue(undefined);
     mockAuth.clearToken.mockResolvedValue(undefined);
-    mockAuth.getToken.mockResolvedValue('pk_live_test1234567890123456789012345678');
+    mockAuth.getToken.mockResolvedValue('sk_live_EXAMPLE_FIXTURE_abcdefghij1234567890');
     mockApi.logExtensionFailure.mockResolvedValue({ success: true, data: { logged: true } });
   });
 
@@ -65,7 +65,7 @@ describe('errorHandling', () => {
 
   describe('handleApiError', () => {
     const url = 'https://example.com/article';
-    const token = 'pk_live_test1234567890123456789012345678';
+    const token = 'sk_live_EXAMPLE_FIXTURE_abcdefghij1234567890';
 
     it('should clear token and show error for 401', async () => {
       await handleApiError(401, 'Unauthorized', url, token);

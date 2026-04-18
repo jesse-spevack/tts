@@ -3,7 +3,7 @@
 class GeneratesApiToken
   include StructuredLogging
 
-  TOKEN_PREFIX = "pk_live_"
+  TOKEN_PREFIX = "sk_live_"
 
   def self.call(user:)
     new(user: user).call
