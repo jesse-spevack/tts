@@ -58,6 +58,7 @@ Rails.application.routes.draw do
 
     namespace :v1 do
       resources :episodes, only: [ :index, :show, :create, :destroy ]
+      resources :narrations, only: [ :show ], param: :public_id
       resources :extension_logs, only: [ :create ]
       resources :voices, only: [ :index ]
       resource :feed, only: [ :show ]

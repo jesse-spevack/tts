@@ -31,3 +31,12 @@ completed_for_narration:
   stripe_payment_intent_id: "pi_test_narration_789"
   tx_hash: "0xabc123def012"
   user: one
+
+expired_narration_payment:
+  public_id: mpp_test_fixture_expired_narration
+  amount_cents: 100
+  currency: usd
+  status: completed
+  stripe_payment_intent_id: "pi_test_expired_narration"
+  tx_hash: "0xabc123expired"
+  user: one
