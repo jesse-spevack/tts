@@ -83,11 +83,19 @@
 
   <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
     headline: "API",
-    subheadline: "Build text-to-speech into your own workflows. Send content programmatically and get episodes delivered to any feed.",
-    badge: "Coming soon"
+    subheadline: "Build text-to-speech into your own workflows. Send content programmatically and get episodes in your feed. Full reference at /docs/mpp."
   } do %>
     <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "brown", placement: "bottom-left" } do %>
       <%= render "pages/feature_api" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Machine Payments",
+    subheadline: "Pay $1.00 per narration with on-chain stablecoin on the Tempo network — no account required. The first production implementation of the Machine Payments Protocol."
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "purple", placement: "top-right" } do %>
+      <%= render "pages/feature_mpp" %>
     <% end %>
   <% end %>
 <% end %>
