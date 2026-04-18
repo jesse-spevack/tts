@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-# Controller concern that adds MPP (Micropayment Protocol) as a third
-# authorization path alongside bearer tokens (API + OAuth).
+# Controller concern that adds MPP (Machine Payments Protocol,
+# http://mpp.dev/) as a third authorization path alongside bearer
+# tokens (API + OAuth).
 #
 # Authorization decision tree:
 #   Request arrives at POST /api/v1/episodes
@@ -63,7 +64,6 @@ module MppPayable
     payment_credential = extract_payment_credential
 
     if bearer_token.present?
-      # Try authenticating the bearer token
       if authenticate_bearer(bearer_token)
         # User is authenticated. Let the existing flow handle subscribers/credit users.
         # We only intervene at the permission check stage (see override below).
@@ -80,7 +80,6 @@ module MppPayable
     end
   end
 
-  # Authenticate a bearer token via the existing base controller methods.
   def authenticate_bearer(token)
     if authenticate_via_api_token(token)
       true
@@ -134,12 +133,16 @@ module MppPayable
       user_id: current_user.id
     )
 
-    # Create the episode using the existing controller flow
     create_episode_via_mpp(mpp_payment, verification)
   end
 
   # ── Episode creation (authenticated + paid) ───────────────────────────
 
+  # current_user here is the bearer-authenticated user who hit the paywall
+  # (subscription inactive, no credits, free tier exhausted) and is paying
+  # via MPP to unlock this one episode. Set earlier by authenticate_bearer
+  # in handle_mpp_auth. This is NOT the anonymous MPP flow — that path
+  # goes through handle_anonymous_mpp_payment and creates a Narration.
   def create_episode_via_mpp(mpp_payment, verification)
     podcast = GetsDefaultPodcastForUser.call(user: current_user)
 
