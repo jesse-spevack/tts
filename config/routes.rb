@@ -47,6 +47,9 @@ Rails.application.routes.draw do
   get "help/claude", to: "pages#claude_help", as: :help_claude
   get "help/chatgpt", to: "pages#chatgpt_help", as: :help_chatgpt
 
+  # MPP API documentation
+  get "docs/mpp", to: "docs#mpp", as: :docs_mpp
+
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
 
