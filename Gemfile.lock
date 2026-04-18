@@ -448,6 +448,7 @@ GEM
       httparty (>= 0.22.0)
     retriable (3.4.1)
     rexml (3.4.4)
+    rouge (4.7.0)
     rubocop (1.81.7)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -630,6 +631,7 @@ DEPENDENCIES
   rack-attack
   rails (~> 8.1.2)
   resend
+  rouge (~> 4.7)
   rubocop-rails-omakase
   ruby-mp3info
   ruby_llm
