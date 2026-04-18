@@ -138,25 +138,8 @@ module MppPayable
 
   # ── Episode creation (authenticated + paid) ───────────────────────────
 
-  # current_user here is the bearer-authenticated user who hit the paywall
-  # (subscription inactive, no credits, free tier exhausted) and is paying
-  # via MPP to unlock this one episode. Set earlier by authenticate_bearer
-  # in handle_mpp_auth. This is NOT the anonymous MPP flow — that path
-  # goes through handle_anonymous_mpp_payment and creates a Narration.
   def create_episode_via_mpp(mpp_payment, verification)
-    podcast = GetsDefaultPodcastForUser.call(user: current_user)
-
-    result = case episode_params[:source_type]
-    when "url"
-      create_from_url(podcast)
-    when "text"
-      create_from_text(podcast)
-    when "extension"
-      create_from_extension(podcast)
-    else
-      render json: { error: "source_type is required. Use 'url', 'text', or 'extension'." }, status: :unprocessable_entity
-      return
-    end
+    result = Mpp::CreatesEpisode.call(user: current_user, params: episode_params)
 
     if result.success?
       receipt = generate_receipt(verification.data[:tx_hash], mpp_payment)
