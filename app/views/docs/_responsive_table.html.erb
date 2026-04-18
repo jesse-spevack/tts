@@ -1,0 +1,52 @@
+<%#
+  Renders a table on md+ and a stacked card list on < md.
+
+  Overrides the ui-skill default of horizontal-scroll-only on mobile.
+  Wide-content tables (long variable names, long endpoint strings)
+  feel cramped under horizontal scroll; stacked cards are more scannable.
+
+  Params:
+    headers: Array<String> — column labels (used as <th> and as <dt> in cards)
+    rows: Array<Array<String | html_safe String>> — row cells, pre-formatted
+    cell_class: Array<String> — optional per-column CSS classes, applied to
+                both <td> and <dd>. Defaults to body-text color per column.
+%>
+<% cell_class ||= Array.new(headers.length) { "text-mist-700 dark:text-mist-300" } %>
+
+<div class="hidden md:block -mx-6 -my-2 mt-6 overflow-x-auto whitespace-nowrap lg:-mx-10">
+  <div class="inline-block min-w-full px-6 py-2 align-middle lg:px-10">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-mist-300 dark:border-mist-700">
+          <% headers.each_with_index do |header, i| %>
+            <th class="whitespace-nowrap py-3 <%= 'pr-6' unless i == headers.length - 1 %> text-left font-medium text-mist-950 dark:text-white"><%= header %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+        <% rows.each do |cells| %>
+          <tr>
+            <% cells.each_with_index do |cell, i| %>
+              <td class="py-3 <%= 'pr-6' unless i == cells.length - 1 %> <%= cell_class[i] %>"><%= cell %></td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<ul role="list" class="md:hidden mt-6 space-y-3">
+  <% rows.each do |cells| %>
+    <li class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+      <dl class="divide-y divide-mist-200 dark:divide-mist-800">
+        <% cells.each_with_index do |cell, i| %>
+          <div class="grid grid-cols-[7rem_1fr] gap-x-4 py-2 first:pt-0 last:pb-0">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400"><%= headers[i] %></dt>
+            <dd class="break-words <%= cell_class[i] %>"><%= cell %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </li>
+  <% end %>
+</ul>

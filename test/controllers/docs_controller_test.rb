@@ -5,7 +5,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     get docs_mpp_path
 
     assert_response :ok
-    assert_select "h1", text: /article into a podcast/i
+    assert_select "h1", text: /text into audio/i
     assert_select "a[href='http://mpp.dev/']"
     assert_select "section#voices"
     assert_select "section#rate-limits"
