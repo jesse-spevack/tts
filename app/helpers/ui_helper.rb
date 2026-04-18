@@ -51,6 +51,10 @@ module UiHelper
     subscription&.canceled? ? "Resubscribe" : "Manage Billing"
   end
 
+  def show_billing_section?(user, subscription)
+    user.premium? || subscription.present?
+  end
+
   def credits_card_variant(user)
     return :balance if user.has_credits?
     return nil if user.premium?

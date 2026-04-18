@@ -126,6 +126,35 @@ class UiHelperTest < ActionView::TestCase
     assert_equal :empty_state, credits_card_variant(users(:past_due_subscriber))
   end
 
+  # --- show_billing_section? (agent-team-01q.3) ---
+  #
+  # Gate for the /settings Billing card + section nav links. Returns true when
+  # the user is premium (show ongoing subscription management) OR has any
+  # subscription on file (canceled / past_due users still need access to the
+  # Manage Billing CTA). Returns false only when both are absent.
+
+  test "show_billing_section? returns true when user is premium and subscription is nil" do
+    user = Struct.new(:premium?).new(true)
+    assert show_billing_section?(user, nil)
+  end
+
+  test "show_billing_section? returns true when user is premium and subscription is present" do
+    user = Struct.new(:premium?).new(true)
+    subscription = Object.new
+    assert show_billing_section?(user, subscription)
+  end
+
+  test "show_billing_section? returns true when user is not premium but subscription is present" do
+    user = Struct.new(:premium?).new(false)
+    subscription = Object.new
+    assert show_billing_section?(user, subscription)
+  end
+
+  test "show_billing_section? returns false when user is not premium and subscription is nil" do
+    user = Struct.new(:premium?).new(false)
+    assert_not show_billing_section?(user, nil)
+  end
+
   # --- oauth_app_badge (agent-team-3d9) ---
   #
   # Badge is a size-9 rounded-lg container that renders either:
