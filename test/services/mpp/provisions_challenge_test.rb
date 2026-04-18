@@ -14,19 +14,19 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
       .with { Result.success(deposit_address: @deposit_address, payment_intent_id: @payment_intent_id) }
   end
 
-  test "returns challenge and deposit_address on success" do
+  test "returns Provisioned value with challenge and deposit_address on success" do
     result = Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
 
     assert result.success?
-    assert_equal @deposit_address, result.data[:deposit_address]
-    assert result.data[:challenge].is_a?(Hash)
-    assert result.data[:challenge][:id].present?
+    assert_kind_of Mpp::ProvisionsChallenge::Provisioned, result.data
+    assert_equal @deposit_address, result.data.deposit_address
+    assert result.data.challenge[:id].present?
   end
 
   test "signs challenge with the provisioned deposit_address as recipient" do
     result = Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
 
-    request_json = Base64.decode64(result.data[:challenge][:request])
+    request_json = Base64.decode64(result.data.challenge[:request])
     request = JSON.parse(request_json)
     assert_equal @deposit_address, request["recipient"]
   end
