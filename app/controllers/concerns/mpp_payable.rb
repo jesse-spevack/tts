@@ -161,44 +161,16 @@ module MppPayable
     amount_cents = AppConfig::Mpp::PRICE_CENTS
     currency = AppConfig::Mpp::CURRENCY
 
-    # Step 1: provision a Stripe PaymentIntent + deposit address FIRST so
-    # the real on-chain recipient is known before we sign anything.
-    deposit_result = Mpp::CreatesDepositAddress.call(
-      amount_cents: amount_cents,
-      currency: currency
-    )
+    result = Mpp::ProvisionsChallenge.call(amount_cents: amount_cents, currency: currency)
 
-    unless deposit_result.success?
-      render json: { error: "Payment provisioning failed: #{deposit_result.error}" },
+    unless result.success?
+      render json: { error: "Payment provisioning failed: #{result.error}" },
         status: :service_unavailable
       return
     end
 
-    deposit_address = deposit_result.data[:deposit_address]
-    payment_intent_id = deposit_result.data[:payment_intent_id]
-
-    # Step 2: sign the HMAC challenge with the real deposit_address as
-    # recipient. This binds the on-chain destination into the HMAC so it
-    # cannot be swapped at verification time.
-    challenge_result = Mpp::GeneratesChallenge.call(
-      amount_cents: amount_cents,
-      currency: currency,
-      recipient: deposit_address
-    )
-    challenge = challenge_result.data
-
-    # Step 3: persist a pending MppPayment row linking challenge_id to the
-    # deposit_address and stripe_payment_intent_id. VerifiesCredential
-    # resolves deposit_address from this row (not client payload) at
-    # verification time; refund accounting uses stripe_payment_intent_id.
-    MppPayment.create!(
-      amount_cents: amount_cents,
-      currency: currency,
-      challenge_id: challenge[:id],
-      deposit_address: deposit_address,
-      stripe_payment_intent_id: payment_intent_id,
-      status: :pending
-    )
+    challenge = result.data[:challenge]
+    deposit_address = result.data[:deposit_address]
 
     response.headers["WWW-Authenticate"] = challenge[:header_value]
 
