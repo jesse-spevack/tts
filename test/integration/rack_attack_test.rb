@@ -120,6 +120,47 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
+  # Unauthenticated episode creation rate limiting (MPP 402 challenge protection)
+
+  test "unauthenticated POST requests are throttled after 10 per minute" do
+    stub_stripe_payment_intent_creation
+
+    10.times do |i|
+      post api_v1_episodes_path,
+        params: @valid_params.merge(url: "https://example.com/anon-#{i}"),
+        as: :json
+
+      # Without auth, MppPayable returns 402 — that's fine, we just care about throttling
+      refute_equal 429, response.status, "Request #{i + 1} should not be throttled"
+    end
+
+    # The 11th unauthenticated request should be rate limited
+    post api_v1_episodes_path,
+      params: @valid_params.merge(url: "https://example.com/anon-11"),
+      as: :json
+
+    assert_response :too_many_requests
+  end
+
+  test "authenticated Bearer token requests are not affected by unauthenticated throttle" do
+    stub_stripe_payment_intent_creation
+
+    # Exhaust the unauthenticated limit first (10 per minute)
+    10.times do |i|
+      post api_v1_episodes_path,
+        params: @valid_params.merge(url: "https://example.com/anon-#{i}"),
+        as: :json
+    end
+
+    # Authenticated request should still go through (different throttle key)
+    post api_v1_episodes_path,
+      params: @valid_params.merge(url: "https://example.com/auth-1"),
+      headers: auth_header(@plain_token),
+      as: :json
+
+    assert_response :created
+  end
+
   # Device code creation rate limiting
 
   test "allows device code creation under the rate limit" do
@@ -166,5 +207,26 @@ class RackAttackTest < ActionDispatch::IntegrationTest
 
   def auth_header(token)
     { "Authorization" => "Bearer #{token}" }
+  end
+
+  # Stub Stripe PaymentIntent creation for unauthenticated requests that
+  # reach render_402_challenge -> Mpp::CreatesDepositAddress
+  def stub_stripe_payment_intent_creation
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_test_#{SecureRandom.hex(8)}",
+        object: "payment_intent",
+        amount: 100,
+        currency: "usd",
+        status: "requires_action",
+        next_action: {
+          type: "crypto_display_details",
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: "0xthrottle_test_deposit" }
+            }
+          }
+        }
+      }.to_json, headers: { "Content-Type" => "application/json" })
   end
 end
