@@ -51,13 +51,25 @@ module Mpp
       return Result.failure("Deposit address not found in cache") unless Rails.cache.read(cache_key)
 
       # Phase 2: On-chain verification
-      tx_hash = payload["hash"]
-      return Result.failure("Missing tx_hash in payload") if tx_hash.nil? || tx_hash.empty?
+      # mppx sends two credential types:
+      #   "hash"      — client already submitted the tx, sends the hash
+      #   "signature" — client sends a signed tx, server submits it
+      tx_hash = if payload["hash"].present?
+        payload["hash"]
+      elsif payload["signature"].present?
+        submitted = submit_raw_transaction(payload["signature"])
+        return submitted if submitted.is_a?(Result) && submitted.failure?
+        submitted
+      end
+      return Result.failure("Missing tx_hash or signature in payload") if tx_hash.nil? || tx_hash.empty?
 
       # Replay protection
       return Result.failure("Transaction already used") if MppPayment.exists?(tx_hash: tx_hash)
 
-      receipt = fetch_transaction_receipt(tx_hash)
+      # Poll for receipt — needed for "signature" type where the tx was
+      # just submitted and may not be mined yet. For "hash" type, the
+      # receipt should be available immediately.
+      receipt = poll_for_receipt(tx_hash)
       return receipt if receipt.is_a?(Result) && receipt.failure?
 
       # Verify receipt status
@@ -90,7 +102,8 @@ module Mpp
     def decode_credential
       return Result.failure("Credential is blank") if credential.nil? || credential.empty?
 
-      decoded = Base64.strict_decode64(credential)
+      # mppx uses base64url (no padding, - and _ instead of + and /)
+      decoded = Base64.urlsafe_decode64(credential)
       parsed = JSON.parse(decoded)
 
       unless parsed.is_a?(Hash) && parsed["challenge"] && parsed["payload"]
@@ -124,13 +137,28 @@ module Mpp
     end
 
     def fetch_transaction_receipt(tx_hash)
+      rpc_call("eth_getTransactionReceipt", [ tx_hash ])
+    end
+
+    def submit_raw_transaction(signed_tx)
+      rpc_call("eth_sendRawTransaction", [ signed_tx ])
+    end
+
+    def poll_for_receipt(tx_hash, max_attempts: 20, delay: 0.5)
+      max_attempts.times do |attempt|
+        receipt = fetch_transaction_receipt(tx_hash)
+        return receipt if receipt.is_a?(Result) && receipt.failure?
+        return receipt if receipt # non-nil means receipt found
+
+        sleep(delay) if attempt < max_attempts - 1
+      end
+
+      nil # receipt not found after all attempts
+    end
+
+    def rpc_call(method, params)
       uri = URI(AppConfig::Mpp::TEMPO_RPC_URL)
-      request_body = {
-        jsonrpc: "2.0",
-        method: "eth_getTransactionReceipt",
-        params: [ tx_hash ],
-        id: 1
-      }.to_json
+      request_body = { jsonrpc: "2.0", method: method, params: params, id: 1 }.to_json
 
       http = Net::HTTP.new(uri.hostname, uri.port)
       http.use_ssl = (uri.scheme == "https")
@@ -142,7 +170,6 @@ module Mpp
 
       response = http.request(request)
 
-      # Net::HTTP does not raise on non-2xx; check explicitly before parsing.
       unless response.is_a?(Net::HTTPSuccess)
         return Result.failure("RPC HTTP error: #{response.code}")
       end
