@@ -482,4 +482,20 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "section#credits", count: 0
   end
+
+  # --- Demo Mode relocated to /admin (agent-team-pte) ---
+  #
+  # Demo Mode toggle moved out of /settings to /admin/demo_mode. The /settings
+  # page should no longer render the toggle block or nav entries, even for admins.
+
+  test "settings page does not render Demo Mode block for admin users" do
+    sign_in_as(users(:admin_user))
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#demo", count: 0
+    assert_select "h2", text: "Demo Mode", count: 0
+    assert_select "a[href='#demo']", count: 0
+  end
 end
