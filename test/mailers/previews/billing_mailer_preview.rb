@@ -12,4 +12,8 @@ class BillingMailerPreview < ActionMailer::Preview
   def cancellation
     BillingMailer.cancellation(User.first, ends_at: 1.month.from_now)
   end
+
+  def subscription_ended
+    BillingMailer.subscription_ended(User.first)
+  end
 end

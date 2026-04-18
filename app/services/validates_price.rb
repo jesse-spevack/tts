@@ -19,8 +19,4 @@ class ValidatesPrice
   def self.credit_pack?(price_id)
     price_id == AppConfig::Stripe::PRICE_ID_CREDIT_PACK
   end
-
-  def self.subscription?(price_id)
-    SUBSCRIPTION_PRICE_IDS.include?(price_id)
-  end
 end

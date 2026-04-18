@@ -3,8 +3,8 @@
 module Tts
   # Configuration class for TTS settings.
   class Config
-    attr_accessor :voice_name, :language_code, :speaking_rate, :pitch, :audio_encoding, :timeout, :max_retries,
-                  :thread_pool_size, :byte_limit
+    attr_reader :voice_name, :language_code, :speaking_rate, :pitch, :audio_encoding, :timeout, :max_retries,
+                :thread_pool_size, :byte_limit
 
     def initialize(
       voice_name: "en-GB-Chirp3-HD-Enceladus",

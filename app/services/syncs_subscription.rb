@@ -15,32 +15,45 @@ class SyncsSubscription
     stripe_subscription = Stripe::Subscription.retrieve(stripe_subscription_id)
     user = User.find_by!(stripe_customer_id: stripe_subscription.customer)
 
+    subscription = nil
+    post_commit_actions = []
+
     ActiveRecord::Base.transaction do
       subscription = Subscription.find_or_initialize_by(
         stripe_subscription_id: stripe_subscription.id
       )
 
       was_not_canceling = subscription.cancel_at.nil?
+      was_persisted_and_not_canceled = subscription.persisted? && !subscription.canceled?
 
       # Assumes single-item subscriptions (one price per subscription)
       item = stripe_subscription.items.data.first
       new_cancel_at = derive_cancel_at(stripe_subscription, item)
+      new_status = map_status(stripe_subscription.status)
 
       subscription.update!(
         user: user,
-        status: map_status(stripe_subscription.status),
+        status: new_status,
         stripe_price_id: item.price.id,
         current_period_end: Time.at(item.current_period_end),
         cancel_at: new_cancel_at
       )
 
       # Send cancellation email when subscription transitions to pending cancellation
-      if was_not_canceling && new_cancel_at.present?
-        SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at)
+      # (skip if subscription is also ending in this same sync — the ended email covers it)
+      if was_not_canceling && new_cancel_at.present? && !subscription.canceled?
+        post_commit_actions << -> { SendsCancellationEmail.call(user: user, subscription: subscription, ends_at: new_cancel_at) }
       end
 
-      Result.success(subscription)
+      # Send subscription ended email when subscription transitions to canceled
+      if was_persisted_and_not_canceled && subscription.canceled?
+        post_commit_actions << -> { SendsSubscriptionEndedEmail.call(user: user, subscription: subscription) }
+      end
     end
+
+    post_commit_actions.each(&:call)
+
+    Result.success(subscription)
   rescue Stripe::StripeError => e
     Result.failure("Stripe API error: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e

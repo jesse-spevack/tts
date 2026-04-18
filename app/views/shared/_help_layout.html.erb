@@ -1,0 +1,16 @@
+<%# locals: (current:) %>
+<div class="max-w-5xl mx-auto">
+  <%= render "shared/page_header", title: "Help", size: "2xl" %>
+  <div class="flex gap-10">
+    <aside class="hidden md:block w-48 shrink-0">
+      <%= render "shared/help_nav", current: current %>
+    </aside>
+    <div class="min-w-0 flex-1 max-w-2xl">
+      <%# Mobile nav — shown below md breakpoint %>
+      <div class="md:hidden mb-8">
+        <%= render "shared/help_nav", current: current %>
+      </div>
+      <%= yield %>
+    </div>
+  </div>
+</div>

@@ -25,4 +25,66 @@ module UiHelper
   def label_classes
     "block text-sm/6 font-medium text-mist-950 dark:text-white"
   end
+
+  def status_pill_label(subscription)
+    return "" if subscription.nil?
+    return "Canceling" if subscription.active? && subscription.canceling?
+    return "Active" if subscription.active?
+    return "Past Due" if subscription.past_due?
+    "Canceled"
+  end
+
+  def status_pill_classes(subscription)
+    case status_pill_label(subscription)
+    when "Active"
+      "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
+    when "Canceling", "Past Due"
+      "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+    when "Canceled"
+      "bg-mist-100 text-mist-600 dark:bg-mist-500/10 dark:text-mist-400"
+    else
+      ""
+    end
+  end
+
+  def manage_billing_cta_label(subscription)
+    subscription&.canceled? ? "Resubscribe" : "Manage Billing"
+  end
+
+  def oauth_app_badge(app)
+    slug = app.name.to_s.parameterize
+    svg_path = Rails.root.join("app/assets/images/oauth_apps/#{slug}.svg") if slug.present?
+
+    if svg_path&.exist?
+      content_tag :span,
+        class: "inline-flex size-9 items-center justify-center rounded-lg text-mist-950 dark:text-white" do
+        inline_oauth_app_svg(svg_path).html_safe
+      end
+    else
+      content_tag :span, oauth_app_initials(app.name),
+        class: "inline-flex size-9 items-center justify-center rounded-lg bg-mist-100 text-mist-700 dark:bg-mist-700 dark:text-mist-200 text-xs font-semibold"
+    end
+  end
+
+  private
+
+  def inline_oauth_app_svg(path)
+    # Strip <script> and <foreignObject> as a backstop against accidental
+    # designer-export leakage. Primary trust boundary is code review; see
+    # app/assets/images/oauth_apps/README.md for the contract.
+    raw = path.read
+      .gsub(%r{<script\b[^>]*>.*?</script>}m, "")
+      .gsub(%r{<foreignObject\b[^>]*>.*?</foreignObject>}m, "")
+
+    doc = Nokogiri::HTML::DocumentFragment.parse(raw)
+    svg_el = doc.at_css("svg")
+    existing = svg_el["class"]
+    svg_el["class"] = [ existing, "size-7" ].compact.map(&:strip).reject(&:empty?).join(" ")
+    doc.to_html
+  end
+
+  def oauth_app_initials(name)
+    return "?" if name.blank?
+    name.to_s.strip.split(/\s+/).first(2).filter_map { |w| w[0] }.join.upcase
+  end
 end

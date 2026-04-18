@@ -551,6 +551,149 @@ Internal API (`/api/internal/episodes`) requires `X-Generator-Secret` header mat
 | Add background job | `app/jobs/` |
 | Write tests | `test/` (mirrors `app/` structure) |
 
+## Dead Code
+
+This repo runs dead code detection in CI. Two tools, one philosophy: **additive
+changes are easy; subtractive cleanup is forgotten**. These checks make
+unreferenced code visible before it ships.
+
+### Tools
+
+1. **debride** (`bundle exec rake code_quality:debride`) — finds methods that
+   look unreachable by static analysis. Uses a **ratchet**: a baseline count
+   lives in `lib/tasks/dead_code.rake`, and CI fails only when findings
+   increase. This lets us block new dead code without gating on a full cleanup
+   of the current backlog.
+2. **RuboCop Lint cops** (`bin/rubocop`) — `Lint/UnusedMethodArgument`,
+   `Lint/UnusedBlockArgument`, `Lint/UnreachableCode`, `Lint/UselessAssignment`,
+   and `Lint/UselessMethodDefinition` catch intra-method dead code.
+3. **unused partials** (`bundle exec rake code_quality:unused_partials`) —
+   finds `app/views/**/_*.html.erb` partials that are never rendered. Pure-Ruby
+   detector lives at `lib/code_quality/unused_partials.rb`. Same ratchet
+   pattern: baseline in `lib/tasks/dead_code.rake`, `.partial_whitelist` for
+   cases the detector can't see.
+
+### When the ratchet fires (findings exceed baseline)
+
+You have three options, in order of preference:
+
+1. **Delete** — if the code is genuinely unused, remove it. Run the full test
+   suite (`bin/rails test`) before committing.
+2. **Wire it up** — if the code should be reached but isn't, connect it to the
+   caller that was missed. Common cases: a new service not yet invoked; a
+   helper method referenced only in a template that debride doesn't parse.
+3. **Whitelist** — if debride is wrong (the method is reached via Rails magic
+   debride can't see), add the method name to `.debride_whitelist` with a
+   comment explaining why. **Every entry must have a justification comment.**
+
+Common Rails false positives (already whitelisted or covered by `--rails`):
+
+- ActiveRecord association reader methods (`has_many :foo` → `foo`)
+- Controller actions referenced only in `config/routes.rb`
+- Concern / module methods included dynamically at load time
+- Rake task methods
+- Serializer attribute methods
+- Callback methods referenced by symbol (e.g. `before_action :require_admin`)
+- `attr_accessor` writers on PORO config objects
+
+### When the unused-partials ratchet fires
+
+Same three-option decision tree as debride, adapted to partials:
+
+1. **Delete** — if the partial is truly orphaned, remove the file. Before
+   deleting, confirm with `grep -rn "<partial-name>"` across `app/ lib/
+   config/ test/ docs/ Agents.md` that nothing references it (including
+   comments) and run `bin/rails test` after deletion.
+2. **Wire it up** — if the partial is meant to be rendered from a template
+   but isn't, add the `render` call to the appropriate place.
+3. **Whitelist** — if the partial IS used but the detector can't see the ref
+   (e.g. rendered from a gem's generator, or referenced via a dynamic name
+   beyond the simple `"prefix/#{var}"` pattern the detector supports), add
+   the render-form name to `.partial_whitelist` with a comment explaining
+   why. **Every entry must have a justification comment.**
+
+Common Rails false-positive categories the detector already handles:
+
+- Dynamic interpolation: `render "shared/icons/#{name}"` — all partials under
+  the static prefix are exempted.
+- `broadcast_replace_to(..., partial: "x/y")` in Ruby files — scanned.
+- Relative bare-name: `render "foo"` (no slash) from `app/views/<dir>/...` —
+  resolved against the referring template's directory.
+- Layout form: `render layout: "x/y" do ... end` — matched.
+- ERB comments: `<%# render "..." %>` — stripped before scanning, so usage
+  examples in partial docstrings don't register as references.
+- Transitive chains: partial A renders B renders C — all reachable iff A is
+  reachable from a top-level template.
+
+If a case comes up that doesn't fit any of the above (e.g. `render @model`
+implicit-object form, or `render template: "..."`), update the detector in
+`lib/code_quality/unused_partials.rb` rather than whitelisting one-off
+false positives.
+
+### Scaffolding a new partial
+
+The unused-partials ratchet is at baseline **0** — a new partial that isn't
+rendered anywhere fails CI immediately. This is intentional (tightest
+anti-accretion posture), but means a workflow decision if you want to
+create the partial file before wiring up its caller.
+
+**Option 1 — Commit partial + caller together (preferred).** Write the
+partial and add the `render` call in the same commit. The ratchet sees the
+reference and the new partial simultaneously. No friction. This should be
+your default.
+
+**Option 2 — Add a scaffolding whitelist entry (preferred for WIP PRs).** If
+the partial and its caller genuinely need to land in separate commits (e.g.
+a WIP PR that only includes the partial file for review), add an entry to
+`.partial_whitelist`:
+
+```
+# scaffolding: wired up in follow-up work — remove when <caller> lands
+my_namespace/new_feature
+```
+
+Remove the whitelist entry in the same commit that adds the caller. The
+justification-comment rule still applies — `# scaffolding` is the acceptable
+shorthand here.
+
+**Option 3 — Bump `partial_baseline` temporarily.** Only if the partial is
+expected to stay unreferenced for several PRs (rare — usually a smell).
+Increment `partial_baseline` in `lib/tasks/dead_code.rake` by 1 when you
+add the partial, decrement when the caller lands. Mention the offset in
+the PR description so it's easy to reverse.
+
+**Anti-pattern:** do NOT commit the partial, let CI fail, and plan to "fix
+it in the follow-up PR." The ratchet is a gate, not a suggestion — unblock
+yourself through one of the three options above.
+
+### When RuboCop Lint cops fire
+
+- `UnusedMethodArgument` / `UnusedBlockArgument`: prefix the name with `_`
+  (e.g. `_episode_id`) to signal intentional non-use. **Exception:** keyword
+  arguments are part of the public interface — renaming them breaks callers.
+  The config enables `AllowUnusedKeywordArguments: true`, so keyword args
+  don't need underscoring.
+- `UselessAssignment`: remove the assignment, or use `_ =` if you want to
+  explicitly discard.
+- `UnreachableCode`: the code after `return`/`raise` can't run — delete it.
+- `UselessMethodDefinition`: an override that only calls `super` with no
+  other logic — remove it.
+
+### Commands
+
+```bash
+bin/rubocop                                     # Lint (includes dead-code cops)
+bundle exec rake code_quality:debride           # Dead method detection (ratchet)
+bundle exec rake code_quality:unused_partials   # Unused partial detection (ratchet)
+```
+
+### Adjusting the baseline
+
+If you clean up dead code and the count drops below baseline, the rake task
+prints a note suggesting a new baseline. Lower the corresponding variable
+(`debride_baseline` or `partial_baseline`) in `lib/tasks/dead_code.rake` to
+match, so the ratchet stays tight.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

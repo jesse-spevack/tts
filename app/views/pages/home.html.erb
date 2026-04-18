@@ -130,6 +130,10 @@
     id: "faq-4",
     question: "What content can I convert?",
     answer: "Web articles (via URL), pasted text, and uploaded markdown files. If you can read it, PodRead can turn it into audio." %>
+  <%= render "shared/marketing/faq_item",
+    id: "faq-5",
+    question: "How is PodRead different from NotebookLM?",
+    answer: "NotebookLM generates a podcast-style conversation that summarizes your content. PodRead converts the original text into audio and delivers it straight to your podcast app — Apple Podcasts, Spotify, Overcast, or wherever you already listen. You get the full article, not a summary, and it lives alongside all your other podcasts instead of in a separate app." %>
 <% end %>
 
 <%# ===== Pricing (multi-tier with toggle) ===== %>
@@ -160,7 +164,6 @@
       price: "$9",
       period: "/month",
       subheadline: "For serious readers and listeners.",
-      badge: "Most popular",
       features: [
         "Everything in Free, plus:",
         "Unlimited episodes",
@@ -173,6 +176,7 @@
       price: AppConfig::Credits::PACK_PRICE_DISPLAY,
       period: "/ #{AppConfig::Credits::PACK_SIZE} episodes",
       subheadline: "Pay as you go — no subscription required.",
+      badge: "Most popular",
       features: [
         "Same features as Premium, per episode:",
         "Up to 50,000 characters",
@@ -203,7 +207,6 @@
       price: "$89",
       period: "/year",
       subheadline: "For serious readers and listeners.",
-      badge: "Most popular",
       features: [
         "Everything in Free, plus:",
         "Unlimited episodes",
@@ -216,6 +219,7 @@
       price: AppConfig::Credits::PACK_PRICE_DISPLAY,
       period: "/ #{AppConfig::Credits::PACK_SIZE} episodes",
       subheadline: "Pay as you go — no subscription required.",
+      badge: "Most popular",
       features: [
         "Same features as Premium, per episode:",
         "Up to 50,000 characters",

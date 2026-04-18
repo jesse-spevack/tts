@@ -59,13 +59,13 @@ gem "faraday-follow_redirects"
 gem "doorkeeper", "~> 5.9.0"
 
 # Model Context Protocol server (remote MCP for Claude Desktop + claude.ai)
-gem "mcp", "~> 0.9.2"
+gem "mcp", "~> 0.13.0"
 
 # API rate limiting
 gem "rack-attack"
 
 # Pagination
-gem "pagy", "~> 43.4"
+gem "pagy", "~> 43.5"
 
 # Prefixed IDs for public URLs
 gem "prefixed_ids"
@@ -82,6 +82,13 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Dead code detection [https://github.com/seattlerb/debride]
+  gem "debride", require: false
+
+  # Extends debride to compile ERB templates so helper calls from views are
+  # visible as references. Auto-loads via debride's plugin system.
+  gem "debride-erb", require: false
 end
 
 group :development do

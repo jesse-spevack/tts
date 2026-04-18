@@ -30,7 +30,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
 
     # Mock the chunked synthesizer
     mock_chunked = Object.new
-    mock_chunked.define_singleton_method(:synthesize) { |chunks, voice| "chunked audio" }
+    mock_chunked.define_singleton_method(:synthesize) { |_chunks, _voice| "chunked audio" }
     synthesizer.instance_variable_set(:@chunked_synthesizer, mock_chunked)
 
     result = synthesizer.call(text: "This is a longer text that will be chunked.")

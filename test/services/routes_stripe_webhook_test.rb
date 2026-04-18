@@ -225,7 +225,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
 
   test "customer.subscription.updated sends cancellation email when cancel_at_period_end becomes true" do
     @user.update!(stripe_customer_id: "cus_cancel")
-    subscription = Subscription.create!(
+    Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_cancel",
       stripe_price_id: "price_monthly",

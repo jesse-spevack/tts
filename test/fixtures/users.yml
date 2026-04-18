@@ -53,3 +53,8 @@ credit_user:
   email_address: credit@example.com
   account_type: 0
   stripe_customer_id: cus_test_credit
+
+annual_subscriber:
+  email_address: annual@example.com
+  account_type: 0
+  stripe_customer_id: cus_test_annual

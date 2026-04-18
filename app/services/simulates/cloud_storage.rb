@@ -10,13 +10,6 @@ module Simulates
       @sim_dir = Rails.root.join("tmp/simulated_uploads")
     end
 
-    def upload_staging_file(content:, filename:)
-      path = local_path("staging/#{filename}")
-      write_file(path, content)
-      log_info "simulation_storage_upload", path: "staging/#{filename}", podcast_id: @podcast_id, bytes: content.bytesize
-      "staging/#{filename}"
-    end
-
     def upload_content(content:, remote_path:)
       path = local_path(remote_path)
       write_file(path, content)
