@@ -6,7 +6,7 @@ module Api
       def show
         narration = Narration.find_by!(public_id: params[:public_id])
 
-        if narration.expires_at < Time.current
+        if narration.expired?
           head :not_found
           return
         end

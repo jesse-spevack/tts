@@ -26,6 +26,10 @@ class Narration < ApplicationRecord
     false
   end
 
+  def expired?
+    expires_at < Time.current
+  end
+
   private
 
   def generate_public_id
