@@ -118,7 +118,6 @@ class AppConfig
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
     TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
-    TEMPO_CHAIN_ID = ENV.fetch("TEMPO_CHAIN_ID", 42431).to_i
     TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
     # Decimals for the Tempo stablecoin (pathUSD / USDC). Confirmed by pympp
     # (mpp/methods/tempo/intents.py) and Stripe's machine-payments sample,
@@ -129,6 +128,5 @@ class AppConfig
     # block a Rails thread indefinitely.
     TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
     TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
-    RECIPIENT_ADDRESS = ENV.fetch("MPP_RECIPIENT_ADDRESS", "")
   end
 end
