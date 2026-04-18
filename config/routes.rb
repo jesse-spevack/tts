@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   namespace :admin do
     resource :analytics, only: [ :show ], controller: "analytics"
     resource :processing_times, only: [ :show ], controller: "processing_times"
+    resource :demo_mode, only: [ :create ], controller: "demo_modes"
   end
 
   resources :episodes, only: [ :index, :new, :create, :show, :destroy ]
@@ -75,7 +76,6 @@ Rails.application.routes.draw do
   resource :settings, only: [ :show, :update ]
 
   namespace :settings do
-    resource :demo_mode, only: [ :create ]
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
