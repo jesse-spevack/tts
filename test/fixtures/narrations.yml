@@ -1,5 +1,4 @@
 one:
-  public_id: nar_test_fixture_one
   title: Test Narration
   author: Test Author
   description: A test narration for fixture purposes
@@ -11,7 +10,6 @@ one:
   mpp_payment: one
 
 completed:
-  public_id: nar_test_fixture_completed
   title: Completed Narration
   author: Completed Author
   description: A completed narration
@@ -26,7 +24,6 @@ completed:
   mpp_payment: completed
 
 processing:
-  public_id: nar_test_fixture_processing
   title: Processing Narration
   author: Processing Author
   description: A narration currently being processed
@@ -38,7 +35,6 @@ processing:
   mpp_payment: completed_for_narration
 
 with_refunded_payment:
-  public_id: nar_test_fixture_refunded
   title: Refunded Narration
   author: Refunded Author
   description: A narration whose payment was already refunded
@@ -50,7 +46,6 @@ with_refunded_payment:
   mpp_payment: refunded
 
 expired:
-  public_id: nar_test_fixture_expired
   title: Expired Narration
   author: Expired Author
   description: A narration past its TTL

@@ -4,7 +4,7 @@ module Api
   module V1
     class NarrationsController < ActionController::API
       def show
-        narration = Narration.find_by!(public_id: params[:public_id])
+        narration = Narration.find_by_prefix_id!(params[:prefix_id])
 
         if narration.expired?
           head :not_found
@@ -12,7 +12,7 @@ module Api
         end
 
         response = {
-          public_id: narration.public_id,
+          id: narration.prefix_id,
           status: narration.status,
           title: narration.title,
           author: narration.author,

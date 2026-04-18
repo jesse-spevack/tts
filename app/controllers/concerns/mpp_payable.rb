@@ -112,7 +112,7 @@ module MppPayable
     receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
 
     response.headers["Payment-Receipt"] = receipt.data[:header_value]
-    render json: { narration_id: result.data.public_id }, status: :created
+    render json: { narration_id: result.data.prefix_id }, status: :created
   end
 
   # Authenticated user (free tier exhausted) with Payment credential:

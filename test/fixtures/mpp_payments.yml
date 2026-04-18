@@ -1,12 +1,10 @@
 one:
-  public_id: mpp_test_fixture_one
   amount_cents: 100
   currency: usd
   status: pending
   user: one
 
 completed:
-  public_id: mpp_test_fixture_completed
   amount_cents: 100
   currency: usd
   status: completed
@@ -15,7 +13,6 @@ completed:
   user: one
 
 refunded:
-  public_id: mpp_test_fixture_refunded
   amount_cents: 100
   currency: usd
   status: refunded
@@ -24,7 +21,6 @@ refunded:
   user: one
 
 completed_for_narration:
-  public_id: mpp_test_fixture_narration
   amount_cents: 100
   currency: usd
   status: completed
@@ -33,7 +29,6 @@ completed_for_narration:
   user: one
 
 expired_narration_payment:
-  public_id: mpp_test_fixture_expired_narration
   amount_cents: 100
   currency: usd
   status: completed

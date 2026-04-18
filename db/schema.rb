@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_10_234332) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_18_172400) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -156,13 +156,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_234332) do
     t.string "currency", default: "usd", null: false
     t.string "deposit_address"
     t.integer "narration_id"
-    t.string "public_id", null: false
     t.string "status", default: "pending", null: false
     t.string "stripe_payment_intent_id"
     t.string "tx_hash"
     t.datetime "updated_at", null: false
     t.integer "user_id"
-    t.index ["public_id"], name: "index_mpp_payments_on_public_id", unique: true
     t.index ["stripe_payment_intent_id"], name: "index_mpp_payments_on_stripe_payment_intent_id"
     t.index ["tx_hash"], name: "index_mpp_payments_on_tx_hash", unique: true
     t.index ["user_id"], name: "index_mpp_payments_on_user_id"
@@ -180,7 +178,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_234332) do
     t.integer "mpp_payment_id", null: false
     t.datetime "processing_completed_at"
     t.datetime "processing_started_at"
-    t.string "public_id", null: false
     t.text "source_text"
     t.integer "source_type", null: false
     t.string "source_url"
@@ -190,7 +187,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_234332) do
     t.string "voice"
     t.index ["expires_at"], name: "index_narrations_on_expires_at"
     t.index ["mpp_payment_id"], name: "index_narrations_on_mpp_payment_id"
-    t.index ["public_id"], name: "index_narrations_on_public_id", unique: true
     t.index ["status"], name: "index_narrations_on_status"
   end
 

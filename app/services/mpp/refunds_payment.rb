@@ -19,11 +19,11 @@ module Mpp
       Stripe::Refund.create(payment_intent: mpp_payment.stripe_payment_intent_id)
       mpp_payment.update!(status: :refunded)
 
-      log_info "mpp_payment_refunded", payment_id: mpp_payment.public_id
+      log_info "mpp_payment_refunded", payment_id: mpp_payment.prefix_id
 
       Result.success
     rescue Stripe::StripeError => e
-      log_error "mpp_payment_refund_failed", payment_id: mpp_payment.public_id, error: e.message
+      log_error "mpp_payment_refund_failed", payment_id: mpp_payment.prefix_id, error: e.message
 
       Result.failure(e.message)
     end
