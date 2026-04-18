@@ -45,3 +45,45 @@
   }
 
 }
+
+/*
+ * Rouge syntax highlighting — /docs/mpp code blocks.
+ *
+ * Restrained 3-color palette on bg-mist-950 (NOT a GitHub rainbow). Designed
+ * to sit alongside the Instrument-Serif hero without clashing:
+ *
+ *   - mist-500 italic  : comments (.c .c1 .cm .cs .cd)
+ *   - emerald-300      : strings (.s .s1 .s2 .sb .sc .sd .sh .sx .dl)
+ *   - mist-300         : JSON keys, bash flags, HTTP header names (.nl .nt .na)
+ *
+ * Everything else inherits the surrounding mist-100 text color. Works in
+ * both light and dark mode because the <pre> wrapper is bg-mist-950
+ * unconditionally.
+ */
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs,
+.highlight .cd {
+  color: var(--color-mist-500);
+  font-style: italic;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .sh,
+.highlight .sx,
+.highlight .dl {
+  color: var(--color-emerald-300);
+}
+
+.highlight .nl,
+.highlight .nt,
+.highlight .na {
+  color: var(--color-mist-300);
+}
+

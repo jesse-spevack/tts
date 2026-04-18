@@ -58,17 +58,20 @@
             <span class="font-mono text-mist-400">bash</span>
             <span class="text-mist-500">one-time setup + paid request</span>
           </figcaption>
-          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code># Create an MPP wallet (one-time setup)
-npx mppx account create
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            # Create an MPP wallet (one-time setup)
+            npx mppx account create
 
-# Fund the wallet with testnet pathUSD
-npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
+            # Fund the wallet with testnet pathUSD
+            npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
 
-# Create a narration — mppx handles the 402 flow automatically
-npx mppx http://your-podread-host/api/v1/episodes \
-  -X POST -H "Content-Type: application/json" \
-  -d '{"source_type":"url","url":"https://example.com/article"}' \
-  --rpc-url https://rpc.testnet.tempo.xyz</code></pre>
+            # Create a narration — mppx handles the 402 flow automatically
+            npx mppx http://your-podread-host/api/v1/episodes \\
+              -X POST -H "Content-Type: application/json" \\
+              -d '{"source_type":"url","url":"https://example.com/article"}' \\
+              --rpc-url https://rpc.testnet.tempo.xyz
+          BASH
+          ) %></code></pre>
         </figure>
         <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
           The response contains a <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">narration_id</code> you can poll for status.
@@ -87,9 +90,12 @@ npx mppx http://your-podread-host/api/v1/episodes \
               <h3 class="font-serif text-xl text-mist-950 dark:text-white">Request episode creation</h3>
             </div>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl -X POST https://verynormal.dev/api/v1/episodes \
-  -H "Content-Type: application/json" \
-  -d '{"source_type":"url","url":"https://example.com/article"}'</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+                curl -X POST https://verynormal.dev/api/v1/episodes \\
+                  -H "Content-Type: application/json" \\
+                  -d '{"source_type":"url","url":"https://example.com/article"}'
+              BASH
+              ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
               Without a Bearer token or Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>.
@@ -98,29 +104,35 @@ npx mppx http://your-podread-host/api/v1/episodes \
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
               <figure class="overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
                 <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">response headers</figcaption>
-                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code>HTTP/1.1 402 Payment Required
-WWW-Authenticate: Payment
-  id="&lt;hmac-hex&gt;",
-  realm="verynormal.dev",
-  method="tempo",
-  intent="charge",
-  request="&lt;base64&gt;",
-  expires="2026-04-10T12:05:00+00:00"</code></pre>
+                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:http, <<~HTTP
+                  HTTP/1.1 402 Payment Required
+                  WWW-Authenticate: Payment
+                    id="<hmac-hex>",
+                    realm="verynormal.dev",
+                    method="tempo",
+                    intent="charge",
+                    request="<base64>",
+                    expires="2026-04-10T12:05:00+00:00"
+                HTTP
+                ) %></code></pre>
               </figure>
               <figure class="overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
                 <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">response body</figcaption>
-                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code>{
-  "error": "Payment required",
-  "challenge": {
-    "id": "a1b2c3d4e5f6…",
-    "amount": 100,
-    "currency": "usd",
-    "methods": ["tempo"],
-    "realm": "verynormal.dev",
-    "expires": "2026-04-10T12:05:00+00:00",
-    "deposit_address": "0x1234abcd…"
-  }
-}</code></pre>
+                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+                  {
+                    "error": "Payment required",
+                    "challenge": {
+                      "id": "a1b2c3d4e5f6…",
+                      "amount": 100,
+                      "currency": "usd",
+                      "methods": ["tempo"],
+                      "realm": "verynormal.dev",
+                      "expires": "2026-04-10T12:05:00+00:00",
+                      "deposit_address": "0x1234abcd…"
+                    }
+                  }
+                JSON
+                ) %></code></pre>
               </figure>
             </div>
 
@@ -128,11 +140,14 @@ WWW-Authenticate: Payment
               The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">WWW-Authenticate</code> header's <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">request</code> field is a base64-encoded JSON object with on-chain payment parameters:
             </p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
-  "amount": "1000000",
-  "currency": "0x20c0000000000000000000000000000000000000",
-  "recipient": "0x1234abcd…"
-}</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+                {
+                  "amount": "1000000",
+                  "currency": "0x20c0000000000000000000000000000000000000",
+                  "recipient": "0x1234abcd…"
+                }
+              JSON
+              ) %></code></pre>
             </figure>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
               <li><code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">amount</code> is in token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">1000000</span> = $1.00</li>
@@ -162,36 +177,45 @@ WWW-Authenticate: Payment
             </div>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Construct a credential and retry the original request with it in the <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">Authorization</code> header. The credential is a <strong class="font-semibold text-mist-950 dark:text-white">base64url-encoded</strong> JSON object:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
-  "challenge": {
-    "id": "a1b2c3d4e5f6…",
-    "realm": "verynormal.dev",
-    "method": "tempo",
-    "intent": "charge",
-    "request": "&lt;base64-encoded-request-json&gt;",
-    "expires": "2026-04-10T12:05:00+00:00"
-  },
-  "payload": {
-    "hash": "0xabc123…"
-  }
-}</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+                {
+                  "challenge": {
+                    "id": "a1b2c3d4e5f6…",
+                    "realm": "verynormal.dev",
+                    "method": "tempo",
+                    "intent": "charge",
+                    "request": "<base64-encoded-request-json>",
+                    "expires": "2026-04-10T12:05:00+00:00"
+                  },
+                  "payload": {
+                    "hash": "0xabc123…"
+                  }
+                }
+              JSON
+              ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[75ch] text-mist-700 dark:text-mist-300">
               The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">payload</code> contains either <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">hash</code> (tx hash of an already-submitted transfer) or <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">signature</code> (a signed raw tx for the server to submit).
             </p>
             <p class="mt-4 max-w-[75ch] text-mist-700 dark:text-mist-300">Encode this JSON as base64url (no padding, <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">-</code>/<code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">_</code> instead of <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">+</code>/<code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">/</code>) and send it:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl -X POST https://verynormal.dev/api/v1/episodes \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Payment &lt;base64url-encoded-credential&gt;" \
-  -d '{"source_type":"url","url":"https://example.com/article"}'</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+                curl -X POST https://verynormal.dev/api/v1/episodes \\
+                  -H "Content-Type: application/json" \\
+                  -H "Authorization: Payment <base64url-encoded-credential>" \\
+                  -d '{"source_type":"url","url":"https://example.com/article"}'
+              BASH
+              ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">On success, the server returns <strong class="font-semibold text-mist-950 dark:text-white">201 Created</strong>:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{ "narration_id": "nar_aB3xK9mQ2pL7" }
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:javascript, <<~JS
+                { "narration_id": "nar_aB3xK9mQ2pL7" }
 
-// Payment-Receipt header:
-// tx=0xabc123…, payment=mpp_…, sig=&lt;hmac-hex&gt;</code></pre>
+                // Payment-Receipt header:
+                // tx=0xabc123…, payment=mpp_…, sig=<hmac-hex>
+              JS
+              ) %></code></pre>
             </figure>
             <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
               <strong class="font-semibold text-mist-950 dark:text-white">Note:</strong>
@@ -206,7 +230,10 @@ WWW-Authenticate: Payment
             </div>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Audio generation is asynchronous. Poll the narration endpoint:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl https://verynormal.dev/api/v1/narrations/nar_aB3xK9mQ2pL7</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+                curl https://verynormal.dev/api/v1/narrations/nar_aB3xK9mQ2pL7
+              BASH
+              ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Responses progress through <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">pending</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">preparing</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">processing</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">complete</code>.</p>
           </li>
@@ -218,14 +245,17 @@ WWW-Authenticate: Payment
             </div>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">When status is <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">complete</code>, the response includes an <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">audio_url</code>:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
-              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
-  "id": "nar_aB3xK9mQ2pL7",
-  "status": "complete",
-  "title": "Example Article",
-  "author": "Jane Doe",
-  "duration_seconds": 342,
-  "audio_url": "https://storage.googleapis.com/…/narrations/abc123.mp3"
-}</code></pre>
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+                {
+                  "id": "nar_aB3xK9mQ2pL7",
+                  "status": "complete",
+                  "title": "Example Article",
+                  "author": "Jane Doe",
+                  "duration_seconds": 342,
+                  "audio_url": "https://storage.googleapis.com/…/narrations/abc123.mp3"
+                }
+              JSON
+              ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Narrations expire <strong class="font-semibold text-mist-950 dark:text-white">24 hours</strong> after creation. After expiration, the narration endpoint returns 404.</p>
           </li>
