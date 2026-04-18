@@ -107,13 +107,12 @@ module MppPayable
       tx_hash: verification.data[:tx_hash]
     )
 
-    narration = create_narration(mpp_payment)
-    ProcessesNarrationJob.perform_later(narration_id: narration.id)
+    result = Mpp::CreatesNarration.call(mpp_payment: mpp_payment, params: episode_params)
 
     receipt = generate_receipt(verification.data[:tx_hash], mpp_payment)
 
     response.headers["Payment-Receipt"] = receipt.data[:header_value]
-    render json: { narration_id: narration.public_id }, status: :created
+    render json: { narration_id: result.data.public_id }, status: :created
   end
 
   # Authenticated user (free tier exhausted) with Payment credential:
@@ -147,31 +146,6 @@ module MppPayable
       render json: { id: result.data.prefix_id }, status: :created
     else
       render json: { error: result.error }, status: :unprocessable_entity
-    end
-  end
-
-  # ── Narration creation (anonymous + paid) ─────────────────────────────
-
-  def create_narration(mpp_payment)
-    source_type = map_source_type(episode_params[:source_type])
-
-    Narration.create!(
-      mpp_payment: mpp_payment,
-      title: episode_params[:title] || "Untitled",
-      author: episode_params[:author],
-      description: episode_params[:description],
-      source_url: episode_params[:url],
-      source_text: episode_params[:content] || episode_params[:text],
-      source_type: source_type,
-      expires_at: 24.hours.from_now
-    )
-  end
-
-  def map_source_type(type)
-    case type
-    when "url" then :url
-    when "text", "extension" then :text
-    else :text
     end
   end
 
