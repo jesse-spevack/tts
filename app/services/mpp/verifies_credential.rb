@@ -161,16 +161,14 @@ module Mpp
       Result.failure("RPC returned invalid JSON")
     end
 
-    def verify_transfer_log(receipt, deposit_address, expected_cents)
+    def verify_transfer_log(receipt, deposit_address, expected_amount)
       logs = receipt["logs"] || []
       token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
 
-      # Convert fiat cents -> token base units. The on-chain Transfer event's
-      # data field is a uint256 in the token's smallest unit (6 decimals for
-      # pathUSD / USDC), so comparing cents directly against it always fails
-      # on a real chain. 100 cents = 1 USD = 1_000_000 base units.
-      decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
-      expected_base_units = (expected_cents * (10**decimals)) / 100
+      # The challenge request amount is already in token base units (e.g.,
+      # "1000000" for $1 USDC with 6 decimals). Convert to integer for
+      # comparison against the on-chain Transfer event data field.
+      expected_base_units = expected_amount.to_i
 
       matching_log = logs.find do |log|
         topics = log["topics"] || []

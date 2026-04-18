@@ -18,7 +18,15 @@ module Mpp
       realm = AppConfig::Domain::HOST
       method = "tempo"
       intent = "charge"
-      request_json = JSON.generate({ amount: amount_cents, currency: currency, recipient: recipient })
+      # MPP Tempo challenges use token base units and contract address, not fiat
+      token_decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
+      amount_base_units = (amount_cents * (10**token_decimals)) / 100
+      token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
+      request_json = JSON.generate({
+        amount: amount_base_units.to_s,
+        currency: token_address,
+        recipient: recipient
+      })
       request_b64 = Base64.strict_encode64(request_json)
       expires = (Time.current + AppConfig::Mpp::CHALLENGE_TTL_SECONDS).iso8601
 
