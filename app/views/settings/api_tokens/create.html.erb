@@ -1,14 +1,46 @@
-<%# Placeholder — copy-to-clipboard + styling in agent-team-q8y.5 %>
 <div class="mx-auto max-w-4xl">
+  <%= render "shared/back_link", path: settings_api_tokens_path, text: "Back to API Tokens" %>
   <%= render "shared/page_header", title: "Token created" %>
 
-  <div class="mt-6 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4">
-    <strong>Copy your token — we won't show it again.</strong>
-    <p>Store it somewhere safe. If you lose it, revoke it and create a new one.</p>
+  <div class="space-y-6">
+    <%# Warning banner — amber, unmissable %>
+    <div class="rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 dark:border-amber-500 dark:bg-amber-500/10" role="alert">
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 text-amber-500 dark:text-amber-400" aria-hidden="true">
+          <%= render "shared/icons/alert_triangle", css_class: "size-5" %>
+        </span>
+        <div>
+          <p class="text-sm/6 font-semibold text-amber-900 dark:text-amber-200">Copy your token — we won't show it again.</p>
+          <p class="mt-1 text-sm/6 text-amber-800 dark:text-amber-200/80">Treat it like a password. If you lose it, revoke it and create a new one.</p>
+        </div>
+      </div>
+    </div>
+
+    <%# Token reveal — mono font code block with copy button %>
+    <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-sm font-semibold text-mist-950 dark:text-white">Your new token</h2>
+        <%= render "shared/clipboard_button",
+                   content: @api_token.plain_token,
+                   title: "Copy token to clipboard",
+                   icon: "copy",
+                   icon_class: "size-4",
+                   label: "Copy",
+                   button_class: "inline-flex items-center gap-1.5 rounded-md bg-mist-950/5 px-2.5 py-1.5 text-xs font-medium text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 cursor-pointer transition-colors" %>
+      </div>
+
+      <pre class="overflow-x-auto rounded-lg bg-mist-950 p-4 font-mono text-sm text-mist-100 dark:bg-mist-950 dark:ring-1 dark:ring-white/10"><code><%= @api_token.plain_token %></code></pre>
+
+      <p class="mt-4 text-xs/6 text-mist-500 dark:text-mist-400">
+        Prefix <code class="ic"><%= @api_token.token_prefix %></code> — this is how you'll identify the token in the tokens list.
+      </p>
+    </div>
+
+    <%# Continue button %>
+    <div>
+      <%= link_to "I have copied my token",
+                  settings_api_tokens_path,
+                  class: "inline-flex items-center justify-center rounded-lg bg-mist-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+    </div>
   </div>
-
-  <pre class="mt-6 overflow-x-auto rounded bg-mist-950 p-4 font-mono text-mist-100"><code><%= @api_token.plain_token %></code></pre>
-
-  <%= link_to "I have copied my token", settings_api_tokens_path,
-        class: "mt-6 inline-block rounded bg-mist-900 px-3 py-2 text-sm font-medium text-white" %>
 </div>
