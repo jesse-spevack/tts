@@ -1,0 +1,602 @@
+<% content_for :title, "MPP API — PodRead" %>
+
+<div class="relative isolate">
+  <!-- Background tint -->
+  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+
+  <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 xl:grid-cols-[minmax(0,1fr)_220px]">
+    <!-- Main column -->
+    <div class="min-w-0 pb-24">
+      <!-- Hero -->
+      <header class="pt-8 pb-16">
+        <div class="flex items-center gap-x-3 text-sm">
+          <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 px-2.5 py-1 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+            <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
+            Public API
+          </span>
+          <span class="text-mist-500 dark:text-mist-400">
+            <a href="http://mpp.dev/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Machine Payments Protocol</a>
+          </span>
+        </div>
+        <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
+          Turn any article into a podcast — pay per episode.
+        </h1>
+        <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
+          PodRead converts articles and text into podcast-style audio. MPP lets you pay $1.00 per conversion with on-chain stablecoin on the Tempo network — no PodRead account required. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
+        </p>
+
+        <!-- Fact row -->
+        <dl class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Price</dt>
+            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.00</dd>
+          </div>
+          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Currency</dt>
+            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 dark:text-white">pathUSD</dd>
+          </div>
+          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Network</dt>
+            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 dark:text-white">Tempo</dd>
+          </div>
+          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">TTL</dt>
+            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 tabular-nums dark:text-white">24 h</dd>
+          </div>
+        </dl>
+      </header>
+
+      <!-- Quick Start -->
+      <section id="quickstart" class="scroll-mt-8 pt-12">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Quick start</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
+          The fastest path uses the <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">mppx</code> CLI. It handles the 402 challenge, on-chain payment, and credential construction automatically.
+        </p>
+
+        <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">one-time setup + paid request</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code># Create an MPP wallet (one-time setup)
+npx mppx account create
+
+# Fund the wallet with testnet pathUSD
+npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
+
+# Create a narration — mppx handles the 402 flow automatically
+npx mppx http://your-podread-host/api/v1/episodes \
+  -X POST -H "Content-Type: application/json" \
+  -d '{"source_type":"url","url":"https://example.com/article"}' \
+  --rpc-url https://rpc.testnet.tempo.xyz</code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
+          The response contains a <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">narration_id</code> you can poll for status.
+        </p>
+      </section>
+
+      <!-- Protocol Flow -->
+      <section id="protocol" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Protocol flow</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Five steps: request, receive challenge, pay, retry with credential, poll for audio.</p>
+
+        <ol role="list" class="mt-10 space-y-14">
+          <li class="relative">
+            <div class="flex items-baseline gap-x-4">
+              <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">STEP 1</span>
+              <h3 class="font-serif text-xl text-mist-950 dark:text-white">Request episode creation</h3>
+            </div>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl -X POST https://verynormal.dev/api/v1/episodes \
+  -H "Content-Type: application/json" \
+  -d '{"source_type":"url","url":"https://example.com/article"}'</code></pre>
+            </figure>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
+              Without a Bearer token or Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>.
+            </p>
+
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+              <figure class="overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+                <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">response headers</figcaption>
+                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code>HTTP/1.1 402 Payment Required
+WWW-Authenticate: Payment
+  id="&lt;hmac-hex&gt;",
+  realm="verynormal.dev",
+  method="tempo",
+  intent="charge",
+  request="&lt;base64&gt;",
+  expires="2026-04-10T12:05:00+00:00"</code></pre>
+              </figure>
+              <figure class="overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+                <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">response body</figcaption>
+                <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code>{
+  "error": "Payment required",
+  "challenge": {
+    "id": "a1b2c3d4e5f6…",
+    "amount": 100,
+    "currency": "usd",
+    "methods": ["tempo"],
+    "realm": "verynormal.dev",
+    "expires": "2026-04-10T12:05:00+00:00",
+    "deposit_address": "0x1234abcd…"
+  }
+}</code></pre>
+              </figure>
+            </div>
+
+            <p class="mt-4 max-w-[75ch] text-mist-700 dark:text-mist-300">
+              The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">WWW-Authenticate</code> header's <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">request</code> field is a base64-encoded JSON object with on-chain payment parameters:
+            </p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
+  "amount": "1000000",
+  "currency": "0x20c0000000000000000000000000000000000000",
+  "recipient": "0x1234abcd…"
+}</code></pre>
+            </figure>
+            <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
+              <li><code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">amount</code> is in token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">1000000</span> = $1.00</li>
+              <li><code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">currency</code> is the pathUSD token contract address on Tempo</li>
+              <li><code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">recipient</code> is the one-time Stripe-provisioned deposit address</li>
+            </ul>
+          </li>
+
+          <li class="relative">
+            <div class="flex items-baseline gap-x-4">
+              <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">STEP 2</span>
+              <h3 class="font-serif text-xl text-mist-950 dark:text-white">Pay</h3>
+            </div>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Send a pathUSD transfer on the Tempo network to the <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">deposit_address</code> from the challenge. The transfer must be:</p>
+            <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
+              <li>To the exact <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">deposit_address</code> returned in the 402 response</li>
+              <li>For exactly <span class="font-mono tabular-nums">1000000</span> base units (= $1.00 pathUSD)</li>
+              <li>Of the pathUSD token at contract <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">0x20c0…0000</code></li>
+              <li>Completed before the challenge <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">expires</code> timestamp</li>
+            </ul>
+          </li>
+
+          <li class="relative">
+            <div class="flex items-baseline gap-x-4">
+              <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">STEP 3</span>
+              <h3 class="font-serif text-xl text-mist-950 dark:text-white">Retry with credential</h3>
+            </div>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Construct a credential and retry the original request with it in the <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">Authorization</code> header. The credential is a <strong class="font-semibold text-mist-950 dark:text-white">base64url-encoded</strong> JSON object:</p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
+  "challenge": {
+    "id": "a1b2c3d4e5f6…",
+    "realm": "verynormal.dev",
+    "method": "tempo",
+    "intent": "charge",
+    "request": "&lt;base64-encoded-request-json&gt;",
+    "expires": "2026-04-10T12:05:00+00:00"
+  },
+  "payload": {
+    "hash": "0xabc123…"
+  }
+}</code></pre>
+            </figure>
+            <p class="mt-4 max-w-[75ch] text-mist-700 dark:text-mist-300">
+              The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">payload</code> contains either <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">hash</code> (tx hash of an already-submitted transfer) or <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">signature</code> (a signed raw tx for the server to submit).
+            </p>
+            <p class="mt-4 max-w-[75ch] text-mist-700 dark:text-mist-300">Encode this JSON as base64url (no padding, <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">-</code>/<code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">_</code> instead of <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">+</code>/<code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">/</code>) and send it:</p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl -X POST https://verynormal.dev/api/v1/episodes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Payment &lt;base64url-encoded-credential&gt;" \
+  -d '{"source_type":"url","url":"https://example.com/article"}'</code></pre>
+            </figure>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">On success, the server returns <strong class="font-semibold text-mist-950 dark:text-white">201 Created</strong>:</p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{ "narration_id": "nar_aB3xK9mQ2pL7" }
+
+// Payment-Receipt header:
+// tx=0xabc123…, payment=mpp_…, sig=&lt;hmac-hex&gt;</code></pre>
+            </figure>
+            <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+              <strong class="font-semibold text-mist-950 dark:text-white">Note:</strong>
+              The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">mppx</code> CLI handles Steps 2 and 3 automatically. If you are building your own client, you must construct the credential yourself.
+            </aside>
+          </li>
+
+          <li class="relative">
+            <div class="flex items-baseline gap-x-4">
+              <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">STEP 4</span>
+              <h3 class="font-serif text-xl text-mist-950 dark:text-white">Poll for status</h3>
+            </div>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Audio generation is asynchronous. Poll the narration endpoint:</p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>curl https://verynormal.dev/api/v1/narrations/nar_aB3xK9mQ2pL7</code></pre>
+            </figure>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Responses progress through <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">pending</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">preparing</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">processing</code> → <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">complete</code>.</p>
+          </li>
+
+          <li class="relative">
+            <div class="flex items-baseline gap-x-4">
+              <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">STEP 5</span>
+              <h3 class="font-serif text-xl text-mist-950 dark:text-white">Get audio</h3>
+            </div>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">When status is <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">complete</code>, the response includes an <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">audio_url</code>:</p>
+            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+              <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>{
+  "id": "nar_aB3xK9mQ2pL7",
+  "status": "complete",
+  "title": "Example Article",
+  "author": "Jane Doe",
+  "duration_seconds": 342,
+  "audio_url": "https://storage.googleapis.com/…/narrations/abc123.mp3"
+}</code></pre>
+            </figure>
+            <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Narrations expire <strong class="font-semibold text-mist-950 dark:text-white">24 hours</strong> after creation. After expiration, the narration endpoint returns 404.</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Authentication Paths -->
+      <section id="auth-paths" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Authentication paths</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">POST /api/v1/episodes</code> endpoint supports three paths. Which path runs depends on the headers you send.</p>
+
+        <div class="mt-8 grid gap-4 md:grid-cols-3">
+          <!-- Path 1 -->
+          <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <div class="font-mono text-xs text-mist-500 dark:text-mist-400">PATH 1</div>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Subscriber</h3>
+            <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">Bearer only</p>
+            <p class="mt-4 text-sm text-mist-700 dark:text-mist-300">Authenticated users with an active subscription or remaining credits bypass MPP entirely.</p>
+            <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
+              <div>Authorization:</div>
+              <div class="pl-4">Bearer &lt;token&gt;</div>
+            </div>
+            <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"id":"ep_…"}</code></p>
+          </article>
+
+          <!-- Path 2 -->
+          <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <div class="font-mono text-xs text-mist-500 dark:text-mist-400">PATH 2</div>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Authenticated + MPP</h3>
+            <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">Bearer + Payment</p>
+            <p class="mt-4 text-sm text-mist-700 dark:text-mist-300">Bearer token holder whose free tier is exhausted pays via MPP. Creates an <strong class="font-semibold text-mist-950 dark:text-white">Episode</strong> attached to their account.</p>
+            <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
+              <div>Authorization:</div>
+              <div class="pl-4">Bearer &lt;token&gt;,</div>
+              <div class="pl-4">Payment &lt;credential&gt;</div>
+            </div>
+            <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"id":"ep_…"}</code></p>
+          </article>
+
+          <!-- Path 3 -->
+          <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <div class="font-mono text-xs text-mist-500 dark:text-mist-400">PATH 3</div>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Anonymous MPP</h3>
+            <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">Payment only</p>
+            <p class="mt-4 text-sm text-mist-700 dark:text-mist-300">No Bearer token, valid Payment credential. Creates a <strong class="font-semibold text-mist-950 dark:text-white">Narration</strong> — standalone audio, no account, 24h TTL.</p>
+            <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
+              <div>Authorization:</div>
+              <div class="pl-4">Payment &lt;credential&gt;</div>
+            </div>
+            <p class="mt-4 text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"narration_id":"nar_…"}</code></p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Request reference -->
+      <section id="request-reference" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Request reference</h2>
+
+        <h3 class="mt-10 font-mono text-sm text-mist-500 dark:text-mist-400">POST /api/v1/episodes</h3>
+        <p class="mt-2 text-sm text-mist-700 dark:text-mist-300">Request body parameters.</p>
+
+        <div class="-mx-4 -my-2 mt-4 overflow-x-auto whitespace-nowrap sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full px-4 py-2 align-middle sm:px-6 lg:px-8">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-mist-300 dark:border-mist-700">
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Parameter</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Type</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Required</th>
+                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">source_type</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Yes</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">One of <code class="font-mono text-[0.9em]">"url"</code>, <code class="font-mono text-[0.9em]">"text"</code>, <code class="font-mono text-[0.9em]">"extension"</code></td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">url</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">For url/extension</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">URL of the article</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">text</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">For text</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Raw text to convert</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">content</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">For extension</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">HTML content from browser extension</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">title</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-500 dark:text-mist-400">No</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Episode title (defaults to <code class="font-mono text-[0.9em]">"Untitled"</code>)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">author</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-500 dark:text-mist-400">No</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Author name</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">description</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-500 dark:text-mist-400">No</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Episode description</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">voice</td>
+                  <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400">string</td>
+                  <td class="py-3 pr-6 text-mist-500 dark:text-mist-400">No</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Voice catalog key — anonymous path only. See <a href="#voices" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Voices</a>.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Voices -->
+      <section id="voices" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Voices</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">Callers on the anonymous MPP (Narration) path may select a voice by passing a <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">voice</code> catalog key. All catalog voices are available — MPP payment unlocks the premium Chirp3-HD tier. The default when omitted is <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">callum</code> (British male, Chirp3-HD). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
+
+        <div class="-mx-4 -my-2 mt-6 overflow-x-auto whitespace-nowrap sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full px-4 py-2 align-middle sm:px-6 lg:px-8">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-mist-300 dark:border-mist-700">
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Key</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Name</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Accent</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Gender</th>
+                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">Tier</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <% [
+                  ["wren",   "Wren",   "British",  "Female", "Standard",  false],
+                  ["felix",  "Felix",  "British",  "Male",   "Standard",  false],
+                  ["sloane", "Sloane", "American", "Female", "Standard",  false],
+                  ["archer", "Archer", "American", "Male",   "Standard",  false],
+                  ["gemma",  "Gemma",  "British",  "Female", "Standard",  false],
+                  ["hugo",   "Hugo",   "British",  "Male",   "Standard",  false],
+                  ["quinn",  "Quinn",  "American", "Female", "Standard",  false],
+                  ["theo",   "Theo",   "American", "Male",   "Standard",  false],
+                  ["elara",  "Elara",  "British",  "Female", "Chirp3-HD", false],
+                  ["callum", "Callum", "British",  "Male",   "Chirp3-HD", true],
+                  ["lark",   "Lark",   "American", "Female", "Chirp3-HD", false],
+                  ["nash",   "Nash",   "American", "Male",   "Chirp3-HD", false]
+                ].each do |key, name, accent, gender, tier, is_default| %>
+                  <tr>
+                    <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">
+                      <%= key %><%= " ★" if is_default %>
+                    </td>
+                    <td class="py-3 pr-6 text-mist-700 dark:text-mist-300"><%= name %></td>
+                    <td class="py-3 pr-6 text-mist-700 dark:text-mist-300"><%= accent %></td>
+                    <td class="py-3 pr-6 text-mist-700 dark:text-mist-300"><%= gender %></td>
+                    <td class="py-3">
+                      <% if tier == "Chirp3-HD" %>
+                        <span class="inline-flex items-center rounded-full bg-mist-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-mist-100 dark:text-mist-900">Chirp3-HD</span>
+                      <% else %>
+                        <span class="inline-flex items-center rounded-full bg-mist-100 px-2.5 py-0.5 text-xs font-medium text-mist-700 dark:bg-mist-800 dark:text-mist-300">Standard</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="mt-4 text-xs text-mist-500 dark:text-mist-400">★ default when <code class="font-mono text-[0.9em]">voice</code> is omitted</p>
+
+        <aside class="mt-8 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+          <strong class="font-semibold text-mist-950 dark:text-white">Authenticated Episode path.</strong>
+          The authenticated path (Bearer + Payment) ignores the <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param and uses the user's stored voice preference. To change the voice for an authenticated MPP request, update the user's profile voice first.
+        </aside>
+      </section>
+
+      <!-- Pricing -->
+      <section id="pricing" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Pricing</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">
+          Each episode or narration costs <strong class="font-semibold text-mist-950 dark:text-white">$1.00 USD</strong>, charged as <strong class="font-semibold text-mist-950 dark:text-white tabular-nums">1,000,000</strong> base units of pathUSD on the Tempo network.
+        </p>
+        <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">0x20c0…0000</dd>
+          </div>
+          <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Decimals</dt>
+            <dd class="mt-1 font-mono text-sm text-mist-900 tabular-nums dark:text-mist-100">6 (1 USD = 1,000,000)</dd>
+          </div>
+          <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Testnet RPC</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">rpc.testnet.tempo.xyz</dd>
+          </div>
+        </dl>
+        <p class="mt-6 max-w-[65ch] text-mist-700 dark:text-mist-300">
+          The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (100 = $1.00). The <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">amount</code> in the <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">WWW-Authenticate</code> header's <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (1,000,000 = $1.00).
+        </p>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">If narration processing fails, the payment is automatically refunded.</p>
+      </section>
+
+      <!-- Rate Limits -->
+      <section id="rate-limits" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Rate limits</h2>
+
+        <div class="-mx-4 -my-2 mt-6 overflow-x-auto whitespace-nowrap sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full px-4 py-2 align-middle sm:px-6 lg:px-8">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-mist-300 dark:border-mist-700">
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Endpoint</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Limit</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Window</th>
+                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">Key</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">POST /api/v1/episodes (authenticated)</td>
+                  <td class="py-3 pr-6 tabular-nums text-mist-700 dark:text-mist-300">20</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">1 hour</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Bearer token</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">POST /api/v1/episodes (unauthenticated)</td>
+                  <td class="py-3 pr-6 tabular-nums text-mist-700 dark:text-mist-300">10</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">1 minute</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">IP address</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100">GET /api/v1/narrations/:prefix_id</td>
+                  <td class="py-3 pr-6 tabular-nums text-mist-700 dark:text-mist-300">60</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">1 minute</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">IP address</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="mt-4 max-w-[65ch] text-sm text-mist-500 dark:text-mist-400">Throttled requests return <strong class="font-semibold text-mist-700 dark:text-mist-300">429 Too Many Requests</strong> with a <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">Retry-After</code> header.</p>
+      </section>
+
+      <!-- Error Codes -->
+      <section id="errors" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Error codes</h2>
+
+        <div class="-mx-4 -my-2 mt-6 overflow-x-auto whitespace-nowrap sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full px-4 py-2 align-middle sm:px-6 lg:px-8">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-mist-300 dark:border-mist-700">
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Status</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Meaning</th>
+                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">When</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">201</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Created</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Episode or narration created successfully</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">402</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Payment Required</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">No valid subscription/credits and no Payment credential</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">404</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Not Found</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Narration does not exist or has expired</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">422</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Unprocessable Entity</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Invalid or missing <code class="font-mono text-[0.9em]">source_type</code>, invalid <code class="font-mono text-[0.9em]">voice</code>, or content error</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">429</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Too Many Requests</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Rate limit exceeded</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">503</td>
+                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Service Unavailable</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">Stripe failed to provision a deposit address</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Environment / Configuration -->
+      <section id="config" class="scroll-mt-8 pt-20">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Environment</h2>
+        <p class="mt-4 max-w-[65ch] text-mist-700 dark:text-mist-300">For self-hosting, the following environment variables configure MPP. Stripe must also be configured (standard <code class="rounded bg-mist-100 px-1.5 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">STRIPE_SECRET_KEY</code> etc.) since deposit addresses are provisioned via Stripe's crypto PaymentIntent API.</p>
+
+        <div class="-mx-4 -my-2 mt-6 overflow-x-auto whitespace-nowrap sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full px-4 py-2 align-middle sm:px-6 lg:px-8">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-mist-300 dark:border-mist-700">
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Variable</th>
+                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Default</th>
+                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <% [
+                  ["MPP_SECRET_KEY", "random hex", "HMAC key for signing challenges and receipts. Must be stable across deploys."],
+                  ["MPP_PRICE_CENTS", "100", "Price per episode/narration in USD cents"],
+                  ["MPP_CURRENCY", "usd", "Currency code"],
+                  ["MPP_CHALLENGE_TTL_SECONDS", "300", "How long a 402 challenge is valid"],
+                  ["MPP_STRIPE_API_VERSION", "2026-03-04.preview", "Stripe API version pinned to MPP preview channel"],
+                  ["TEMPO_RPC_URL", "rpc.testnet.tempo.xyz", "Tempo JSON-RPC endpoint"],
+                  ["TEMPO_CURRENCY_TOKEN", "0x20c0…0000", "pathUSD token contract address"],
+                  ["TEMPO_TOKEN_DECIMALS", "6", "Decimal places for the stablecoin"],
+                  ["TEMPO_RPC_OPEN_TIMEOUT_SECONDS", "5", "TCP connect timeout"],
+                  ["TEMPO_RPC_READ_TIMEOUT_SECONDS", "10", "Read timeout"],
+                  ["APP_HOST", "localhost:3000", "Used as the realm in challenges"]
+                ].each do |name, default, desc| %>
+                  <tr>
+                    <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100"><%= name %></td>
+                    <td class="py-3 pr-6 font-mono text-mist-500 dark:text-mist-400"><%= default %></td>
+                    <td class="py-3 text-mist-700 dark:text-mist-300"><%= desc %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right-rail TOC -->
+    <nav aria-label="On this page" class="hidden xl:block">
+      <div class="sticky top-24 py-8">
+        <div class="font-mono text-xs text-mist-500 dark:text-mist-400">ON THIS PAGE</div>
+        <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+          <% [
+            ["#quickstart", "Quick start"],
+            ["#protocol", "Protocol flow"],
+            ["#auth-paths", "Authentication paths"],
+            ["#request-reference", "Request reference"],
+            ["#voices", "Voices"],
+            ["#pricing", "Pricing"],
+            ["#rate-limits", "Rate limits"],
+            ["#errors", "Error codes"],
+            ["#config", "Environment"]
+          ].each do |href, label| %>
+            <li>
+              <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
+                <%= label %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>

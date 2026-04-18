@@ -30,8 +30,9 @@ namespace :code_quality do
   # CleanupStaleMppPaymentsJob#perform, ProcessesNarrationJob#perform. All three
   # are Rails-invoked (routing + Active Job) — same category as existing entries
   # already counted in the baseline (e.g. ProcessesUrlEpisodeJob#perform).
+  # Updated 2026-04-18 (+1) for DocsController#mpp. Rails-invoked via routing.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 63
+  debride_baseline = 64
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
