@@ -55,9 +55,13 @@ module Mpp
         params: {
           amount: amount_cents,
           currency: currency,
-          "payment_method_types[]": "crypto"
+          "payment_method_types[]": "crypto",
+          "payment_method_data[type]": "crypto",
+          "payment_method_options[crypto][mode]": "deposit",
+          "payment_method_options[crypto][deposit_options][networks][]": "tempo",
+          confirm: true
         },
-        opts: { api_version: STRIPE_API_VERSION }
+        opts: { stripe_version: STRIPE_API_VERSION }
       )
       parsed = JSON.parse(response.http_body)
 
