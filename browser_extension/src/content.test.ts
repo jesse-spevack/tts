@@ -1,6 +1,53 @@
 import { isTrustedDomain, TRUSTED_DOMAINS } from './content';
 
 describe('content', () => {
+  describe('podread:extension-ready announcement', () => {
+    beforeEach(() => {
+      jest.resetModules();
+      // Clear dataset between tests to prevent state bleed across jest.isolateModules calls
+      delete document.documentElement.dataset.podreadExtensionVersion;
+    });
+
+    it('dispatches podread:extension-ready with extensionVersion on load', () => {
+      const listener = jest.fn();
+      window.addEventListener('podread:extension-ready', listener as EventListener);
+
+      // Mock manifest so we can assert the version flows through
+      (global as unknown as { chrome: typeof chrome }).chrome.runtime.getManifest = jest
+        .fn()
+        .mockReturnValue({ version: '9.9.9' });
+
+      // Re-import the module so its top-level dispatch runs under our listener
+      jest.isolateModules(() => {
+        require('./content');
+      });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const event = listener.mock.calls[0][0] as CustomEvent<{ extensionVersion: string }>;
+      expect(event.type).toBe('podread:extension-ready');
+      expect(event.detail.extensionVersion).toBe('9.9.9');
+
+      window.removeEventListener('podread:extension-ready', listener as EventListener);
+    });
+
+    it('writes extension version to document.documentElement.dataset on load', () => {
+      // Mock manifest so we can assert the version flows through
+      (global as unknown as { chrome: typeof chrome }).chrome.runtime.getManifest = jest
+        .fn()
+        .mockReturnValue({ version: '9.9.9' });
+
+      expect(document.documentElement.dataset.podreadExtensionVersion).toBeUndefined();
+
+      // Re-import the module so its top-level dataset write runs
+      jest.isolateModules(() => {
+        require('./content');
+      });
+
+      expect(document.documentElement.dataset.podreadExtensionVersion).toBe('9.9.9');
+    });
+  });
+
+
   describe('TRUSTED_DOMAINS', () => {
     it('includes podread.app', () => {
       expect(TRUSTED_DOMAINS).toContain('podread.app');

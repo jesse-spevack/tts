@@ -10,6 +10,7 @@ const chromeMock = {
       removeListener: jest.fn(),
     },
     getURL: jest.fn((path) => `chrome-extension://test-id/${path}`),
+    getManifest: jest.fn(() => ({ version: '0.0.0-test' })),
     lastError: null,
   },
   storage: {
