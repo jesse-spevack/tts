@@ -31,8 +31,12 @@ namespace :code_quality do
   # are Rails-invoked (routing + Active Job) — same category as existing entries
   # already counted in the baseline (e.g. ProcessesUrlEpisodeJob#perform).
   # Updated 2026-04-18 (+1) for DocsController#mpp. Rails-invoked via routing.
+  # Updated 2026-04-18 (+2) for Settings::ApiTokensController#index and
+  # Settings::ApiTokensController#reveal. Both Rails-invoked via routing —
+  # same category as existing controller actions already in the baseline
+  # (Settings::ExtensionsController#show, SettingsController#show, etc.).
   # Count includes both unused methods and unused constants.
-  debride_baseline = 64
+  debride_baseline = 66
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
