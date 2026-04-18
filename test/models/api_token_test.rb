@@ -181,4 +181,47 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert second_token.active?
     assert_equal 1, user.api_tokens.active.count
   end
+
+  # Source Enum Tests
+  test "source enum accepts user and extension values" do
+    user_token = api_tokens(:user_created_token)
+    extension_token = api_tokens(:active_token)
+
+    assert user_token.source_user?
+    refute user_token.source_extension?
+    assert extension_token.source_extension?
+    refute extension_token.source_user?
+  end
+
+  test "new ApiToken defaults source to user" do
+    token = ApiToken.new(user: users(:one), token_digest: "new_digest_for_default_test")
+    assert_equal "user", token.source
+  end
+
+  test "user_created scope returns only source=user tokens" do
+    user_created = ApiToken.user_created
+    assert_includes user_created, api_tokens(:user_created_token)
+    refute_includes user_created, api_tokens(:active_token)
+    refute_includes user_created, api_tokens(:revoked_token)
+    refute_includes user_created, api_tokens(:recently_used_token)
+  end
+
+  test "source_extension scope returns only source=extension tokens" do
+    extension_tokens = ApiToken.source_extension
+    assert_includes extension_tokens, api_tokens(:active_token)
+    assert_includes extension_tokens, api_tokens(:recently_used_token)
+    refute_includes extension_tokens, api_tokens(:user_created_token)
+  end
+
+  # Token Prefix Tests
+  test "token_prefix is nullable for legacy tokens" do
+    token = api_tokens(:active_token)
+    assert_nil token.token_prefix
+    assert token.valid?
+  end
+
+  test "token_prefix stores the prefix for display" do
+    token = api_tokens(:user_created_token)
+    assert_equal "sk_live_EXAMPLE_FIXTURE_u1", token.token_prefix
+  end
 end
