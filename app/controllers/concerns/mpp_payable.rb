@@ -109,7 +109,7 @@ module MppPayable
 
     result = Mpp::CreatesNarration.call(mpp_payment: mpp_payment, params: episode_params)
 
-    receipt = generate_receipt(verification.data[:tx_hash], mpp_payment)
+    receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
 
     response.headers["Payment-Receipt"] = receipt.data[:header_value]
     render json: { narration_id: result.data.public_id }, status: :created
@@ -141,18 +141,12 @@ module MppPayable
     result = Mpp::CreatesEpisode.call(user: current_user, params: episode_params)
 
     if result.success?
-      receipt = generate_receipt(verification.data[:tx_hash], mpp_payment)
+      receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
       response.headers["Payment-Receipt"] = receipt.data[:header_value]
       render json: { id: result.data.prefix_id }, status: :created
     else
       render json: { error: result.error }, status: :unprocessable_entity
     end
-  end
-
-  # ── Receipt generation ────────────────────────────────────────────────
-
-  def generate_receipt(tx_hash, mpp_payment)
-    Mpp::GeneratesReceipt.call(tx_hash: tx_hash, mpp_payment: mpp_payment)
   end
 
   # ── 402 Challenge response ────────────────────────────────────────────
