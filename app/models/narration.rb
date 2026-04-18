@@ -33,7 +33,7 @@ class Narration < ApplicationRecord
   private
 
   def set_default_voice
-    self.voice ||= Voice::DEFAULT_STANDARD
+    self.voice ||= Voice::DEFAULT_CHIRP
   end
 
   def should_refund_mpp_payment?

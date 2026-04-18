@@ -16,6 +16,8 @@ module Mpp
     end
 
     def call
+      return Result.failure("Invalid voice: #{params[:voice]}") if invalid_voice?
+
       narration = Narration.create!(
         mpp_payment: mpp_payment,
         title: params[:title] || "Untitled",
@@ -24,6 +26,7 @@ module Mpp
         source_url: params[:url],
         source_text: params[:content] || params[:text],
         source_type: source_type_for(params[:source_type]),
+        voice: Voice.google_voice_for(params[:voice], is_premium: true),
         expires_at: 24.hours.from_now
       )
 
@@ -41,6 +44,10 @@ module Mpp
       when "url" then :url
       else :text
       end
+    end
+
+    def invalid_voice?
+      params[:voice].present? && !Voice::ALL.include?(params[:voice])
     end
   end
 end

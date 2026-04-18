@@ -61,4 +61,39 @@ class Mpp::CreatesNarrationTest < ActiveSupport::TestCase
       assert_in_delta 24.hours.from_now, result.data.expires_at, 1.second
     end
   end
+
+  test "defaults voice to Chirp3-HD when no voice param supplied" do
+    params = { source_type: "text", text: "body" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert_equal Voice::DEFAULT_CHIRP, result.data.voice
+  end
+
+  test "translates voice catalog key to google voice name" do
+    params = { source_type: "text", text: "body", voice: "callum" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert_equal Voice.find("callum").google_voice, result.data.voice
+  end
+
+  test "returns failure for unknown voice key" do
+    params = { source_type: "text", text: "body", voice: "nonexistent" }
+
+    assert_no_difference -> { Narration.count } do
+      result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+      refute result.success?
+      assert_match(/Invalid voice/, result.error)
+    end
+  end
+
+  test "accepts Standard-tier voice key for MPP payers" do
+    params = { source_type: "text", text: "body", voice: "felix" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert result.success?
+    assert_equal Voice.find("felix").google_voice, result.data.voice
+  end
 end
