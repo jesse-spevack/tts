@@ -1,0 +1,14 @@
+<%# Placeholder — copy-to-clipboard + styling in agent-team-q8y.5 %>
+<div class="mx-auto max-w-4xl">
+  <%= render "shared/page_header", title: "Token created" %>
+
+  <div class="mt-6 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4">
+    <strong>Copy your token — we won't show it again.</strong>
+    <p>Store it somewhere safe. If you lose it, revoke it and create a new one.</p>
+  </div>
+
+  <pre class="mt-6 overflow-x-auto rounded bg-mist-950 p-4 font-mono text-mist-100"><code><%= @api_token.plain_token %></code></pre>
+
+  <%= link_to "I have copied my token", settings_api_tokens_path,
+        class: "mt-6 inline-block rounded bg-mist-900 px-3 py-2 text-sm font-medium text-white" %>
+</div>
