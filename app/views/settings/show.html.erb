@@ -107,7 +107,7 @@
                   <% if @subscription.present? %>
                     <div class="flex items-center gap-2">
                       <p class="text-sm font-medium text-mist-950 dark:text-white"><%= @subscription.plan_name %></p>
-                      <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium <%= @subscription.status_pill_classes %>"><%= @subscription.status_pill_label %></span>
+                      <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium <%= status_pill_classes(@subscription) %>"><%= status_pill_label(@subscription) %></span>
                     </div>
                     <% unless @subscription.canceled? %>
                       <% renewal_date = @subscription.canceling? ? @subscription.cancel_at : @subscription.current_period_end %>
@@ -117,7 +117,7 @@
                     <% end %>
                   <% end %>
                 </div>
-                <%= link_to((@subscription&.manage_billing_cta_label || "Manage Billing"), billing_path, class: "#{button_classes(type: :secondary)} self-start sm:self-auto") %>
+                <%= link_to manage_billing_cta_label(@subscription), billing_path, class: "#{button_classes(type: :secondary)} self-start sm:self-auto" %>
               </div>
             </div>
           </div>

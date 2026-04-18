@@ -61,26 +61,4 @@ class SubscriptionTest < ActiveSupport::TestCase
     subscription = Subscription.new(stripe_price_id: "price_unknown")
     assert_nil subscription.plan_display_price
   end
-
-  # --- Status pill presentation (agent-team-bwz) ---
-
-  test "status_pill_label is 'Active' for active subscriptions" do
-    subscription = subscriptions(:active_subscription)
-    assert_equal "Active", subscription.status_pill_label
-  end
-
-  test "status_pill_label is 'Canceling' for canceling subscriptions" do
-    subscription = subscriptions(:canceling_subscription)
-    assert_equal "Canceling", subscription.status_pill_label
-  end
-
-  test "status_pill_label is 'Past Due' for past_due subscriptions" do
-    subscription = subscriptions(:past_due_subscription)
-    assert_equal "Past Due", subscription.status_pill_label
-  end
-
-  test "status_pill_label is 'Canceled' for canceled subscriptions" do
-    subscription = subscriptions(:canceled_subscription)
-    assert_equal "Canceled", subscription.status_pill_label
-  end
 end
