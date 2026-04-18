@@ -556,7 +556,202 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     }
   end
 
+  # --- Signature credential tests ---
+
+  test "signature: submits raw transaction and returns success with tx hash" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+    stub_get_transaction_receipt(submitted_tx_hash, receipt: valid_receipt(submitted_tx_hash))
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.success?, "Expected success but got: #{result.error}"
+    assert_equal submitted_tx_hash, result.data[:tx_hash]
+  end
+
+  test "signature: polls for receipt when first attempt returns null, succeeds on retry" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+
+    # First receipt call returns null, second returns real receipt
+    receipt_stub = stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .with(body: hash_including("method" => "eth_getTransactionReceipt"))
+      .to_return(
+        { status: 200, body: { jsonrpc: "2.0", id: 1, result: nil }.to_json },
+        { status: 200, body: { jsonrpc: "2.0", id: 1, result: valid_receipt(submitted_tx_hash) }.to_json }
+      )
+
+    service = Mpp::VerifiesCredential.new(credential: credential)
+    service.define_singleton_method(:sleep) { |_| } # no-op sleep
+    result = service.call
+
+    assert result.success?, "Expected success but got: #{result.error}"
+    assert_equal submitted_tx_hash, result.data[:tx_hash]
+
+    # Verify receipt endpoint was called at least twice
+    assert_requested(receipt_stub, times: 2)
+  end
+
+  test "signature: returns failure when eth_sendRawTransaction returns RPC error" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .with(body: hash_including("method" => "eth_sendRawTransaction"))
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        error: { code: -32_000, message: "nonce too low" }
+      }.to_json)
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/nonce too low/, result.error)
+  end
+
+  test "signature: returns failure when poll for receipt times out" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+
+    # Receipt always returns null — simulates tx never mined
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .with(body: hash_including("method" => "eth_getTransactionReceipt"))
+      .to_return(status: 200, body: { jsonrpc: "2.0", id: 1, result: nil }.to_json)
+
+    service = Mpp::VerifiesCredential.new(credential: credential)
+    service.define_singleton_method(:sleep) { |_| } # no-op sleep
+    result = service.call
+
+    assert result.failure?
+    assert_match(/Transaction not found/, result.error)
+  end
+
+  test "signature: returns failure when submitted transaction reverts" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+    stub_get_transaction_receipt(submitted_tx_hash, receipt: {
+      status: "0x0",
+      logs: []
+    })
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/Transaction reverted/, result.error)
+  end
+
+  test "signature: replay protection rejects already-used tx hash" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+
+    # Pre-create a payment with the same tx hash
+    MppPayment.create!(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      tx_hash: submitted_tx_hash,
+      status: :completed
+    )
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/Transaction already used/, result.error)
+  end
+
+  test "signature: transfer event log verification works after receipt obtained" do
+    credential = build_signature_credential(@challenge, signature: "0xsigned_tx_data")
+
+    submitted_tx_hash = "0x#{SecureRandom.hex(32)}"
+    stub_send_raw_transaction(result: submitted_tx_hash)
+
+    # Receipt with wrong recipient in Transfer log
+    stub_get_transaction_receipt(submitted_tx_hash, receipt: {
+      status: "0x1",
+      logs: [
+        {
+          address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+          topics: [
+            TRANSFER_TOPIC,
+            pad_address("0xsender"),
+            pad_address("0xwrong_recipient")
+          ],
+          data: amount_to_hex(@amount_cents)
+        }
+      ]
+    })
+
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?
+    assert_match(/No matching Transfer event found/, result.error)
+  end
+
   private
+
+  def build_signature_credential(challenge, signature:)
+    credential_hash = {
+      challenge: {
+        id: challenge[:id],
+        realm: challenge[:realm],
+        method: challenge[:method],
+        intent: challenge[:intent],
+        request: challenge[:request],
+        expires: challenge[:expires]
+      },
+      payload: {
+        type: "signature",
+        signature: signature
+      }
+    }
+    Base64.strict_encode64(JSON.generate(credential_hash))
+  end
+
+  def stub_send_raw_transaction(result:)
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .with(body: hash_including("method" => "eth_sendRawTransaction"))
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: result
+      }.to_json)
+  end
+
+  def stub_get_transaction_receipt(_tx_hash, receipt:)
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .with(body: hash_including("method" => "eth_getTransactionReceipt"))
+      .to_return(status: 200, body: {
+        jsonrpc: "2.0",
+        id: 1,
+        result: receipt
+      }.to_json)
+  end
+
+  def valid_receipt(_tx_hash = nil)
+    {
+      status: "0x1",
+      logs: [
+        {
+          address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+          topics: [
+            TRANSFER_TOPIC,
+            pad_address("0xsender"),
+            pad_address(@deposit_address)
+          ],
+          data: amount_to_hex(@amount_cents)
+        }
+      ]
+    }
+  end
 
   def stub_tempo_rpc_success
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)

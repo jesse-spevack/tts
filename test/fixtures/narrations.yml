@@ -21,6 +21,7 @@ completed:
   voice: en-GB-Standard-D
   duration_seconds: 120
   audio_size_bytes: 1024000
+  gcs_episode_id: 20240101-120000-completed-narration
   expires_at: <%= 24.hours.from_now.iso8601 %>
   mpp_payment: completed
 
@@ -47,3 +48,17 @@ with_refunded_payment:
   voice: en-GB-Standard-D
   expires_at: <%= 24.hours.from_now.iso8601 %>
   mpp_payment: refunded
+
+expired:
+  public_id: nar_test_fixture_expired
+  title: Expired Narration
+  author: Expired Author
+  description: A narration past its TTL
+  source_type: 1
+  source_text: This narration has expired and should not be accessible.
+  status: complete
+  voice: en-GB-Standard-D
+  duration_seconds: 60
+  gcs_episode_id: 20240101-120000-expired-narration
+  expires_at: <%= 1.hour.ago.iso8601 %>
+  mpp_payment: expired_narration_payment

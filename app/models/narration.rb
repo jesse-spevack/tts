@@ -16,6 +16,16 @@ class Narration < ApplicationRecord
 
   after_update :refund_mpp_payment_on_failure, if: :should_refund_mpp_payment?
 
+  # Duck-type compatibility with Episode for ProcessesWithLlm prompt selection.
+  # Text narrations use the paste prompt; URL narrations use the URL prompt.
+  def paste?
+    text?
+  end
+
+  def email?
+    false
+  end
+
   private
 
   def generate_public_id

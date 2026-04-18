@@ -14,6 +14,14 @@ class Rack::Attack
     end
   end
 
+  # Rate limit: 60 narration polls per minute per IP
+  # Prevents enumeration of public_ids
+  throttle("api/v1/narrations/show", limit: 60, period: 1.minute) do |req|
+    if req.path.start_with?("/api/v1/narrations/") && req.get?
+      req.ip
+    end
+  end
+
   # Rate limit: 5 device code creations per minute per IP
   throttle("api/v1/auth/device_codes/create", limit: 5, period: 1.minute) do |req|
     if req.path == "/api/v1/auth/device_codes" && req.post?
