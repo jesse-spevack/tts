@@ -20,6 +20,7 @@
 #     │    └─ No credential → Return 402 challenge
 module MppPayable
   extend ActiveSupport::Concern
+  include StructuredLogging
 
   # Inner module that gets prepended so its methods take priority over the
   # including controller's own method definitions.
@@ -97,6 +98,7 @@ module MppPayable
     verification = Mpp::VerifiesCredential.call(credential: credential)
 
     unless verification.success?
+      log_warn "mpp_anonymous_payment_rejected", error: verification.error
       render_402_challenge
       return
     end
@@ -107,7 +109,21 @@ module MppPayable
       tx_hash: verification.data[:tx_hash]
     )
 
+    log_info "mpp_anonymous_payment_verified",
+      mpp_payment_id: mpp_payment.prefix_id,
+      tx_hash: verification.data[:tx_hash]
+
     result = Mpp::CreatesNarration.call(mpp_payment: mpp_payment, params: episode_params)
+
+    unless result.success?
+      log_error "mpp_narration_creation_failed", mpp_payment_id: mpp_payment.prefix_id, error: result.error
+      render json: { error: result.error }, status: :unprocessable_entity
+      return
+    end
+
+    log_info "mpp_narration_created",
+      narration_id: result.data.prefix_id,
+      mpp_payment_id: mpp_payment.prefix_id
 
     receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
 
@@ -121,6 +137,8 @@ module MppPayable
     verification = Mpp::VerifiesCredential.call(credential: credential)
 
     unless verification.success?
+      log_warn "mpp_authenticated_payment_rejected",
+        user_id: current_user.id, error: verification.error
       render_402_challenge
       return
     end
@@ -132,6 +150,11 @@ module MppPayable
       user_id: current_user.id
     )
 
+    log_info "mpp_authenticated_payment_verified",
+      user_id: current_user.id,
+      mpp_payment_id: mpp_payment.prefix_id,
+      tx_hash: verification.data[:tx_hash]
+
     create_episode_via_mpp(mpp_payment, verification)
   end
 
@@ -141,10 +164,18 @@ module MppPayable
     result = Mpp::CreatesEpisode.call(user: current_user, params: episode_params)
 
     if result.success?
+      log_info "mpp_episode_created",
+        episode_id: result.data.prefix_id,
+        mpp_payment_id: mpp_payment.prefix_id,
+        user_id: current_user.id
       receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
       response.headers["Payment-Receipt"] = receipt.data[:header_value]
       render json: { id: result.data.prefix_id }, status: :created
     else
+      log_error "mpp_episode_creation_failed",
+        mpp_payment_id: mpp_payment.prefix_id,
+        user_id: current_user.id,
+        error: result.error
       render json: { error: result.error }, status: :unprocessable_entity
     end
   end
@@ -158,6 +189,7 @@ module MppPayable
     result = Mpp::ProvisionsChallenge.call(amount_cents: amount_cents, currency: currency)
 
     unless result.success?
+      log_error "mpp_challenge_provisioning_failed", error: result.error
       render json: { error: "Payment provisioning failed: #{result.error}" },
         status: :service_unavailable
       return
@@ -165,6 +197,11 @@ module MppPayable
 
     challenge = result.data.challenge
     deposit_address = result.data.deposit_address
+
+    log_info "mpp_challenge_issued",
+      challenge_id: challenge[:id],
+      amount_cents: amount_cents,
+      currency: currency
 
     response.headers["WWW-Authenticate"] = challenge[:header_value]
 
