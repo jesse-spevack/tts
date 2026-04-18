@@ -29,4 +29,36 @@ class SubscriptionTest < ActiveSupport::TestCase
     subscription = Subscription.new(cancel_at: nil)
     refute subscription.canceling?
   end
+
+  # --- Plan lookup (agent-team-bwz) ---
+
+  test "plan_name returns human-readable name for monthly price" do
+    subscription = subscriptions(:active_subscription)
+    assert_equal "Premium Monthly", subscription.plan_name
+  end
+
+  test "plan_name returns human-readable name for annual price" do
+    subscription = subscriptions(:annual_subscription)
+    assert_equal "Premium Annual", subscription.plan_name
+  end
+
+  test "plan_name returns nil for unknown price id" do
+    subscription = Subscription.new(stripe_price_id: "price_unknown")
+    assert_nil subscription.plan_name
+  end
+
+  test "plan_display_price returns formatted price for monthly" do
+    subscription = subscriptions(:active_subscription)
+    assert_equal "$9/mo", subscription.plan_display_price
+  end
+
+  test "plan_display_price returns formatted price for annual" do
+    subscription = subscriptions(:annual_subscription)
+    assert_equal "$89/yr", subscription.plan_display_price
+  end
+
+  test "plan_display_price returns nil for unknown price id" do
+    subscription = Subscription.new(stripe_price_id: "price_unknown")
+    assert_nil subscription.plan_display_price
+  end
 end

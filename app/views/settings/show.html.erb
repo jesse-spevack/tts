@@ -7,7 +7,7 @@
     <nav class="mb-8 hidden lg:sticky lg:top-6 lg:mb-0 lg:block lg:self-start" aria-label="Settings sections">
       <ul role="list" class="space-y-1 text-sm">
         <li><a href="#voice" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Voice</a></li>
-        <% if Current.user.premium? %>
+        <% if Current.user.premium? || @subscription.present? %>
           <li><a href="#billing" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Billing</a></li>
         <% end %>
         <li><a href="#extension" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Browser Extension</a></li>
@@ -22,7 +22,7 @@
     <%# Mobile section nav (horizontal pills) %>
     <nav class="mb-6 flex gap-2 overflow-x-auto lg:hidden" aria-label="Settings sections">
       <a href="#voice" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Voice</a>
-      <% if Current.user.premium? %>
+      <% if Current.user.premium? || @subscription.present? %>
         <a href="#billing" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Billing</a>
       <% end %>
       <a href="#extension" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Extension</a>
@@ -93,7 +93,7 @@
         </div>
       </section>
 
-      <% if Current.user.premium? %>
+      <% if Current.user.premium? || @subscription.present? %>
         <%# Billing section %>
         <section id="billing" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
           <div>
@@ -102,7 +102,23 @@
           </div>
           <div class="md:col-span-2">
             <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-              <%= link_to "Manage Billing", billing_path, class: button_classes(type: :secondary) %>
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="space-y-1">
+                  <% if @subscription.present? %>
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-medium text-mist-950 dark:text-white"><%= @subscription.plan_name %></p>
+                      <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium <%= status_pill_classes(@subscription) %>"><%= status_pill_label(@subscription) %></span>
+                    </div>
+                    <% unless @subscription.canceled? %>
+                      <% renewal_date = @subscription.canceling? ? @subscription.cancel_at : @subscription.current_period_end %>
+                      <p class="text-sm text-mist-500 dark:text-mist-400">
+                        <%= @subscription.canceling? ? "Ends" : "Renews" %> <%= renewal_date.strftime("%B %-d, %Y") %> &middot; <%= @subscription.plan_display_price %>
+                      </p>
+                    <% end %>
+                  <% end %>
+                </div>
+                <%= link_to manage_billing_cta_label(@subscription), billing_path, class: "#{button_classes(type: :secondary)} self-start sm:self-auto" %>
+              </div>
             </div>
           </div>
         </section>

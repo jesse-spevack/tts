@@ -25,4 +25,29 @@ module UiHelper
   def label_classes
     "block text-sm/6 font-medium text-mist-950 dark:text-white"
   end
+
+  def status_pill_label(subscription)
+    return "" if subscription.nil?
+    return "Canceling" if subscription.active? && subscription.canceling?
+    return "Active" if subscription.active?
+    return "Past Due" if subscription.past_due?
+    "Canceled"
+  end
+
+  def status_pill_classes(subscription)
+    case status_pill_label(subscription)
+    when "Active"
+      "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
+    when "Canceling", "Past Due"
+      "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
+    when "Canceled"
+      "bg-mist-100 text-mist-600 dark:bg-mist-500/10 dark:text-mist-400"
+    else
+      ""
+    end
+  end
+
+  def manage_billing_cta_label(subscription)
+    subscription&.canceled? ? "Resubscribe" : "Manage Billing"
+  end
 end

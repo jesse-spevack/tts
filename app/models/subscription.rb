@@ -10,4 +10,18 @@ class Subscription < ApplicationRecord
   def canceling?
     cancel_at.present?
   end
+
+  def plan_name
+    plan_info&.dig(:name)
+  end
+
+  def plan_display_price
+    plan_info&.dig(:display)
+  end
+
+  private
+
+  def plan_info
+    AppConfig::Stripe::PLAN_INFO[stripe_price_id]
+  end
 end
