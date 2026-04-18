@@ -10,6 +10,12 @@ const TOKEN_KEY = 'very_normal_tts_api_token';
  * alphanumeric chars. Backend renamed the prefix from pk_live_ (publishable
  * convention) to sk_live_ (secret-key convention) — we accept both during
  * the migration window so previously-issued tokens keep working.
+ *
+ * TODO(agent-team-ohu): tighten to /^sk_live_[A-Za-z0-9_-]{32,64}$/ once
+ * no active extension holds a legacy pk_live_ token. Cutover signal:
+ * 30 consecutive days of zero pk_live_-prefixed api_request_authenticated
+ * events in structured logs, after a shipped extension release with
+ * sk_live_-only support has been live for 60+ days.
  */
 const TOKEN_PATTERN = /^(sk|pk)_live_[a-zA-Z0-9_-]{32,64}$/;
 
