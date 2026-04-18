@@ -13,8 +13,6 @@ module Mpp
       @currency = currency
     end
 
-    STRIPE_API_VERSION = "2026-03-04.preview"
-
     def call
       payment_intent = create_payment_intent
 
@@ -61,7 +59,7 @@ module Mpp
           "payment_method_options[crypto][deposit_options][networks][]": "tempo",
           confirm: true
         },
-        opts: { stripe_version: STRIPE_API_VERSION }
+        opts: { stripe_version: AppConfig::Mpp::STRIPE_API_VERSION }
       )
       parsed = JSON.parse(response.http_body)
 
