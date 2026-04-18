@@ -406,7 +406,10 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
 
     result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
-    assert_equal @amount_cents, result.data[:amount]
+    # Amount in the result is now in token base units (string from challenge)
+    decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
+    expected_base_units = (@amount_cents * (10**decimals)) / 100
+    assert_equal expected_base_units.to_s, result.data[:amount]
   end
 
   test "successful result includes recipient" do

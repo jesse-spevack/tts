@@ -77,8 +77,12 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     assert challenge[:request].present?
 
     decoded = JSON.parse(Base64.decode64(challenge[:request]))
-    assert_equal @amount_cents, decoded["amount"]
-    assert_equal @currency, decoded["currency"]
+    # Amount is in token base units (string), not cents
+    decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
+    expected_base_units = (@amount_cents * (10**decimals)) / 100
+    assert_equal expected_base_units.to_s, decoded["amount"]
+    # Currency is the token contract address, not fiat code
+    assert_equal AppConfig::Mpp::TEMPO_CURRENCY_TOKEN, decoded["currency"]
     assert_equal @recipient, decoded["recipient"]
   end
 
@@ -124,22 +128,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: 200,
       currency: @currency,
-      recipient: @recipient
-    )
-
-    assert_not_equal result1.data[:id], result2.data[:id]
-  end
-
-  test "challenge id changes when currency changes" do
-    result1 = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents,
-      currency: "usd",
-      recipient: @recipient
-    )
-
-    result2 = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents,
-      currency: "eur",
       recipient: @recipient
     )
 
