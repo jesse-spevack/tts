@@ -1,6 +1,8 @@
 module Api
   module V1
     class BaseController < ActionController::API
+      include StructuredLogging
+
       before_action :authenticate_token!
 
       private
@@ -35,6 +37,10 @@ module Api
         api_token.update_column(:last_used_at, Time.current)
         @current_api_token = api_token
         @current_user = api_token.user
+        Current.api_token_prefix = api_token.token_prefix
+        log_info "api_request_authenticated",
+          user_id: api_token.user_id,
+          source: api_token.source
         true
       end
 
