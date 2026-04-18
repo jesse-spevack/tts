@@ -71,7 +71,7 @@ module Settings
       end
 
       assert_response :success
-      new_token = @user.api_tokens.user_created.order(created_at: :desc).first
+      new_token = @user.api_tokens.source_user.order(created_at: :desc).first
       assert_equal "user", new_token.source
       assert_includes response.body, new_token.token_prefix
     end

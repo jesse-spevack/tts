@@ -6,9 +6,9 @@ class ApiToken < ApplicationRecord
   enum :source, { user: "user", extension: "extension" }, prefix: true
 
   validates :token_digest, presence: true, uniqueness: true
+  validates :token_prefix, presence: true
 
   scope :active, -> { where(revoked_at: nil) }
-  scope :user_created, -> { source_user }
 
   # Virtual attribute to hold the plain token temporarily after generation
   attr_accessor :plain_token

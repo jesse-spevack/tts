@@ -196,8 +196,8 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert_equal "user", token.source
   end
 
-  test "user_created scope returns only source=user tokens" do
-    user_created = ApiToken.user_created
+  test "source_user scope returns only source=user tokens" do
+    user_created = ApiToken.source_user
     assert_includes user_created, api_tokens(:user_created_token)
     refute_includes user_created, api_tokens(:active_token)
     refute_includes user_created, api_tokens(:revoked_token)
@@ -212,14 +212,14 @@ class ApiTokenTest < ActiveSupport::TestCase
   end
 
   # Token Prefix Tests
-  test "token_prefix is nullable for legacy tokens" do
-    token = api_tokens(:active_token)
-    assert_nil token.token_prefix
-    assert token.valid?
+  test "token_prefix is required" do
+    token = ApiToken.new(user: users(:one), token_digest: "x", source: "user")
+    refute token.valid?, "should require a token_prefix"
+    assert_includes token.errors[:token_prefix], "can't be blank"
   end
 
   test "token_prefix stores the prefix for display" do
     token = api_tokens(:user_created_token)
-    assert_equal "sk_live_EXAMPLE_FIXTURE_u1", token.token_prefix
+    assert_equal "sk_live_u123", token.token_prefix
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_18_201035) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_18_210301) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -54,7 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_201035) do
     t.datetime "revoked_at"
     t.string "source", default: "user", null: false
     t.string "token_digest", null: false
-    t.string "token_prefix"
+    t.string "token_prefix", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true

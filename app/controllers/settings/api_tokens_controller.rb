@@ -10,7 +10,7 @@ module Settings
     def index
       @api_tokens = Current.user
         .api_tokens
-        .user_created
+        .source_user
         .active
         .order(created_at: :desc)
     end
@@ -23,7 +23,7 @@ module Settings
     end
 
     def destroy
-      token = Current.user.api_tokens.user_created.find(params[:id])
+      token = Current.user.api_tokens.source_user.find(params[:id])
       RevokesApiToken.call(token: token)
       redirect_to settings_api_tokens_path, notice: "Token revoked."
     end
