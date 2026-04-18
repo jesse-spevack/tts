@@ -129,5 +129,9 @@ class AppConfig
     # block a Rails thread indefinitely.
     TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
     TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
+    # Stripe API version for crypto PaymentIntent endpoints. Must stay
+    # on the preview track while Machine Payments Protocol support is
+    # gated there.
+    STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
   end
 end
