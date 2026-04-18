@@ -24,8 +24,8 @@ module Mpp
       payload = parsed["payload"]
 
       # Phase 1: HMAC verification
-      hmac_result = verify_hmac(challenge)
-      return hmac_result if hmac_result&.failure?
+      hmac_result = Mpp::VerifiesHmac.call(challenge: challenge)
+      return hmac_result unless hmac_result.success?
 
       # Check expiration. Untrusted client input — never let a malformed
       # timestamp bubble up as a 500.
@@ -115,25 +115,6 @@ module Mpp
       Result.failure("Invalid base64 encoding")
     rescue JSON::ParserError
       Result.failure("Invalid JSON in credential")
-    end
-
-    def verify_hmac(challenge)
-      realm = challenge["realm"]
-      method = challenge["method"]
-      intent = challenge["intent"]
-      request_b64 = challenge["request"]
-      expires = challenge["expires"]
-
-      request_json = Base64.decode64(request_b64)
-
-      hmac_data = "#{realm}|#{method}|#{intent}|#{request_json}|#{expires}"
-      expected_id = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, hmac_data)
-
-      unless ActiveSupport::SecurityUtils.secure_compare(expected_id, challenge["id"])
-        return Result.failure("Challenge HMAC verification failed")
-      end
-
-      nil
     end
 
     def fetch_transaction_receipt(tx_hash)
