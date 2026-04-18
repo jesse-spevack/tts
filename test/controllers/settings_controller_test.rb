@@ -267,6 +267,61 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # --- Connected Apps: app identity (agent-team-3d9) ---
+  #
+  # Connected Apps rows must render a size-9 rounded-lg badge per connected app
+  # (logo for known apps, initials fallback otherwise) and an absolute-timestamp
+  # tooltip on the "Connected X ago" text. No oauth_applications / oauth_access_tokens
+  # fixtures exist, so records are created inline — matches the pattern in
+  # test/controllers/settings/connected_apps_controller_test.rb.
+
+  test "show renders badge for each connected app" do
+    app = Doorkeeper::Application.create!(
+      name: "Claude",
+      uid: "test_claude_3d9_badge",
+      redirect_uri: "http://localhost:3001/callback",
+      scopes: "podread",
+      confidential: false
+    )
+    Doorkeeper::AccessToken.create!(
+      application: app,
+      resource_owner_id: @user.id,
+      scopes: "podread",
+      expires_in: 1.hour
+    )
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#connected-apps span.size-9.rounded-lg", count: 1
+  end
+
+  test "show renders absolute timestamp tooltip on Connected X ago" do
+    app = Doorkeeper::Application.create!(
+      name: "Claude",
+      uid: "test_claude_3d9_tooltip",
+      redirect_uri: "http://localhost:3001/callback",
+      scopes: "podread",
+      confidential: false
+    )
+    Doorkeeper::AccessToken.create!(
+      application: app,
+      resource_owner_id: @user.id,
+      scopes: "podread",
+      expires_in: 1.hour
+    )
+
+    get settings_path
+
+    assert_response :success
+    # Option-2 tooltip: <time> element with datetime, title, aria-label.
+    assert_select "section#connected-apps time[title][datetime][aria-label]" do |elements|
+      assert_equal 1, elements.length
+      title = elements.first["title"]
+      assert_match(/\A[A-Z][a-z]+ \d{1,2}, \d{4} at \d{1,2}:\d{2} [AP]M\z/, title)
+    end
+  end
+
   test "billing card renders safely for subscription with unknown stripe_price_id" do
     # S8: future price rotation must not 500 /settings.
     user = users(:subscriber)

@@ -82,4 +82,112 @@ class UiHelperTest < ActionView::TestCase
   test "manage_billing_cta_label returns 'Manage Billing' for nil subscription" do
     assert_equal "Manage Billing", manage_billing_cta_label(nil)
   end
+
+  # --- oauth_app_badge (agent-team-3d9) ---
+  #
+  # Badge is a size-9 rounded-lg container that renders either:
+  #   - an inlined SVG logo (when app/assets/images/oauth_apps/<slug>.svg exists), or
+  #   - an initials fallback (first letter of each word, max 2, uppercased).
+  # Known apps' SVGs use fill="currentColor" so the container's text color controls
+  # theming in both light/dark. Unknown apps get a framed initials block.
+
+  test "oauth_app_badge returns logo badge with inline SVG for known app (Claude)" do
+    app = Struct.new(:name).new("Claude")
+    html = oauth_app_badge(app)
+
+    assert_includes html, "inline-flex"
+    assert_includes html, "size-9"
+    assert_includes html, "items-center"
+    assert_includes html, "justify-center"
+    assert_includes html, "rounded-lg"
+    assert_includes html, "<svg"
+    assert_includes html, 'fill="currentColor"'
+    assert_includes html, "text-mist-950"
+    assert_includes html, "dark:text-white"
+  end
+
+  test "oauth_app_badge returns logo badge with inline SVG for known app (ChatGPT)" do
+    app = Struct.new(:name).new("ChatGPT")
+    html = oauth_app_badge(app)
+
+    assert_includes html, "inline-flex"
+    assert_includes html, "size-9"
+    assert_includes html, "items-center"
+    assert_includes html, "justify-center"
+    assert_includes html, "rounded-lg"
+    assert_includes html, "<svg"
+    assert_includes html, 'fill="currentColor"'
+    assert_includes html, "text-mist-950"
+    assert_includes html, "dark:text-white"
+  end
+
+  test "oauth_app_badge returns initials badge for unknown multi-word app" do
+    app = Struct.new(:name).new("MCP Client")
+    html = oauth_app_badge(app)
+
+    assert_includes html, "MC"
+    assert_includes html, "bg-mist-100"
+    assert_includes html, "text-mist-700"
+    assert_includes html, "dark:bg-mist-700"
+    assert_includes html, "dark:text-mist-200"
+    assert_includes html, "text-xs"
+    assert_includes html, "font-semibold"
+    assert_includes html, "size-9"
+    assert_includes html, "rounded-lg"
+    refute_includes html, "<svg"
+  end
+
+  test "oauth_app_badge returns single-letter initial for single-word unknown app" do
+    app = Struct.new(:name).new("Slack")
+    html = oauth_app_badge(app)
+
+    assert_includes html, ">S<"
+    refute_includes html, "<svg"
+  end
+
+  test "oauth_app_badge caps initials at two letters for three-word unknown app" do
+    app = Struct.new(:name).new("Some Cool App")
+    html = oauth_app_badge(app)
+
+    assert_includes html, "SC"
+    refute_includes html, "SCA"
+    refute_includes html, "<svg"
+  end
+
+  test "oauth_app_badge resolves logo via app.name.parameterize (case-insensitive)" do
+    app = Struct.new(:name).new("claude")
+    html = oauth_app_badge(app)
+
+    # Lowercase "claude" parameterizes to "claude" — should hit claude.svg
+    # just like the "Claude" test above. Locks in that the helper doesn't
+    # do a raw case-sensitive filename match.
+    assert_includes html, "<svg"
+    assert_includes html, 'fill="currentColor"'
+  end
+
+  test "oauth_app_badge strips leading/trailing whitespace before computing initials" do
+    app = Struct.new(:name).new("  Foo Bar  ")
+    html = oauth_app_badge(app)
+    assert_includes html, "FB"
+    refute_includes html, ">F<"
+  end
+
+  test "oauth_app_badge merges size-7 with any pre-existing class on the root svg" do
+    require "tempfile"
+    stub_name = "merge-test-#{SecureRandom.hex(4)}"
+    stub_path = Rails.root.join("app/assets/images/oauth_apps/#{stub_name}.svg")
+    stub_path.write(%(<svg xmlns="http://www.w3.org/2000/svg" class="existing-class" viewBox="0 0 10 10"><path d="M0 0h10v10H0z"/></svg>))
+    begin
+      app = Struct.new(:name).new(stub_name)
+      html = oauth_app_badge(app)
+      assert_match %r{<svg[^>]*class="[^"]*existing-class[^"]*"}, html
+      assert_match %r{<svg[^>]*class="[^"]*size-7[^"]*"}, html
+      # The merged class attribute should appear exactly once on the <svg>.
+      svg_open_tag = html[/<svg\b[^>]*>/]
+      assert_equal 1, svg_open_tag.scan(/\bclass=/).size,
+        "expected exactly one class attribute on <svg>, got: #{svg_open_tag}"
+    ensure
+      stub_path.delete if stub_path.exist?
+    end
+  end
 end
