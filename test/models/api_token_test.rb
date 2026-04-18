@@ -87,7 +87,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert_equal expected_digest, token.token_digest
   end
 
-  test "GeneratesApiToken revokes existing active tokens for user" do
+  test "GeneratesApiToken does not revoke other existing tokens for user" do
     user = users(:one)
     existing_active_token = api_tokens(:active_token)
 
@@ -96,7 +96,8 @@ class ApiTokenTest < ActiveSupport::TestCase
     GeneratesApiToken.call(user: user)
 
     existing_active_token.reload
-    assert existing_active_token.revoked?
+    assert existing_active_token.active?,
+      "creating a new token must not touch pre-existing active tokens"
   end
 
   test "GeneratesApiToken does not affect already revoked tokens" do
@@ -107,7 +108,6 @@ class ApiTokenTest < ActiveSupport::TestCase
     GeneratesApiToken.call(user: user)
 
     revoked_token.reload
-    # The revoked_at time should not have changed
     assert_equal original_revoked_at.to_i, revoked_token.revoked_at.to_i
   end
 
@@ -166,20 +166,18 @@ class ApiTokenTest < ActiveSupport::TestCase
     refute_includes active_tokens, api_tokens(:revoked_token)
   end
 
-  # One Active Token Per User Tests
-  test "user can only have one active token at a time" do
+  # Multiple Active Tokens Per User
+  test "user can have multiple active tokens" do
     user = users(:two)
     user.api_tokens.destroy_all
 
     first_token = GeneratesApiToken.call(user: user)
-    assert first_token.active?
-
     second_token = GeneratesApiToken.call(user: user)
 
     first_token.reload
-    assert first_token.revoked?
+    assert first_token.active?
     assert second_token.active?
-    assert_equal 1, user.api_tokens.active.count
+    assert_equal 2, user.api_tokens.active.count
   end
 
   # Source Enum Tests

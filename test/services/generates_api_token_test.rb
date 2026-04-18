@@ -25,20 +25,32 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
     assert_equal @user, api_token.user
   end
 
-  test "call revokes existing active tokens for user" do
-    # Generate first token
+  test "call allows multiple active tokens per user" do
     first_token = GeneratesApiToken.call(user: @user)
-    assert first_token.active?
-
-    # Generate second token
     second_token = GeneratesApiToken.call(user: @user)
 
-    # First token should now be revoked
     first_token.reload
-    assert first_token.revoked?
-
-    # Second token should be active
+    assert first_token.active?
     assert second_token.active?
+  end
+
+  test "call defaults source to user" do
+    token = GeneratesApiToken.call(user: @user)
+    assert_equal "user", token.source
+  end
+
+  test "call accepts explicit source" do
+    token = GeneratesApiToken.call(user: @user, source: "extension")
+    assert_equal "extension", token.source
+  end
+
+  test "call populates token_prefix with prefix + 4 chars of random portion" do
+    token = GeneratesApiToken.call(user: @user)
+
+    assert token.token_prefix.start_with?("sk_live_")
+    # 8 chars of "sk_live_" + 4 chars from the random portion = 12 chars total
+    assert_equal 12, token.token_prefix.length
+    assert token.plain_token.start_with?(token.token_prefix)
   end
 
   test "call generates unique tokens each time" do

@@ -41,26 +41,40 @@ module Extension
       assert api_token.active?
     end
 
-    test "show revokes previous tokens for user" do
+    test "show revokes previous extension tokens for user" do
       sign_in_as(@user)
 
-      # Generate first token
+      # First reconnect — generate extension token
       get extension_connect_path
       first_token_match = response.body.match(/sk_live_[A-Za-z0-9_-]+/)
       first_api_token = FindsApiToken.call(plain_token: first_token_match[0])
       assert first_api_token.active?
+      assert_equal "extension", first_api_token.source
 
-      # Generate second token
+      # Second reconnect — should revoke the first and issue a new one
       get extension_connect_path
       second_token_match = response.body.match(/sk_live_[A-Za-z0-9_-]+/)
 
-      # First token should now be revoked
       first_api_token.reload
       assert first_api_token.revoked?
 
-      # Second token should be active
       second_api_token = FindsApiToken.call(plain_token: second_token_match[0])
       assert second_api_token.active?
+      assert_equal "extension", second_api_token.source
+    end
+
+    test "show does not revoke user-created tokens when reconnecting" do
+      sign_in_as(@user)
+
+      user_created_token = api_tokens(:user_created_token)
+      assert user_created_token.active?
+      assert_equal "user", user_created_token.source
+
+      get extension_connect_path
+
+      user_created_token.reload
+      assert user_created_token.active?,
+        "user-created tokens must survive an extension reconnect"
     end
 
     test "show includes data attribute for extension to read" do

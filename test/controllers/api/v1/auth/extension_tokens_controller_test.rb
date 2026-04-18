@@ -41,25 +41,35 @@ module Api
           assert api_token.active?
         end
 
-        test "create revokes previous tokens for user" do
+        test "create revokes previous extension tokens for user" do
           sign_in_as(@user)
 
-          # Generate first token
           post api_v1_auth_extension_token_path
           first_token = response.parsed_body["token"]
           first_api_token = FindsApiToken.call(plain_token: first_token)
+          assert_equal "extension", first_api_token.source
 
-          # Generate second token
           post api_v1_auth_extension_token_path
           second_token = response.parsed_body["token"]
 
-          # First token should now be revoked
           first_api_token.reload
           assert first_api_token.revoked?
 
-          # Second token should be active
           second_api_token = FindsApiToken.call(plain_token: second_token)
           assert second_api_token.active?
+          assert_equal "extension", second_api_token.source
+        end
+
+        test "create does not revoke user-created tokens" do
+          sign_in_as(@user)
+
+          user_created_token = api_tokens(:user_created_token)
+          assert user_created_token.active?
+
+          post api_v1_auth_extension_token_path
+
+          user_created_token.reload
+          assert user_created_token.active?
         end
 
         test "create returns different token each time" do

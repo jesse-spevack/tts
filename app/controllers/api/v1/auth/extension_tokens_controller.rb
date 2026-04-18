@@ -11,7 +11,13 @@ module Api
             return
           end
 
-          token = GeneratesApiToken.call(user: Current.user)
+          # Same rotation semantics as Extension::ConnectController — only
+          # revoke source=extension tokens so user-created tokens survive.
+          Current.user.api_tokens.active.source_extension.find_each do |t|
+            RevokesApiToken.call(token: t)
+          end
+
+          token = GeneratesApiToken.call(user: Current.user, source: "extension")
 
           render json: {
             token: token.plain_token
