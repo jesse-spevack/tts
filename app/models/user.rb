@@ -29,6 +29,11 @@ class User < ApplicationRecord
     where.not(auth_token: nil)
          .where("auth_token_expires_at > ?", Time.current)
   }
+  scope :active, -> { where(active: true) }
+
+  def deactivated?
+    !active
+  end
 
   def premium?
     subscription&.active? || complimentary? || unlimited?
