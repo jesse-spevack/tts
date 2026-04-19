@@ -16,9 +16,13 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:)
+    # voice_tier defaults to :premium during the agent-team-nkz migration
+    # window — matches the legacy flat-price flow. After agent-team-nkz.3
+    # (route split) lands, callers pass tier explicitly.
+    def initialize(amount_cents:, currency:, voice_tier: :premium)
       @amount_cents = amount_cents
       @currency = currency
+      @voice_tier = voice_tier
     end
 
     def call
@@ -34,12 +38,13 @@ module Mpp
       payment_intent_id = deposit_result.data[:payment_intent_id]
 
       # Step 2: sign the HMAC challenge with the real deposit_address
-      # as recipient. Binds the on-chain destination into the HMAC so
-      # it cannot be swapped at verification time.
+      # as recipient. Binds the on-chain destination + voice tier into
+      # the HMAC so neither can be swapped at verification time.
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: amount_cents,
         currency: currency,
-        recipient: deposit_address
+        recipient: deposit_address,
+        voice_tier: voice_tier
       )
       challenge = challenge_result.data
 
@@ -62,6 +67,6 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency
+    attr_reader :amount_cents, :currency, :voice_tier
   end
 end

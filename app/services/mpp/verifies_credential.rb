@@ -80,6 +80,11 @@ module Mpp
       request_json = Base64.decode64(challenge["request"])
       request_data = JSON.parse(request_json)
       expected_amount = request_data["amount"]
+      # voice_tier is embedded in the HMAC-signed request blob, so any
+      # tampering is caught by the HMAC check upstream. Downstream callers
+      # still compare this against the tier of the CURRENT request's
+      # voice to catch the "pay Standard, retry Premium" case.
+      voice_tier = request_data["voice_tier"]&.to_sym
 
       transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount)
       return transfer_result if transfer_result&.failure?
@@ -91,7 +96,8 @@ module Mpp
         tx_hash: tx_hash,
         amount: expected_amount,
         recipient: deposit_address,
-        challenge_id: challenge["id"]
+        challenge_id: challenge["id"],
+        voice_tier: voice_tier
       )
     end
 

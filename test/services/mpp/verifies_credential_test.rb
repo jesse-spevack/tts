@@ -412,6 +412,17 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     assert_equal expected_base_units.to_s, result.data[:amount]
   end
 
+  test "successful result includes voice_tier extracted from the challenge" do
+    stub_tempo_rpc_success
+
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+
+    # Legacy test setup uses GeneratesChallenge's default tier (:premium).
+    # agent-team-nkz.3 will route tier from the request's resolved voice
+    # and compare it against this extracted value.
+    assert_equal :premium, result.data[:voice_tier]
+  end
+
   test "successful result includes recipient" do
     stub_tempo_rpc_success
 

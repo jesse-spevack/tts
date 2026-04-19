@@ -8,10 +8,15 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:, recipient:)
+    # voice_tier defaults to :premium during the agent-team-nkz migration
+    # window — matches the legacy flat-price flow. After agent-team-nkz.3
+    # (route split) lands, all callers pass tier explicitly derived from
+    # the request's resolved voice, and the default can be removed.
+    def initialize(amount_cents:, currency:, recipient:, voice_tier: :premium)
       @amount_cents = amount_cents
       @currency = currency
       @recipient = recipient
+      @voice_tier = voice_tier
     end
 
     def call
@@ -22,10 +27,14 @@ module Mpp
       token_decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
       amount_base_units = (amount_cents * (10**token_decimals)) / 100
       token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
+      # voice_tier is embedded in the request blob so tampering with the
+      # tier on retry (e.g. paying a Standard price but requesting a
+      # Premium voice) fails HMAC verification downstream.
       request_json = JSON.generate({
         amount: amount_base_units.to_s,
         currency: token_address,
-        recipient: recipient
+        recipient: recipient,
+        voice_tier: voice_tier.to_s
       })
       request_b64 = Base64.strict_encode64(request_json)
       expires = (Time.current + AppConfig::Mpp::CHALLENGE_TTL_SECONDS).iso8601
@@ -48,12 +57,13 @@ module Mpp
         intent: intent,
         request: request_b64,
         expires: expires,
+        voice_tier: voice_tier,
         header_value: header_value
       )
     end
 
     private
 
-    attr_reader :amount_cents, :currency, :recipient
+    attr_reader :amount_cents, :currency, :recipient, :voice_tier
   end
 end

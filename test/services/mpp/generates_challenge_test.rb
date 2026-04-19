@@ -86,6 +86,47 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     assert_equal @recipient, decoded["recipient"]
   end
 
+  # Tier-aware challenges (agent-team-nkz.4)
+
+  test "voice_tier is embedded in the request blob when passed explicitly" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: 50,
+      currency: @currency,
+      recipient: @recipient,
+      voice_tier: :standard
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert_equal "standard", decoded["voice_tier"]
+    assert_equal :standard, result.data[:voice_tier]
+  end
+
+  test "voice_tier defaults to :premium when omitted (legacy flat-price compat)" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      recipient: @recipient
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert_equal "premium", decoded["voice_tier"]
+    assert_equal :premium, result.data[:voice_tier]
+  end
+
+  test "different voice_tiers yield different challenge ids (HMAC is tier-bound)" do
+    freeze_time do
+      standard = Mpp::GeneratesChallenge.call(
+        amount_cents: 50, currency: @currency, recipient: @recipient, voice_tier: :standard
+      )
+      premium = Mpp::GeneratesChallenge.call(
+        amount_cents: 50, currency: @currency, recipient: @recipient, voice_tier: :premium
+      )
+
+      assert_not_equal standard.data[:id], premium.data[:id],
+        "swapping voice_tier must invalidate the HMAC so a Standard-priced challenge cannot be reused at Premium tier"
+    end
+  end
+
   test "challenge includes expires as ISO 8601 timestamp approximately 5 minutes from now" do
     freeze_time do
       result = Mpp::GeneratesChallenge.call(
