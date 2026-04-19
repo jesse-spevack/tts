@@ -36,7 +36,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "create requires authentication" do
     post checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
 
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/checkout")
   end
 
   test "success page renders" do
@@ -91,6 +91,6 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "show requires authentication" do
     get checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
 
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/checkout")
   end
 end

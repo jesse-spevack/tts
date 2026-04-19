@@ -8,7 +8,7 @@ class Admin::DemoModesControllerTest < ActionDispatch::IntegrationTest
 
   test "redirects unauthenticated users to root" do
     post admin_demo_mode_url
-    assert_redirected_to root_url
+    assert_redirected_to login_path(return_to: "/admin/demo_mode")
   end
 
   test "returns not found for non-admin users" do

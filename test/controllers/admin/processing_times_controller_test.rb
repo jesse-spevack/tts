@@ -8,7 +8,7 @@ class Admin::ProcessingTimesControllerTest < ActionDispatch::IntegrationTest
 
   test "redirects unauthenticated users to root" do
     get admin_processing_times_url
-    assert_redirected_to root_url
+    assert_redirected_to login_path(return_to: "/admin/processing_times")
   end
 
   test "returns not found for non-admin users" do
