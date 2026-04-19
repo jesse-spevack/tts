@@ -60,8 +60,9 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
     assert_requested stub
   end
 
-  test "treats Stripe 404 (subscription missing) as success" do
+  test "treats Stripe 404 (subscription missing) as success when customer has no active subs" do
     user = users(:free_user)
+    user.update!(stripe_customer_id: "cus_no_active")
     Subscription.create!(
       user: user,
       stripe_subscription_id: "sub_already_gone",
@@ -78,11 +79,64 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
         headers: { "Content-Type" => "application/json" }
       )
 
+    # Before reconciling, the job verifies with Stripe that the customer
+    # truly has no active subscriptions — guards against wrong-ID mismatch.
+    stub_request(:get, %r{\Ahttps://api\.stripe\.com/v1/subscriptions})
+      .with(query: hash_including(customer: "cus_no_active", status: "active"))
+      .to_return(
+        status: 200,
+        body: { data: [], has_more: false }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     # Should not raise or re-enqueue. Subscription already gone from Stripe's
-    # side is a desirable end state.
+    # side AND customer has no other active subs = desirable end state.
     assert_nothing_raised do
       CancelsUserSubscriptionJob.perform_now(user_id: user.id)
     end
+  end
+
+  test "raises and logs error when Stripe 404 masks a wrong-ID mismatch" do
+    # Threat: our stripe_subscription_id was wrong from day one (env mismatch,
+    # truncated value, lost webhook). Treating 404 as success marks the local
+    # row canceled while the real subscription keeps billing.
+    user = users(:free_user)
+    user.update!(stripe_customer_id: "cus_wrong_id")
+    subscription = Subscription.create!(
+      user: user,
+      stripe_subscription_id: "sub_wrong_id",
+      stripe_price_id: "price_monthly",
+      status: :active,
+      current_period_end: 1.month.from_now
+    )
+    user.update!(deleted_at: Time.current)
+
+    stub_request(:delete, "https://api.stripe.com/v1/subscriptions/sub_wrong_id")
+      .to_return(
+        status: 404,
+        body: { error: { message: "No such subscription", code: "resource_missing" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    # Customer has a REAL active sub that we weren't tracking (different id).
+    stub_request(:get, %r{\Ahttps://api\.stripe\.com/v1/subscriptions})
+      .with(query: hash_including(customer: "cus_wrong_id", status: "active"))
+      .to_return(
+        status: 200,
+        body: { data: [ { id: "sub_actually_billing", status: "active" } ], has_more: false }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    log_output = capture_logs do
+      assert_raises(CancelsUserSubscriptionJob::SubscriptionIdMismatchError) do
+        CancelsUserSubscriptionJob.perform_now(user_id: user.id)
+      end
+    end
+
+    assert_match(/event=cancel_user_subscription_id_mismatch/, log_output)
+    assert_match(/user_id=#{user.id}/, log_output)
+    # Local row MUST NOT be marked canceled — real sub is still billing.
+    assert_not subscription.reload.canceled?
   end
 
   test "soft_delete! enqueues the job" do
@@ -121,6 +175,7 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
 
   test "marks the local subscription canceled when Stripe returns 404" do
     user = users(:free_user)
+    user.update!(stripe_customer_id: "cus_reconcile_404")
     subscription = Subscription.create!(
       user: user,
       stripe_subscription_id: "sub_already_gone_reconcile",
@@ -134,6 +189,13 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
       .to_return(
         status: 404,
         body: { error: { message: "No such subscription", code: "resource_missing" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+    stub_request(:get, %r{\Ahttps://api\.stripe\.com/v1/subscriptions})
+      .with(query: hash_including(customer: "cus_reconcile_404", status: "active"))
+      .to_return(
+        status: 200,
+        body: { data: [], has_more: false }.to_json,
         headers: { "Content-Type" => "application/json" }
       )
 

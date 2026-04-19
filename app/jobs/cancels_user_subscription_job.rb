@@ -10,6 +10,12 @@
 class CancelsUserSubscriptionJob < ApplicationJob
   include StructuredLogging
 
+  # Raised when Stripe returns 404 for our stored stripe_subscription_id but
+  # the customer still has an active subscription under a different id. The
+  # local row has diverged from Stripe's state — we cannot safely reconcile
+  # because marking it canceled would hide a sub that's still billing.
+  class SubscriptionIdMismatchError < StandardError; end
+
   queue_as :default
 
   # Block-form retry_on so exhausted retries surface as log_error (Sentry per
@@ -48,10 +54,20 @@ class CancelsUserSubscriptionJob < ApplicationJob
       user_id: user.id,
       stripe_subscription_id: subscription.stripe_subscription_id
   rescue Stripe::InvalidRequestError => e
-    # Subscription doesn't exist on Stripe's side (already canceled or never
-    # existed). Treat as a successful end state — do not retry. Reconcile the
-    # local row so User#premium? stops returning true on a restored account.
+    # 404 could mean "already canceled" (safe) OR "our stored id was wrong
+    # and the real sub is still billing" (dangerous). Verify with Stripe
+    # before reconciling the local row.
     if e.code == "resource_missing" || e.http_status == 404
+      if customer_has_active_subscription?(user)
+        log_error "cancel_user_subscription_id_mismatch",
+          user_id: user&.id,
+          stripe_customer_id: user&.stripe_customer_id,
+          stored_stripe_subscription_id: subscription&.stripe_subscription_id,
+          reason: "stripe_404_but_customer_has_active_subscription"
+        raise SubscriptionIdMismatchError,
+          "Stripe 404 for #{subscription&.stripe_subscription_id} but customer #{user&.stripe_customer_id} has an active subscription"
+      end
+
       reconcile_local_subscription(subscription)
       log_warn "cancel_user_subscription_already_gone",
         user_id: user&.id,
@@ -78,5 +94,11 @@ class CancelsUserSubscriptionJob < ApplicationJob
     return if subscription.canceled?
 
     subscription.update!(status: :canceled, canceled_at: Time.current)
+  end
+
+  def customer_has_active_subscription?(user)
+    return false unless user&.stripe_customer_id
+
+    Stripe::Subscription.list(customer: user.stripe_customer_id, status: "active", limit: 1).data.any?
   end
 end
