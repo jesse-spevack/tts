@@ -86,11 +86,6 @@
       </p>
 
       <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
-        <strong class="font-semibold text-mist-950 dark:text-white">How extraction works:</strong>
-        URLs are fetched server-side and parsed with Nokogiri against common article selectors (<code class="ic">&lt;article&gt;</code>, <code class="ic">&lt;main&gt;</code>, <code class="ic">&lt;body&gt;</code>). If the extracted body is too short, PodRead falls back to <a href="https://jina.ai/reader/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Jina Reader</a>. The result is cleaned by an LLM pass that also produces title, author, and description. If both extractors return below <code class="ic"><%= AppConfig::Content::MIN_LENGTH %></code> characters, the episode is marked <code class="ic">failed</code> and <code class="ic">error_message</code> explains.
-      </aside>
-
-      <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
         <strong class="font-semibold text-mist-950 dark:text-white">Rate limit:</strong>
         <%= ChecksEpisodeRateLimit::HOURLY_LIMIT %> episode creations per user per rolling hour. Over the limit returns <code class="ic">429 Too Many Requests</code>. Reads (<code class="ic">show</code>, <code class="ic">index</code>) are not rate-limited.
       </aside>
@@ -212,7 +207,7 @@
           description: %(Server fetches and extracts the article. <code class="ic">source_url</code> is the submitted URL, normalized.).html_safe },
         { name: "paste", type: "POST-able",
           description: %(Direct text submission via the API <code class="ic">text</code> input. <code class="ic">source_url</code> is <code class="ic">null</code>.).html_safe },
-        { name: "extension", type: "POST-able",
+        { name: "extension", type: "Internal",
           description: %(Reserved for the first-party PodRead browser extension. <code class="ic">source_url</code> is the captured page URL, normalized.).html_safe },
         { name: "file", type: "read-only",
           description: %(Created by the web uploader. <code class="ic">source_url</code> is <code class="ic">null</code>. Submitting <code class="ic">source_type=file</code> on <code class="ic">POST</code> returns <code class="ic">422</code>.).html_safe },
