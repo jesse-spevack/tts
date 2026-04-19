@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_18_210301) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -159,6 +159,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_210301) do
     t.string "currency", default: "usd", null: false
     t.string "deposit_address"
     t.integer "narration_id"
+    t.boolean "needs_review", default: false, null: false
+    t.text "refund_error"
     t.string "status", default: "pending", null: false
     t.string "stripe_payment_intent_id"
     t.string "tx_hash"

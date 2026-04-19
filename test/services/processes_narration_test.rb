@@ -142,7 +142,7 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
 
   test "failed narration triggers refund via after_update callback" do
     Mocktail.replace(Mpp::RefundsPayment)
-    stubs { |m| Mpp::RefundsPayment.call(mpp_payment: m.any) }.with { nil }
+    stubs { |m| Mpp::RefundsPayment.call(mpp_payment: m.any) }.with { Result.success }
 
     Mocktail.replace(FetchesJinaContent)
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.failure("Could not fetch URL") }

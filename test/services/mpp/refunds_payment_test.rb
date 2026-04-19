@@ -102,6 +102,47 @@ class Mpp::RefundsPaymentTest < ActiveSupport::TestCase
     assert_equal "completed", @completed_payment.status
   end
 
+  # --- Stranded-money protection ---
+  # These cases prove that a Stripe failure never silently leaves an
+  # mpp_payment in status=completed with no trace of the failure.
+
+  test "flags payment for review when Stripe reports no successful charge to refund" do
+    error_message = "This PaymentIntent (pi_test) does not have a successful charge to refund."
+    stub_request(:post, "https://api.stripe.com/v1/refunds")
+      .to_return(status: 400, body: {
+        error: {
+          type: "invalid_request_error",
+          message: error_message
+        }
+      }.to_json)
+
+    result = Mpp::RefundsPayment.call(mpp_payment: @completed_payment)
+
+    assert result.failure?
+    @completed_payment.reload
+    assert_equal "completed", @completed_payment.status
+    assert @completed_payment.needs_review, "expected needs_review to be true after refund failure"
+    assert_includes @completed_payment.refund_error, "does not have a successful charge to refund"
+  end
+
+  test "flags payment for review on unknown Stripe error" do
+    stub_request(:post, "https://api.stripe.com/v1/refunds")
+      .to_return(status: 500, body: {
+        error: {
+          type: "api_error",
+          message: "Something went wrong on Stripe's end."
+        }
+      }.to_json)
+
+    result = Mpp::RefundsPayment.call(mpp_payment: @completed_payment)
+
+    assert result.failure?
+    @completed_payment.reload
+    assert_equal "completed", @completed_payment.status
+    assert @completed_payment.needs_review, "expected needs_review to be true after generic Stripe error"
+    assert @completed_payment.refund_error.present?, "expected refund_error to be recorded"
+  end
+
   private
 
   def assert_no_requested_stripe_refund

@@ -84,6 +84,12 @@ class Episode < ApplicationRecord
   end
 
   def refund_mpp_payment_on_failure
-    Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
+    result = Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
+    return if result.success?
+
+    Rails.logger.error(
+      "event=mpp_payment_refund_failed_from_episode " \
+      "episode_id=#{id} payment_id=#{mpp_payment.prefix_id} error=#{result.error}"
+    )
   end
 end
