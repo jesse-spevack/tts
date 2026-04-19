@@ -299,6 +299,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.datetime "cancel_at"
+    t.datetime "canceled_at"
     t.datetime "created_at", null: false
     t.datetime "current_period_end", null: false
     t.integer "status", default: 0, null: false
