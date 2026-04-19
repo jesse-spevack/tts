@@ -118,7 +118,7 @@ class AppConfig
     # ($4/M chars COGS); Premium voices use Chirp3-HD ($30/M chars COGS) —
     # 7.5× delta on the biggest input cost line justifies a split.
     # See agent-team-0g5 for the full cost model.
-    PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 50).to_i
+    PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
     PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
     # Legacy flat price — retained for any call site not yet migrated to
     # per-tier pricing. Removed once agent-team-nkz.4 (tier-aware challenge
