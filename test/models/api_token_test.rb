@@ -28,6 +28,18 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert_includes duplicate.errors[:token_digest], "has already been taken"
   end
 
+  test "belongs_to_soft_deleted_user? is false for active user" do
+    token = api_tokens(:active_token)
+    refute token.belongs_to_soft_deleted_user?
+  end
+
+  test "belongs_to_soft_deleted_user? is true when owning user is soft-deleted" do
+    token = api_tokens(:active_token)
+    token.user.update!(deleted_at: Time.current)
+    token.reload
+    assert token.belongs_to_soft_deleted_user?
+  end
+
   test "allows last_used_at to be nil" do
     token = api_tokens(:active_token)
     assert_nil token.last_used_at

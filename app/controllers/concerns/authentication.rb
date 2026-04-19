@@ -54,7 +54,7 @@ module Authentication
     # lookup to detect the soft-deleted state explicitly.
     def soft_deleted_session_user?
       user = User.unscoped.find_by(id: Current.session.user_id)
-      user&.deleted_at.present?
+      user&.soft_deleted?
     end
 
     def find_session_by_cookie

@@ -17,4 +17,12 @@ class ApiToken < ApplicationRecord
   def active?
     !revoked?
   end
+
+  # User.default_scope hides soft-deleted users, so belongs_to :user returns
+  # nil once the account has been soft-deleted. has_many :api_tokens,
+  # dependent: :destroy means hard-delete cascades the token row away, so in
+  # practice user.nil? here means soft-deleted.
+  def belongs_to_soft_deleted_user?
+    user.nil?
+  end
 end
