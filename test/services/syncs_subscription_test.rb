@@ -460,7 +460,40 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       "Expected SendsSubscriptionEndedEmail to be invoked after SyncsSubscription's transaction committed"
   end
 
+  test "returns Result.failure and logs warn when customer lookup misses" do
+    # Soft-deleted user (hidden by default_scope) or a Stripe customer we've
+    # never seen. Controller-layer rescue used to swallow this as a blanket
+    # RecordNotFound; now the lookup is narrow and explicit.
+    stub_stripe_subscription(
+      id: "sub_no_user",
+      customer: "cus_unknown",
+      status: "active",
+      price_id: "price_monthly",
+      current_period_end: 1.month.from_now.to_i
+    )
+
+    log_output = capture_logs do
+      @result = SyncsSubscription.call(stripe_subscription_id: "sub_no_user")
+    end
+
+    assert_not @result.success?
+    assert_match(/No user found for customer/, @result.error)
+    assert_match(/event=syncs_subscription_user_not_found/, log_output)
+    assert_match(/stripe_customer_id=cus_unknown/, log_output)
+    assert_match(/reason=user_missing_or_soft_deleted/, log_output)
+  end
+
   private
+
+  def capture_logs
+    original_logger = Rails.logger
+    io = StringIO.new
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original_logger
+  end
 
   def stub_stripe_subscription(id:, customer:, status:, price_id:, current_period_end:, cancel_at_period_end: false, cancel_at: nil)
     stub_request(:get, "https://api.stripe.com/v1/subscriptions/#{id}")

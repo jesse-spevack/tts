@@ -42,13 +42,13 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "returns 200 for RecordNotFound (non-retryable)" do
+  test "surfaces downstream RecordNotFound as 500 (Stripe retries)" do
     payload = { type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
     Mocktail.replace(RoutesStripeWebhook)
-    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise ActiveRecord::RecordNotFound, "User not found" }
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { raise ActiveRecord::RecordNotFound, "Plan not found" }
 
     post webhooks_stripe_path,
       params: payload,
@@ -57,7 +57,29 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
         "CONTENT_TYPE" => "application/json"
       }
 
+    assert_response :internal_server_error
+  end
+
+  test "logs and returns 200 when handler returns Result.failure (e.g. soft-deleted customer)" do
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_missing_user" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { Result.failure("No user found for customer") }
+
+    log_output = capture_logs do
+      post webhooks_stripe_path,
+        params: payload,
+        headers: {
+          "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+          "CONTENT_TYPE" => "application/json"
+        }
+    end
+
     assert_response :ok
+    assert_match(/Failed to process customer\.subscription\.updated/, log_output)
+    assert_match(/No user found for customer/, log_output)
   end
 
   test "returns 200 for RecordInvalid (non-retryable)" do
@@ -115,6 +137,16 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def capture_logs
+    original_logger = Rails.logger
+    io = StringIO.new
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original_logger
+  end
 
   def generate_stripe_signature(payload, timestamp)
     secret = AppConfig::Stripe::WEBHOOK_SECRET

@@ -20,19 +20,6 @@ class WebhooksController < ApplicationController
   rescue Stripe::SignatureVerificationError => e
     Rails.logger.warn("[Stripe Webhook] Invalid signature: #{e.message}")
     head :bad_request
-  rescue ActiveRecord::RecordNotFound => e
-    # Most common cause: the user/subscription was soft-deleted or never
-    # existed. We return 200 so Stripe stops retrying — but we must log
-    # enough context to reconcile manually if a charge leaked through.
-    stripe_customer_id = event&.data&.object&.respond_to?(:customer) ? event.data.object.customer : nil
-    Rails.logger.warn(
-      "event=stripe_webhook_record_not_found " \
-      "event_type=#{event&.type || 'unknown'} " \
-      "stripe_customer_id=#{stripe_customer_id || 'unknown'} " \
-      "reason=user_soft_deleted_or_missing " \
-      "error=#{e.message}"
-    )
-    head :ok
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.error("[Stripe Webhook] Validation failed: #{e.message}")
     head :ok

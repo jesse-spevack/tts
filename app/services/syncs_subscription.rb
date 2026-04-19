@@ -13,7 +13,15 @@ class SyncsSubscription
 
   def call
     stripe_subscription = Stripe::Subscription.retrieve(stripe_subscription_id)
-    user = User.find_by!(stripe_customer_id: stripe_subscription.customer)
+    user = User.find_by(stripe_customer_id: stripe_subscription.customer)
+
+    unless user
+      log_warn "syncs_subscription_user_not_found",
+        stripe_customer_id: stripe_subscription.customer,
+        stripe_subscription_id: stripe_subscription.id,
+        reason: "user_missing_or_soft_deleted"
+      return Result.failure("No user found for customer")
+    end
 
     subscription = nil
     post_commit_actions = []
