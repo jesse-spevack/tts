@@ -44,6 +44,22 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
     assert_equal "test-action-123", Current.action_id
   end
 
+  test "marks episode failed and skips audio generation when user is soft-deleted" do
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    @user.update!(deleted_at: Time.current)
+    @episode.reload
+
+    logs = capture_logs do
+      GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
+    end
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+    assert_equal "Account was deleted", @episode.error_message
+    assert_match(/event=generates_episode_audio_job_skipped .*reason=user_missing_or_soft_deleted/, logs)
+    assert_equal 0, Mocktail.calls(GeneratesEpisodeAudio, :call).size
+  end
+
   # --- Retry behavior ---
 
   test "retries on transient Google Cloud error" do
@@ -137,5 +153,17 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
 
     assert_nil Rails.cache.read("audio_failures:#{@user.id}")
+  end
+
+  private
+
+  def capture_logs
+    output = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(output)
+    yield
+    output.string
+  ensure
+    Rails.logger = original_logger
   end
 end

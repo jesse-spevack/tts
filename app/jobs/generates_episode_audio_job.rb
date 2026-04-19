@@ -13,17 +13,8 @@ class GeneratesEpisodeAudioJob < ApplicationJob
   def perform(episode_id:, action_id: nil)
     with_episode_logging(episode_id: episode_id, user_id: nil, action_id: action_id) do
       episode = Episode.find(episode_id)
-      # episode.user is nil when the owner is soft-deleted (User.default_scope)
-      # or hard-deleted. Guard explicitly so we log + bail rather than 500ing
-      # with NoMethodError deep inside the audio pipeline.
-      if episode.user.nil?
-        Rails.logger.warn(
-          "event=generate_episode_audio_skipped " \
-          "episode_id=#{episode_id} " \
-          "reason=user_missing_or_soft_deleted"
-        )
-        next
-      end
+      next if skip_if_user_missing(episode)
+
       ChecksAudioCircuitBreaker.call(user: episode.user) do
         GeneratesEpisodeAudio.call(episode: episode)
       end
