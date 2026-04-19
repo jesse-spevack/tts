@@ -191,7 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.datetime "updated_at", null: false
     t.string "voice"
     t.index ["expires_at"], name: "index_narrations_on_expires_at"
-    t.index ["mpp_payment_id"], name: "index_narrations_on_mpp_payment_id"
+    t.index ["mpp_payment_id"], name: "index_narrations_on_mpp_payment_id", unique: true
     t.index ["status"], name: "index_narrations_on_status"
   end
 

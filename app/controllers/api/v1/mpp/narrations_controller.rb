@@ -87,23 +87,20 @@ module Api
             return
           end
 
-          # Step 5: mark the pending MppPayment completed.
+          # Step 5: atomically flip the pending MppPayment to completed AND
+          # create the Narration via Mpp::FinalizesNarration. The service
+          # serializes concurrent racers at the SQL layer (see
+          # agent-team-kzq) so exactly one caller creates a Narration per
+          # MppPayment — losers return the winner's Narration for
+          # idempotent retry semantics.
           mpp_payment = MppPayment.find_by!(challenge_id: verification.data[:challenge_id])
-          mpp_payment.update!(
-            status: :completed,
-            tx_hash: verification.data[:tx_hash]
-          )
-
-          log_info "mpp_anonymous_payment_verified",
-            mpp_payment_id: mpp_payment.prefix_id,
-            tx_hash: verification.data[:tx_hash]
-
-          # Step 6: create the Narration. Pass the resolved voice key
-          # explicitly (not the raw request param) so default-voice callers
-          # don't land on the Premium Chirp3-HD fallback inside
-          # Voice.google_voice_for while only paying the Standard price.
-          result = ::Mpp::CreatesNarration.call(
+          result = ::Mpp::FinalizesNarration.call(
             mpp_payment: mpp_payment,
+            tx_hash: verification.data[:tx_hash],
+            # Pass the resolved voice key explicitly (not the raw request
+            # param) so default-voice callers don't land on the Premium
+            # Chirp3-HD fallback inside Voice.google_voice_for while only
+            # paying the Standard price.
             params: narration_params.merge(voice: voice.key)
           )
 
@@ -115,17 +112,28 @@ module Api
             return
           end
 
-          log_info "mpp_narration_created",
-            narration_id: result.data.prefix_id,
-            mpp_payment_id: mpp_payment.prefix_id
+          narration = result.data[:narration]
 
-          # Step 7: emit Payment-Receipt header + unified 201 body.
+          log_info "mpp_anonymous_payment_verified",
+            mpp_payment_id: mpp_payment.prefix_id,
+            tx_hash: verification.data[:tx_hash],
+            outcome: result.data[:outcome]
+
+          log_info "mpp_narration_created",
+            narration_id: narration.prefix_id,
+            mpp_payment_id: mpp_payment.prefix_id,
+            outcome: result.data[:outcome]
+
+          # Step 6: emit Payment-Receipt header + unified 201 body.
+          # Loser branch still gets a receipt — the caller's payment DID
+          # settle; the receipt just points at the already-created
+          # Narration.
           receipt = ::Mpp::GeneratesReceipt.call(
             tx_hash: verification.data[:tx_hash],
             mpp_payment: mpp_payment
           )
           response.headers["Payment-Receipt"] = receipt.data[:header_value]
-          render json: { id: result.data.prefix_id }, status: :created
+          render json: { id: narration.prefix_id }, status: :created
         end
 
         private

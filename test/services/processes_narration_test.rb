@@ -61,7 +61,7 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
 
   test "processes text narration without fetching URL" do
     text_narration = Narration.create!(
-      mpp_payment: mpp_payments(:completed_for_narration),
+      mpp_payment: MppPayment.create!(amount_cents: 100, currency: "usd", status: :completed, user: users(:one)),
       title: "Text Narration",
       source_type: :text,
       source_text: "This is pasted text content for narration.",
@@ -83,7 +83,7 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
     Mocktail.replace(FetchesArticleContent)
 
     text_narration = Narration.create!(
-      mpp_payment: mpp_payments(:completed_for_narration),
+      mpp_payment: MppPayment.create!(amount_cents: 100, currency: "usd", status: :completed, user: users(:one)),
       title: "Text Narration",
       source_type: :text,
       source_text: "This is pasted text content for narration.",

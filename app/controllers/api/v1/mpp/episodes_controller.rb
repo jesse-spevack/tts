@@ -69,29 +69,26 @@ module Api
             return
           end
 
-          # Step 5: mark the pending MppPayment completed AND link the user.
+          # Step 5: atomically flip the pending MppPayment → completed,
+          # link the user, AND create the Episode via
+          # Mpp::FinalizesEpisode. The service serializes concurrent
+          # racers at the SQL layer (see agent-team-kzq) so exactly one
+          # caller creates an Episode per MppPayment — losers return
+          # outcome: :loser which this controller maps to 409 Conflict.
           mpp_payment = MppPayment.find_by!(challenge_id: verification.data[:challenge_id])
-          mpp_payment.update!(
-            status: :completed,
-            tx_hash: verification.data[:tx_hash],
-            user_id: current_user.id
-          )
 
-          log_info "mpp_authenticated_payment_verified",
-            user_id: current_user.id,
-            mpp_payment_id: mpp_payment.prefix_id,
-            tx_hash: verification.data[:tx_hash]
-
-          # Step 6: create the Episode. The resolved voice's google_voice
-          # string flows via voice_override into the processing job — this
-          # is the sidecar path (Option A) that keeps Episode#voice delegation
-          # to User#voice unchanged while still synthesizing the paid-for
-          # voice. Translating key → google_voice happens here (once) so the
-          # job doesn't need to know Voice.google_voice_for.
+          # The resolved voice's google_voice string flows via
+          # voice_override into the processing job — the sidecar path
+          # (Option A) that keeps Episode#voice delegation to User#voice
+          # unchanged while still synthesizing the paid-for voice.
+          # Translating key → google_voice here (once) so the job
+          # doesn't need to know Voice.google_voice_for.
           google_voice = Voice.google_voice_for(voice.key, is_premium: voice.tier == :premium)
 
-          result = ::Mpp::CreatesEpisode.call(
+          result = ::Mpp::FinalizesEpisode.call(
             user: current_user,
+            mpp_payment: mpp_payment,
+            tx_hash: verification.data[:tx_hash],
             params: episode_params,
             voice_override: google_voice
           )
@@ -105,18 +102,34 @@ module Api
             return
           end
 
+          if result.data[:outcome] == :loser
+            log_warn "mpp_authenticated_payment_double_spend_blocked",
+              user_id: current_user.id,
+              mpp_payment_id: mpp_payment.prefix_id,
+              tx_hash: verification.data[:tx_hash]
+            render json: { error: "Payment already used" }, status: :conflict
+            return
+          end
+
+          episode = result.data[:episode]
+
+          log_info "mpp_authenticated_payment_verified",
+            user_id: current_user.id,
+            mpp_payment_id: mpp_payment.prefix_id,
+            tx_hash: verification.data[:tx_hash]
+
           log_info "mpp_episode_created",
             user_id: current_user.id,
-            episode_id: result.data.prefix_id,
+            episode_id: episode.prefix_id,
             mpp_payment_id: mpp_payment.prefix_id
 
-          # Step 7: emit Payment-Receipt header + unified 201 body.
+          # Step 6: emit Payment-Receipt header + unified 201 body.
           receipt = ::Mpp::GeneratesReceipt.call(
             tx_hash: verification.data[:tx_hash],
             mpp_payment: mpp_payment
           )
           response.headers["Payment-Receipt"] = receipt.data[:header_value]
-          render json: { id: result.data.prefix_id }, status: :created
+          render json: { id: episode.prefix_id }, status: :created
         end
 
         private

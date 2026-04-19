@@ -6,7 +6,16 @@ class Mpp::CreatesNarrationTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   setup do
-    @mpp_payment = mpp_payments(:one)
+    # Fresh, unclaimed MppPayment. The narrations(:one) fixture binds
+    # mpp_payments(:one) to an existing Narration, and the unique index
+    # on narrations.mpp_payment_id (agent-team-kzq) rejects a second
+    # Narration pointing at the same payment.
+    @mpp_payment = MppPayment.create!(
+      amount_cents: 100,
+      currency: "usd",
+      status: :pending,
+      user: users(:one)
+    )
   end
 
   test "creates a url narration and enqueues processing job" do
