@@ -30,31 +30,39 @@ module Mpp
     end
 
     def call
-      rows_updated = MppPayment
-        .where(id: mpp_payment.id, status: "pending")
-        .update_all(
-          status: "completed",
-          tx_hash: tx_hash,
-          user_id: user.id,
-          updated_at: Time.current
-        )
+      # Wrap the winner's flip + episode insert in one transaction so
+      # a creation failure rolls back the payment flip too — otherwise
+      # the payment stays status=completed with no linked Episode and
+      # no refund callback fires (Narration#after_update won't because
+      # no Narration exists), stranding the money.
+      ActiveRecord::Base.transaction do
+        rows_updated = MppPayment
+          .where(id: mpp_payment.id, status: "pending")
+          .update_all(
+            status: "completed",
+            tx_hash: tx_hash,
+            user_id: user.id,
+            updated_at: Time.current
+          )
 
-      if rows_updated == 1
-        mpp_payment.reload
-        creation = CreatesEpisode.call(
-          user: user,
-          params: params,
-          voice_override: voice_override
-        )
-        return creation if creation.failure?
+        if rows_updated == 1
+          mpp_payment.reload
+          creation = CreatesEpisode.call(
+            user: user,
+            params: params,
+            voice_override: voice_override
+          )
+          raise ActiveRecord::Rollback if creation.failure?
 
-        Result.success(episode: creation.data, outcome: :winner)
-      else
-        # Loser: another caller already flipped the payment. Return
-        # outcome: :loser with no episode — controller renders 409.
-        mpp_payment.reload
-        Result.success(episode: nil, outcome: :loser)
+          return Result.success(episode: creation.data, outcome: :winner)
+        end
       end
+
+      # Lost the race (or winner rolled back). Episodes don't expose an
+      # idempotent-retry lookup — return clean loser outcome. Controller
+      # renders 409.
+      mpp_payment.reload
+      Result.success(episode: nil, outcome: :loser)
     end
 
     private
