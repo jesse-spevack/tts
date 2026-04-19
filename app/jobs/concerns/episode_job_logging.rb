@@ -15,6 +15,16 @@ module EpisodeJobLogging
     raise
   end
 
+  # Returns true if the episode's user is deactivated. Jobs should bail out
+  # when this returns true — the blobs will be cleaned up async and the job
+  # has nothing valid to process.
+  def skip_if_user_deactivated?(episode)
+    return false unless episode.user.deactivated?
+
+    log_event("skipped", episode_id: episode.id, user_id: episode.user_id, reason: "inactive_user")
+    true
+  end
+
   def log_event(status, **attrs)
     exception = attrs.delete(:exception)
     event_name = "#{job_type}_#{status}"

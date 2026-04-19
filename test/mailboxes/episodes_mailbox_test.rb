@@ -155,6 +155,20 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     end
   end
 
+  test "does not create episode for deactivated user" do
+    address = email_address_for(@user)
+    @user.update!(active: false)
+
+    assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
+      receive_inbound_email_from_mail(
+        to: address,
+        from: "sender@example.com",
+        subject: "Newsletter",
+        body: "A" * 150
+      )
+    end
+  end
+
   private
 
   def email_address_for(user)

@@ -258,6 +258,61 @@ module Api
         end
       end
 
+      test "authenticate_token! rejects deactivated user's API token" do
+        @user.update!(active: false)
+
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{@plain_token}"
+            }
+          assert_response :unauthorized
+        end
+      end
+
+      test "authenticate_token! rejects Doorkeeper token for deactivated user" do
+        app = Doorkeeper::Application.create!(
+          name: "Test OAuth App",
+          uid: "test_oauth_deactivated",
+          redirect_uri: "https://example.com/callback",
+          scopes: "podread",
+          confidential: true
+        )
+        doorkeeper_token = Doorkeeper::AccessToken.create!(
+          application: app,
+          resource_owner_id: @user.id,
+          scopes: "podread",
+          expires_in: 1.hour
+        )
+        @user.update!(active: false)
+
+        with_routing do |set|
+          set.draw do
+            namespace :api do
+              namespace :v1 do
+                get "test_auth", to: "test#index"
+              end
+            end
+          end
+
+          get "/api/v1/test_auth",
+            headers: {
+              "Content-Type" => "application/json",
+              "Authorization" => "Bearer #{doorkeeper_token.token}"
+            }
+          assert_response :unauthorized
+        end
+      end
+
       test "authenticate_token! prefers API token over Doorkeeper token" do
         # If a token matches both an API token and a Doorkeeper token,
         # the API token should win (preserves backwards compatibility)

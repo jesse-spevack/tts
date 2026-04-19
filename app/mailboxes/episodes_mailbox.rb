@@ -11,6 +11,11 @@ class EpisodesMailbox < ApplicationMailbox
       return
     end
 
+    if user.deactivated?
+      log_warn "email_episode_skipped", user_id: user.id, reason: "inactive_user"
+      return
+    end
+
     rate_limit_result = ChecksEpisodeRateLimit.call(user: user)
     unless rate_limit_result.success?
       log_warn "email_episode_rate_limited", user_id: user.id

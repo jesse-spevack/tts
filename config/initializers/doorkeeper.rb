@@ -36,6 +36,12 @@ Doorkeeper.configure do
   # PodRead uses magic link auth with cookie-based sessions (not Devise).
   # Current.user is set by the Authentication concern via resume_session.
   # If not logged in, redirect to login page with return_to pointing back here.
+  #
+  # Note: the /oauth/authorize screen runs here, so a deactivated user can
+  # never reach consent — their session is destroyed and resume_session
+  # returns nil. The matching access-token path (MCP, API v1) is guarded
+  # inside McpController and Api::V1::BaseController, since Doorkeeper 5.9
+  # does not support a `resource_owner_from_access_token` config hook.
   resource_owner_authenticator do
     # Doorkeeper controllers skip require_authentication (see doorkeeper_auth_skip.rb),
     # so we call resume_session to restore Current.session from the cookie.

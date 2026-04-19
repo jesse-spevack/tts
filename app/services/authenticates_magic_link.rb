@@ -22,6 +22,11 @@ class AuthenticatesMagicLink
     end
 
     if user
+      if user.deactivated?
+        log_info "magic_link_deactivated_user", user_id: user.id
+        return Result.failure("Invalid or expired token")
+      end
+
       InvalidatesAuthToken.call(user: user)
 
       log_info "user_authenticated", user_id: user.id, email: LoggingHelper.mask_email(user.email_address)

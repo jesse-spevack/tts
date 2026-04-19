@@ -9,6 +9,8 @@ class ProcessesFileEpisodeJob < ApplicationJob
   def perform(episode_id:, user_id:, action_id: nil, voice_override: nil)
     with_episode_logging(episode_id: episode_id, user_id: user_id, action_id: action_id) do
       episode = Episode.find(episode_id)
+      next if skip_if_user_deactivated?(episode)
+
       ProcessesFileEpisode.call(episode: episode, voice_override: voice_override)
     end
   end
