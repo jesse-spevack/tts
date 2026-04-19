@@ -26,8 +26,12 @@ namespace :code_quality do
   # positives).
   # Updated 2026-04-17 after removing Result#flash_type, LlmUsage#cost_dollars,
   # and ValidatesPrice.subscription? (all only referenced by their own tests).
+  # Updated 2026-04-18 after adding RestoreAccountsController#new for the
+  # kyb-a soft-delete revive flow (PR #290) — same false-positive category as
+  # the other controller `new`/`show` actions already in the baseline (debride
+  # can't see `resource :restore_account` routing).
   # Count includes both unused methods and unused constants.
-  debride_baseline = 60
+  debride_baseline = 61
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
