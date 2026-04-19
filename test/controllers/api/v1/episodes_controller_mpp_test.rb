@@ -267,8 +267,8 @@ module Api
 
         assert_response :created
         json = response.parsed_body
-        assert json["narration_id"].present?, "Expected narration public_id in response body"
-        assert json["narration_id"].start_with?("nar_"), "Narration ID should start with nar_"
+        assert json["id"].present?, "Expected narration public_id in response body"
+        assert json["id"].start_with?("nar_"), "Narration ID should start with nar_"
       end
 
       # =========================================================================

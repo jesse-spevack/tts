@@ -128,7 +128,10 @@ module MppPayable
     receipt = Mpp::GeneratesReceipt.call(tx_hash: verification.data[:tx_hash], mpp_payment: mpp_payment)
 
     response.headers["Payment-Receipt"] = receipt.data[:header_value]
-    render json: { narration_id: result.data.prefix_id }, status: :created
+    # Unified response shape: every 201 returns { id: "<prefix>_..." }.
+    # Clients distinguish Episode vs Narration by the id's prefix
+    # ("ep_" vs "nar_") and by the Payment-Receipt header's payment= field.
+    render json: { id: result.data.prefix_id }, status: :created
   end
 
   # Authenticated user (free tier exhausted) with Payment credential:

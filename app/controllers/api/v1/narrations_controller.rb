@@ -4,7 +4,7 @@ module Api
   module V1
     class NarrationsController < ActionController::API
       def show
-        narration = Narration.find_by_prefix_id!(params[:prefix_id])
+        narration = Narration.find_by_prefix_id!(params[:id])
 
         if narration.expired?
           head :not_found
