@@ -87,7 +87,7 @@
           ) %></code></pre>
         </figure>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The response contains an <code class="ic">id</code> (prefixed <code class="ic">nar_</code>) that you can poll for status.
+          The response contains an <code class="ic">id</code> you can poll for status. Anonymous MPP calls (this example) always get a <code class="ic">nar_</code>-prefixed Narration id, polled at <code class="ic">GET /api/v1/narrations/:id</code>. Bearer holders on Paths 1 and 2 get <code class="ic">ep_</code>-prefixed Episode ids, which live under the Episodes endpoint instead.
         </p>
       </section>
 
@@ -120,7 +120,7 @@
                 <pre class="overflow-x-auto p-5 font-mono text-[12px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:http, <<~HTTP
                   HTTP/1.1 402 Payment Required
                   WWW-Authenticate: Payment
-                    id="<hmac-hex>",
+                    id="a1b2c3d4e5f6…",
                     realm="podread.app",
                     method="tempo",
                     intent="charge",
@@ -212,7 +212,7 @@
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit for you):
+              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit on your behalf via <code class="ic">eth_sendRawTransaction</code>). The signature must be an RLP-encoded signed Ethereum transaction, hex-prefixed — any valid transaction type (legacy, EIP-2930, EIP-1559) is accepted as long as it transfers the right amount of pathUSD to the challenge's deposit address.
             </p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
@@ -356,7 +356,7 @@
             ["source_type", "string", "Yes", %Q(One of <code class="font-mono text-[0.9em]">"url"</code>, <code class="font-mono text-[0.9em]">"text"</code>, <code class="font-mono text-[0.9em]">"extension"</code>).html_safe],
             ["url", "string", "For url/extension", "URL of the article"],
             ["text", "string", "For text", "Raw text to convert"],
-            ["content", "string", "For extension", "HTML of the article body, typically Readability-extracted (not full page, not already-sanitized plain text). The server passes it through its own extractor."],
+            ["content", "string", "For extension", "HTML of the article body, typically Readability-extracted (not full page, not already-sanitized plain text). The server runs its own extractor and truncates the result to 20,000 characters before synthesis."],
             ["title", "string", "No", %Q(Episode title (defaults to <code class="font-mono text-[0.9em]">"Untitled"</code>)).html_safe],
             ["author", "string", "No", "Author name"],
             ["description", "string", "No", "Episode description"],
@@ -512,7 +512,7 @@
                 <tr>
                   <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">402</td>
                   <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Payment Required</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">No valid subscription/credits and no Payment credential, or Payment credential failed verification</td>
+                  <td class="py-3 text-mist-700 dark:text-mist-300">No valid subscription/credits and no Payment credential, <strong class="font-semibold">or</strong> a submitted Payment credential failed verification. The response body is identical in both cases — retrying with the same credential after a 402 will produce the same 402. Check server logs for the specific verification failure.</td>
                 </tr>
                 <tr>
                   <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">403</td>
