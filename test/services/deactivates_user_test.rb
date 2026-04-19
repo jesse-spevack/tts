@@ -51,7 +51,7 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     end
   end
 
-  test "revokes all oauth_access_tokens" do
+  test "revokes all oauth_access_tokens and oauth_access_grants" do
     app = Doorkeeper::Application.create!(
       name: "Test App",
       uid: "test_uid_#{SecureRandom.hex}",
@@ -65,10 +65,18 @@ class DeactivatesUserTest < ActiveSupport::TestCase
       scopes: "podread",
       expires_in: 1.hour
     )
+    grant = Doorkeeper::AccessGrant.create!(
+      application: app,
+      resource_owner_id: @user.id,
+      scopes: "podread",
+      expires_in: 10.minutes,
+      redirect_uri: "http://localhost/callback"
+    )
 
     DeactivatesUser.call(user: @user)
 
     assert token.reload.revoked?
+    assert grant.reload.revoked?
   end
 
   test "enqueues CancelsUserSubscriptionJob exactly once" do
@@ -86,6 +94,21 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     assert_equal "deleted-#{original_id}@deleted.invalid", @user.email_address
     assert_not @user.active
     assert @user.deactivated?
+  end
+
+  test "nulls auth_token, auth_token_expires_at, and email_ingest_token" do
+    @user.update!(
+      auth_token: "tok_#{SecureRandom.hex}",
+      auth_token_expires_at: 1.hour.from_now,
+      email_ingest_token: "ingest_#{SecureRandom.hex}"
+    )
+
+    DeactivatesUser.call(user: @user)
+
+    @user.reload
+    assert_nil @user.auth_token
+    assert_nil @user.auth_token_expires_at
+    assert_nil @user.email_ingest_token
   end
 
   test "logs user_deactivated structured event on success" do

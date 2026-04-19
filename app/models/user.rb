@@ -32,7 +32,7 @@ class User < ApplicationRecord
   scope :active, -> { where(active: true) }
 
   def deactivated?
-    !active
+    !active?
   end
 
   def premium?
