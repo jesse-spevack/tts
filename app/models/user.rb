@@ -42,9 +42,10 @@ class User < ApplicationRecord
       update!(deleted_at: Time.current)
 
       # Defense in depth: revoke every auth artifact at the source instead of
-      # relying on per-path soft-delete checks. A future caller that trusts a
-      # token without re-loading the user (e.g. Doorkeeper#acceptable?) would
-      # otherwise admit a deleted account.
+      # relying on per-path soft-delete checks.
+      # update_all skips per-record callbacks intentionally — revocation is a
+      # pure timestamp write and we don't want ActiveRecord to instantiate
+      # every token just to stamp revoked_at.
       api_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
       sessions.destroy_all
       oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)

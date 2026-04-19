@@ -39,11 +39,9 @@ module Authentication
     # participate in the revive flow (RestoreAccountsController,
     # SessionsController#destroy) opt out via `allow_soft_deleted_access`.
     def redirect_if_soft_deleted
-      # Ensure the session is resolved before we inspect it. Controllers that
-      # subclass ApplicationController sometimes redeclare
-      # `before_action :require_authentication`, which re-appends it after
-      # this filter. Calling `resume_session` here keeps the check order-
-      # independent.
+      # Resolve the session here so the check works on allow_unauthenticated_access
+      # actions too — those skip require_authentication, which means
+      # Current.session wouldn't otherwise be populated before this filter runs.
       resume_session
       return unless Current.session
       return unless soft_deleted_session_user?
@@ -63,10 +61,9 @@ module Authentication
       return nil unless cookies.signed[:session_id]
 
       session = Session.find_by(id: cookies.signed[:session_id])
-      # A session whose user is entirely gone (hard-deleted, which today only
-      # happens in tests) cannot resume. A soft-deleted user's session IS
-      # honored just far enough for `redirect_if_soft_deleted` to push them
-      # to the revive flow — that check uses an unscoped lookup.
+      # A session whose user is entirely gone cannot resume. A soft-deleted
+      # user's session IS honored just far enough for `redirect_if_soft_deleted`
+      # to push them to the revive flow — that check uses an unscoped lookup.
       if session
         user_exists = User.unscoped.exists?(id: session.user_id)
         return nil unless user_exists

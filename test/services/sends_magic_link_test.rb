@@ -73,6 +73,20 @@ class SendsMagicLinkTest < ActiveSupport::TestCase
     end
   end
 
+  test "call finds soft-deleted user via unscoped (no new user, email sent to existing)" do
+    user = users(:one)
+    user.update!(deleted_at: Time.current)
+    email = user.email_address
+
+    assert_no_difference "User.count" do
+      assert_enqueued_emails 1 do
+        result = SendsMagicLink.call(email_address: email)
+        assert result.success?
+        assert_equal user.id, result.data.id
+      end
+    end
+  end
+
   test "call sets token expiration to 30 minutes from now" do
     result = SendsMagicLink.call(email_address: "test@example.com")
 

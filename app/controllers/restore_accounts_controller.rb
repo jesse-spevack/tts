@@ -16,8 +16,6 @@ class RestoreAccountsController < ApplicationController
   helper_method :soft_deleted_current_user
 
   def new
-    # If the caller is authenticated but NOT soft-deleted, there's nothing to
-    # restore — bounce them into the app.
     redirect_to new_episode_path unless soft_deleted_current_user
   end
 

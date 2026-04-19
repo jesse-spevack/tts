@@ -15,9 +15,9 @@ class GrantsCreditFromCheckout
     user = User.find_by(stripe_customer_id: session.customer)
 
     unless user
-      # Most common cause today: user soft-deleted between paying and webhook
-      # delivery. Silent failure here leaves the charge unreconciled — log
-      # loud so finance can spot it.
+      # Silent failure here leaves the charge unreconciled — log loud so
+      # finance can spot it. Common triggers: user soft-deleted between paying
+      # and webhook delivery, or an unknown stripe_customer_id.
       log_error "grants_credit_no_user",
         stripe_customer_id: session.customer,
         stripe_session_id: session.id

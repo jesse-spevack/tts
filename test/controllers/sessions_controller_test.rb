@@ -124,8 +124,8 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   # intentionally reaches soft-deleted users so they can restore. That makes
   # an attacker who knows the deleted email able to spam mail to it. Per-email
   # rate-limit applied to ALL users (not just soft-deleted) is the orthogonal
-  # mitigation. Limiter is wired through RateLimitStore for testability — see
-  # the comment on SessionsController::MagicLinkRateLimitStore.
+  # mitigation. Limiter is wired through CacheStoreRateLimitProxy for
+  # testability — see that class for why the indirection is needed.
   test "magic-link rate limit: 6th request within an hour for the same email is rejected" do
     original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new

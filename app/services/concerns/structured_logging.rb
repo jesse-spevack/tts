@@ -3,7 +3,10 @@
 module StructuredLogging
   extend ActiveSupport::Concern
 
-  private
+  # log_info/log_warn/log_error are the logging API callers use — public so
+  # retry_on blocks (which yield a detached job instance) can invoke them
+  # without `send`. The build_log_message / default_log_context helpers stay
+  # private.
 
   def log_info(event, **attrs)
     Rails.logger.info build_log_message(event, attrs)
@@ -17,6 +20,8 @@ module StructuredLogging
   def log_error(event, **attrs)
     Rails.logger.error build_log_message(event, attrs)
   end
+
+  private
 
   def default_log_context
     { action_id: Current.action_id }.compact

@@ -7,6 +7,8 @@ require "test_helper"
 # existing auth path. The magic-link path is a special case — we DO let them
 # through just far enough to reach /restore_account, per the revive flow.
 class SoftDeletedUserAuthTest < ActionDispatch::IntegrationTest
+  include ActionMailer::TestHelper
+
   setup do
     @user = users(:one)
     @user.update!(deleted_at: Time.current)
@@ -74,6 +76,22 @@ class SoftDeletedUserAuthTest < ActionDispatch::IntegrationTest
     # root_url maps to SessionsController#new, which is declared
     # allow_unauthenticated_access.
     get root_url
+
+    assert_redirected_to new_restore_account_path
+  end
+
+  # A soft-deleted user with a valid session cookie POSTing to session_url
+  # (SessionsController#create, allow_unauthenticated_access) must not be
+  # able to trigger the magic-link email flow — they should bounce to the
+  # restore page, no email sent.
+  test "soft-deleted user POSTing to session_url redirects to restore without sending magic link" do
+    @user.update_columns(deleted_at: nil)
+    sign_in_as(@user)
+    @user.update_columns(deleted_at: Time.current)
+
+    assert_no_enqueued_emails do
+      post session_url, params: { email_address: @user.email_address }
+    end
 
     assert_redirected_to new_restore_account_path
   end

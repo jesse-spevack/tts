@@ -22,14 +22,14 @@ class CancelsUserSubscriptionJob < ApplicationJob
   # project convention). Without this the job DLQ's silently and Stripe keeps
   # billing through the outage.
   retry_on Stripe::APIConnectionError, wait: :polynomially_longer, attempts: 5 do |job, error|
-    job.send(:log_error, "cancel_user_subscription_unrecoverable",
+    job.log_error("cancel_user_subscription_unrecoverable",
       user_id: job.arguments.first[:user_id],
       error_class: error.class.name,
       error: error.message)
   end
 
   retry_on Stripe::APIError, wait: :polynomially_longer, attempts: 3 do |job, error|
-    job.send(:log_error, "cancel_user_subscription_unrecoverable",
+    job.log_error("cancel_user_subscription_unrecoverable",
       user_id: job.arguments.first[:user_id],
       error_class: error.class.name,
       error: error.message)
