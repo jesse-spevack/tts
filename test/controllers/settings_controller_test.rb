@@ -82,6 +82,36 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  # --- Account section (agent-team-kyb-a) ---
+  #
+  # Section is always visible (no gating predicate). It shows the user's
+  # read-only email and a danger-zone Delete account button. Nav entry
+  # appears in both the desktop left-rail and the mobile horizontal pills.
+
+  test "show renders Account section with user's email" do
+    get settings_path
+
+    assert_response :success
+    assert_select "section#account" do
+      assert_select "h2", text: "Account"
+      assert_select "*", text: /#{Regexp.escape(@user.email_address)}/
+      assert_select "form[action=?][method=?]", settings_account_path, "post" do
+        assert_select "input[name=_method][value=delete]", count: 1
+        assert_select "button", text: /Delete account/
+      end
+    end
+  end
+
+  test "show renders Account nav entry in desktop and mobile nav" do
+    get settings_path
+
+    assert_response :success
+    # Desktop left-rail (hidden lg:block)
+    assert_select "nav.lg\\:block a[href='#account']", text: "Account"
+    # Mobile pills (lg:hidden)
+    assert_select "nav.lg\\:hidden a[href='#account']", text: "Account"
+  end
+
   test "show displays email episodes section when disabled" do
     get settings_path
 

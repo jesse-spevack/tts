@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_18_234500) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -251,6 +251,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.datetime "cancel_at"
+    t.datetime "canceled_at"
     t.datetime "created_at", null: false
     t.datetime "current_period_end", null: false
     t.integer "status", default: 0, null: false
@@ -269,6 +270,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.string "auth_token"
     t.datetime "auth_token_expires_at"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "email_address"
     t.boolean "email_episode_confirmation", default: true, null: false
     t.boolean "email_episodes_enabled", default: false, null: false
@@ -278,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.string "voice_preference"
     t.index ["auth_token"], name: "index_users_on_auth_token"
     t.index ["auth_token_expires_at"], name: "index_users_on_auth_token_expires_at"
+    t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_ingest_token"], name: "index_users_on_email_ingest_token", unique: true
     t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true

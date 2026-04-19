@@ -75,7 +75,12 @@ Rails.application.routes.draw do
   resource :session
   resource :settings, only: [ :show, :update ]
 
+  # Soft-deleted user revive flow. A soft-deleted user who clicks their magic
+  # link lands here; confirming restores the account.
+  resource :restore_account, only: [ :new, :create ], controller: "restore_accounts"
+
   namespace :settings do
+    resource :account, only: [ :destroy ]
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]

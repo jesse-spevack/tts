@@ -13,6 +13,7 @@
         <li><a href="#extension" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Browser Extension</a></li>
         <li><a href="#connected-apps" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Connected Apps</a></li>
         <li><a href="#email" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Email to Podcast</a></li>
+        <li><a href="#account" class="block rounded-md px-3 py-2 text-mist-700 hover:bg-mist-950/5 hover:text-mist-950 dark:text-mist-300 dark:hover:bg-white/5 dark:hover:text-white">Account</a></li>
       </ul>
     </nav>
 
@@ -25,6 +26,7 @@
       <a href="#extension" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Extension</a>
       <a href="#connected-apps" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Connected</a>
       <a href="#email" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Email</a>
+      <a href="#account" class="shrink-0 rounded-full border border-mist-200 px-3 py-1.5 text-sm text-mist-700 dark:border-mist-700 dark:text-mist-300">Account</a>
     </nav>
 
     <div class="space-y-12">
@@ -240,6 +242,37 @@
               <%= button_to "Enable Email Episodes", settings_email_episodes_path,
                   method: :post, class: button_classes(type: :primary) %>
             <% end %>
+          </div>
+        </div>
+      </section>
+
+      <%# Account section %>
+      <section id="account" class="scroll-mt-6 grid grid-cols-1 gap-x-8 gap-y-6 border-t border-mist-950/10 pt-12 md:grid-cols-3 dark:border-white/10">
+        <div>
+          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Account</h2>
+          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Your profile and account-wide actions.</p>
+        </div>
+        <div class="md:col-span-2 space-y-6">
+          <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+            <dl class="divide-y divide-mist-950/5 dark:divide-white/5">
+              <div class="flex items-center justify-between py-2 first:pt-0">
+                <dt class="text-sm font-medium text-mist-950 dark:text-white">Email</dt>
+                <dd class="text-sm text-mist-500 dark:text-mist-400 break-all"><%= Current.user.email_address %></dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="rounded-xl border border-red-600/20 bg-white p-6 shadow-sm dark:border-red-400/20 dark:bg-mist-800">
+            <h3 class="text-sm font-semibold text-mist-950 dark:text-white">Delete account</h3>
+            <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">
+              Permanently remove access to your PodRead account. This signs you out and hides your data. This cannot be undone from the app.
+            </p>
+            <div class="mt-4">
+              <%= button_to "Delete account", settings_account_path,
+                    method: :delete,
+                    class: button_classes(type: :danger),
+                    data: { turbo_confirm: "Delete your PodRead account? You will be signed out and lose access to your episodes." } %>
+            </div>
           </div>
         </div>
       </section>

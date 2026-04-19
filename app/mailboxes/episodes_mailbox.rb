@@ -7,7 +7,15 @@ class EpisodesMailbox < ApplicationMailbox
     log_info "email_received", to: recipient_email, from: sender_email, subject: mail.subject
 
     unless user
-      log_info "invalid_token", token: extract_token_from_recipient
+      # No user matched the token — either a bad token, email-episodes
+      # disabled, OR the user was soft-deleted. Log loud so inbound drops
+      # aren't silent.
+      token = extract_token_from_recipient
+      log_warn "episodes_mailbox_unknown_token",
+        from: sender_email,
+        to: recipient_email,
+        token_prefix: token&.slice(0, 8),
+        reason: "invalid_token_or_user_soft_deleted"
       return
     end
 

@@ -9,6 +9,14 @@ class ProcessesUrlEpisodeJob < ApplicationJob
   def perform(episode_id:, user_id:, action_id: nil)
     with_episode_logging(episode_id: episode_id, user_id: user_id, action_id: action_id) do
       episode = Episode.find(episode_id)
+      if episode.user.nil?
+        Rails.logger.warn(
+          "event=process_url_episode_skipped " \
+          "episode_id=#{episode_id} " \
+          "reason=user_missing_or_soft_deleted"
+        )
+        next
+      end
       ProcessesUrlEpisode.call(episode: episode)
     end
   end

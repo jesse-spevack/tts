@@ -119,4 +119,59 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     mail = ActionMailer::Base.deliveries.last
     assert_includes mail.body.to_s, "plan=premium_monthly"
   end
+
+  # Defense in depth around the soft-delete revive flow: SendsMagicLink
+  # intentionally reaches soft-deleted users so they can restore. That makes
+  # an attacker who knows the deleted email able to spam mail to it. Per-email
+  # rate-limit applied to ALL users (not just soft-deleted) is the orthogonal
+  # mitigation. Limiter is wired through RateLimitStore for testability — see
+  # the comment on SessionsController::MagicLinkRateLimitStore.
+  test "magic-link rate limit: 6th request within an hour for the same email is rejected" do
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    5.times do
+      post session_url, params: { email_address: "spammed@example.com" }
+      assert_redirected_to root_url
+    end
+
+    assert_no_emails do
+      post session_url, params: { email_address: "spammed@example.com" }
+    end
+    assert_redirected_to root_url
+    assert_match(/wait/i, flash[:alert].to_s)
+  ensure
+    Rails.cache = original_cache if original_cache
+  end
+
+  test "magic-link rate limit: different emails are independently limited" do
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    5.times do
+      post session_url, params: { email_address: "alice@example.com" }
+    end
+
+    assert_emails 1 do
+      post session_url, params: { email_address: "bob@example.com" }
+    end
+    assert_redirected_to root_url
+    assert_equal "Check your email for a login link!", flash[:notice]
+  ensure
+    Rails.cache = original_cache if original_cache
+  end
+
+  test "magic-link rate limit: case- and whitespace-insensitive on email" do
+    original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+    5.times { post session_url, params: { email_address: "Mixed@Example.com" } }
+
+    assert_no_emails do
+      post session_url, params: { email_address: "  mixed@example.com  " }
+    end
+    assert_redirected_to root_url
+  ensure
+    Rails.cache = original_cache if original_cache
+  end
 end

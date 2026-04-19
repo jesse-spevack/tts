@@ -26,6 +26,9 @@ module Api
       def authenticate_via_api_token(token)
         api_token = FindsApiToken.call(plain_token: token)
         return false if api_token.nil?
+        # User.default_scope excludes soft-deleted users, so `api_token.user`
+        # returns nil if the account has been deleted.
+        return false if api_token.user.nil?
 
         api_token.update_column(:last_used_at, Time.current)
         @current_api_token = api_token

@@ -25,10 +25,51 @@ class User < ApplicationRecord
   validates :email_address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :voice_preference, inclusion: { in: Voice::ALL }, allow_nil: true
 
+  # Soft-delete: hide soft-deleted users from every default query (auth lookups
+  # included). Matches the Episode precedent. Use `User.unscoped` when you
+  # explicitly need soft-deleted rows (e.g. admin forensics).
+  default_scope { where(deleted_at: nil) }
+
   scope :with_valid_auth_token, -> {
     where.not(auth_token: nil)
          .where("auth_token_expires_at > ?", Time.current)
   }
+
+  def soft_delete!
+    raise "User already deleted" if soft_deleted?
+
+    transaction do
+      update!(deleted_at: Time.current)
+
+      # Defense in depth: revoke every auth artifact at the source instead of
+      # relying on per-path soft-delete checks. A future caller that trusts a
+      # token without re-loading the user (e.g. Doorkeeper#acceptable?) would
+      # otherwise admit a deleted account.
+      api_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
+      sessions.destroy_all
+      oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
+    end
+
+    # Best-effort async Stripe cleanup. The local soft-delete commits
+    # immediately so we honor user intent; Stripe cancellation retries on its
+    # own if the API is unavailable. If there's no active subscription the job
+    # logs + returns early.
+    CancelsUserSubscriptionJob.perform_later(user_id: id)
+  end
+
+  # Revive a soft-deleted account. Clears `deleted_at` so default_scope
+  # lookups see the user again. Intentionally does NOT reactivate any prior
+  # Stripe subscription — that was canceled on soft-delete and the user must
+  # resubscribe from Billing.
+  def restore!
+    raise "User is not deleted" unless soft_deleted?
+
+    update!(deleted_at: nil)
+  end
+
+  def soft_deleted?
+    deleted_at.present?
+  end
 
   def premium?
     subscription&.active? || complimentary? || unlimited?

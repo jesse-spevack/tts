@@ -1,6 +1,37 @@
 class SessionsController < ApplicationController
+  # Thin proxy around Rails.cache so the rate_limit store is resolved at
+  # request time. Rails 8 `rate_limit` captures `store:` at class-load via
+  # the `cache_store` default, and the test env default is :null_store
+  # (no-op). The proxy lets tests swap Rails.cache to MemoryStore to exercise
+  # the limiter — same pattern as Settings::AccountsController.
+  class MagicLinkRateLimitStore
+    def increment(*args, **kwargs) = Rails.cache.increment(*args, **kwargs)
+  end
+
   allow_unauthenticated_access only: %i[ new create ]
+  # A soft-deleted user lands on /restore_account; from there they may click
+  # Sign out. That hits #destroy and needs to bypass the soft-delete redirect.
+  allow_soft_deleted_access only: :destroy
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to root_path, alert: "Try again later." }
+  # Per-email magic-link rate limit. Threat model: SendsMagicLink intentionally
+  # reaches soft-deleted users (Option C revive flow), which means an attacker
+  # who knows a deleted email can spam its inbox. This limit applies to ALL
+  # users, not just soft-deleted, as orthogonal mailbox-spam mitigation.
+  rate_limit to: 5,
+             within: 1.hour,
+             by: -> {
+               # Mirror User.normalizes :email_address (strip + downcase). Reject
+               # non-String shapes (e.g. param-pollution arrays) so they collide
+               # into one bucket instead of a junk per-shape key. Blank/missing
+               # emails also share the empty bucket — SendsMagicLink rejects
+               # those anyway, so the bucket only protects against accidental
+               # spam from a buggy client.
+               raw = params[:email_address]
+               raw.is_a?(String) ? raw.strip.downcase : ""
+             },
+             store: MagicLinkRateLimitStore.new,
+             with: -> { redirect_to root_path, alert: "Please wait before requesting another login link." },
+             only: :create
 
   def new
     # Redirect authenticated users to episode creation form

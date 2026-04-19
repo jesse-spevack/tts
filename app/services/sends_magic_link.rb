@@ -9,7 +9,11 @@ class SendsMagicLink
   end
 
   def call
-    user = User.find_by(email_address: @email_address)
+    # Use unscoped so we can find soft-deleted users. They still need to be
+    # able to reach the magic-link flow in order to restore their account.
+    # CreatesUser is only called if truly no row exists, so the DB unique
+    # index on email_address is never violated.
+    user = User.unscoped.find_by(email_address: @email_address)
 
     if user.nil?
       result = CreatesUser.call(email_address: @email_address)
