@@ -41,9 +41,9 @@
     <li class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
       <dl class="divide-y divide-mist-200 dark:divide-mist-800">
         <% cells.each_with_index do |cell, i| %>
-          <div class="grid grid-cols-[7rem_1fr] gap-x-4 py-2 first:pt-0 last:pb-0">
+          <div class="py-2 first:pt-0 last:pb-0">
             <dt class="text-xs font-medium text-mist-500 dark:text-mist-400"><%= headers[i] %></dt>
-            <dd class="break-words <%= cell_class[i] %>"><%= cell %></dd>
+            <dd class="mt-1 min-w-0 [overflow-wrap:anywhere] <%= cell_class[i] %>"><%= cell %></dd>
           </div>
         <% end %>
       </dl>

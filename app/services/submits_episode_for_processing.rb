@@ -3,13 +3,14 @@
 class SubmitsEpisodeForProcessing
   include EpisodeLogging
 
-  def self.call(episode:, content:)
-    new(episode: episode, content: content).call
+  def self.call(episode:, content:, voice_override: nil)
+    new(episode: episode, content: content, voice_override: voice_override).call
   end
 
-  def initialize(episode:, content:)
+  def initialize(episode:, content:, voice_override: nil)
     @episode = episode
     @content = content
+    @voice_override = voice_override
   end
 
   def call
@@ -18,7 +19,11 @@ class SubmitsEpisodeForProcessing
     wrapped = wrap_content
     episode.update!(source_text: wrapped, source_text_length: wrapped.length)
 
-    GeneratesEpisodeAudioJob.set(priority: DeterminesJobPriority.call(user: episode.user)).perform_later(episode_id: episode.id, action_id: Current.action_id)
+    GeneratesEpisodeAudioJob.set(priority: DeterminesJobPriority.call(user: episode.user)).perform_later(
+      episode_id: episode.id,
+      action_id: Current.action_id,
+      voice_override: @voice_override
+    )
 
     log_info "audio_generation_enqueued"
   end

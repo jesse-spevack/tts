@@ -68,7 +68,7 @@ class MppIntegrationTest
     puts "\n--- Scenario 1: Stripe deposit address creation ---"
 
     result = Mpp::CreatesDepositAddress.call(
-      amount_cents: AppConfig::Mpp::PRICE_CENTS,
+      amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS,
       currency: AppConfig::Mpp::CURRENCY,
       recipient: "integration-test"
     )
@@ -162,7 +162,7 @@ class MppIntegrationTest
     # Create a fresh PI and simulate deposit so we have a captured payment to refund
     puts "  Creating fresh deposit address..."
     result = Mpp::CreatesDepositAddress.call(
-      amount_cents: AppConfig::Mpp::PRICE_CENTS,
+      amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS,
       currency: AppConfig::Mpp::CURRENCY,
       recipient: "integration-test-refund"
     )
@@ -208,7 +208,7 @@ class MppIntegrationTest
 
   def create_fresh_payment_intent
     result = Mpp::CreatesDepositAddress.call(
-      amount_cents: AppConfig::Mpp::PRICE_CENTS,
+      amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS,
       currency: AppConfig::Mpp::CURRENCY,
       recipient: "integration-test-scenario2"
     )

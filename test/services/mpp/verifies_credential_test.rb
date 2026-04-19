@@ -37,7 +37,8 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
         currency: @currency,
-        recipient: @deposit_address
+        recipient: @deposit_address,
+        voice_tier: :premium
       )
       @challenge = challenge_result.data
     end
@@ -117,7 +118,8 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
         currency: @currency,
-        recipient: @deposit_address
+        recipient: @deposit_address,
+        voice_tier: :premium
       )
       expired_challenge = challenge_result.data
     end
@@ -496,7 +498,8 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     challenge = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: integration_deposit_address
+      recipient: integration_deposit_address,
+      voice_tier: :premium
     ).data
 
     MppPayment.create!(

@@ -10,11 +10,11 @@ class GeneratesEpisodeAudioJob < ApplicationJob
     job.handle_retries_exhausted(error)
   end
 
-  def perform(episode_id:, action_id: nil)
+  def perform(episode_id:, action_id: nil, voice_override: nil)
     with_episode_logging(episode_id: episode_id, user_id: nil, action_id: action_id) do
       episode = Episode.find(episode_id)
       ChecksAudioCircuitBreaker.call(user: episode.user) do
-        GeneratesEpisodeAudio.call(episode: episode)
+        GeneratesEpisodeAudio.call(episode: episode, voice_override: voice_override)
       end
     end
   rescue ChecksAudioCircuitBreaker::Tripped => e

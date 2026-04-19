@@ -10,11 +10,6 @@ module Api
       attr_reader :current_user, :current_api_token
 
       def authenticate_token!
-        # Idempotent: MppPayable#handle_mpp_auth may have already
-        # authenticated the bearer token earlier in the chain. Skipping
-        # here avoids a duplicate DB write to api_token.last_used_at.
-        return if @current_user.present?
-
         token = extract_bearer_token
 
         # Try API token first (CLI, browser extension)

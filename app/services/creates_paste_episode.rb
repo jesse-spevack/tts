@@ -3,17 +3,18 @@
 class CreatesPasteEpisode
   include StructuredLogging
 
-  def self.call(podcast:, user:, text:, title: nil, author: nil, source_url: nil)
-    new(podcast: podcast, user: user, text: text, title: title, author: author, source_url: source_url).call
+  def self.call(podcast:, user:, text:, title: nil, author: nil, source_url: nil, voice_override: nil)
+    new(podcast: podcast, user: user, text: text, title: title, author: author, source_url: source_url, voice_override: voice_override).call
   end
 
-  def initialize(podcast:, user:, text:, title: nil, author: nil, source_url: nil)
+  def initialize(podcast:, user:, text:, title: nil, author: nil, source_url: nil, voice_override: nil)
     @podcast = podcast
     @user = user
     @text = text
     @title = title.presence
     @author = author.presence
     @source_url = source_url.presence
+    @voice_override = voice_override
   end
 
   def call
@@ -30,7 +31,12 @@ class CreatesPasteEpisode
 
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessesPasteEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesPasteEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(
+      episode_id: episode.id,
+      user_id: episode.user_id,
+      action_id: Current.action_id,
+      voice_override: @voice_override
+    )
     log_info "paste_episode_created", episode_id: episode.id, text_length: text.length
 
     Result.success(episode)

@@ -3,4 +3,10 @@ class DocsController < ApplicationController
 
   def mpp
   end
+
+  def authentication
+  end
+
+  def episodes
+  end
 end

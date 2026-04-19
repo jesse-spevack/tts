@@ -7,13 +7,17 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     @amount_cents = 100
     @currency = "usd"
     @recipient = "0x1234567890abcdef1234567890abcdef12345678"
+    # agent-team-909 removed the :premium default — callers must pass tier
+    # explicitly. Tests that don't care which tier use @voice_tier.
+    @voice_tier = :premium
   end
 
   test "returns a successful Result with challenge data" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     assert result.success?
@@ -24,7 +28,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data
@@ -37,7 +42,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data
@@ -48,7 +54,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data
@@ -59,7 +66,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data
@@ -70,7 +78,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data
@@ -101,16 +110,14 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     assert_equal :standard, result.data[:voice_tier]
   end
 
-  test "voice_tier defaults to :premium when omitted (legacy flat-price compat)" do
-    result = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents,
-      currency: @currency,
-      recipient: @recipient
-    )
-
-    decoded = JSON.parse(Base64.decode64(result.data[:request]))
-    assert_equal "premium", decoded["voice_tier"]
-    assert_equal :premium, result.data[:voice_tier]
+  test "voice_tier is required — omitting raises ArgumentError (agent-team-909)" do
+    assert_raises(ArgumentError) do
+      Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        recipient: @recipient
+      )
+    end
   end
 
   test "different voice_tiers yield different challenge ids (HMAC is tier-bound)" do
@@ -132,7 +139,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
       result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
         currency: @currency,
-        recipient: @recipient
+        recipient: @recipient,
+        voice_tier: @voice_tier
       )
 
       challenge = result.data
@@ -147,13 +155,15 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     assert_equal result1.data[:id], result2.data[:id]
@@ -163,13 +173,15 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: 100,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: 200,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     assert_not_equal result1.data[:id], result2.data[:id]
@@ -179,13 +191,15 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: "0x1111111111111111111111111111111111111111"
+      recipient: "0x1111111111111111111111111111111111111111",
+      voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: "0x2222222222222222222222222222222222222222"
+      recipient: "0x2222222222222222222222222222222222222222",
+      voice_tier: @voice_tier
     )
 
     assert_not_equal result1.data[:id], result2.data[:id]
@@ -195,7 +209,8 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
       currency: @currency,
-      recipient: @recipient
+      recipient: @recipient,
+      voice_tier: @voice_tier
     )
 
     challenge = result.data

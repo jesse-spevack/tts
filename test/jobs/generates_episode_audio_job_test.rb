@@ -27,7 +27,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   end
 
   test "calls GeneratesEpisodeAudio with episode" do
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
 
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
 
@@ -37,7 +37,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   end
 
   test "sets Current.action_id when provided" do
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
 
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id, action_id: "test-action-123")
 
@@ -47,7 +47,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   # --- Retry behavior ---
 
   test "retries on transient Google Cloud error" do
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with {
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with {
       raise Google::Cloud::DeadlineExceededError, "timeout"
     }
 
@@ -60,7 +60,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   end
 
   test "retries on Faraday timeout" do
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with {
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with {
       raise Faraday::TimeoutError, "connection timed out"
     }
 
@@ -70,7 +70,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   end
 
   test "does not retry on permanent error" do
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with {
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with {
       raise Google::Cloud::InvalidArgumentError, "bad voice"
     }
 
@@ -109,7 +109,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   test "circuit breaker trips after threshold failures" do
     Rails.cache.write("audio_failures:#{@user.id}", 3, expires_in: 1.hour)
 
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
 
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
 
@@ -122,7 +122,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   test "circuit breaker allows synthesis below threshold" do
     Rails.cache.write("audio_failures:#{@user.id}", 2, expires_in: 1.hour)
 
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
 
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
 
@@ -132,7 +132,7 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
   test "circuit breaker resets on success" do
     Rails.cache.write("audio_failures:#{@user.id}", 2, expires_in: 1.hour)
 
-    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any) }.with { nil }
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
 
     GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
 

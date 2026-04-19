@@ -28,7 +28,7 @@ class Mpp::CreatesEpisodeTest < ActiveSupport::TestCase
 
   test "dispatches to CreatesUrlEpisode for url source_type" do
     Mocktail.replace(CreatesUrlEpisode)
-    stubs { |_m| CreatesUrlEpisode.call(podcast: @podcast, user: @user, url: "https://example.com/article") }
+    stubs { |_m| CreatesUrlEpisode.call(podcast: @podcast, user: @user, url: "https://example.com/article", voice_override: nil) }
       .with { Result.success(@episode) }
 
     result = Mpp::CreatesEpisode.call(
@@ -44,7 +44,7 @@ class Mpp::CreatesEpisodeTest < ActiveSupport::TestCase
     Mocktail.replace(CreatesPasteEpisode)
     stubs { |_m|
       CreatesPasteEpisode.call(
-        podcast: @podcast, user: @user, text: "Article body", title: "Title", author: "Author"
+        podcast: @podcast, user: @user, text: "Article body", title: "Title", author: "Author", voice_override: nil
       )
     }.with { Result.success(@episode) }
 
@@ -66,7 +66,8 @@ class Mpp::CreatesEpisodeTest < ActiveSupport::TestCase
         content: "Content body",
         url: "https://example.com",
         author: "Author",
-        description: "Description"
+        description: "Description",
+        voice_override: nil
       )
     }.with { Result.success(@episode) }
 

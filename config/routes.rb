@@ -48,8 +48,10 @@ Rails.application.routes.draw do
   get "help/claude", to: "pages#claude_help", as: :help_claude
   get "help/chatgpt", to: "pages#chatgpt_help", as: :help_chatgpt
 
-  # MPP API documentation
+  # API documentation
   get "docs/mpp", to: "docs#mpp", as: :docs_mpp
+  get "docs/authentication", to: "docs#authentication", as: :docs_authentication
+  get "docs/episodes", to: "docs#episodes", as: :docs_episodes
 
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
@@ -61,11 +63,15 @@ Rails.application.routes.draw do
 
     namespace :v1 do
       resources :episodes, only: [ :index, :show, :create, :destroy ]
-      resources :narrations, only: [ :show ]
       resources :extension_logs, only: [ :create ]
       resources :voices, only: [ :index ]
       resource :feed, only: [ :show ]
       get "openapi.json", to: "openapi#show", as: :openapi
+
+      namespace :mpp do
+        resources :episodes, only: [ :create ]
+        resources :narrations, only: [ :show, :create ]
+      end
 
       namespace :auth do
         resource :device_codes, only: [ :create ]

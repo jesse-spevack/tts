@@ -47,13 +47,13 @@
 }
 
 /*
- * Rouge syntax highlighting — /docs/mpp code blocks.
+ * Rouge syntax highlighting — /docs/* code blocks.
  *
  * Restrained 3-color palette on bg-mist-950 (NOT a GitHub rainbow). Designed
  * to sit alongside the Instrument-Serif hero without clashing:
  *
  *   - mist-500 italic  : comments (.c .c1 .cm .cs .cd)
- *   - emerald-300      : strings (.s .s1 .s2 .sb .sc .sd .sh .sx .dl)
+ *   - violet-300       : strings (.s .s1 .s2 .sb .sc .sd .sh .sx .dl)
  *   - mist-300         : JSON keys, bash flags, HTTP header names (.nl .nt .na)
  *
  * Everything else inherits the surrounding mist-100 text color. Works in
@@ -78,7 +78,7 @@
 .highlight .sh,
 .highlight .sx,
 .highlight .dl {
-  color: var(--color-emerald-300);
+  color: var(--color-violet-300);
 }
 
 .highlight .nl,
@@ -102,6 +102,7 @@
   font-family: var(--font-mono);
   font-size: 0.9em;
   color: var(--color-mist-900);
+  overflow-wrap: anywhere;
   @variant dark {
     background-color: var(--color-mist-800);
     color: var(--color-mist-100);

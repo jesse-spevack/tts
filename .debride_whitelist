@@ -24,10 +24,3 @@ device_codes
 oauth_access_grants
 oauth_access_tokens
 narration
-
-# ---------------------------------------------------------------------------
-# Controller concern methods invoked via prepend_before_action.
-# debride can't trace the callback registration to the method call.
-# ---------------------------------------------------------------------------
-handle_mpp_auth
-

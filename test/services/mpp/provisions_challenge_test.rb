@@ -8,6 +8,9 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
     @currency = "usd"
     @deposit_address = "0x1234567890abcdef1234567890abcdef12345678"
     @payment_intent_id = "pi_test_abc123"
+    # agent-team-909 removed the :premium default on ProvisionsChallenge.
+    # Tests that don't care which tier use @voice_tier.
+    @voice_tier = :premium
 
     Mocktail.replace(Mpp::CreatesDepositAddress)
     stubs { |_m| Mpp::CreatesDepositAddress.call(amount_cents: @amount_cents, currency: @currency) }
@@ -15,7 +18,9 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
   end
 
   test "returns Provisioned value with challenge and deposit_address on success" do
-    result = Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
+    result = Mpp::ProvisionsChallenge.call(
+      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
+    )
 
     assert result.success?
     assert_kind_of Mpp::ProvisionsChallenge::Provisioned, result.data
@@ -24,7 +29,9 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
   end
 
   test "signs challenge with the provisioned deposit_address as recipient" do
-    result = Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
+    result = Mpp::ProvisionsChallenge.call(
+      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
+    )
 
     request_json = Base64.decode64(result.data.challenge[:request])
     request = JSON.parse(request_json)
@@ -33,7 +40,9 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
 
   test "persists a pending MppPayment linking challenge_id, deposit_address, payment_intent_id" do
     assert_difference -> { MppPayment.count }, 1 do
-      Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
+      Mpp::ProvisionsChallenge.call(
+        amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
+      )
     end
 
     payment = MppPayment.order(:created_at).last
@@ -49,9 +58,17 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
       .with { Result.failure("Stripe down") }
 
     assert_no_difference -> { MppPayment.count } do
-      result = Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
+      result = Mpp::ProvisionsChallenge.call(
+        amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
+      )
       refute result.success?
       assert_equal "Stripe down", result.error
+    end
+  end
+
+  test "voice_tier is required — omitting raises ArgumentError (agent-team-909)" do
+    assert_raises(ArgumentError) do
+      Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
     end
   end
 end

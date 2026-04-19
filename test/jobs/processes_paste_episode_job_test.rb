@@ -24,11 +24,11 @@ class ProcessesPasteEpisodeJobTest < ActiveSupport::TestCase
   end
 
   test "calls ProcessesPasteEpisode with episode" do
-    stubs { |m| ProcessesPasteEpisode.call(episode: m.any) }.with { true }
+    stubs { |m| ProcessesPasteEpisode.call(episode: m.any, voice_override: m.any) }.with { true }
 
     ProcessesPasteEpisodeJob.perform_now(episode_id: @episode.id, user_id: @user.id)
 
-    verify { ProcessesPasteEpisode.call(episode: @episode) }
+    verify { ProcessesPasteEpisode.call(episode: @episode, voice_override: nil) }
     assert true
   end
 

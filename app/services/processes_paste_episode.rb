@@ -3,13 +3,14 @@
 class ProcessesPasteEpisode
   include EpisodeErrorHandling
 
-  def self.call(episode:)
-    new(episode: episode).call
+  def self.call(episode:, voice_override: nil)
+    new(episode: episode, voice_override: voice_override).call
   end
 
-  def initialize(episode:)
+  def initialize(episode:, voice_override: nil)
     @episode = episode
     @user = episode.user
+    @voice_override = voice_override
   end
 
   def call
@@ -70,7 +71,7 @@ class ProcessesPasteEpisode
 
     log_info "episode_metadata_updated"
 
-    SubmitsEpisodeForProcessing.call(episode: episode, content: content)
+    SubmitsEpisodeForProcessing.call(episode: episode, content: content, voice_override: @voice_override)
   end
 
   def user_provided_title?

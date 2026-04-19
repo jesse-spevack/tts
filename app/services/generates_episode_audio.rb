@@ -6,13 +6,14 @@ require "mp3info"
 class GeneratesEpisodeAudio
   include EpisodeLogging
 
-  def self.call(episode:, skip_feed_upload: false)
-    new(episode: episode, skip_feed_upload: skip_feed_upload).call
+  def self.call(episode:, skip_feed_upload: false, voice_override: nil)
+    new(episode: episode, skip_feed_upload: skip_feed_upload, voice_override: voice_override).call
   end
 
-  def initialize(episode:, skip_feed_upload: false)
+  def initialize(episode:, skip_feed_upload: false, voice_override: nil)
     @episode = episode
     @skip_feed_upload = skip_feed_upload
+    @voice_override = voice_override
     @uploaded_audio_path = nil
   end
 
@@ -72,7 +73,7 @@ class GeneratesEpisodeAudio
   end
 
   def voice_name
-    @episode.voice
+    @voice_override.presence || @episode.voice
   end
 
   def content_text

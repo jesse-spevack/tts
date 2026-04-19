@@ -16,10 +16,7 @@ module Mpp
       new(**kwargs).call
     end
 
-    # voice_tier defaults to :premium during the agent-team-nkz migration
-    # window — matches the legacy flat-price flow. After agent-team-nkz.3
-    # (route split) lands, callers pass tier explicitly.
-    def initialize(amount_cents:, currency:, voice_tier: :premium)
+    def initialize(amount_cents:, currency:, voice_tier:)
       @amount_cents = amount_cents
       @currency = currency
       @voice_tier = voice_tier
