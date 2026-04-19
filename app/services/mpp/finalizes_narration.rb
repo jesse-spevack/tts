@@ -40,37 +40,41 @@ module Mpp
     end
 
     def call
-      rows_updated = MppPayment
-        .where(id: mpp_payment.id, status: "pending")
-        .update_all(
-          status: "completed",
-          tx_hash: tx_hash,
-          updated_at: Time.current
-        )
+      # Wrap the winner's flip + narration insert in one transaction so
+      # losers never observe a half-committed state (status=completed
+      # with no linked Narration yet). Without the wrapper, a loser whose
+      # update_all returns 0 can race the winner's narration insert and
+      # get a transient "payment finalized but narration pending" failure,
+      # which would surface as a 500 on a client's idempotent retry.
+      ActiveRecord::Base.transaction do
+        rows_updated = MppPayment
+          .where(id: mpp_payment.id, status: "pending")
+          .update_all(
+            status: "completed",
+            tx_hash: tx_hash,
+            updated_at: Time.current
+          )
 
-      if rows_updated == 1
-        # Winner: we flipped the pending row. Refresh our local copy
-        # so callers see the new state, then create the Narration.
-        mpp_payment.reload
-        creation = CreatesNarration.call(mpp_payment: mpp_payment, params: params)
-        return creation if creation.failure?
+        if rows_updated == 1
+          mpp_payment.reload
+          creation = CreatesNarration.call(mpp_payment: mpp_payment, params: params)
+          raise ActiveRecord::Rollback if creation.failure?
 
-        Result.success(narration: creation.data, outcome: :winner)
-      else
-        # Loser: another caller already won the race. Look up the
-        # winner's Narration and return it for idempotent retry.
-        # narrations.mpp_payment_id is uniquely indexed so find_by
-        # is guaranteed to return at most one row.
-        mpp_payment.reload
-        existing = Narration.find_by(mpp_payment_id: mpp_payment.id)
-        if existing
-          Result.success(narration: existing, outcome: :loser)
-        else
-          # Degenerate case: status flipped but Narration not yet
-          # persisted by the winner thread. Controller treats this
-          # as a transient conflict (retry-friendly).
-          Result.failure("Payment already finalized but narration pending")
+          return Result.success(narration: creation.data, outcome: :winner)
         end
+      end
+
+      # Either we lost the race OR we were the winner but CreatesNarration
+      # failed (rolled back). In both cases the authoritative state is
+      # in the DB now — look up the committed Narration.
+      mpp_payment.reload
+      existing = Narration.find_by(mpp_payment_id: mpp_payment.id)
+      if existing
+        Result.success(narration: existing, outcome: :loser)
+      else
+        # True failure: winner rolled back AND no other winner committed.
+        # Controller treats this as a transient conflict.
+        Result.failure("Payment already finalized but narration pending")
       end
     end
 
