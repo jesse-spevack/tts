@@ -97,7 +97,7 @@
 @utility ic {
   border-radius: var(--radius-sm);
   background-color: var(--color-mist-100);
-  padding-inline: --spacing(1.5);
+  padding-inline: --spacing(1);
   padding-block: --spacing(0.5);
   font-family: var(--font-mono);
   font-size: 0.9em;
@@ -106,5 +106,16 @@
     background-color: var(--color-mist-800);
     color: var(--color-mist-100);
   }
+}
+
+/*
+ * Leading .ic pill: when <code class="ic"> is the first child of a list
+ * item / paragraph / table cell, pull its left edge back by its own
+ * inline padding so the pill's text content aligns flush with the
+ * container's text start — otherwise lines beginning with a pill look
+ * visually indented relative to neighboring text lines.
+ */
+:where(li, p, dd, td) > .ic:first-child {
+  margin-inline-start: calc(var(--spacing) * -1);
 }
 
