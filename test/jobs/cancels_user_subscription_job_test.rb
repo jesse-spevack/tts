@@ -128,7 +128,7 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
       )
 
     log_output = capture_logs do
-      assert_raises(CancelsUserSubscriptionJob::SubscriptionIdMismatchError) do
+      assert_raises(CancelsUserSubscription::SubscriptionIdMismatchError) do
         CancelsUserSubscriptionJob.perform_now(user_id: user.id)
       end
     end
@@ -139,11 +139,11 @@ class CancelsUserSubscriptionJobTest < ActiveSupport::TestCase
     assert_not subscription.reload.canceled?
   end
 
-  test "soft_delete! enqueues the job" do
+  test "SoftDeletesUser enqueues the job" do
     user = users(:one)
 
     assert_enqueued_with(job: CancelsUserSubscriptionJob, args: [ { user_id: user.id } ]) do
-      user.soft_delete!
+      SoftDeletesUser.call(user: user)
     end
   end
 

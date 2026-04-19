@@ -35,29 +35,6 @@ class User < ApplicationRecord
          .where("auth_token_expires_at > ?", Time.current)
   }
 
-  def soft_delete!
-    raise "User already deleted" if soft_deleted?
-
-    transaction do
-      update!(deleted_at: Time.current)
-
-      # Defense in depth: revoke every auth artifact at the source instead of
-      # relying on per-path soft-delete checks.
-      # update_all skips per-record callbacks intentionally — revocation is a
-      # pure timestamp write and we don't want ActiveRecord to instantiate
-      # every token just to stamp revoked_at.
-      api_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
-      sessions.destroy_all
-      oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
-    end
-
-    # Best-effort async Stripe cleanup. The local soft-delete commits
-    # immediately so we honor user intent; Stripe cancellation retries on its
-    # own if the API is unavailable. If there's no active subscription the job
-    # logs + returns early.
-    CancelsUserSubscriptionJob.perform_later(user_id: id)
-  end
-
   # Revive a soft-deleted account. Clears `deleted_at` so default_scope
   # lookups see the user again. Intentionally does NOT reactivate any prior
   # Stripe subscription — that was canceled on soft-delete and the user must

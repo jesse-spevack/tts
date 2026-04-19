@@ -169,7 +169,7 @@ class RecalculatesProcessingEstimateTest < ActiveSupport::TestCase
     ep1 = create_completed_episode(source_text_length: 1000, processing_seconds: 10)
     create_completed_episode(source_text_length: 2000, processing_seconds: 20)
 
-    ep1.soft_delete!
+    ep1.update!(deleted_at: Time.current)
 
     # Only 1 non-deleted episode remains, so should return nil
     result = RecalculatesProcessingEstimate.call

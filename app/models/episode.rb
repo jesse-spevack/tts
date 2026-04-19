@@ -33,12 +33,6 @@ class Episode < ApplicationRecord
   default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
 
-  def soft_delete!
-    raise "Episode already deleted" if soft_deleted?
-
-    update!(deleted_at: Time.current)
-  end
-
   def soft_deleted?
     deleted_at.present?
   end

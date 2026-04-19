@@ -98,7 +98,7 @@ module Api
       test "index does not return soft-deleted episodes" do
         # Soft-delete an episode owned by user one
         episode = episodes(:one)
-        episode.soft_delete!
+        episode.update!(deleted_at: Time.current)
 
         get api_v1_episodes_path,
           headers: auth_header(@plain_token),

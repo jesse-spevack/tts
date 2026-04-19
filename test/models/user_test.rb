@@ -350,25 +350,7 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.email_ingest_address
   end
 
-  # soft_delete! / restore! / soft_deleted? tests
-  test "soft_delete! sets deleted_at and enqueues Stripe cancel job" do
-    user = users(:one)
-
-    assert_enqueued_with(job: CancelsUserSubscriptionJob, args: [ { user_id: user.id } ]) do
-      user.soft_delete!
-    end
-
-    assert user.soft_deleted?
-    assert_not_nil user.deleted_at
-  end
-
-  test "soft_delete! raises if already deleted" do
-    user = users(:one)
-    user.update!(deleted_at: Time.current)
-
-    assert_raises(RuntimeError) { user.soft_delete! }
-  end
-
+  # restore! / soft_deleted? tests (soft_delete! lives in SoftDeletesUser)
   test "restore! clears deleted_at" do
     user = users(:one)
     user.update!(deleted_at: 1.day.ago)
@@ -393,51 +375,5 @@ class UserTest < ActiveSupport::TestCase
     assert_nil user.deleted_at
 
     assert_raises(RuntimeError) { user.restore! }
-  end
-
-  # Defense-in-depth: every auth artifact must be revoked at the source on
-  # soft-delete, not just denied at the lookup layer. A future caller that
-  # trusts a token without re-loading the user (e.g. Doorkeeper#acceptable?)
-  # would otherwise admit a deleted account.
-  test "soft_delete! revokes the user's API tokens" do
-    user = users(:one)
-    token = user.api_tokens.create!(token_digest: "soft_delete_token_digest")
-    assert_nil token.revoked_at
-
-    user.soft_delete!
-
-    assert_not_nil token.reload.revoked_at
-  end
-
-  test "soft_delete! destroys the user's sessions" do
-    user = users(:one)
-    user.sessions.create!(user_agent: "test", ip_address: "127.0.0.1")
-    assert_operator user.sessions.count, :>, 0
-
-    user.soft_delete!
-
-    assert_equal 0, user.sessions.reload.count
-  end
-
-  test "soft_delete! revokes the user's Doorkeeper access tokens" do
-    user = users(:one)
-    app = Doorkeeper::Application.create!(
-      name: "test_app_revoke",
-      uid: "soft_delete_app_uid",
-      redirect_uri: "https://example.com/cb",
-      scopes: "podread",
-      confidential: false
-    )
-    token = Doorkeeper::AccessToken.create!(
-      application: app,
-      resource_owner_id: user.id,
-      scopes: "podread",
-      expires_in: 1.hour
-    )
-    assert_nil token.revoked_at
-
-    user.soft_delete!
-
-    assert_not_nil token.reload.revoked_at
   end
 end

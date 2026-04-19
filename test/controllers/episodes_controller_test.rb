@@ -534,7 +534,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
 
   test "deleted episodes do not appear in index" do
     episode = episodes(:one)
-    episode.soft_delete!
+    episode.update!(deleted_at: Time.current)
 
     get episodes_url
 

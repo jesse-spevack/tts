@@ -16,7 +16,7 @@ module Settings
                only: :destroy
 
     def destroy
-      Current.user.soft_delete!
+      SoftDeletesUser.call(user: Current.user)
       terminate_session
       redirect_to root_path, status: :see_other, notice: "Your account has been deleted."
     end
