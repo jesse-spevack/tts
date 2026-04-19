@@ -6,9 +6,7 @@ namespace :accounts do
     abort "ERROR: EMAIL is required. Usage: bin/rails accounts:create_complimentary EMAIL=friend@example.com" if email.blank?
     abort "ERROR: '#{email}' doesn't look like a valid email address." unless email.match?(URI::MailTo::EMAIL_REGEXP)
 
-    # Unscoped so admin ops can touch soft-deleted accounts without tripping
-    # the DB unique index when we would otherwise try to create a new row.
-    user = User.unscoped.find_by(email_address: email)
+    user = FindsUserByEmail.call(email_address: email)
 
     if user
       if user.complimentary?

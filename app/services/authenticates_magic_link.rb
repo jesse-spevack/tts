@@ -12,23 +12,11 @@ class AuthenticatesMagicLink
   end
 
   def call
-    return Result.failure("Invalid or expired token") if @token.blank?
-
-    # Find all users with valid tokens to prevent timing attacks.
-    # Use unscoped so soft-deleted users can click their magic link and
-    # reach the /restore_account page. Post-auth, a before_action redirects
-    # soft-deleted users to the revive flow before they touch any other UI.
-    users = User.unscoped.with_valid_auth_token
-
-    user = users.find do |u|
-      VerifiesHashedToken.call(hashed_token: u.auth_token, raw_token: @token)
-    end
+    user = FindsUserByAuthToken.call(raw_token: @token)
 
     if user
       InvalidatesAuthToken.call(user: user)
-
       log_info "user_authenticated", user_id: user.id, email: LoggingHelper.mask_email(user.email_address)
-
       Result.success(user)
     else
       Result.failure("Invalid or expired token")
