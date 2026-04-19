@@ -24,3 +24,9 @@ device_codes
 oauth_access_grants
 oauth_access_tokens
 narration
+
+# ---------------------------------------------------------------------------
+# ActiveJob#perform — called dynamically by the queue executor after
+# perform_later enqueues the job. debride can't trace the dispatch.
+# ---------------------------------------------------------------------------
+perform
