@@ -45,6 +45,12 @@ class Voice
 
   ALL = CATALOG.keys.freeze
 
+  # Catalog default used by ResolvesVoice when no voice is requested AND
+  # no user preference applies. Flipped from 'callum' (Premium) to 'felix'
+  # (Standard) per agent-team-0g5 research — casual callers who omit
+  # voice should land on the cheaper tier by default.
+  DEFAULT_KEY = "felix"
+
   DEFAULT_STANDARD = "en-GB-Standard-D"
   DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"
 
