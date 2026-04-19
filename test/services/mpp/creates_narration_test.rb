@@ -1,0 +1,108 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class Mpp::CreatesNarrationTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup do
+    # Fresh, unclaimed MppPayment. The narrations(:one) fixture binds
+    # mpp_payments(:one) to an existing Narration, and the unique index
+    # on narrations.mpp_payment_id (agent-team-kzq) rejects a second
+    # Narration pointing at the same payment.
+    @mpp_payment = MppPayment.create!(
+      amount_cents: 100,
+      currency: "usd",
+      status: :pending,
+      user: users(:one)
+    )
+  end
+
+  test "creates a url narration and enqueues processing job" do
+    params = { source_type: "url", url: "https://example.com/article", title: "Headline" }
+
+    assert_enqueued_with(job: ProcessesNarrationJob) do
+      result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+      assert result.success?
+      narration = result.data
+      assert narration.persisted?
+      assert narration.url?
+      assert_equal "https://example.com/article", narration.source_url
+      assert_equal "Headline", narration.title
+      assert_equal @mpp_payment, narration.mpp_payment
+    end
+  end
+
+  test "creates a text narration from text param" do
+    params = { source_type: "text", text: "Article body content", title: "Piece" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert result.success?
+    assert result.data.text?
+    assert_equal "Article body content", result.data.source_text
+  end
+
+  test "creates a text narration from content param (extension source_type)" do
+    params = { source_type: "extension", content: "Extracted page content", title: "Page" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert result.success?
+    assert result.data.text?
+    assert_equal "Extracted page content", result.data.source_text
+  end
+
+  test "defaults title to Untitled when missing" do
+    params = { source_type: "text", text: "body" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert_equal "Untitled", result.data.title
+  end
+
+  test "sets expires_at approximately 24 hours from now" do
+    params = { source_type: "text", text: "body" }
+
+    freeze_time do
+      result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+      assert_in_delta 24.hours.from_now, result.data.expires_at, 1.second
+    end
+  end
+
+  test "defaults voice to Chirp3-HD when no voice param supplied" do
+    params = { source_type: "text", text: "body" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert_equal Voice::DEFAULT_CHIRP, result.data.voice
+  end
+
+  test "translates voice catalog key to google voice name" do
+    params = { source_type: "text", text: "body", voice: "callum" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert_equal Voice.find("callum").google_voice, result.data.voice
+  end
+
+  test "returns failure for unknown voice key" do
+    params = { source_type: "text", text: "body", voice: "nonexistent" }
+
+    assert_no_difference -> { Narration.count } do
+      result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+      refute result.success?
+      assert_match(/Invalid voice/, result.error)
+    end
+  end
+
+  test "accepts Standard-tier voice key for MPP payers" do
+    params = { source_type: "text", text: "body", voice: "felix" }
+
+    result = Mpp::CreatesNarration.call(mpp_payment: @mpp_payment, params: params)
+
+    assert result.success?
+    assert_equal Voice.find("felix").google_voice, result.data.voice
+  end
+end

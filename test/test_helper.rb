@@ -5,6 +5,8 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require "mocktail"
+
+WebMock::Config.instance.query_values_notation = :flat
 require_relative "test_helpers/session_test_helper"
 
 module ActiveSupport
@@ -29,6 +31,7 @@ module ActiveSupport
 
     def teardown
       Mocktail.reset
+      WebMock.reset!
     end
   end
 end

@@ -16,7 +16,7 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
 
     assert api_token.is_a?(ApiToken)
     assert api_token.plain_token.present?
-    assert api_token.plain_token.start_with?("pk_live_")
+    assert api_token.plain_token.start_with?("sk_live_")
   end
 
   test "call creates token associated with user" do
@@ -25,20 +25,32 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
     assert_equal @user, api_token.user
   end
 
-  test "call revokes existing active tokens for user" do
-    # Generate first token
+  test "call allows multiple active tokens per user" do
     first_token = GeneratesApiToken.call(user: @user)
-    assert first_token.active?
-
-    # Generate second token
     second_token = GeneratesApiToken.call(user: @user)
 
-    # First token should now be revoked
     first_token.reload
-    assert first_token.revoked?
-
-    # Second token should be active
+    assert first_token.active?
     assert second_token.active?
+  end
+
+  test "call defaults source to user" do
+    token = GeneratesApiToken.call(user: @user)
+    assert_equal "user", token.source
+  end
+
+  test "call accepts explicit source" do
+    token = GeneratesApiToken.call(user: @user, source: "extension")
+    assert_equal "extension", token.source
+  end
+
+  test "call populates token_prefix with prefix + 4 chars of random portion" do
+    token = GeneratesApiToken.call(user: @user)
+
+    assert token.token_prefix.start_with?("sk_live_")
+    # 8 chars of "sk_live_" + 4 chars from the random portion = 12 chars total
+    assert_equal 12, token.token_prefix.length
+    assert token.plain_token.start_with?(token.token_prefix)
   end
 
   test "call generates unique tokens each time" do
@@ -55,6 +67,25 @@ class GeneratesApiTokenTest < ActiveSupport::TestCase
     found_token = FindsApiToken.call(plain_token: plain_token)
     assert_not_nil found_token
     assert_equal api_token.id, found_token.id
+  end
+
+  test "call emits structured log with event, user_id, source, and token_prefix" do
+    output = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(output)
+    begin
+      token = GeneratesApiToken.call(user: @user, source: "extension")
+    ensure
+      Rails.logger = original_logger
+    end
+
+    logs = output.string
+    assert_match(/event=api_token_generated/, logs)
+    assert_match(/user_id=#{@user.id}/, logs)
+    assert_match(/source=extension/, logs)
+    assert_match(/token_prefix=#{Regexp.escape(token.token_prefix)}/, logs)
+    refute_match(/token_digest/, logs, "token_digest must never appear in logs")
+    refute_match(Regexp.new(Regexp.escape(token.plain_token)), logs, "plain token must never appear in logs")
   end
 
   test "call creates token with correct digest" do

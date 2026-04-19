@@ -45,3 +45,78 @@
   }
 
 }
+
+/*
+ * Rouge syntax highlighting — /docs/* code blocks.
+ *
+ * Restrained 3-color palette on bg-mist-950 (NOT a GitHub rainbow). Designed
+ * to sit alongside the Instrument-Serif hero without clashing:
+ *
+ *   - mist-500 italic  : comments (.c .c1 .cm .cs .cd)
+ *   - violet-300       : strings (.s .s1 .s2 .sb .sc .sd .sh .sx .dl)
+ *   - mist-300         : JSON keys, bash flags, HTTP header names (.nl .nt .na)
+ *
+ * Everything else inherits the surrounding mist-100 text color. Works in
+ * both light and dark mode because the <pre> wrapper is bg-mist-950
+ * unconditionally.
+ */
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs,
+.highlight .cd {
+  color: var(--color-mist-500);
+  font-style: italic;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .sh,
+.highlight .sx,
+.highlight .dl {
+  color: var(--color-violet-300);
+}
+
+.highlight .nl,
+.highlight .nt,
+.highlight .na {
+  color: var(--color-mist-300);
+}
+
+/*
+ * .ic — inline code token.
+ *
+ * Extracted from ~30 repeated class strings in /docs/mpp. Pill-shaped mono
+ * span with mist-on-light in light mode, light-on-mist in dark mode.
+ * Sized relative to surrounding prose via em.
+ */
+@utility ic {
+  border-radius: var(--radius-sm);
+  background-color: var(--color-mist-100);
+  padding-inline: --spacing(1);
+  padding-block: --spacing(0.5);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--color-mist-900);
+  overflow-wrap: anywhere;
+  @variant dark {
+    background-color: var(--color-mist-800);
+    color: var(--color-mist-100);
+  }
+}
+
+/*
+ * Leading .ic pill: when <code class="ic"> is the first child of a list
+ * item / paragraph / table cell, pull its left edge back by its own
+ * inline padding so the pill's text content aligns flush with the
+ * container's text start — otherwise lines beginning with a pill look
+ * visually indented relative to neighboring text lines.
+ */
+:where(li, p, dd, td) > .ic:first-child {
+  margin-inline-start: calc(var(--spacing) * -1);
+}
+

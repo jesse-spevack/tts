@@ -1,0 +1,120 @@
+<div class="mx-auto max-w-4xl">
+  <%= render "shared/back_link", path: settings_path, text: "Back to Settings" %>
+  <%= render "shared/page_header", title: "API Tokens" %>
+
+  <div class="space-y-12">
+    <%# Description + Create section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Personal Access Tokens</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Personal access tokens authenticate as you. Treat them like passwords.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <p class="text-sm/6 text-mist-500 dark:text-mist-400">
+            Use tokens as a <code class="ic">Bearer</code> credential to call the API on your behalf. Tokens are shown in full only once, at creation time.
+          </p>
+
+          <div class="mt-6">
+            <%= button_to "Create token",
+                          settings_api_tokens_path,
+                          method: :post,
+                          form: { data: { turbo: false } },
+                          class: "inline-flex items-center justify-center rounded-lg bg-mist-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200 cursor-pointer" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# Tokens list section %>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
+      <div>
+        <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Your tokens</h2>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Revoke a token to immediately stop any script using it.</p>
+      </div>
+      <div class="md:col-span-2">
+        <div class="rounded-xl bg-white shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+          <% if @api_tokens.any? %>
+            <%# Desktop table %>
+            <div class="hidden md:block overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-mist-200 dark:border-mist-700">
+                    <th class="px-6 py-3 text-left font-medium text-mist-950 dark:text-white">Prefix</th>
+                    <th class="px-6 py-3 text-left font-medium text-mist-950 dark:text-white">Created</th>
+                    <th class="px-6 py-3 text-left font-medium text-mist-950 dark:text-white">Last used</th>
+                    <th class="px-6 py-3 text-right font-medium text-mist-950 dark:text-white"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-mist-200 dark:divide-mist-700">
+                  <% @api_tokens.each do |token| %>
+                    <tr>
+                      <td class="px-6 py-3 font-mono text-mist-950 dark:text-white"><%= token.token_prefix %></td>
+                      <td class="px-6 py-3 text-mist-700 dark:text-mist-300"><%= token.created_at.strftime("%b %-d, %Y") %></td>
+                      <td class="px-6 py-3 text-mist-700 dark:text-mist-300">
+                        <% if token.last_used_at %>
+                          <%= time_ago_in_words(token.last_used_at) %> ago
+                        <% else %>
+                          Never
+                        <% end %>
+                      </td>
+                      <td class="px-6 py-3 text-right">
+                        <%= button_to "Revoke",
+                                      settings_api_token_path(token),
+                                      method: :delete,
+                                      class: "text-sm text-red-600 hover:underline dark:text-red-400 cursor-pointer",
+                                      data: {
+                                        turbo_confirm: "Revoke this token? Any script using it will stop working."
+                                      } %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <%# Mobile stacked cards %>
+            <ul role="list" class="md:hidden divide-y divide-mist-200 dark:divide-mist-700">
+              <% @api_tokens.each do |token| %>
+                <li class="p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                      <p class="font-mono text-sm text-mist-950 dark:text-white break-all"><%= token.token_prefix %></p>
+                      <dl class="mt-2 space-y-1 text-xs">
+                        <div class="flex gap-2">
+                          <dt class="text-mist-500 dark:text-mist-400">Created</dt>
+                          <dd class="text-mist-700 dark:text-mist-300"><%= token.created_at.strftime("%b %-d, %Y") %></dd>
+                        </div>
+                        <div class="flex gap-2">
+                          <dt class="text-mist-500 dark:text-mist-400">Last used</dt>
+                          <dd class="text-mist-700 dark:text-mist-300">
+                            <% if token.last_used_at %>
+                              <%= time_ago_in_words(token.last_used_at) %> ago
+                            <% else %>
+                              Never
+                            <% end %>
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                    <%= button_to "Revoke",
+                                  settings_api_token_path(token),
+                                  method: :delete,
+                                  class: "shrink-0 text-sm text-red-600 hover:underline dark:text-red-400 cursor-pointer",
+                                  data: {
+                                    turbo_confirm: "Revoke this token? Any script using it will stop working."
+                                  } %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="p-6 text-center">
+              <p class="text-sm/6 text-mist-500 dark:text-mist-400">You haven't created any tokens yet.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

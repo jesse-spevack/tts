@@ -34,4 +34,22 @@ class GetsApiTokenTest < ActiveSupport::TestCase
 
     assert_not_equal revoked_token, token
   end
+
+  test "call does not return user-created tokens" do
+    user = users(:one)
+    user_token = api_tokens(:user_created_token)
+    assert_equal user, user_token.user
+    assert user_token.active?
+    assert user_token.source_user?
+
+    # Revoke the active extension token so it would fall through to the PAT
+    # if the source filter were missing.
+    RevokesApiToken.call(token: api_tokens(:active_token))
+
+    token = GetsApiToken.call(user: user)
+
+    assert_nil token,
+      "GetsApiToken must only return extension-sourced tokens to prevent " \
+      "'Disconnect Extension' from silently revoking user-created PATs"
+  end
 end

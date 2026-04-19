@@ -25,7 +25,7 @@ module Settings
 
       post settings_email_token_path
 
-      assert_redirected_to root_path
+      assert_redirected_to login_path(return_to: "/settings/email_token")
     end
   end
 end

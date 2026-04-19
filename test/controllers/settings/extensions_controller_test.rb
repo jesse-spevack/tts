@@ -5,7 +5,7 @@ class Settings::ExtensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "show requires authentication" do
     get settings_extensions_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/settings/extensions")
   end
 
   test "show renders for authenticated user" do
@@ -51,7 +51,7 @@ class Settings::ExtensionsControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy requires authentication" do
     delete settings_extensions_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/settings/extensions")
   end
 
   test "destroy revokes active token and redirects with success notice" do

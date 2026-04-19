@@ -8,8 +8,7 @@ module Extension
         return
       end
 
-      # Generate a new API token for the current user
-      @api_token = GeneratesApiToken.call(user: Current.user)
+      @api_token = RotatesExtensionToken.call(user: Current.user)
     end
   end
 end

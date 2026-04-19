@@ -48,6 +48,11 @@ Rails.application.routes.draw do
   get "help/claude", to: "pages#claude_help", as: :help_claude
   get "help/chatgpt", to: "pages#chatgpt_help", as: :help_chatgpt
 
+  # API documentation
+  get "docs/mpp", to: "docs#mpp", as: :docs_mpp
+  get "docs/authentication", to: "docs#authentication", as: :docs_authentication
+  get "docs/episodes", to: "docs#episodes", as: :docs_episodes
+
   # Feed proxy
   get "/feeds/:podcast_id", to: "feeds#show", constraints: { podcast_id: /podcast_\w+\.xml/ }
 
@@ -63,8 +68,12 @@ Rails.application.routes.draw do
       resource :feed, only: [ :show ]
       get "openapi.json", to: "openapi#show", as: :openapi
 
+      namespace :mpp do
+        resources :episodes, only: [ :create ]
+        resources :narrations, only: [ :show, :create ]
+      end
+
       namespace :auth do
-        resource :extension_token, only: [ :create ]
         resource :device_codes, only: [ :create ]
         resource :device_tokens, only: [ :create ]
         resource :status, only: [ :show ]
@@ -80,6 +89,8 @@ Rails.application.routes.draw do
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]
     resources :connected_apps, only: [ :destroy ]
+    resources :api_tokens, only: [ :index, :create, :destroy ]
+    resource :api_token_reveal, only: [ :show ]
   end
 
   # Device authorization (CLI login)

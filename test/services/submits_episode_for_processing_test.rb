@@ -12,7 +12,7 @@ class SubmitsEpisodeForProcessingTest < ActiveSupport::TestCase
   end
 
   test "enqueues GeneratesEpisodeAudioJob" do
-    assert_enqueued_with(job: GeneratesEpisodeAudioJob, args: [ { episode_id: @episode.id, action_id: nil } ]) do
+    assert_enqueued_with(job: GeneratesEpisodeAudioJob, args: [ { episode_id: @episode.id, action_id: nil, voice_override: nil } ]) do
       SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
     end
   end
@@ -51,7 +51,7 @@ class SubmitsEpisodeForProcessingTest < ActiveSupport::TestCase
   test "passes action_id to job" do
     Current.action_id = "test-action-456"
 
-    assert_enqueued_with(job: GeneratesEpisodeAudioJob, args: [ { episode_id: @episode.id, action_id: "test-action-456" } ]) do
+    assert_enqueued_with(job: GeneratesEpisodeAudioJob, args: [ { episode_id: @episode.id, action_id: "test-action-456", voice_override: nil } ]) do
       SubmitsEpisodeForProcessing.call(episode: @episode, content: "Article body.")
     end
   ensure

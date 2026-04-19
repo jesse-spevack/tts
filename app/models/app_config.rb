@@ -105,10 +105,37 @@ class AppConfig
   module Credits
     PACK_SIZE = 5
     PACK_PRICE_DISPLAY = "$4.99"
-    PER_EPISODE_DISPLAY = "$1.00"
   end
 
   module Extension
     CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/podread-extension/icgbgfaelfomnobbkecaegeecjpdcdhd"
+  end
+
+  module Mpp
+    SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
+    # Tiered per-narration pricing. Standard voices use Google TTS Standard
+    # ($4/M chars COGS); Premium voices use Chirp3-HD ($30/M chars COGS) —
+    # 7.5× delta on the biggest input cost line justifies a split.
+    # See agent-team-0g5 for the full cost model.
+    PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
+    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
+    CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
+    CHARACTER_LIMIT = 20_000
+    CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
+    TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
+    # Decimals for the Tempo stablecoin (pathUSD / USDC). Confirmed by pympp
+    # (mpp/methods/tempo/intents.py) and Stripe's machine-payments sample,
+    # both of which hardcode 6. On-chain Transfer event `data` is in these
+    # base units, so we convert cents -> base units before comparing.
+    TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
+    # Timeouts for the Tempo JSON-RPC call. A slow or hung RPC must not
+    # block a Rails thread indefinitely.
+    TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
+    TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
+    # Stripe API version for crypto PaymentIntent endpoints. Must stay
+    # on the preview track while Machine Payments Protocol support is
+    # gated there.
+    STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
   end
 end

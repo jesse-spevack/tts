@@ -13,6 +13,8 @@ class RecordsLlmUsage
   end
 
   def call
+    return unless episode.is_a?(Episode)
+
     info = llm_client.find_model(response.model_id)
 
     input_cost_cents = BigDecimal(response.input_tokens) * BigDecimal(info.input_price_per_million.to_s) / 10_000

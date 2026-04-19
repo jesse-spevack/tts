@@ -1,6 +1,8 @@
 module Api
   module V1
     class BaseController < ActionController::API
+      include StructuredLogging
+
       before_action :authenticate_token!
 
       private
@@ -30,6 +32,10 @@ module Api
         api_token.update_column(:last_used_at, Time.current)
         @current_api_token = api_token
         @current_user = api_token.user
+        Current.api_token_prefix = api_token.token_prefix
+        log_info "api_request_authenticated",
+          user_id: api_token.user_id,
+          source: api_token.source
         true
       end
 
@@ -46,10 +52,27 @@ module Api
       end
 
       def extract_bearer_token
-        header = request.headers["Authorization"]
-        return nil unless header&.start_with?("Bearer ")
+        extract_auth_scheme("Bearer")
+      end
 
-        header.split(" ", 2).last
+      def extract_payment_credential
+        extract_auth_scheme("Payment")
+      end
+
+      # Parse a single auth scheme value from the Authorization header.
+      # Supports RFC 9110 comma-separated schemes, e.g.
+      #   Authorization: Bearer <token>, Payment <credential>
+      def extract_auth_scheme(scheme)
+        header = request.headers["Authorization"]
+        return nil if header.blank?
+
+        prefix = "#{scheme} "
+        header.split(",").each do |part|
+          part = part.strip
+          return part.split(" ", 2).last if part.start_with?(prefix)
+        end
+
+        nil
       end
     end
   end

@@ -120,6 +120,38 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
+  # Anonymous MPP narration creation rate limiting
+
+  test "POST /api/v1/mpp/narrations is throttled after 10 per minute per IP" do
+    stub_stripe_payment_intent_creation
+
+    narration_params = {
+      title: "Rate limit test",
+      author: "Test",
+      description: "Rate limit test",
+      content: "This is the full content of the article. " * 50,
+      url: "https://example.com/article",
+      source_type: "url"
+    }
+
+    10.times do |i|
+      post api_v1_mpp_narrations_path,
+        params: narration_params.merge(url: "https://example.com/mpp-narr-#{i}"),
+        as: :json
+
+      # Without a Payment credential, the controller returns 402 — we only
+      # care that rack-attack lets the first 10 through.
+      refute_equal 429, response.status, "Request #{i + 1} should not be throttled"
+    end
+
+    # The 11th request from the same IP should be rate limited.
+    post api_v1_mpp_narrations_path,
+      params: narration_params.merge(url: "https://example.com/mpp-narr-11"),
+      as: :json
+
+    assert_response :too_many_requests
+  end
+
   # Device code creation rate limiting
 
   test "allows device code creation under the rate limit" do
@@ -166,5 +198,26 @@ class RackAttackTest < ActionDispatch::IntegrationTest
 
   def auth_header(token)
     { "Authorization" => "Bearer #{token}" }
+  end
+
+  # Stub Stripe PaymentIntent creation for unauthenticated requests that
+  # reach render_402_challenge -> Mpp::CreatesDepositAddress
+  def stub_stripe_payment_intent_creation
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_test_#{SecureRandom.hex(8)}",
+        object: "payment_intent",
+        amount: 100,
+        currency: "usd",
+        status: "requires_action",
+        next_action: {
+          type: "crypto_display_details",
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: "0xthrottle_test_deposit" }
+            }
+          }
+        }
+      }.to_json, headers: { "Content-Type" => "application/json" })
   end
 end

@@ -1,0 +1,377 @@
+<% content_for :title, "Episodes — PodRead API" %>
+
+<div class="relative isolate" data-controller="copy-docs">
+  <!-- Background tint -->
+  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+
+  <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 px-6 lg:px-10 xl:grid-cols-[minmax(0,1fr)_220px]">
+    <!-- Main column -->
+    <div class="min-w-0 pb-24" data-copy-docs-target="source">
+    <!-- Docs nav -->
+    <nav class="pt-8 text-sm" data-copy-skip>
+      <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-mist-500 dark:text-mist-400">
+        <li><%= link_to "Authentication", docs_authentication_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+        <li class="font-medium text-mist-950 dark:text-white" aria-current="page">Episodes</li>
+        <li><%= link_to "Machine Payments", docs_mpp_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+      </ul>
+    </nav>
+
+    <!-- Hero -->
+    <header class="pt-8 pb-12">
+      <div class="flex items-center gap-x-3 text-sm">
+        <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+          <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
+          Public API
+        </span>
+        <%= render "docs/copy_for_llm_button" %>
+      </div>
+      <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
+        Episodes
+      </h1>
+      <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
+        Create, list, fetch, and delete episodes on your primary podcast feed. All endpoints require a bearer token — see <%= link_to "Authentication", docs_authentication_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %>. Requests and responses are JSON; all timestamps are UTC (ISO 8601 with a trailing <code class="ic">Z</code>).
+      </p>
+    </header>
+
+    <!-- Endpoint summary -->
+    <section id="summary" class="scroll-mt-8 pt-8">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Endpoints</h2>
+      <div class="mt-4 overflow-hidden rounded-lg ring-1 ring-mist-200 dark:ring-white/10">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-mist-50 dark:bg-mist-900/50">
+              <th class="py-2.5 pl-4 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Method</th>
+              <th class="py-2.5 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Path</th>
+              <th class="py-2.5 pr-4 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Purpose</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-mist-200 dark:divide-mist-800 text-mist-700 dark:text-mist-300">
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">POST</td>
+              <td class="py-3 pr-6 font-mono"><a href="#create" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">/api/v1/episodes</a></td>
+              <td class="py-3 pr-4">Create an episode from a URL, pasted text, or extension payload</td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">GET</td>
+              <td class="py-3 pr-6 font-mono"><a href="#list" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">/api/v1/episodes</a></td>
+              <td class="py-3 pr-4">List your episodes (paginated, newest first)</td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">GET</td>
+              <td class="py-3 pr-6 font-mono"><a href="#show" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">/api/v1/episodes/:id</a></td>
+              <td class="py-3 pr-4">Fetch a single episode by its <code class="ic">ep_</code>-prefixed id</td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">DELETE</td>
+              <td class="py-3 pr-6 font-mono"><a href="#delete" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">/api/v1/episodes/:id</a></td>
+              <td class="py-3 pr-4">Delete an episode</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Create -->
+    <section id="create" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Create an episode</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        <code class="ic">POST /api/v1/episodes</code>. The <code class="ic">source_type</code> field picks one of two public input paths:
+      </p>
+      <ol role="list" class="mt-4 space-y-2 text-mist-700 list-decimal pl-5 dark:text-mist-300">
+        <li><code class="ic">url</code> — fetch and extract the article at <code class="ic">url</code>. The <strong class="font-semibold text-mist-950 dark:text-white">full article body</strong> is read (not just the title or metadata) and narrated. Title, author, and description are extracted from the page and cleaned by an LLM pass; you cannot override them. Paywalled or JavaScript-rendered pages may extract poorly and return <code class="ic">422</code> — see the aside below.</li>
+        <li><code class="ic">text</code> — synthesize from <code class="ic">text</code>. Optional <code class="ic">title</code> and <code class="ic">author</code>; if omitted, placeholder values are used. No URL is stored.</li>
+      </ol>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        A third value, <code class="ic">extension</code>, is reserved for the first-party PodRead browser extension and is not part of the public API contract — do not build against it. Two other values, <code class="ic">file</code> and <code class="ic">email</code>, can appear in GET responses for episodes ingested via the web uploader and email-in surfaces, but are <strong class="font-semibold text-mist-950 dark:text-white">read-only</strong> — submitting them on <code class="ic">POST</code> returns <code class="ic">422</code>.
+      </p>
+
+      <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+        <strong class="font-semibold text-mist-950 dark:text-white">How extraction works:</strong>
+        URLs are fetched server-side and parsed with Nokogiri against common article selectors (<code class="ic">&lt;article&gt;</code>, <code class="ic">&lt;main&gt;</code>, <code class="ic">&lt;body&gt;</code>). If the extracted body is too short, PodRead falls back to <a href="https://jina.ai/reader/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Jina Reader</a>. The result is cleaned by an LLM pass that also produces title, author, and description. If both extractors return below <code class="ic"><%= AppConfig::Content::MIN_LENGTH %></code> characters, the episode is marked <code class="ic">failed</code> and <code class="ic">error_message</code> explains.
+      </aside>
+
+      <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+        <strong class="font-semibold text-mist-950 dark:text-white">Rate limit:</strong>
+        <%= ChecksEpisodeRateLimit::HOURLY_LIMIT %> episode creations per user per rolling hour. Over the limit returns <code class="ic">429 Too Many Requests</code>. Reads (<code class="ic">show</code>, <code class="ic">index</code>) are not rate-limited.
+      </aside>
+
+      <aside class="mt-4 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+        <strong class="font-semibold text-mist-950 dark:text-white">Idempotency:</strong>
+        <code class="ic">POST</code> is <em>not</em> deduplicated. Submitting the same URL or text twice creates two episodes. Build a client-side guard if retry-safety matters.
+      </aside>
+
+      <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">url source</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl -X POST https://podread.app/api/v1/episodes \\
+            -H "Authorization: Bearer sk_live_…" \\
+            -H "Content-Type: application/json" \\
+            -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}'
+        BASH
+        ) %></code></pre>
+      </figure>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">text source</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl -X POST https://podread.app/api/v1/episodes \\
+            -H "Authorization: Bearer sk_live_…" \\
+            -H "Content-Type: application/json" \\
+            -d '{"source_type":"text","title":"Weekly notes","author":"Jesse","text":"…"}'
+        BASH
+        ) %></code></pre>
+      </figure>
+      <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Successful responses are <strong class="font-semibold text-mist-950 dark:text-white">201 Created</strong>:</p>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+          { "id": "ep_aB3xK9mQ2pL7" }
+        JSON
+        ) %></code></pre>
+      </figure>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        The 201 body is intentionally minimal — audio generation is async and most fields (<code class="ic">title</code>, <code class="ic">author</code>, <code class="ic">duration_seconds</code>) aren't populated yet. Call <a href="#show" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">GET /api/v1/episodes/:id</a> to poll the full object.
+      </p>
+
+      <h3 class="mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Polling for completion</h3>
+      <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Poll the returned id no more than once every 5 seconds. Typical completion is 30–90 seconds; long articles or backlogged queues can take longer. Stop polling when <code class="ic">status</code> is <code class="ic">complete</code> or <code class="ic">failed</code>. Webhooks are not available yet.
+      </p>
+    </section>
+
+    <!-- Show -->
+    <section id="show" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Fetch an episode</h2>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl https://podread.app/api/v1/episodes/ep_aB3xK9mQ2pL7 \\
+            -H "Authorization: Bearer sk_live_…"
+        BASH
+        ) %></code></pre>
+      </figure>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">200 OK</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+          {
+            "episode": {
+              "id": "ep_aB3xK9mQ2pL7",
+              "title": "The article title",
+              "author": "Jane Doe",
+              "description": "…",
+              "status": "complete",
+              "source_type": "url",
+              "source_url": "https://www.worksinprogress.news/p/the-secret-behind-japans-railways",
+              "audio_url": "https://storage.googleapis.com/podread-audio/…/ep_aB3xK9mQ2pL7.mp3",
+              "duration_seconds": 612,
+              "error_message": null,
+              "created_at": "2026-04-19T14:22:09Z"
+            }
+          }
+        JSON
+        ) %></code></pre>
+      </figure>
+
+      <h3 class="mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Fields</h3>
+
+      <% response_fields = [
+        { name: "id", type: "string",
+          description: %(The <code class="ic">ep_</code>-prefixed public identifier.).html_safe },
+        { name: "title", type: "string",
+          description: %(The article title.).html_safe },
+        { name: "author", type: "string",
+          description: %(The article author.).html_safe },
+        { name: "description", type: "string",
+          description: %(A short summary of the content.).html_safe },
+        { name: "source_url", type: "string | null",
+          description: %(The origin URL. Populated for <code class="ic">url</code> and <code class="ic">extension</code> sources with the normalized URL (tracking params stripped). <code class="ic">null</code> for <code class="ic">paste</code>, <code class="ic">file</code>, and <code class="ic">email</code> sources. See <a href="#source-types" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Source types</a>.).html_safe },
+        { name: "source_type", type: "enum",
+          description: %(One of <code class="ic">url</code>, <code class="ic">paste</code>, <code class="ic">extension</code>, <code class="ic">file</code>, or <code class="ic">email</code>. See <a href="#source-types" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Source types</a>.).html_safe },
+        { name: "audio_url", type: "string | null",
+          description: %(Direct URL to the generated MP3 on public object storage. <code class="ic">null</code> until <code class="ic">status</code> becomes <code class="ic">complete</code>. URL is stable and safe to hand to a podcast player or cache; it does not require the bearer token.).html_safe },
+        { name: "status", type: "enum",
+          description: %(Lifecycle state; see <a href="#status" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Status lifecycle</a>.).html_safe },
+        { name: "duration_seconds", type: "integer | null",
+          description: %(Populated after <code class="ic">complete</code>; <code class="ic">null</code> before.).html_safe },
+        { name: "error_message", type: "string | null",
+          description: %(Populated only when <code class="ic">status</code> is <code class="ic">failed</code>; <code class="ic">null</code> otherwise.).html_safe },
+        { name: "created_at", type: "timestamp",
+          description: %(ISO 8601, UTC, trailing <code class="ic">Z</code>.).html_safe }
+      ] %>
+
+      <%= render "docs/param_table", rows: response_fields %>
+
+      <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        <code class="ic">title</code>, <code class="ic">author</code>, and <code class="ic">description</code> share extraction behavior: for <code class="ic">url</code> sources they're pulled from the article's page metadata; for <code class="ic">text</code> sources they're provided by the client at creation (or placeholder values if omitted); for <code class="ic">extension</code> sources they're provided by the browser extension. All three are present on a <code class="ic">complete</code> episode.
+      </p>
+
+      <h3 id="source-types" class="scroll-mt-8 mt-10 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Source types</h3>
+      <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        The <code class="ic">source_type</code> enum has five values. The API <code class="ic">text</code> input maps to the stored value <code class="ic">paste</code>. <code class="ic">file</code> and <code class="ic">email</code> are <strong class="font-semibold text-mist-950 dark:text-white">read-only</strong> — they appear only in responses for episodes ingested through the web uploader and email-in surfaces.
+      </p>
+
+      <% source_type_rows = [
+        { name: "url", type: "POST-able",
+          description: %(Server fetches and extracts the article. <code class="ic">source_url</code> is the submitted URL, normalized.).html_safe },
+        { name: "paste", type: "POST-able",
+          description: %(Direct text submission via the API <code class="ic">text</code> input. <code class="ic">source_url</code> is <code class="ic">null</code>.).html_safe },
+        { name: "extension", type: "POST-able",
+          description: %(Reserved for the first-party PodRead browser extension. <code class="ic">source_url</code> is the captured page URL, normalized.).html_safe },
+        { name: "file", type: "read-only",
+          description: %(Created by the web uploader. <code class="ic">source_url</code> is <code class="ic">null</code>. Submitting <code class="ic">source_type=file</code> on <code class="ic">POST</code> returns <code class="ic">422</code>.).html_safe },
+        { name: "email", type: "read-only",
+          description: %(Created by the email-in ingestion path. <code class="ic">source_url</code> is <code class="ic">null</code>. Submitting <code class="ic">source_type=email</code> on <code class="ic">POST</code> returns <code class="ic">422</code>.).html_safe }
+      ] %>
+      <%= render "docs/param_table", rows: source_type_rows, name_label: "Value", type_label: "Access" %>
+
+      <h3 id="status" class="scroll-mt-8 mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Status lifecycle</h3>
+      <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
+        <li><code class="ic">pending</code> — row created, job not yet picked up.</li>
+        <li><code class="ic">preparing</code> — source fetched / extracted; setting up synthesis.</li>
+        <li><code class="ic">processing</code> — audio synthesis running.</li>
+        <li><code class="ic">complete</code> — audio generated, episode visible in the feed.</li>
+        <li><code class="ic">failed</code> — processing hit an unrecoverable error; <code class="ic">error_message</code> explains.</li>
+      </ul>
+    </section>
+
+    <!-- List -->
+    <section id="list" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">List episodes</h2>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl "https://podread.app/api/v1/episodes?page=1&limit=25" \\
+            -H "Authorization: Bearer sk_live_…"
+        BASH
+        ) %></code></pre>
+      </figure>
+      <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
+        <li><code class="ic">page</code> — 1-indexed page number (default <code class="ic">1</code>).</li>
+        <li><code class="ic">limit</code> — page size. Default <code class="ic"><%= AppConfig::Api::DEFAULT_PER_PAGE %></code>, capped at <code class="ic"><%= AppConfig::Api::MAX_PER_PAGE %></code>.</li>
+      </ul>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">200 OK</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+          {
+            "episodes": [
+              {
+                "id": "ep_aB3xK9mQ2pL7",
+                "title": "The article title",
+                "author": "Jane Doe",
+                "description": "…",
+                "status": "complete",
+                "source_type": "url",
+                "source_url": "https://www.worksinprogress.news/p/the-secret-behind-japans-railways",
+                "audio_url": "https://storage.googleapis.com/podread-audio/…/ep_aB3xK9mQ2pL7.mp3",
+                "duration_seconds": 612,
+                "error_message": null,
+                "created_at": "2026-04-19T14:22:09Z"
+              }
+            ],
+            "meta": { "page": 1, "limit": 25, "total": 142 }
+          }
+        JSON
+        ) %></code></pre>
+      </figure>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Each element of <code class="ic">episodes</code> is the same object shape returned by <a href="#show" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">GET /api/v1/episodes/:id</a> (unwrapped — no <code class="ic">episode:</code> key). Results are newest-first. <code class="ic">meta</code> includes <code class="ic">total</code>; compute <code class="ic">has_more</code> as <code class="ic">page * limit &lt; total</code> if needed.
+      </p>
+    </section>
+
+    <!-- Delete -->
+    <section id="delete" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Delete an episode</h2>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl -X DELETE https://podread.app/api/v1/episodes/ep_aB3xK9mQ2pL7 \\
+            -H "Authorization: Bearer sk_live_…"
+        BASH
+        ) %></code></pre>
+      </figure>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">200 OK</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+          { "deleted": true }
+        JSON
+        ) %></code></pre>
+      </figure>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Deletion removes the episode from your feed and queues cleanup of its audio file. <code class="ic">DELETE</code> returns <code class="ic">200 OK</code> with a confirmation body rather than <code class="ic">204 No Content</code> so clients can assert on the <code class="ic">deleted: true</code> flag.
+      </p>
+    </section>
+
+    <!-- Errors -->
+    <section id="errors" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Error responses</h2>
+      <div class="mt-4 overflow-hidden rounded-lg ring-1 ring-mist-200 dark:ring-white/10">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-mist-50 dark:bg-mist-900/50">
+              <th class="py-2.5 pl-4 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Status</th>
+              <th class="py-2.5 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">When</th>
+              <th class="py-2.5 pr-4 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Body</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-mist-200 dark:divide-mist-800 text-mist-700 dark:text-mist-300">
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">401</td>
+              <td class="py-3 pr-6">Missing or invalid bearer token</td>
+              <td class="py-3 pr-4 font-mono text-xs"><code>{"error":"Unauthorized"}</code></td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">402</td>
+              <td class="py-3 pr-6">Out of episode credits on <code class="ic">POST</code>. <code class="ic">upgrade_url</code> points at the web billing page (for humans); agents should treat this as a terminal error or switch to <%= link_to "MPP", docs_mpp_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %>.</td>
+              <td class="py-3 pr-4 font-mono text-xs"><code>{"error":"Payment required","credits_remaining":0,"subscription_active":false,"upgrade_url":"https://podread.app/billing"}</code></td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">404</td>
+              <td class="py-3 pr-6"><code class="ic">show</code>/<code class="ic">destroy</code> on a nonexistent id <em>or</em> one owned by a different user — PodRead does not leak existence across users.</td>
+              <td class="py-3 pr-4 font-mono text-xs"><code>{"error":"Episode not found"}</code></td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">422</td>
+              <td class="py-3 pr-6">Missing or invalid <code class="ic">source_type</code>, or source processing failed (URL unreachable, text too long, etc.)</td>
+              <td class="py-3 pr-4 font-mono text-xs"><code>{"error":"source_type is required. Use 'url', 'text', or 'extension'."}</code></td>
+            </tr>
+            <tr>
+              <td class="py-3 pl-4 pr-6 font-mono">429</td>
+              <td class="py-3 pr-6">Over <%= ChecksEpisodeRateLimit::HOURLY_LIMIT %> episode creations in the last rolling hour. Back off and retry after a minute.</td>
+              <td class="py-3 pr-4 font-mono text-xs"><code>{"error":"You've reached your hourly episode limit"}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="pt-16 flex items-center justify-between">
+      <%= link_to docs_authentication_path, class: "inline-flex items-center gap-2 text-sm font-medium text-mist-500 hover:text-mist-950 dark:text-mist-400 dark:hover:text-white" do %>
+        ← Authentication
+      <% end %>
+      <%= link_to docs_mpp_path, class: "inline-flex items-center gap-2 text-sm font-medium text-mist-950 hover:text-mist-700 dark:text-white dark:hover:text-mist-300" do %>
+        Next: Machine Payments →
+      <% end %>
+    </div>
+    </div>
+
+    <!-- Right-rail TOC -->
+    <nav aria-label="On this page" class="hidden xl:block">
+      <div class="sticky top-24 py-8">
+        <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
+        <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+          <% [
+            ["#summary", "Endpoints"],
+            ["#create", "Create an episode"],
+            ["#show", "Fetch an episode"],
+            ["#source-types", "Source types"],
+            ["#status", "Status lifecycle"],
+            ["#list", "List episodes"],
+            ["#delete", "Delete an episode"],
+            ["#errors", "Error responses"]
+          ].each do |href, label| %>
+            <li>
+              <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
+                <%= label %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>

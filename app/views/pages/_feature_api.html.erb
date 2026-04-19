@@ -13,7 +13,7 @@
       <span class="text-mist-400">$</span>
       <span class="text-mist-950 dark:text-white"> curl </span>
       <span class="text-mist-400">-X POST</span>
-      <span class="text-green-700 dark:text-green-400"> https://api.podread.app/v1/episodes</span>
+      <span class="text-green-700 dark:text-green-400"> https://podread.app/api/v1/episodes</span>
       <span class="text-mist-400"> \</span>
     </p>
     <p class="pl-4">
@@ -23,7 +23,7 @@
     </p>
     <p class="pl-4">
       <span class="text-mist-400">-d</span>
-      <span class="text-green-700 dark:text-green-400"> '{"url": "https://example.com/article"}'</span>
+      <span class="text-green-700 dark:text-green-400"> '{"url": "https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}'</span>
     </p>
   </div>
 
@@ -31,13 +31,11 @@
 
   <%# JSON response %>
   <div class="px-4 pt-3 pb-4">
-    <p><span class="text-mist-950 dark:text-white">{</span></p>
-    <p class="pl-4">
-      <span class="text-mist-500 dark:text-mist-400">"status"</span><span class="text-mist-950 dark:text-white">: </span><span class="text-green-700 dark:text-green-400">"processing"</span><span class="text-mist-950 dark:text-white">,</span>
+    <p>
+      <span class="text-mist-500 dark:text-mist-400">HTTP/1.1 </span><span class="text-mist-950 dark:text-white">201 Created</span>
     </p>
-    <p class="pl-4">
-      <span class="text-mist-500 dark:text-mist-400">"episode_id"</span><span class="text-mist-950 dark:text-white">: </span><span class="text-green-700 dark:text-green-400">"ep_abc123"</span>
+    <p class="mt-1">
+      <span class="text-mist-950 dark:text-white">{ </span><span class="text-mist-500 dark:text-mist-400">"id"</span><span class="text-mist-950 dark:text-white">: </span><span class="text-green-700 dark:text-green-400">"ep_aB3xK9…"</span><span class="text-mist-950 dark:text-white"> }</span>
     </p>
-    <p><span class="text-mist-950 dark:text-white">}</span></p>
   </div>
 </div>

@@ -17,7 +17,7 @@ class ProcessesFileEpisodeTest < ActiveSupport::TestCase
   end
 
   test "strips markdown and submits for processing" do
-    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { nil }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any, voice_override: m.any) }.with { nil }
 
     ProcessesFileEpisode.call(episode: @episode)
 
@@ -28,7 +28,7 @@ class ProcessesFileEpisodeTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed on error" do
-    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { raise StandardError, "Upload failed" }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any, voice_override: m.any) }.with { raise StandardError, "Upload failed" }
 
     ProcessesFileEpisode.call(episode: @episode)
 

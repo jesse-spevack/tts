@@ -55,7 +55,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     token = GeneratesApiToken.call(user: user)
 
     assert token.persisted?
-    assert token.plain_token.start_with?("pk_live_")
+    assert token.plain_token.start_with?("sk_live_")
   end
 
   test "GeneratesApiToken returns plain_token which is not stored in database" do
@@ -87,7 +87,7 @@ class ApiTokenTest < ActiveSupport::TestCase
     assert_equal expected_digest, token.token_digest
   end
 
-  test "GeneratesApiToken revokes existing active tokens for user" do
+  test "GeneratesApiToken does not revoke other existing tokens for user" do
     user = users(:one)
     existing_active_token = api_tokens(:active_token)
 
@@ -96,7 +96,8 @@ class ApiTokenTest < ActiveSupport::TestCase
     GeneratesApiToken.call(user: user)
 
     existing_active_token.reload
-    assert existing_active_token.revoked?
+    assert existing_active_token.active?,
+      "creating a new token must not touch pre-existing active tokens"
   end
 
   test "GeneratesApiToken does not affect already revoked tokens" do
@@ -107,7 +108,6 @@ class ApiTokenTest < ActiveSupport::TestCase
     GeneratesApiToken.call(user: user)
 
     revoked_token.reload
-    # The revoked_at time should not have changed
     assert_equal original_revoked_at.to_i, revoked_token.revoked_at.to_i
   end
 
@@ -166,19 +166,88 @@ class ApiTokenTest < ActiveSupport::TestCase
     refute_includes active_tokens, api_tokens(:revoked_token)
   end
 
-  # One Active Token Per User Tests
-  test "user can only have one active token at a time" do
+  # Multiple Active Tokens Per User
+  test "user can have multiple active tokens" do
     user = users(:two)
     user.api_tokens.destroy_all
 
     first_token = GeneratesApiToken.call(user: user)
-    assert first_token.active?
-
     second_token = GeneratesApiToken.call(user: user)
 
     first_token.reload
-    assert first_token.revoked?
+    assert first_token.active?
     assert second_token.active?
-    assert_equal 1, user.api_tokens.active.count
+    assert_equal 2, user.api_tokens.active.count
+  end
+
+  # Source Enum Tests
+  test "source enum accepts user and extension values" do
+    user_token = api_tokens(:user_created_token)
+    extension_token = api_tokens(:active_token)
+
+    assert user_token.source_user?
+    refute user_token.source_extension?
+    assert extension_token.source_extension?
+    refute extension_token.source_user?
+  end
+
+  test "new ApiToken defaults source to user" do
+    token = ApiToken.new(user: users(:one), token_digest: "new_digest_for_default_test")
+    assert_equal "user", token.source
+  end
+
+  test "source_user scope returns only source=user tokens" do
+    user_created = ApiToken.source_user
+    assert_includes user_created, api_tokens(:user_created_token)
+    refute_includes user_created, api_tokens(:active_token)
+    refute_includes user_created, api_tokens(:revoked_token)
+    refute_includes user_created, api_tokens(:recently_used_token)
+  end
+
+  test "source_extension scope returns only source=extension tokens" do
+    extension_tokens = ApiToken.source_extension
+    assert_includes extension_tokens, api_tokens(:active_token)
+    assert_includes extension_tokens, api_tokens(:recently_used_token)
+    refute_includes extension_tokens, api_tokens(:user_created_token)
+  end
+
+  # Token Prefix Tests
+  test "token_prefix is required" do
+    token = ApiToken.new(user: users(:one), token_digest: "x", source: "user")
+    refute token.valid?, "should require a token_prefix"
+    assert_includes token.errors[:token_prefix], "can't be blank"
+  end
+
+  test "token_prefix stores the prefix for display" do
+    token = api_tokens(:user_created_token)
+    assert_equal "sk_live_u123", token.token_prefix
+  end
+
+  # Plain token leak prevention
+  test "#inspect does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.inspect, plain,
+      "plain_token must not appear in #inspect output (leaks via logger.debug, pp, exception messages)"
+  end
+
+  test "#to_json does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.to_json, plain,
+      "plain_token must not appear in #to_json (leaks via API responses, cache writes)"
+  end
+
+  test "#attributes does not leak plain_token" do
+    token = GeneratesApiToken.call(user: users(:free_user))
+    plain = token.plain_token
+
+    assert plain.present?
+    refute_includes token.attributes.values.map(&:to_s).join, plain,
+      "plain_token is a virtual attr and must not appear in the attributes hash"
   end
 end

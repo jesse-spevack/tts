@@ -2,8 +2,29 @@
 
 class Voice
   Entry = Struct.new(:key, :name, :accent, :gender, :google_voice, :sample_url, keyword_init: true) do
-    def chirphd?
-      AppConfig::Tiers::CHIRPHD_VOICES.include?(key)
+    # :premium or :standard — drives MPP pricing and user-facing tier badges.
+    # Premium maps to Chirp3-HD synthesis; Standard maps to Google Standard voices.
+    def tier
+      AppConfig::Tiers::CHIRPHD_VOICES.include?(key) ? :premium : :standard
+    end
+
+    def premium?
+      tier == :premium
+    end
+
+    def standard?
+      tier == :standard
+    end
+
+    # Backwards-compat alias. Prefer #premium?.
+    alias_method :chirphd?, :premium?
+
+    # MPP price for one narration with this voice, in cents.
+    def price_cents
+      case tier
+      when :premium then AppConfig::Mpp::PRICE_PREMIUM_CENTS
+      when :standard then AppConfig::Mpp::PRICE_STANDARD_CENTS
+      end
     end
   end
 
@@ -23,6 +44,12 @@ class Voice
   }.freeze
 
   ALL = CATALOG.keys.freeze
+
+  # Catalog default used by ResolvesVoice when no voice is requested AND
+  # no user preference applies. Flipped from 'callum' (Premium) to 'felix'
+  # (Standard) per agent-team-0g5 research — casual callers who omit
+  # voice should land on the cheaper tier by default.
+  DEFAULT_KEY = "felix"
 
   DEFAULT_STANDARD = "en-GB-Standard-D"
   DEFAULT_CHIRP = "en-GB-Chirp3-HD-Enceladus"

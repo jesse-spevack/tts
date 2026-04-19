@@ -5,7 +5,7 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
 
   test "show requires authentication" do
     get billing_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/billing")
   end
 
   test "show redirects free user to upgrade" do

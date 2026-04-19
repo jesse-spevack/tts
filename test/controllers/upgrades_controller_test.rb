@@ -5,7 +5,7 @@ class UpgradesControllerTest < ActionDispatch::IntegrationTest
 
   test "show requires authentication" do
     get upgrade_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/upgrade")
   end
 
   test "show renders for free user" do

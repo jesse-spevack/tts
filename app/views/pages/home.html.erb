@@ -9,6 +9,7 @@
   links: [
     { label: "How it works", href: "#features" },
     { label: "Pricing", href: "#pricing" },
+    { label: "Docs", href: docs_authentication_path },
     { label: "About", href: about_path },
   ],
   actions: safe_join([
@@ -83,11 +84,22 @@
 
   <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
     headline: "API",
-    subheadline: "Build text-to-speech into your own workflows. Send content programmatically and get episodes delivered to any feed.",
-    badge: "Coming soon"
+    subheadline: "Build text-to-speech into your own workflows. Create a personal API token at /settings/api_tokens, send content programmatically, and get episodes in your feed."
   } do %>
     <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "brown", placement: "bottom-left" } do %>
       <%= render "pages/feature_api" %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/marketing/features_three_col_demos_card", locals: {
+    headline: "Machine Payments",
+    subheadline: safe_join([
+      "Pay per narration with stablecoin via the Machine Payments Protocol — the open protocol for machine-to-machine payments. ",
+      link_to("Read the docs", docs_mpp_path, class: "font-medium text-mist-950 underline hover:text-mist-700 dark:text-white dark:hover:text-mist-300")
+    ])
+  } do %>
+    <%= render layout: "shared/marketing/screenshot", locals: { wallpaper: "purple", placement: "top-right" } do %>
+      <%= render "pages/feature_mpp" %>
     <% end %>
   <% end %>
 <% end %>

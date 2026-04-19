@@ -3,12 +3,13 @@
 class ProcessesFileEpisode
   include EpisodeErrorHandling
 
-  def self.call(episode:)
-    new(episode: episode).call
+  def self.call(episode:, voice_override: nil)
+    new(episode: episode, voice_override: voice_override).call
   end
 
-  def initialize(episode:)
+  def initialize(episode:, voice_override: nil)
     @episode = episode
+    @voice_override = voice_override
   end
 
   def call
@@ -32,6 +33,6 @@ class ProcessesFileEpisode
   end
 
   def submit_for_processing(content)
-    SubmitsEpisodeForProcessing.call(episode: episode, content: content)
+    SubmitsEpisodeForProcessing.call(episode: episode, content: content, voice_override: @voice_override)
   end
 end

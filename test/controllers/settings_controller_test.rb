@@ -79,7 +79,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     sign_out
     get settings_path
 
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/settings")
   end
 
   test "show displays email episodes section when disabled" do

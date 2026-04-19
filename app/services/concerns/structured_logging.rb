@@ -19,7 +19,7 @@ module StructuredLogging
   end
 
   def default_log_context
-    { action_id: Current.action_id }.compact
+    { action_id: Current.action_id, api_token_prefix: Current.api_token_prefix }.compact
   end
 
   def build_log_message(event, attrs)

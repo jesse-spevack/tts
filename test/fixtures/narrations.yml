@@ -1,0 +1,59 @@
+one:
+  title: Test Narration
+  author: Test Author
+  description: A test narration for fixture purposes
+  source_type: 0
+  source_url: https://example.com/article
+  status: pending
+  voice: en-GB-Standard-D
+  expires_at: <%= 24.hours.from_now.iso8601 %>
+  mpp_payment: one
+
+completed:
+  title: Completed Narration
+  author: Completed Author
+  description: A completed narration
+  source_type: 1
+  source_text: This is a completed text narration with enough content to be valid for testing purposes.
+  status: complete
+  voice: en-GB-Standard-D
+  duration_seconds: 120
+  audio_size_bytes: 1024000
+  gcs_episode_id: 20240101-120000-completed-narration
+  expires_at: <%= 24.hours.from_now.iso8601 %>
+  mpp_payment: completed
+
+processing:
+  title: Processing Narration
+  author: Processing Author
+  description: A narration currently being processed
+  source_type: 0
+  source_url: https://example.com/processing-article
+  status: processing
+  voice: en-GB-Standard-D
+  expires_at: <%= 24.hours.from_now.iso8601 %>
+  mpp_payment: completed_for_narration
+
+with_refunded_payment:
+  title: Refunded Narration
+  author: Refunded Author
+  description: A narration whose payment was already refunded
+  source_type: 0
+  source_url: https://example.com/refunded-article
+  status: failed
+  voice: en-GB-Standard-D
+  expires_at: <%= 24.hours.from_now.iso8601 %>
+  mpp_payment: refunded
+
+expired:
+  title: Expired Narration
+  author: Expired Author
+  description: A narration past its TTL
+  source_type: 1
+  source_text: This narration has expired and should not be accessible.
+  status: complete
+  voice: en-GB-Standard-D
+  duration_seconds: 60
+  gcs_episode_id: 20240101-120000-expired-narration
+  expires_at: <%= 1.hour.ago.iso8601 %>
+  mpp_payment: expired_narration_payment

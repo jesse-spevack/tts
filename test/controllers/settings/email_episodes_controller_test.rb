@@ -36,7 +36,7 @@ module Settings
 
       post settings_email_episodes_path
 
-      assert_redirected_to root_path
+      assert_redirected_to login_path(return_to: "/settings/email_episodes")
     end
 
     test "destroy requires authentication" do
@@ -44,7 +44,7 @@ module Settings
 
       delete settings_email_episodes_path
 
-      assert_redirected_to root_path
+      assert_redirected_to login_path(return_to: "/settings/email_episodes")
     end
   end
 end

@@ -79,6 +79,46 @@ module Api
         assert_equal 100, response.parsed_body["meta"]["limit"]
       end
 
+      test "index clamps page below 1 to 1" do
+        get api_v1_episodes_path,
+          params: { page: 0 },
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :success
+        assert_equal 1, response.parsed_body["meta"]["page"]
+      end
+
+      test "index clamps negative page to 1" do
+        get api_v1_episodes_path,
+          params: { page: -5 },
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :success
+        assert_equal 1, response.parsed_body["meta"]["page"]
+      end
+
+      test "index clamps limit below 1 to 1" do
+        get api_v1_episodes_path,
+          params: { limit: 0 },
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :success
+        assert_equal 1, response.parsed_body["meta"]["limit"]
+      end
+
+      test "index clamps negative limit to 1" do
+        get api_v1_episodes_path,
+          params: { limit: -10 },
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :success
+        assert_equal 1, response.parsed_body["meta"]["limit"]
+      end
+
       test "index does not return other users episodes" do
         other_user = users(:two)
         other_token = GeneratesApiToken.call(user: other_user)
@@ -242,8 +282,13 @@ module Api
         assert_response :unprocessable_entity
       end
 
-      test "create returns 403 when user exceeds free tier limit" do
-        # Use a free user and max out their episode count
+      # === CREATE — 402 "upgrade" shape (agent-team-909) ===
+      #
+      # /api/v1/episodes is Path 1: authenticated + credits only. When a user
+      # is out of credits we return a 402 that points them at the billing
+      # upgrade URL — NOT an MPP challenge. MPP creation lives on /mpp/*.
+
+      test "create returns 402 upgrade shape when authenticated user is out of credits" do
         free_user = users(:free_user)
         token = GeneratesApiToken.call(user: free_user)
 
@@ -258,8 +303,111 @@ module Api
           headers: auth_header(token.plain_token),
           as: :json
 
-        assert_response :forbidden
-        assert_equal "Episode limit reached. Please upgrade your plan.", response.parsed_body["error"]
+        assert_response :payment_required
+        json = response.parsed_body
+        assert_equal "Payment required", json["error"]
+        assert_equal 0, json["credits_remaining"]
+        assert_equal false, json["subscription_active"]
+        assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
+      end
+
+      test "create 402 upgrade response does not include WWW-Authenticate header" do
+        free_user = users(:free_user)
+        token = GeneratesApiToken.call(user: free_user)
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: AppConfig::Tiers::FREE_MONTHLY_EPISODES
+        )
+
+        post api_v1_episodes_path,
+          params: @valid_params,
+          headers: auth_header(token.plain_token),
+          as: :json
+
+        assert_response :payment_required
+        assert_nil response.headers["WWW-Authenticate"],
+          "Path 1 upgrade 402 must not include WWW-Authenticate — MPP lives on /mpp/*"
+      end
+
+      test "create 402 upgrade response does not include MPP challenge key" do
+        free_user = users(:free_user)
+        token = GeneratesApiToken.call(user: free_user)
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: AppConfig::Tiers::FREE_MONTHLY_EPISODES
+        )
+
+        post api_v1_episodes_path,
+          params: @valid_params,
+          headers: auth_header(token.plain_token),
+          as: :json
+
+        assert_response :payment_required
+        json = response.parsed_body
+        assert_nil json["challenge"],
+          "Path 1 upgrade 402 must not include an MPP challenge — redirect clients to /mpp/* for that"
+      end
+
+      test "create returns 402 upgrade even when a Payment header is attached (MPP not accepted on /episodes)" do
+        free_user = users(:free_user)
+        token = GeneratesApiToken.call(user: free_user)
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: AppConfig::Tiers::FREE_MONTHLY_EPISODES
+        )
+
+        headers = {
+          "Authorization" => "Bearer #{token.plain_token}, Payment anything_goes_here"
+        }
+
+        post api_v1_episodes_path, params: @valid_params, headers: headers, as: :json
+
+        assert_response :payment_required
+        json = response.parsed_body
+        assert_equal "Payment required", json["error"]
+        assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
+        assert_nil json["challenge"]
+      end
+
+      test "create returns 402 upgrade when Payment header is malformed (header is ignored)" do
+        free_user = users(:free_user)
+        token = GeneratesApiToken.call(user: free_user)
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: AppConfig::Tiers::FREE_MONTHLY_EPISODES
+        )
+
+        headers = {
+          "Authorization" => "Bearer #{token.plain_token}, Payment !!not-base64!!"
+        }
+
+        post api_v1_episodes_path, params: @valid_params, headers: headers, as: :json
+
+        assert_response :payment_required
+        json = response.parsed_body
+        assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
+      end
+
+      test "create returns 201 for subscriber with bearer token (no credit check needed)" do
+        subscriber = users(:subscriber)
+        token = GeneratesApiToken.call(user: subscriber)
+
+        assert_difference "Episode.count", 1 do
+          post api_v1_episodes_path,
+            params: @valid_params,
+            headers: auth_header(token.plain_token),
+            as: :json
+        end
+
+        assert_response :created
       end
 
       test "create records episode usage for free user" do
@@ -407,7 +555,31 @@ module Api
           as: :json
 
         assert_response :unprocessable_entity
-        assert_includes response.parsed_body["error"], "source_type is required"
+        assert_includes response.parsed_body["error"], "source_type must be"
+      end
+
+      test "create with source_type file returns 422 read-only error" do
+        params = { source_type: "file", title: "Test" }
+
+        post api_v1_episodes_path,
+          params: params,
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :unprocessable_entity
+        assert_includes response.parsed_body["error"], "'file' is read-only"
+      end
+
+      test "create with source_type email returns 422 read-only error" do
+        params = { source_type: "email", title: "Test" }
+
+        post api_v1_episodes_path,
+          params: params,
+          headers: auth_header(@plain_token),
+          as: :json
+
+        assert_response :unprocessable_entity
+        assert_includes response.parsed_body["error"], "'email' is read-only"
       end
 
       # === DESTROY ===

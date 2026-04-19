@@ -3,14 +3,15 @@
 class CreatesUrlEpisode
   include StructuredLogging
 
-  def self.call(podcast:, user:, url:)
-    new(podcast: podcast, user: user, url: url).call
+  def self.call(podcast:, user:, url:, voice_override: nil)
+    new(podcast: podcast, user: user, url: url, voice_override: voice_override).call
   end
 
-  def initialize(podcast:, user:, url:)
+  def initialize(podcast:, user:, url:, voice_override: nil)
     @podcast = podcast
     @user = user
     @url = url
+    @voice_override = voice_override
   end
 
   def call
@@ -26,7 +27,12 @@ class CreatesUrlEpisode
     episode = create_episode
     return Result.failure(episode.errors.full_messages.first) unless episode.persisted?
 
-    ProcessesUrlEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(episode_id: episode.id, user_id: episode.user_id, action_id: Current.action_id)
+    ProcessesUrlEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(
+      episode_id: episode.id,
+      user_id: episode.user_id,
+      action_id: Current.action_id,
+      voice_override: @voice_override
+    )
 
     log_info "url_episode_created", episode_id: episode.id, url: @normalized_url
 

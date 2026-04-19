@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -52,10 +52,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.datetime "created_at", null: false
     t.datetime "last_used_at"
     t.datetime "revoked_at"
+    t.string "source", default: "user", null: false
     t.string "token_digest", null: false
+    t.string "token_prefix", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+    t.index ["user_id", "source", "revoked_at"], name: "index_api_tokens_on_user_id_and_source_and_revoked_at"
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
@@ -116,6 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.integer "duration_seconds"
     t.text "error_message"
     t.string "gcs_episode_id"
+    t.integer "mpp_payment_id"
     t.integer "podcast_id", null: false
     t.datetime "processing_completed_at"
     t.datetime "processing_started_at"
@@ -129,6 +133,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.integer "user_id"
     t.index ["deleted_at"], name: "index_episodes_on_deleted_at"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
+    t.index ["mpp_payment_id"], name: "index_episodes_on_mpp_payment_id"
     t.index ["podcast_id"], name: "index_episodes_on_podcast_id"
     t.index ["source_type"], name: "index_episodes_on_source_type"
     t.index ["status"], name: "index_episodes_on_status"
@@ -145,6 +150,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
     t.string "provider", null: false
     t.datetime "updated_at", null: false
     t.index ["episode_id"], name: "index_llm_usages_on_episode_id"
+  end
+
+  create_table "mpp_payments", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.string "challenge_id"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "usd", null: false
+    t.string "deposit_address"
+    t.integer "narration_id"
+    t.boolean "needs_review", default: false, null: false
+    t.text "refund_error"
+    t.string "status", default: "pending", null: false
+    t.string "stripe_payment_intent_id"
+    t.string "tx_hash"
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["stripe_payment_intent_id"], name: "index_mpp_payments_on_stripe_payment_intent_id"
+    t.index ["tx_hash"], name: "index_mpp_payments_on_tx_hash", unique: true
+    t.index ["user_id"], name: "index_mpp_payments_on_user_id"
+  end
+
+  create_table "narrations", force: :cascade do |t|
+    t.integer "audio_size_bytes"
+    t.string "author"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "duration_seconds"
+    t.text "error_message"
+    t.datetime "expires_at", null: false
+    t.string "gcs_episode_id"
+    t.integer "mpp_payment_id", null: false
+    t.datetime "processing_completed_at"
+    t.datetime "processing_started_at"
+    t.text "source_text"
+    t.integer "source_type", null: false
+    t.string "source_url"
+    t.string "status", default: "pending", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.string "voice"
+    t.index ["expires_at"], name: "index_narrations_on_expires_at"
+    t.index ["mpp_payment_id"], name: "index_narrations_on_mpp_payment_id", unique: true
+    t.index ["status"], name: "index_narrations_on_status"
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|
@@ -291,9 +339,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_29_155741) do
   add_foreign_key "credit_transactions", "users"
   add_foreign_key "device_codes", "users"
   add_foreign_key "episode_usages", "users"
+  add_foreign_key "episodes", "mpp_payments"
   add_foreign_key "episodes", "podcasts"
   add_foreign_key "episodes", "users"
   add_foreign_key "llm_usages", "episodes"
+  add_foreign_key "narrations", "mpp_payments"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"

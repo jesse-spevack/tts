@@ -7,3 +7,4 @@ pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin "@rails/actioncable", to: "actioncable.esm.js"
 pin_all_from "app/javascript/controllers", under: "controllers"
 pin "tailwindplus-elements", to: "tailwindplus-elements.js", preload: true
+pin "turndown" # @7.2.4

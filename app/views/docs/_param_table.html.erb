@@ -1,0 +1,47 @@
+<%#
+  Param / Type / Description reference table used across /docs/*.
+  Renders a 3-column table at md+ and stacks to cards below md.
+
+  Params:
+    rows: Array<Hash> — each row needs :name, :type, :description
+          (:description may be html_safe)
+    name_label: String — column header for the first column (default "Param")
+    type_label: String — column header for the middle column (default "Type")
+%>
+<% name_label ||= "Param" %>
+<% type_label ||= "Type" %>
+
+<div class="mt-4 hidden md:block">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-mist-300 dark:border-mist-700">
+        <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white"><%= name_label %></th>
+        <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white"><%= type_label %></th>
+        <th class="py-3 text-left font-medium text-mist-950 dark:text-white">Description</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+      <% rows.each do |row| %>
+        <tr>
+          <td class="py-3 pr-6 align-top whitespace-nowrap">
+            <span class="font-mono font-medium text-mist-950 dark:text-white"><%= row[:name] %></span>
+          </td>
+          <td class="py-3 pr-6 align-top whitespace-nowrap font-mono text-xs text-mist-500 dark:text-mist-400"><%= row[:type] %></td>
+          <td class="py-3 align-top text-mist-700 dark:text-mist-300"><%= row[:description] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<ul role="list" class="mt-4 space-y-4 md:hidden">
+  <% rows.each do |row| %>
+    <li class="flex flex-col gap-y-2 border-b border-mist-200 pb-4 last:border-b-0 last:pb-0 dark:border-mist-800">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span class="font-mono font-medium text-mist-950 dark:text-white"><%= row[:name] %></span>
+        <span class="font-mono text-xs text-mist-500 dark:text-mist-400"><%= row[:type] %></span>
+      </div>
+      <p class="text-mist-700 dark:text-mist-300"><%= row[:description] %></p>
+    </li>
+  <% end %>
+</ul>

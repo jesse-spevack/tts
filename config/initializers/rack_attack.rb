@@ -14,6 +14,42 @@ class Rack::Attack
     end
   end
 
+  # Rate limit: 60 narration polls per minute per IP
+  # Prevents enumeration of public_ids
+  throttle("api/v1/mpp/narrations/show", limit: 60, period: 1.minute) do |req|
+    if req.path.start_with?("/api/v1/mpp/narrations/") && req.get?
+      req.ip
+    end
+  end
+
+  # Rate limit: 10 anonymous MPP narration creations per minute per IP.
+  #
+  # POST /api/v1/mpp/narrations is the anonymous-pay-to-create endpoint.
+  # Every request without a Payment credential triggers the 402 challenge
+  # flow, which has a real cost per call:
+  #   1. Stripe PaymentIntent creation (Stripe API call + account resource)
+  #   2. HMAC challenge sign + cache write
+  #   3. Pending MppPayment row inserted (cleaned up hourly by
+  #      CleanupStaleMppPaymentsJob but accumulates inside that window)
+  #
+  # Why 10/minute per IP:
+  # - A legitimate client paying with mppx typically makes 2 requests per
+  #   narration (initial 402, retry with credential). 10/min gives 5× that
+  #   headroom for retry-on-failure loops.
+  # - An attacker flooding the endpoint would otherwise cost us Stripe API
+  #   quota and DB bloat at zero cost to themselves (no wallet needed for
+  #   the 402 path).
+  # - 1-minute window is short enough to limit sustained abuse but long
+  #   enough to accommodate bursty testing from a single integrator.
+  #
+  # There is no authenticated path on this route: all callers are
+  # anonymous by design, so we throttle every POST.
+  throttle("api/v1/mpp/narrations/create", limit: 10, period: 1.minute) do |req|
+    if req.path == "/api/v1/mpp/narrations" && req.post?
+      req.ip
+    end
+  end
+
   # Rate limit: 5 device code creations per minute per IP
   throttle("api/v1/auth/device_codes/create", limit: 5, period: 1.minute) do |req|
     if req.path == "/api/v1/auth/device_codes" && req.post?

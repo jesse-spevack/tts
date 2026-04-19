@@ -17,6 +17,7 @@
             <% else %>
               <%= link_to "Billing", billing_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <% end %>
+            <%= link_to "Docs", docs_authentication_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <%= link_to "Help", how_it_sounds_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
             <% if Current.user_admin? %>
               <%= link_to "Analytics", admin_analytics_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
@@ -106,6 +107,7 @@
               <% else %>
                 <%= link_to "Billing", billing_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <% end %>
+              <%= link_to "Docs", docs_authentication_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <%= link_to "Help", how_it_sounds_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>
               <% if Current.user_admin? %>
                 <%= link_to "Analytics", admin_analytics_path, class: "group inline-flex items-center justify-between gap-2 text-3xl/10 font-medium text-mist-950 dark:text-white" %>

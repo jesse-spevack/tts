@@ -3,7 +3,7 @@
 class CreatesExtensionEpisode
   include StructuredLogging
 
-  def self.call(podcast:, user:, title:, content:, url:, author:, description:)
+  def self.call(podcast:, user:, title:, content:, url:, author:, description:, voice_override: nil)
     new(
       podcast: podcast,
       user: user,
@@ -11,11 +11,12 @@ class CreatesExtensionEpisode
       content: content,
       url: url,
       author: author,
-      description: description
+      description: description,
+      voice_override: voice_override
     ).call
   end
 
-  def initialize(podcast:, user:, title:, content:, url:, author:, description:)
+  def initialize(podcast:, user:, title:, content:, url:, author:, description:, voice_override: nil)
     @podcast = podcast
     @user = user
     @title = title
@@ -23,6 +24,7 @@ class CreatesExtensionEpisode
     @url = url
     @author = author
     @description = description
+    @voice_override = voice_override
   end
 
   def call
@@ -45,7 +47,8 @@ class CreatesExtensionEpisode
     ProcessesFileEpisodeJob.set(priority: DeterminesJobPriority.call(user: user)).perform_later(
       episode_id: episode.id,
       user_id: episode.user_id,
-      action_id: Current.action_id
+      action_id: Current.action_id,
+      voice_override: @voice_override
     )
 
     log_info "extension_episode_created",

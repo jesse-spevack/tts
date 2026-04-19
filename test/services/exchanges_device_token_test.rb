@@ -8,7 +8,7 @@ class ExchangesDeviceTokenTest < ActiveSupport::TestCase
 
     assert result.success?
     assert result.data[:access_token].present?
-    assert result.data[:access_token].start_with?("pk_live_")
+    assert result.data[:access_token].start_with?("sk_live_")
     assert_equal users(:one).email_address, result.data[:user_email]
   end
 

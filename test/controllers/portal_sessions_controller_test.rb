@@ -27,6 +27,6 @@ class PortalSessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "create requires authentication" do
     post portal_session_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/portal_session")
   end
 end

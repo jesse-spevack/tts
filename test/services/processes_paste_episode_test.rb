@@ -131,11 +131,11 @@ class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
     ))
 
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
-    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any, voice_override: m.any) }.with { true }
 
     ProcessesPasteEpisode.call(episode: @episode)
 
-    verify { |_m| SubmitsEpisodeForProcessing.call(episode: @episode, content: cleaned_content) }
+    verify { |_m| SubmitsEpisodeForProcessing.call(episode: @episode, content: cleaned_content, voice_override: nil) }
     assert true
   end
 

@@ -1,0 +1,587 @@
+require "test_helper"
+
+module Api
+  module V1
+    module Mpp
+      class NarrationsControllerTest < ActionDispatch::IntegrationTest
+        TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+        # === SHOW — valid prefix_id, pending narration ===
+
+        test "show returns 200 with status and metadata for pending narration" do
+          narration = narrations(:one)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+          json = response.parsed_body
+          assert_equal narration.prefix_id, json["id"]
+          assert_equal "pending", json["status"]
+          assert_equal narration.title, json["title"]
+          assert_equal narration.author, json["author"]
+        end
+
+        test "show does not include audio_url for pending narration" do
+          narration = narrations(:one)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+          json = response.parsed_body
+          assert_nil json["audio_url"]
+        end
+
+        test "show does not include audio_url for processing narration" do
+          narration = narrations(:processing)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+          json = response.parsed_body
+          assert_equal "processing", json["status"]
+          assert_nil json["audio_url"]
+        end
+
+        # === SHOW — complete narration with audio ===
+
+        test "show includes audio_url when narration is complete" do
+          narration = narrations(:completed)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+          json = response.parsed_body
+          assert_equal "complete", json["status"]
+          assert json["audio_url"].present?
+          assert_includes json["audio_url"], narration.gcs_episode_id
+        end
+
+        test "show includes duration_seconds when narration is complete" do
+          narration = narrations(:completed)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+          json = response.parsed_body
+          assert_equal narration.duration_seconds, json["duration_seconds"]
+        end
+
+        # === SHOW — expired narration ===
+
+        test "show returns 404 for expired narration" do
+          narration = narrations(:expired)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :not_found
+        end
+
+        # === SHOW — invalid prefix_id ===
+
+        test "show returns 404 for nonexistent prefix_id" do
+          get api_v1_mpp_narration_path("nar_does_not_exist_at_all"), as: :json
+
+          assert_response :not_found
+        end
+
+        # === No authentication required ===
+
+        test "show does not require bearer token" do
+          narration = narrations(:one)
+
+          get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+
+          assert_response :ok
+        end
+
+        # === Rate limiting ===
+
+        test "rate limits narration show requests per IP" do
+          narration = narrations(:one)
+
+          # Use a fresh memory store for rate limiting
+          memory_store = ActiveSupport::Cache::MemoryStore.new
+          original_cache = Rack::Attack.cache.store
+          Rack::Attack.cache.store = memory_store
+          Rack::Attack.reset!
+
+          freeze_time do
+            # Make 60 requests (the limit)
+            60.times do
+              get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+              assert_response :ok
+            end
+
+            # The 61st request should be rate limited
+            get api_v1_mpp_narration_path(narration.prefix_id), as: :json
+            assert_response :too_many_requests
+          end
+        ensure
+          unfreeze_time
+          Rack::Attack.reset!
+          Rack::Attack.cache.store = original_cache
+        end
+
+        # === Old location no longer routes ===
+
+        test "old /api/v1/narrations/:id URL is no longer routed" do
+          narration = narrations(:one)
+
+          get "/api/v1/narrations/#{narration.prefix_id}", as: :json
+
+          assert_response :not_found
+        end
+
+        # =====================================================================
+        # === CREATE — anonymous MPP path (agent-team-8qa / .3b)           ===
+        # =====================================================================
+        #
+        # These tests exercise POST /api/v1/mpp/narrations, the anonymous MPP
+        # flow (no Bearer token). Three code paths:
+        #
+        #   1. No Payment credential  → 402 challenge, WWW-Authenticate set
+        #   2. Valid Payment credential → 201 + Payment-Receipt, Narration created
+        #   3. Invalid voice           → 422
+        #
+        # Tier-aware pricing: the resolved voice drives the challenge price
+        # (Standard = 75c, Premium = 100c) via AppConfig::Mpp::PRICE_*_CENTS.
+
+        class CreateTest < ActionDispatch::IntegrationTest
+          TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+          setup do
+            @valid_params = {
+              title: "Test Article",
+              author: "Test Author",
+              description: "A test article description",
+              content: "This is the full content of the article. " * 50,
+              url: "https://example.com/article",
+              source_type: "url"
+            }
+
+            @currency = AppConfig::Mpp::CURRENCY
+            @tx_hash = "0x#{SecureRandom.hex(32)}"
+            @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
+
+            Stripe.api_key = "sk_test_fake"
+
+            # Every 402 challenge response calls CreatesDepositAddress, which
+            # hits Stripe. Stub the endpoint globally so 402 paths don't need
+            # per-test wiring. Individual tests override via valid_credential.
+            stub_stripe_deposit_address(address: @deposit_address)
+          end
+
+          # -------------------------------------------------------------------
+          # 402 Challenge — no Payment credential
+          # -------------------------------------------------------------------
+
+          test "POST without Payment header returns 402 with WWW-Authenticate" do
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            assert response.headers["WWW-Authenticate"].present?,
+              "Expected WWW-Authenticate header in 402 response"
+            assert_match(/\APayment /, response.headers["WWW-Authenticate"])
+          end
+
+          test "POST without Payment header returns challenge body with id/amount/currency/methods" do
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            json = response.parsed_body
+            assert json["challenge"].present?, "Expected 'challenge' key in 402 body"
+            assert json["challenge"]["id"].present?
+            assert json["challenge"]["amount"].present?
+            assert json["challenge"]["currency"].present?
+            assert json["challenge"]["methods"].present?
+          end
+
+          test "POST without Payment header, voice=felix (Standard) returns 402 with price 75" do
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              as: :json
+
+            assert_response :payment_required
+            json = response.parsed_body
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
+            assert_equal 75, json["challenge"]["amount"]
+          end
+
+          test "POST without Payment header, voice=callum (Premium) returns 402 with price 100" do
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "callum"),
+              as: :json
+
+            assert_response :payment_required
+            json = response.parsed_body
+            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"]
+            assert_equal 100, json["challenge"]["amount"]
+          end
+
+          test "POST without Payment header and no voice param defaults to Voice::DEFAULT_KEY (felix/Standard/75)" do
+            # DEFAULT_KEY is 'felix', which is Standard tier → 75c
+            assert_equal "felix", Voice::DEFAULT_KEY
+            assert_equal :standard, Voice.find(Voice::DEFAULT_KEY).tier
+
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            json = response.parsed_body
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
+            assert_equal 75, json["challenge"]["amount"]
+          end
+
+          # -------------------------------------------------------------------
+          # 422 — invalid voice
+          # -------------------------------------------------------------------
+
+          test "POST with invalid voice (with or without Payment header) returns 422" do
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "nonexistent_voice"),
+              as: :json
+
+            assert_response :unprocessable_entity
+            # No WWW-Authenticate — this isn't a payment issue, it's a bad param
+            assert_nil response.headers["WWW-Authenticate"]
+          end
+
+          # -------------------------------------------------------------------
+          # 201 — valid Payment credential creates Narration
+          # -------------------------------------------------------------------
+
+          test "POST with valid Payment credential (voice=felix) creates Narration and returns 201" do
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            assert_difference "Narration.count", 1 do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params.merge(voice: "felix"),
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            assert_response :created
+            narration = Narration.last
+            # felix → en-GB-Standard-D
+            assert_equal "en-GB-Standard-D", narration.voice
+          end
+
+          test "POST with valid Payment credential and NO voice param creates Standard-voice Narration" do
+            # Regression test for default-voice pricing arbitrage: without an
+            # explicit voice param, the controller resolves to Voice::DEFAULT_KEY
+            # ("felix", Standard tier, 75c) and must synthesize with felix's
+            # Google voice — NOT the Premium DEFAULT_CHIRP fallback inside
+            # Voice.google_voice_for. Paying Standard price for Premium
+            # synthesis would be an undetectable arbitrage.
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            assert_difference "Narration.count", 1 do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params, # no :voice key
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            assert_response :created
+            narration = Narration.last
+            # felix (DEFAULT_KEY, Standard) → en-GB-Standard-D
+            assert_equal "en-GB-Standard-D", narration.voice,
+              "Default-voice narration must synthesize with Standard voice, not Premium Chirp3-HD"
+          end
+
+          test "POST with valid Payment credential sets Payment-Receipt header" do
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              headers: payment_only_header(credential),
+              as: :json
+
+            assert_response :created
+            assert response.headers["Payment-Receipt"].present?,
+              "Expected Payment-Receipt header in 201 response"
+          end
+
+          test "POST with valid Payment credential returns Narration JSON with prefix_id" do
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              headers: payment_only_header(credential),
+              as: :json
+
+            assert_response :created
+            json = response.parsed_body
+            assert json["id"].present?, "Expected narration prefix_id in response body"
+            assert json["id"].start_with?("nar_"), "Narration id should start with nar_"
+          end
+
+          test "POST with valid Payment credential (voice=callum) creates Premium-voice Narration at 100c" do
+            credential = valid_credential(voice_tier: :premium, amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS)
+
+            assert_difference "Narration.count", 1 do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params.merge(voice: "callum"),
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            assert_response :created
+            narration = Narration.last
+            # callum → en-GB-Chirp3-HD-Enceladus
+            assert_equal "en-GB-Chirp3-HD-Enceladus", narration.voice
+            assert response.headers["Payment-Receipt"].present?
+          end
+
+          test "POST with valid credential transitions MppPayment pending → completed (no user link)" do
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            # Pending row already created by valid_credential (via ProvisionsChallenge);
+            # POST transitions it to completed. No new row.
+            assert_no_difference "MppPayment.count" do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params.merge(voice: "felix"),
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            assert_response :created
+            payment = MppPayment.last
+            assert_nil payment.user_id, "Anonymous payment must not be linked to a user"
+            assert_equal "completed", payment.status
+            assert_equal @tx_hash, payment.tx_hash
+          end
+
+          # -------------------------------------------------------------------
+          # 402 re-challenge — credential/price mismatch and malformed inputs
+          # -------------------------------------------------------------------
+
+          test "POST with credential paid for Standard but requesting Premium voice → 402 re-challenge" do
+            # Attacker buys a cheap Standard challenge then tries to claim a
+            # Premium voice. voice_tier is embedded in the HMAC-signed request
+            # blob so either HMAC fails OR the tier stored in the credential
+            # won't match the request voice — either way we re-issue 402.
+            credential = valid_credential(voice_tier: :standard, amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+            stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS)
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "callum"),
+              headers: payment_only_header(credential),
+              as: :json
+
+            assert_response :payment_required,
+              "Standard-priced credential must not satisfy a Premium voice request"
+            assert response.headers["WWW-Authenticate"].present?
+          end
+
+          test "POST with malformed Payment header returns 402 re-challenge" do
+            post api_v1_mpp_narrations_path,
+              params: @valid_params,
+              headers: payment_only_header("this_is_not_valid_base64_or_json"),
+              as: :json
+
+            assert_response :payment_required,
+              "Malformed credential should yield 402 (new challenge), not 400/500"
+            assert response.headers["WWW-Authenticate"].present?
+          end
+
+          test "POST with tampered HMAC in Payment credential returns 402 re-challenge" do
+            tampered = build_credential_with_tampered_hmac
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params,
+              headers: payment_only_header(tampered),
+              as: :json
+
+            assert_response :payment_required,
+              "Invalid credential should yield 402 (new challenge), not 401"
+            assert response.headers["WWW-Authenticate"].present?
+          end
+
+          test "POST with expired Payment credential returns 402 re-challenge" do
+            expired = build_expired_credential
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params,
+              headers: payment_only_header(expired),
+              as: :json
+
+            assert_response :payment_required,
+              "Expired credential should yield 402 (new challenge)"
+          end
+
+          private
+
+          def payment_only_header(credential)
+            { "Authorization" => "Payment #{credential}" }
+          end
+
+          # Simulate the production 402 flow: provision a deposit address, sign
+          # a challenge with it as recipient, persist the MppPayment row.
+          # Returns the challenge hash so credential builders can echo fields.
+          def provision_challenge(voice_tier:, amount_cents:, deposit_address: @deposit_address, expires_offset: nil)
+            ::Mpp::CreatesDepositAddress.call(
+              amount_cents: amount_cents,
+              currency: @currency
+            )
+
+            challenge = if expires_offset
+              travel_to(expires_offset) do
+                ::Mpp::GeneratesChallenge.call(
+                  amount_cents: amount_cents,
+                  currency: @currency,
+                  recipient: deposit_address,
+                  voice_tier: voice_tier
+                ).data
+              end
+            else
+              ::Mpp::GeneratesChallenge.call(
+                amount_cents: amount_cents,
+                currency: @currency,
+                recipient: deposit_address,
+                voice_tier: voice_tier
+              ).data
+            end
+
+            MppPayment.create!(
+              amount_cents: amount_cents,
+              currency: @currency,
+              challenge_id: challenge[:id],
+              deposit_address: deposit_address,
+              stripe_payment_intent_id: "pi_test_#{SecureRandom.hex(8)}",
+              status: :pending
+            )
+
+            challenge
+          end
+
+          def valid_credential(voice_tier:, amount_cents:)
+            challenge = provision_challenge(voice_tier: voice_tier, amount_cents: amount_cents)
+
+            credential_hash = {
+              challenge: {
+                id: challenge[:id],
+                realm: challenge[:realm],
+                method: challenge[:method],
+                intent: challenge[:intent],
+                request: challenge[:request],
+                expires: challenge[:expires]
+              },
+              payload: {
+                type: "hash",
+                hash: @tx_hash
+              }
+            }
+
+            Base64.strict_encode64(JSON.generate(credential_hash))
+          end
+
+          def build_credential_with_tampered_hmac
+            challenge = provision_challenge(
+              voice_tier: :standard,
+              amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS
+            )
+
+            credential_hash = {
+              challenge: {
+                id: "a" * 64, # tampered HMAC
+                realm: challenge[:realm],
+                method: challenge[:method],
+                intent: challenge[:intent],
+                request: challenge[:request],
+                expires: challenge[:expires]
+              },
+              payload: {
+                type: "hash",
+                hash: @tx_hash
+              }
+            }
+
+            Base64.strict_encode64(JSON.generate(credential_hash))
+          end
+
+          def build_expired_credential
+            expired_challenge = provision_challenge(
+              voice_tier: :standard,
+              amount_cents: AppConfig::Mpp::PRICE_STANDARD_CENTS,
+              expires_offset: 10.minutes.ago
+            )
+
+            credential_hash = {
+              challenge: {
+                id: expired_challenge[:id],
+                realm: expired_challenge[:realm],
+                method: expired_challenge[:method],
+                intent: expired_challenge[:intent],
+                request: expired_challenge[:request],
+                expires: expired_challenge[:expires]
+              },
+              payload: {
+                type: "hash",
+                hash: @tx_hash
+              }
+            }
+
+            Base64.strict_encode64(JSON.generate(credential_hash))
+          end
+
+          def stub_tempo_rpc_success(amount_cents:)
+            stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+              .to_return(status: 200, body: {
+                jsonrpc: "2.0",
+                id: 1,
+                result: {
+                  status: "0x1",
+                  logs: [
+                    {
+                      address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+                      topics: [
+                        TRANSFER_TOPIC,
+                        pad_address("0xsender"),
+                        pad_address(@deposit_address)
+                      ],
+                      data: amount_to_hex(amount_cents)
+                    }
+                  ]
+                }
+              }.to_json)
+          end
+
+          def stub_stripe_deposit_address(address:)
+            stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+              .to_return(status: 200, body: {
+                id: "pi_test_#{SecureRandom.hex(8)}",
+                object: "payment_intent",
+                amount: AppConfig::Mpp::PRICE_PREMIUM_CENTS,
+                currency: @currency,
+                status: "requires_action",
+                next_action: {
+                  type: "crypto_display_details",
+                  crypto_display_details: {
+                    deposit_addresses: {
+                      tempo: { address: address }
+                    }
+                  }
+                }
+              }.to_json, headers: { "Content-Type" => "application/json" })
+          end
+
+          def pad_address(address)
+            clean = address.delete_prefix("0x").downcase
+            "0x" + clean.rjust(64, "0")
+          end
+
+          def amount_to_hex(amount_cents)
+            base_units = (amount_cents * (10**AppConfig::Mpp::TEMPO_TOKEN_DECIMALS)) / 100
+            "0x" + base_units.to_s(16).rjust(64, "0")
+          end
+        end
+      end
+    end
+  end
+end

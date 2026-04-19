@@ -1,0 +1,24 @@
+<%#
+  "Copy for LLM" button for /docs/* pages. Wires into the copy-docs
+  Stimulus controller that clones the [data-copy-docs-target="source"]
+  subtree, strips [data-copy-skip] nodes, and writes Markdown to the
+  clipboard via Turndown. The button itself is [data-copy-skip] so it
+  doesn't appear in the copied output.
+
+  Requires the enclosing page to:
+    - put data-controller="copy-docs" on an ancestor
+    - put data-copy-docs-target="source" on the content root
+%>
+<div class="group/copy relative" data-copy-skip>
+  <button type="button"
+          data-action="copy-docs#copy"
+          aria-label="Copy page as Markdown"
+          class="inline-flex items-center gap-1.5 text-mist-500 hover:text-mist-950 dark:text-mist-400 dark:hover:text-white cursor-pointer transition-colors">
+    <%= render "shared/icons/copy", css_class: "size-3.5" %>
+    <span data-copy-docs-target="label">Copy for LLM</span>
+  </button>
+  <span class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-mist-200 px-2.5 py-1 text-xs font-medium text-mist-900 opacity-0 transition-opacity group-hover/copy:opacity-100 dark:bg-mist-800 dark:text-mist-100"
+        role="tooltip">
+    Copy page as Markdown
+  </span>
+</div>

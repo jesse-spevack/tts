@@ -8,7 +8,7 @@ class Admin::AnalyticsControllerTest < ActionDispatch::IntegrationTest
 
   test "redirects unauthenticated users to root" do
     get admin_analytics_url
-    assert_redirected_to root_url
+    assert_redirected_to login_path(return_to: "/admin/analytics")
   end
 
   test "returns not found for non-admin users" do
