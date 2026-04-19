@@ -114,6 +114,15 @@ class AppConfig
 
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
+    # Tiered per-narration pricing. Standard voices use Google TTS Standard
+    # ($4/M chars COGS); Premium voices use Chirp3-HD ($30/M chars COGS) —
+    # 7.5× delta on the biggest input cost line justifies a split.
+    # See agent-team-0g5 for the full cost model.
+    PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 50).to_i
+    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
+    # Legacy flat price — retained for any call site not yet migrated to
+    # per-tier pricing. Removed once agent-team-nkz.4 (tier-aware challenge
+    # generation) lands and all call sites use Voice#price_cents instead.
     PRICE_CENTS = ENV.fetch("MPP_PRICE_CENTS", 100).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000

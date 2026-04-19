@@ -42,6 +42,43 @@ class VoiceTest < ActiveSupport::TestCase
     refute Voice.find("felix").chirphd?
   end
 
+  # Tier + pricing (agent-team-nkz.1)
+
+  test "tier returns :premium for ChirpHD voices" do
+    %w[elara callum lark nash].each do |key|
+      assert_equal :premium, Voice.find(key).tier, "expected #{key} to be :premium"
+    end
+  end
+
+  test "tier returns :standard for Standard voices" do
+    %w[wren felix sloane archer gemma hugo quinn theo].each do |key|
+      assert_equal :standard, Voice.find(key).tier, "expected #{key} to be :standard"
+    end
+  end
+
+  test "premium? matches tier" do
+    assert Voice.find("callum").premium?
+    refute Voice.find("felix").premium?
+  end
+
+  test "standard? matches tier" do
+    assert Voice.find("felix").standard?
+    refute Voice.find("callum").standard?
+  end
+
+  test "price_cents returns PRICE_PREMIUM_CENTS for premium voices" do
+    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, Voice.find("callum").price_cents
+  end
+
+  test "price_cents returns PRICE_STANDARD_CENTS for standard voices" do
+    assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, Voice.find("felix").price_cents
+  end
+
+  test "default price_cents values reflect the locked rates (50 standard, 100 premium)" do
+    assert_equal 50, AppConfig::Mpp::PRICE_STANDARD_CENTS
+    assert_equal 100, AppConfig::Mpp::PRICE_PREMIUM_CENTS
+  end
+
   test "google_voice_for returns google_voice for valid preference" do
     assert_equal "en-GB-Standard-C", Voice.google_voice_for("wren", is_premium: false)
     assert_equal "en-GB-Chirp3-HD-Gacrux", Voice.google_voice_for("elara", is_premium: true)
