@@ -7,56 +7,77 @@
   <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 px-6 lg:px-10 xl:grid-cols-[minmax(0,1fr)_220px]">
     <!-- Main column -->
     <div class="min-w-0 pb-24" data-copy-docs-target="source">
+      <!-- Docs nav -->
+      <nav class="pt-8 text-sm" data-copy-skip>
+        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-mist-500 dark:text-mist-400">
+          <li><%= link_to "Authentication", docs_authentication_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+          <li><%= link_to "Episodes", docs_episodes_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+          <li class="font-medium text-mist-950 dark:text-white" aria-current="page">Machine Payments</li>
+        </ul>
+      </nav>
       <!-- Hero -->
       <header class="pt-8 pb-16">
-        <div class="flex items-center gap-x-3 text-sm">
-          <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+          <span class="inline-flex shrink-0 items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs whitespace-nowrap text-white dark:bg-mist-100 dark:text-mist-900">
             <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
             Public API
           </span>
           <span class="text-mist-500 dark:text-mist-400">
             <a href="http://mpp.dev/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Machine Payments Protocol</a>
           </span>
-          <div class="group/copy relative ml-auto" data-copy-skip>
-            <button type="button"
-                    data-action="copy-docs#copy"
-                    aria-label="Copy page as Markdown"
-                    class="inline-flex items-center gap-1.5 text-mist-500 hover:text-mist-950 dark:text-mist-400 dark:hover:text-white cursor-pointer transition-colors">
-              <%= render "shared/icons/copy", css_class: "size-3.5" %>
-              <span data-copy-docs-target="label">Copy for LLM</span>
-            </button>
-            <span class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap rounded-md bg-mist-200 px-2.5 py-1 text-xs font-medium text-mist-900 opacity-0 transition-opacity group-hover/copy:opacity-100 dark:bg-mist-800 dark:text-mist-100"
-                  role="tooltip">
-              Copy page as Markdown
-            </span>
-          </div>
+          <%= render "docs/copy_for_llm_button" %>
         </div>
         <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
           Turn any text into audio — pay per narration.
         </h1>
         <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
-          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay $1.00 per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
+          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Pricing is tiered: Standard voices cost 75¢, Premium voices cost $1.00. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
         </p>
 
-        <!-- Fact row -->
-        <dl class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Price</dt>
-            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.00</dd>
+        <!-- Fact row: two-tier price table + meta -->
+        <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div class="overflow-hidden rounded-lg ring-1 ring-mist-200 dark:ring-white/10">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-mist-50 dark:bg-mist-900/50">
+                  <th class="py-2.5 pl-4 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Tier</th>
+                  <th class="py-2.5 pr-6 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Price</th>
+                  <th class="py-2.5 pr-4 text-left text-xs font-medium text-mist-500 dark:text-mist-400">Voices</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+                <tr>
+                  <td class="py-3 pl-4 pr-6">
+                    <span class="inline-flex items-center rounded-full bg-mist-100 px-2.5 py-0.5 text-xs font-medium text-mist-700 dark:bg-mist-800 dark:text-mist-300">Standard</span>
+                  </td>
+                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$0.75</td>
+                  <td class="py-3 pr-4 font-mono text-xs text-mist-700 dark:text-mist-300">wren, felix, sloane, archer, gemma, hugo, quinn, theo</td>
+                </tr>
+                <tr>
+                  <td class="py-3 pl-4 pr-6">
+                    <span class="inline-flex items-center rounded-full bg-mist-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-mist-100 dark:text-mist-900">Premium</span>
+                  </td>
+                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.00</td>
+                  <td class="py-3 pr-4 font-mono text-xs text-mist-700 dark:text-mist-300">elara, callum, lark, nash</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Currency</dt>
-            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 dark:text-white">pathUSD</dd>
-          </div>
-          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Network</dt>
-            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 dark:text-white">Tempo</dd>
-          </div>
-          <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">TTL</dt>
-            <dd class="mt-1 font-serif text-2xl tracking-tight text-mist-950 tabular-nums dark:text-white">24 h</dd>
-          </div>
-        </dl>
+          <dl class="grid grid-cols-3 gap-6 self-start lg:grid-cols-1 lg:gap-4">
+            <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+              <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Currency</dt>
+              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">pathUSD</dd>
+            </div>
+            <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+              <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Network</dt>
+              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Tempo</dd>
+            </div>
+            <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
+              <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">TTL</dt>
+              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">24 h</dd>
+            </div>
+          </dl>
+        </div>
       </header>
 
       <!-- Quick Start -->
@@ -79,15 +100,18 @@
             npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
 
             # Create a narration — mppx handles the 402 flow automatically
-            npx mppx http://your-podread-host/api/v1/episodes \\
+            npx mppx http://your-podread-host/api/v1/mpp/narrations \\
               -X POST -H "Content-Type: application/json" \\
-              -d '{"source_type":"url","url":"https://example.com/article"}' \\
+              -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
               --rpc-url https://rpc.testnet.tempo.xyz
           BASH
           ) %></code></pre>
         </figure>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The response contains an <code class="ic">id</code> you can poll for status. Anonymous MPP calls (this example) always get a <code class="ic">nar_</code>-prefixed Narration id, polled at <code class="ic">GET /api/v1/narrations/:id</code>. Bearer holders on Paths 1 and 2 get <code class="ic">ep_</code>-prefixed Episode ids, which live under the Episodes endpoint instead.
+          Anonymous MPP calls (this example) hit <code class="ic">POST /api/v1/mpp/narrations</code> and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
+        </p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.00 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.
         </p>
       </section>
 
@@ -104,14 +128,14 @@
             </div>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
-                curl -X POST https://podread.app/api/v1/episodes \\
+                curl -X POST https://podread.app/api/v1/mpp/narrations \\
                   -H "Content-Type: application/json" \\
-                  -d '{"source_type":"url","url":"https://example.com/article"}'
+                  -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}'
               BASH
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              Without a Bearer token or Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>.
+              Without a Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>. The amount reflects the resolved voice's tier — 75 cents for Standard (the example below), 100 cents if the request asked for a Premium voice.
             </p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -136,7 +160,7 @@
                     "error": "Payment required",
                     "challenge": {
                       "id": "a1b2c3d4e5f6…",
-                      "amount": 100,
+                      "amount": 75,
                       "currency": "usd",
                       "methods": ["tempo"],
                       "realm": "podread.app",
@@ -150,27 +174,41 @@
             </div>
 
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Fields in the outer challenge object:</p>
-            <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
-              <li><code class="ic">id</code> is the HMAC-SHA256 hex over <code class="ic">realm|method|intent|request|expires</code> signed with the server's secret — it doubles as challenge identifier and tamper-check. Clients should echo it back unchanged in the credential.</li>
-              <li><code class="ic">amount</code> is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (100 = $1.00). Distinct from <code class="ic">request.amount</code> below, which is in token base units.</li>
-              <li><code class="ic">currency</code> is the <strong class="font-semibold text-mist-950 dark:text-white">ISO 4217 code</strong> ("usd"). Distinct from <code class="ic">request.currency</code> below, which is an ERC-20 contract address.</li>
-              <li><code class="ic">request</code> is <strong class="font-semibold text-mist-950 dark:text-white">standard base64</strong> (with padding, <code class="ic">+</code>/<code class="ic">/</code> alphabet) — not base64url. Decodes to:</li>
-            </ul>
-            <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+
+            <% challenge_fields = [
+              { name: "id", type: "string",
+                description: %(HMAC-SHA256 hex over <code class="ic">realm|method|intent|request|expires</code> signed with the server's secret — doubles as challenge identifier and tamper-check. Clients should echo it back unchanged in the credential.).html_safe },
+              { name: "amount", type: "integer",
+                description: %(In <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75 for Standard, 100 = $1.00 for Premium). Distinct from <code class="ic">request.amount</code> below, which is in token base units.).html_safe },
+              { name: "currency", type: "string",
+                description: %(The <strong class="font-semibold text-mist-950 dark:text-white">ISO 4217 code</strong> (<code class="ic">"usd"</code>). Distinct from <code class="ic">request.currency</code> below, which is an ERC-20 contract address.).html_safe },
+              { name: "request", type: "string",
+                description: %(<strong class="font-semibold text-mist-950 dark:text-white">Standard base64</strong> (with padding, <code class="ic">+</code>/<code class="ic">/</code> alphabet) — not base64url. Decodes to the object below.).html_safe }
+            ] %>
+
+            <%= render "docs/param_table", rows: challenge_fields %>
+
+            <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
                 {
-                  "amount": "1000000",
+                  "amount": "750000",
                   "currency": "0x20c0000000000000000000000000000000000000",
                   "recipient": "0x1234abcd…"
                 }
               JSON
               ) %></code></pre>
             </figure>
-            <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
-              <li><code class="ic">amount</code> is in token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">1000000</span> = $1.00</li>
-              <li><code class="ic">currency</code> is the pathUSD token contract address on Tempo</li>
-              <li><code class="ic">recipient</code> is the one-time Stripe-provisioned deposit address</li>
-            </ul>
+
+            <% decoded_request_fields = [
+              { name: "amount", type: "string",
+                description: %(Token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1000000</span> = $1.00 (Premium).).html_safe },
+              { name: "currency", type: "string",
+                description: %(The pathUSD token contract address on Tempo.).html_safe },
+              { name: "recipient", type: "string",
+                description: %(The one-time Stripe-provisioned deposit address.).html_safe }
+            ] %>
+
+            <%= render "docs/param_table", rows: decoded_request_fields %>
           </li>
 
           <li class="relative">
@@ -181,7 +219,7 @@
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a pathUSD transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
               <li>To the exact <code class="ic">deposit_address</code> returned in the 402 response</li>
-              <li>For exactly <span class="font-mono tabular-nums">1000000</span> base units (= $1.00 pathUSD)</li>
+              <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1000000</span> for Premium ($1.00)</li>
               <li>Of the pathUSD token at contract <code class="ic">0x20c0…0000</code></li>
               <li>Completed before the challenge <code class="ic">expires</code> timestamp</li>
             </ul>
@@ -228,10 +266,10 @@
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Encode this JSON as base64url (no padding, <code class="ic">-</code>/<code class="ic">_</code> instead of <code class="ic">+</code>/<code class="ic">/</code>) and send it:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
-                curl -X POST https://podread.app/api/v1/episodes \\
+                curl -X POST https://podread.app/api/v1/mpp/narrations \\
                   -H "Content-Type: application/json" \\
                   -H "Authorization: Payment <base64url-encoded-credential>" \\
-                  -d '{"source_type":"url","url":"https://example.com/article"}'
+                  -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}'
               BASH
               ) %></code></pre>
             </figure>
@@ -246,7 +284,7 @@
               ) %></code></pre>
             </figure>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
-              <li><code class="ic">id</code> is the created resource's public identifier. The prefix (<code class="ic">ep_</code> vs <code class="ic">nar_</code>) tells you whether this was an Episode (Paths 1 and 2) or a Narration (Path 3).</li>
+              <li><code class="ic">id</code> is the created resource's public identifier. The prefix (<code class="ic">ep_</code> vs <code class="ic">nar_</code>) tells you whether this was an Episode (from <code class="ic">/api/v1/episodes</code> or <code class="ic">/api/v1/mpp/episodes</code>) or a Narration (from <code class="ic">/api/v1/mpp/narrations</code>).</li>
               <li><code class="ic">Payment-Receipt</code> is a comma-separated triplet: <code class="ic">tx</code> is the on-chain transaction hash, <code class="ic">payment</code> is the opaque MppPayment public id (useful for support inquiries), <code class="ic">sig</code> is an HMAC-SHA256 over the receipt body signed with the server's secret so clients can verify authenticity.</li>
             </ul>
             <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
@@ -263,7 +301,7 @@
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Audio generation is asynchronous. Poll the narration endpoint:</p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
-                curl https://podread.app/api/v1/narrations/nar_aB3xK9mQ2pL7
+                curl https://podread.app/api/v1/mpp/narrations/nar_aB3xK9mQ2pL7
               BASH
               ) %></code></pre>
             </figure>
@@ -289,7 +327,7 @@
               JSON
               ) %></code></pre>
             </figure>
-            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Narrations expire <strong class="font-semibold text-mist-950 dark:text-white">24 hours</strong> after creation. After expiration, the narration endpoint returns 404.</p>
+            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Narrations expire <strong class="font-semibold text-mist-950 dark:text-white">24 hours</strong> after creation. After expiration, <code class="ic">GET /api/v1/mpp/narrations/:id</code> returns 404. Episodes from <code class="ic">/api/v1/mpp/episodes</code> persist in the authenticated user's account and are retrieved via the Episodes API instead.</p>
           </li>
         </ol>
       </section>
@@ -297,16 +335,15 @@
       <!-- Authentication Paths -->
       <section id="auth-paths" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Authentication paths</h2>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">The <code class="ic">POST /api/v1/episodes</code> endpoint supports three paths. Which path runs depends on the headers you send.</p>
-        <p class="mt-2 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Path 2 sends Bearer and Payment credentials as <strong class="font-semibold text-mist-950 dark:text-white">a single <code class="ic">Authorization</code> header</strong> with comma-separated auth schemes per <a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-authorization" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">RFC 9110 §11.6.2</a> — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> two separate <code class="ic">Authorization</code> headers.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">There are three POST endpoints, one per intent. The endpoint you call determines what credentials the server demands and what resource it creates.</p>
 
         <div class="mt-8 grid gap-4 md:grid-cols-3">
           <!-- Path 1 -->
           <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 1</div>
-            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Subscriber</h3>
-            <p class="mt-1 text-base sm:text-sm text-mist-500 dark:text-mist-400">Bearer only</p>
-            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with an active subscription or remaining credits bypass MPP entirely. The <code class="ic">voice</code> param is ignored — Episodes use the user's stored voice preference.</p>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Subscriber / credits</h3>
+            <p class="mt-1 font-mono text-xs text-mist-500 dark:text-mist-400">POST /api/v1/episodes</p>
+            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with an active subscription or remaining credits. No MPP. Free-tier users who are out of credits get a 402 pointing at the billing upgrade URL — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge.</p>
             <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
               <div>Authorization:</div>
               <div class="pl-4">Bearer &lt;token&gt;</div>
@@ -317,9 +354,22 @@
           <!-- Path 2 -->
           <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 2</div>
-            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Authenticated + MPP</h3>
-            <p class="mt-1 text-base sm:text-sm text-mist-500 dark:text-mist-400">Bearer + Payment</p>
-            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Bearer token holder whose free tier is exhausted pays via MPP. Creates an <strong class="font-semibold text-mist-950 dark:text-white">Episode</strong> attached to their account.</p>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Anonymous MPP</h3>
+            <p class="mt-1 font-mono text-xs text-mist-500 dark:text-mist-400">POST /api/v1/mpp/narrations</p>
+            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">No account required. Pay per call via MPP. Creates a <strong class="font-semibold text-mist-950 dark:text-white">Narration</strong> — standalone audio, no user, 24h TTL, polled at <code class="ic">/api/v1/mpp/narrations/:id</code>.</p>
+            <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
+              <div>Authorization:</div>
+              <div class="pl-4">Payment &lt;credential&gt;</div>
+            </div>
+            <p class="mt-4 text-base sm:text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"id":"nar_…"}</code></p>
+          </article>
+
+          <!-- Path 3 -->
+          <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
+            <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 3</div>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Authenticated MPP</h3>
+            <p class="mt-1 font-mono text-xs text-mist-500 dark:text-mist-400">POST /api/v1/mpp/episodes</p>
+            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated user who wants to pay per episode instead of subscribing. Creates an <strong class="font-semibold text-mist-950 dark:text-white">Episode</strong> attached to the user's primary podcast. Both credentials are required.</p>
             <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
               <div>Authorization:</div>
               <div class="pl-4">Bearer &lt;token&gt;,</div>
@@ -327,54 +377,77 @@
             </div>
             <p class="mt-4 text-base sm:text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"id":"ep_…"}</code></p>
           </article>
-
-          <!-- Path 3 -->
-          <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
-            <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 3</div>
-            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Anonymous MPP</h3>
-            <p class="mt-1 text-base sm:text-sm text-mist-500 dark:text-mist-400">Payment only</p>
-            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">No Bearer token, valid Payment credential. Creates a <strong class="font-semibold text-mist-950 dark:text-white">Narration</strong> — standalone audio, no account, 24h TTL.</p>
-            <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
-              <div>Authorization:</div>
-              <div class="pl-4">Payment &lt;credential&gt;</div>
-            </div>
-            <p class="mt-4 text-base sm:text-sm text-mist-500 dark:text-mist-400">Returns <code class="rounded bg-mist-100 px-1 py-0.5 font-mono text-[0.9em] text-mist-900 dark:bg-mist-800 dark:text-mist-100">{"id":"nar_…"}</code></p>
-          </article>
         </div>
+
+        <aside class="mt-8 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+          <strong class="font-semibold text-mist-950 dark:text-white">Path 3 header format.</strong>
+          Send Bearer and Payment as <strong class="font-semibold text-mist-950 dark:text-white">a single <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">Authorization</code> header</strong> with the two auth schemes comma-separated per <a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-authorization" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">RFC 9110 §11.6.2</a> — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> two separate <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">Authorization</code> headers.
+        </aside>
       </section>
 
       <!-- Request reference -->
       <section id="request-reference" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Request reference</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Each of the three POST endpoints accepts the same source-and-metadata parameters. The differences are which <code class="ic">Authorization</code> scheme is required and whether the <code class="ic">voice</code> param is honored.</p>
 
-        <h3 class="mt-10 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/episodes</h3>
-        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Request body parameters.</p>
-
-        <%= render "docs/responsive_table",
-          headers: ["Parameter", "Type", "Required", "Description"],
-          rows: [
+        <%
+          shared_source_rows = [
             ["source_type", "string", "Yes", %Q(One of <code class="font-mono text-[0.9em]">"url"</code>, <code class="font-mono text-[0.9em]">"text"</code>, <code class="font-mono text-[0.9em]">"extension"</code>).html_safe],
             ["url", "string", "For url/extension", "URL of the article"],
             ["text", "string", "For text", "Raw text to convert"],
             ["content", "string", "For extension", "HTML of the article body, typically Readability-extracted (not full page, not already-sanitized plain text). The server runs its own extractor and truncates the result to 20,000 characters before synthesis."],
             ["title", "string", "No", %Q(Episode title (defaults to <code class="font-mono text-[0.9em]">"Untitled"</code>)).html_safe],
             ["author", "string", "No", "Author name"],
-            ["description", "string", "No", "Episode description"],
-            ["voice", "string", "No", %Q(Voice catalog key — anonymous path only. See <a href="#voices" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Voices</a>.).html_safe]
-          ],
-          cell_class: [
+            ["description", "string", "No", "Episode description"]
+          ]
+          param_cell_class = [
             "font-mono text-mist-900 dark:text-mist-100",
             "font-mono text-mist-500 dark:text-mist-400",
             "text-mist-700 dark:text-mist-300",
             "text-mist-700 dark:text-mist-300"
           ]
         %>
+
+        <!-- POST /api/v1/episodes -->
+        <h3 class="mt-10 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/episodes</h3>
+        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 1 — Bearer-authenticated with active subscription or credits. The <code class="ic">voice</code> param is ignored; Episodes use the user's stored voice preference.</p>
+
+        <%= render "docs/responsive_table",
+          headers: ["Parameter", "Type", "Required", "Description"],
+          rows: shared_source_rows,
+          cell_class: param_cell_class
+        %>
+
+        <!-- POST /api/v1/mpp/narrations -->
+        <h3 class="mt-12 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/mpp/narrations</h3>
+        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 2 — anonymous, Payment credential only. The <code class="ic">voice</code> param selects which voice (and therefore which tier price) the 402 challenge quotes.</p>
+
+        <%= render "docs/responsive_table",
+          headers: ["Parameter", "Type", "Required", "Description"],
+          rows: shared_source_rows + [
+            ["voice", "string", "No", %Q(Voice catalog key. Defaults to <code class="font-mono text-[0.9em]">"felix"</code> (Standard, 75¢). See <a href="#voices" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Voices</a>.).html_safe]
+          ],
+          cell_class: param_cell_class
+        %>
+
+        <!-- POST /api/v1/mpp/episodes -->
+        <h3 class="mt-12 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/mpp/episodes</h3>
+        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 3 — Bearer + Payment. An explicit <code class="ic">voice</code> param wins; otherwise the user's saved preference is used, falling back to the catalog default (<code class="ic">felix</code>, Standard).</p>
+
+        <%= render "docs/responsive_table",
+          headers: ["Parameter", "Type", "Required", "Description"],
+          rows: shared_source_rows + [
+            ["voice", "string", "No", %Q(Voice catalog key. Overrides the user's stored voice preference for this request only. See <a href="#voices" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Voices</a>.).html_safe]
+          ],
+          cell_class: param_cell_class
+        %>
       </section>
 
       <!-- Voices -->
       <section id="voices" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Voices</h2>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Callers on the anonymous MPP (Narration) path may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available — MPP payment unlocks the Premium tier. The default when omitted is <code class="ic">callum</code> (British male, Premium). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">MPP callers may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available on the MPP paths. Voice tier determines price: Standard voices cost 75¢, Premium voices cost $1.00. The default when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (British male, Standard, 75¢). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
+        <p class="mt-2 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Voice resolution on MPP endpoints follows a three-step hierarchy: explicit <code class="ic">voice</code> param → user's saved preference (authenticated only) → catalog default (<code class="ic">felix</code>).</p>
 
         <div class="-mx-6 -my-2 mt-6 overflow-x-auto whitespace-nowrap lg:-mx-10">
           <div class="inline-block min-w-full px-6 py-2 align-middle lg:px-10">
@@ -391,18 +464,18 @@
               </thead>
               <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
                 <% [
-                  ["wren",   "Wren",   "British",  "Female", "Standard",  false],
-                  ["felix",  "Felix",  "British",  "Male",   "Standard",  false],
-                  ["sloane", "Sloane", "American", "Female", "Standard",  false],
-                  ["archer", "Archer", "American", "Male",   "Standard",  false],
-                  ["gemma",  "Gemma",  "British",  "Female", "Standard",  false],
-                  ["hugo",   "Hugo",   "British",  "Male",   "Standard",  false],
-                  ["quinn",  "Quinn",  "American", "Female", "Standard",  false],
-                  ["theo",   "Theo",   "American", "Male",   "Standard",  false],
-                  ["elara",  "Elara",  "British",  "Female", "Premium", false],
-                  ["callum", "Callum", "British",  "Male",   "Premium", true],
-                  ["lark",   "Lark",   "American", "Female", "Premium", false],
-                  ["nash",   "Nash",   "American", "Male",   "Premium", false]
+                  ["wren",   "Wren",   "British",  "Female", "Standard", false],
+                  ["felix",  "Felix",  "British",  "Male",   "Standard", true],
+                  ["sloane", "Sloane", "American", "Female", "Standard", false],
+                  ["archer", "Archer", "American", "Male",   "Standard", false],
+                  ["gemma",  "Gemma",  "British",  "Female", "Standard", false],
+                  ["hugo",   "Hugo",   "British",  "Male",   "Standard", false],
+                  ["quinn",  "Quinn",  "American", "Female", "Standard", false],
+                  ["theo",   "Theo",   "American", "Male",   "Standard", false],
+                  ["elara",  "Elara",  "British",  "Female", "Premium",  false],
+                  ["callum", "Callum", "British",  "Male",   "Premium",  false],
+                  ["lark",   "Lark",   "American", "Female", "Premium",  false],
+                  ["nash",   "Nash",   "American", "Male",   "Premium",  false]
                 ].each do |key, name, accent, gender, tier, is_default| %>
                   <tr>
                     <td class="py-3 pr-6 font-mono text-mist-900 dark:text-mist-100"><%= key %></td>
@@ -426,8 +499,8 @@
         <p class="mt-4 text-sm sm:text-xs text-mist-500 dark:text-mist-400">★ default when <code class="font-mono text-[0.9em]">voice</code> is omitted</p>
 
         <aside class="mt-8 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
-          <strong class="font-semibold text-mist-950 dark:text-white">Authenticated Episode path.</strong>
-          The authenticated path (Bearer + Payment) ignores the <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param and uses the user's stored voice preference. To change the voice for an authenticated MPP request, update the user's profile voice first.
+          <strong class="font-semibold text-mist-950 dark:text-white">Where <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> is honored.</strong>
+          The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param is read on both MPP endpoints (<code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/narrations</code> and <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/episodes</code>). It is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> read on the subscriber-credits endpoint <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/api/v1/episodes</code> — there, Episodes use the user's stored voice preference.
         </aside>
       </section>
 
@@ -435,8 +508,27 @@
       <section id="pricing" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Pricing</h2>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          Each episode or narration costs <strong class="font-semibold text-mist-950 dark:text-white">$1.00 USD</strong>, charged as <strong class="font-semibold text-mist-950 dark:text-white tabular-nums">1,000,000</strong> base units of pathUSD on the Tempo network.
+          MPP pricing is tiered by voice. The resolved voice's tier determines the challenge amount issued in the 402 response.
         </p>
+
+        <%= render "docs/responsive_table",
+          headers: ["Tier", "Price (USD)", "Base units (pathUSD)", "Voices"],
+          rows: [
+            ["Standard", "$0.75", "750,000", "wren, felix, sloane, archer, gemma, hugo, quinn, theo"],
+            ["Premium",  "$1.00", "1,000,000", "elara, callum, lark, nash"]
+          ],
+          cell_class: [
+            "text-mist-900 dark:text-mist-100",
+            "font-serif text-mist-950 tabular-nums dark:text-white",
+            "font-mono tabular-nums text-mist-700 dark:text-mist-300",
+            "font-mono text-mist-700 dark:text-mist-300"
+          ]
+        %>
+
+        <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The default voice when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (Standard), so the cheapest successful call costs $0.75. Requesting a Premium voice shifts the entire 402 → pay → retry flow to $1.00.
+        </p>
+
         <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token</dt>
@@ -452,9 +544,9 @@
           </div>
         </dl>
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (100 = $1.00). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (1,000,000 = $1.00).
+          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 100 = $1.00). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,000,000 for Premium).
         </p>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">If narration processing fails, the payment is automatically refunded.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">A challenge is bound to a specific voice tier by an HMAC-signed request blob. A Standard-priced credential cannot be redeemed against a Premium voice (or vice versa) — the server re-issues a fresh 402 at the correct price when the tiers don't match. If narration processing fails after payment succeeds, the payment is automatically refunded.</p>
       </section>
 
       <!-- Rate Limits -->
@@ -464,9 +556,9 @@
         <%= render "docs/responsive_table",
           headers: ["Endpoint", "Limit", "Window", "Key"],
           rows: [
-            ["POST /api/v1/episodes (authenticated)", "20", "1 hour", "Bearer token"],
-            ["POST /api/v1/episodes (unauthenticated)", "10", "1 minute", "IP address"],
-            ["GET /api/v1/narrations/:id", "60", "1 minute", "IP address"]
+            ["POST /api/v1/episodes", "20", "1 hour", "Bearer token"],
+            ["POST /api/v1/mpp/narrations", "10", "1 minute", "IP address"],
+            ["GET /api/v1/mpp/narrations/:id", "60", "1 minute", "IP address"]
           ],
           cell_class: [
             "font-mono text-mist-900 dark:text-mist-100",
@@ -476,78 +568,42 @@
           ]
         %>
         <p class="mt-4 max-w-[65ch] text-base sm:text-sm text-mist-500 dark:text-mist-400">Throttled requests return <strong class="font-semibold text-mist-700 dark:text-mist-300">429 Too Many Requests</strong> with a <code class="ic">Retry-After</code> header.</p>
-        <p class="mt-4 max-w-[65ch] text-pretty text-base sm:text-sm text-mist-500 dark:text-mist-400">The unauthenticated ceiling (10/minute) looks higher than the authenticated one (20/hour) because the unauthenticated path <strong class="font-semibold text-mist-700 dark:text-mist-300">costs $1.00 per call via MPP</strong> — the cost is the real self-limit, so the rack-level limit is set to block spammers rather than cap real usage.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-base sm:text-sm text-mist-500 dark:text-mist-400"><code class="ic">POST /api/v1/mpp/episodes</code> has no rack-level throttle at this time — the endpoint is Bearer-gated and payment-gated, so cost is the self-limit. A per-user throttle is on the roadmap.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-base sm:text-sm text-mist-500 dark:text-mist-400">The anonymous MPP create limit (10/minute per IP) exists to block abusers who churn through the 402-challenge flow without paying — every challenge costs a Stripe PaymentIntent and a pending DB row. A legitimate client making one paid narration burns at most 2 requests (initial 402, retry with credential), so 10/min leaves 5× headroom.</p>
       </section>
 
       <!-- Error Codes -->
       <section id="errors" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Error codes</h2>
 
-        <div class="-mx-6 -my-2 mt-6 overflow-x-auto whitespace-nowrap lg:-mx-10">
-          <div class="inline-block min-w-full px-6 py-2 align-middle lg:px-10">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-mist-300 dark:border-mist-700">
-                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Status</th>
-                  <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Meaning</th>
-                  <th class="whitespace-nowrap py-3 text-left font-medium text-mist-950 dark:text-white">When</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">201</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Created</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Episode or narration created successfully</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">400</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Bad Request</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Malformed JSON body or missing required headers</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">401</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Unauthorized</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Bearer token is invalid, expired, or revoked</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">402</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Payment Required</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">No valid subscription/credits and no Payment credential, <strong class="font-semibold">or</strong> a submitted Payment credential failed verification. The response body is identical in both cases — retrying with the same credential after a 402 will produce the same 402. Check server logs for the specific verification failure.</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">403</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Forbidden</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Authenticated user exists but lacks permission for the requested action</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">404</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Not Found</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Narration does not exist or has expired (past 24h TTL)</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">422</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Unprocessable Entity</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Invalid or missing <code class="font-mono text-[0.9em]">source_type</code>, invalid <code class="font-mono text-[0.9em]">voice</code>, or content error</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">429</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Too Many Requests</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Rate limit exceeded (see <a href="#rate-limits" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Rate limits</a>); includes a <code class="font-mono text-[0.9em]">Retry-After</code> header</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">500</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Internal Server Error</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Unexpected server failure (not caused by any of the above)</td>
-                </tr>
-                <tr>
-                  <td class="py-3 pr-6 font-mono tabular-nums text-mist-900 dark:text-mist-100">503</td>
-                  <td class="py-3 pr-6 text-mist-700 dark:text-mist-300">Service Unavailable</td>
-                  <td class="py-3 text-mist-700 dark:text-mist-300">Stripe failed to provision a deposit address, or Tempo RPC is unreachable</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+          <strong class="font-semibold text-mist-950 dark:text-white">Two flavors of 402:</strong>
+          <ul role="list" class="mt-2 space-y-1.5">
+            <li><strong class="font-semibold">MPP challenge</strong> (from <code class="ic">/api/v1/mpp/*</code>): includes a <code class="ic">WWW-Authenticate: Payment</code> header and a <code class="ic">challenge</code> object in the body. Retry with a Payment credential. Issued when no credential was sent, the credential failed verification, or the credential's tier didn't match the resolved voice.</li>
+            <li><strong class="font-semibold">Upgrade prompt</strong> (from <code class="ic">/api/v1/episodes</code>): <strong>no</strong> <code class="ic">WWW-Authenticate</code> header. Body is <code class="ic">{"error","credits_remaining","upgrade_url"}</code>. The authenticated user is out of credits — direct them to billing or to the <code class="ic">/api/v1/mpp/episodes</code> endpoint.</li>
+          </ul>
+        </aside>
+
+        <%= render "docs/responsive_table",
+          headers: ["Status", "Meaning", "When"],
+          rows: [
+            ["201", "Created", "Episode or narration created successfully"],
+            ["400", "Bad Request", "Malformed JSON body or missing required headers"],
+            ["401", "Unauthorized", "Bearer token is invalid, expired, or revoked"],
+            ["402", "Payment Required", "See the callout above — either an MPP challenge or an upgrade prompt".html_safe],
+            ["403", "Forbidden", "Authenticated user exists but lacks permission for the requested action"],
+            ["404", "Not Found", 'Narration (<code class="ic">GET /api/v1/mpp/narrations/:id</code>) does not exist or has expired past its 24h TTL'.html_safe],
+            ["422", "Unprocessable Entity", 'Invalid or missing <code class="ic">source_type</code>, invalid <code class="ic">voice</code>, or content error'.html_safe],
+            ["429", "Too Many Requests", 'Rate limit exceeded (see <a href="#rate-limits" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Rate limits</a>); includes a <code class="ic">Retry-After</code> header'.html_safe],
+            ["500", "Internal Server Error", "Unexpected server failure (not caused by any of the above)"],
+            ["503", "Service Unavailable", "Stripe failed to provision a deposit address, or Tempo RPC is unreachable"]
+          ],
+          cell_class: [
+            "font-mono tabular-nums text-mist-900 dark:text-mist-100",
+            "text-mist-700 dark:text-mist-300",
+            "text-mist-700 dark:text-mist-300"
+          ]
+        %>
       </section>
 
       <!-- Environment / Configuration -->
@@ -559,7 +615,8 @@
           headers: ["Variable", "Default", "Description"],
           rows: [
             ["MPP_SECRET_KEY", "random hex", "HMAC key for signing challenges and receipts. Must be stable across deploys."],
-            ["MPP_PRICE_CENTS", "100", "Price per episode/narration in USD cents"],
+            ["MPP_PRICE_STANDARD_CENTS", "75", "Price for a Standard-voice narration, in USD cents"],
+            ["MPP_PRICE_PREMIUM_CENTS", "100", "Price for a Premium-voice narration, in USD cents"],
             ["MPP_CURRENCY", "usd", "Currency code"],
             ["MPP_CHALLENGE_TTL_SECONDS", "300", "How long a 402 challenge is valid"],
             ["MPP_STRIPE_API_VERSION", "2026-03-04.preview", "Stripe API version pinned to MPP preview channel"],

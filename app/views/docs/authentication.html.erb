@@ -1,0 +1,230 @@
+<% content_for :title, "Authentication — PodRead API" %>
+
+<div class="relative isolate" data-controller="copy-docs">
+  <!-- Background tint -->
+  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+
+  <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 px-6 lg:px-10 xl:grid-cols-[minmax(0,1fr)_220px]">
+    <!-- Main column -->
+    <div class="min-w-0 pb-24" data-copy-docs-target="source">
+    <!-- Docs nav -->
+    <nav class="pt-8 text-sm" data-copy-skip>
+      <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-mist-500 dark:text-mist-400">
+        <li class="font-medium text-mist-950 dark:text-white" aria-current="page">Authentication</li>
+        <li><%= link_to "Episodes", docs_episodes_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+        <li><%= link_to "Machine Payments", docs_mpp_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+      </ul>
+    </nav>
+
+    <!-- Hero -->
+    <header class="pt-8 pb-12">
+      <div class="flex items-center gap-x-3 text-sm">
+        <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+          <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
+          Public API
+        </span>
+        <%= render "docs/copy_for_llm_button" %>
+      </div>
+      <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
+        Authentication
+      </h1>
+      <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
+        The PodRead API is authenticated with personal API tokens. Tokens are self-serve and carry the full permissions of your user account. If you'd rather pay per call without creating an account, see <%= link_to "Machine Payments", docs_mpp_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> instead.
+      </p>
+    </header>
+
+    <!-- Quick start -->
+    <section id="quickstart" class="scroll-mt-8 pt-8">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Quick start</h2>
+      <ol role="list" class="mt-6 space-y-2 text-mist-700 dark:text-mist-300 list-decimal pl-5">
+        <li>Sign in at <a href="<%= login_url %>" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">podread.app/login</a>.</li>
+        <li>Open <a href="<%= settings_api_tokens_url %>" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Settings → API tokens</a>.</li>
+        <li>Click <strong class="font-semibold text-mist-950 dark:text-white">New token</strong>. Copy the token — it is shown once and never again.</li>
+        <li>Send it as <code class="ic">Authorization: Bearer &lt;token&gt;</code>.</li>
+      </ol>
+
+      <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+        <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+          <span class="font-mono text-mist-400">bash</span>
+          <span class="text-mist-500">authenticated request</span>
+        </figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl https://podread.app/api/v1/episodes \\
+            -H "Authorization: Bearer sk_live_Nk2o8F7XqV9pR3cL-JmQwTdY5bH7aKfNxZgBvEhWnMsPoIuCrA"
+        BASH
+        ) %></code></pre>
+      </figure>
+
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        <code class="ic">Content-Type: application/json</code> is only required for requests with a JSON body (<code class="ic">POST</code>, <code class="ic">PATCH</code>); <code class="ic">GET</code> and <code class="ic">DELETE</code> do not need it.
+      </p>
+    </section>
+
+    <!-- Permissions -->
+    <section id="permissions" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Permissions</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        A personal API token acts as the user it was created by. Every token can do anything that user can do through the API — create, list, fetch, and delete episodes on their own podcast feeds. Read-only tokens, per-resource scopes (<code class="ic">episode:write</code>), and per-token quotas are not supported.
+      </p>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Tokens are also not user-nameable today — the only identifier shown in <a href="<%= settings_api_tokens_url %>" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Settings → API tokens</a> is the 4-character display prefix. If you run more than one integration, create multiple tokens and track which is which on your side.
+      </p>
+    </section>
+
+    <!-- Token format -->
+    <section id="format" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Token format</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Tokens look like:
+      </p>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code>sk_live_Nk2o8F7XqV9pR3cL-JmQwTdY5bH7aKfNxZgBvEhWnMsPoIuCrA</code></pre>
+      </figure>
+      <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
+        <li><code class="ic">sk_live_</code> — fixed prefix so tokens are easy to recognize in logs and secret scanners.</li>
+        <li>The remaining 43 characters are 256 bits of url-safe base64 randomness (no padding, <code class="ic">-</code>/<code class="ic">_</code> alphabet).</li>
+        <li>The plain token is shown once at creation and cannot be recovered.</li>
+      </ul>
+    </section>
+
+    <!-- Using a token -->
+    <section id="using" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Using a token</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Send the token in the <code class="ic">Authorization</code> header of every request to <code class="ic">/api/v1/*</code>:
+      </p>
+      <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+        <figcaption class="border-b border-white/10 px-5 py-2 font-mono text-xs text-mist-400">create an episode from a URL</figcaption>
+        <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+          curl -X POST https://podread.app/api/v1/episodes \\
+            -H "Authorization: Bearer sk_live_…" \\
+            -H "Content-Type: application/json" \\
+            -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}'
+        BASH
+        ) %></code></pre>
+      </figure>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        See <%= link_to "Episodes", docs_episodes_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> for every endpoint's request and response shape.
+      </p>
+    </section>
+
+    <!-- Secret hygiene -->
+    <section id="hygiene" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Secret hygiene</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Treat personal API tokens like passwords. Load them from environment variables or a secret manager. Never commit them to source control, never paste them in client-side JavaScript, never ship them in a browser extension you don't control end-to-end.
+      </p>
+    </section>
+
+    <!-- Revocation -->
+    <section id="revocation" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Rotation and revocation</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Tokens do not expire automatically. Revoke a token any time at <a href="<%= settings_api_tokens_url %>" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Settings → API tokens</a> — revocation is immediate; the next request using that token gets a <code class="ic">401 Unauthorized</code>. Rotating a token is three steps: create a new token, swap it into your client, revoke the old one.
+      </p>
+      <aside class="mt-6 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
+        <strong class="font-semibold text-mist-950 dark:text-white">Leak a token?</strong>
+        Revoke it immediately and rotate anything downstream.
+      </aside>
+    </section>
+
+    <!-- Rate limits -->
+    <section id="rate-limits" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Rate limits</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        The only per-user limit today is on episode creation: <code class="ic"><%= ChecksEpisodeRateLimit::HOURLY_LIMIT %></code> episodes per rolling hour. Reads (<code class="ic">GET</code>) are not rate-limited. Per-token quotas are not supported.
+      </p>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        Over-limit responses return <code class="ic">429 Too Many Requests</code> with a JSON error body. <code class="ic">Retry-After</code> and <code class="ic">X-RateLimit-*</code> headers are not emitted yet — back off for ~60 seconds and retry.
+      </p>
+    </section>
+
+    <!-- Error responses -->
+    <section id="errors" class="scroll-mt-8 pt-16">
+      <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Error responses</h2>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        All error responses are JSON and always include an <code class="ic">error</code> field with a human-readable string. Some endpoints add extra fields (<code class="ic">402</code> on <code class="ic">POST /api/v1/episodes</code> includes <code class="ic">upgrade_url</code> and <code class="ic">credits_remaining</code>); those are documented on each endpoint's page.
+      </p>
+      <% error_rows = [
+        { status: "400 / 422", when_text: "Malformed request or invalid parameters",
+          body: %({"error":"…"}).html_safe },
+        { status: "401", when_text: "Missing, malformed, or revoked token",
+          body: %({"error":"Unauthorized"}).html_safe },
+        { status: "402", when_text: "Authenticated but out of episode credits (POST only). Pointer to a human billing page.",
+          body: %({"error":"Payment required","upgrade_url":"…"}).html_safe },
+        { status: "404", when_text: "Resource does not exist, or exists but is owned by another user (existence is not leaked)",
+          body: %({"error":"…"}).html_safe },
+        { status: "429", when_text: "Over the #{ChecksEpisodeRateLimit::HOURLY_LIMIT}/hour episode creation limit",
+          body: %({"error":"You've reached your hourly episode limit"}).html_safe },
+        { status: "5xx", when_text: "Server error; retry with exponential backoff",
+          body: %({"error":"…"}).html_safe }
+      ] %>
+
+      <div class="mt-6 hidden md:block">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-mist-300 dark:border-mist-700">
+              <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">Status</th>
+              <th class="whitespace-nowrap py-3 pr-6 text-left font-medium text-mist-950 dark:text-white">When</th>
+              <th class="py-3 text-left font-medium text-mist-950 dark:text-white">Body</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-mist-200 dark:divide-mist-800">
+            <% error_rows.each do |r| %>
+              <tr>
+                <td class="py-3 pr-6 align-top whitespace-nowrap font-mono font-medium text-mist-950 dark:text-white"><%= r[:status] %></td>
+                <td class="py-3 pr-6 align-top text-mist-700 dark:text-mist-300"><%= r[:when_text] %></td>
+                <td class="py-3 align-top font-mono text-xs text-mist-500 dark:text-mist-400 [overflow-wrap:anywhere]"><%= r[:body] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <ul role="list" class="mt-6 space-y-4 md:hidden">
+        <% error_rows.each do |r| %>
+          <li class="flex flex-col gap-y-2 border-b border-mist-200 pb-4 last:border-b-0 last:pb-0 dark:border-mist-800">
+            <span class="font-mono font-medium text-mist-950 dark:text-white"><%= r[:status] %></span>
+            <p class="text-mist-700 dark:text-mist-300"><%= r[:when_text] %></p>
+            <code class="font-mono text-xs text-mist-500 dark:text-mist-400 [overflow-wrap:anywhere]"><%= r[:body] %></code>
+          </li>
+        <% end %>
+      </ul>
+      <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+        The <code class="ic">402</code> here is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge — it's a pointer to the <code class="ic">/billing</code> upgrade page meant for humans. If you want to pay per request with no account, use the <%= link_to "Machine Payments", docs_mpp_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> endpoints instead.
+      </p>
+    </section>
+
+    <div class="pt-16">
+      <%= link_to docs_episodes_path, class: "inline-flex items-center gap-2 text-sm font-medium text-mist-950 hover:text-mist-700 dark:text-white dark:hover:text-mist-300" do %>
+        Next: Episodes endpoint →
+      <% end %>
+    </div>
+    </div>
+
+    <!-- Right-rail TOC -->
+    <nav aria-label="On this page" class="hidden xl:block">
+      <div class="sticky top-24 py-8">
+        <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
+        <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+          <% [
+            ["#quickstart", "Quick start"],
+            ["#permissions", "Permissions"],
+            ["#format", "Token format"],
+            ["#using", "Using a token"],
+            ["#hygiene", "Secret hygiene"],
+            ["#revocation", "Rotation and revocation"],
+            ["#rate-limits", "Rate limits"],
+            ["#errors", "Error responses"]
+          ].each do |href, label| %>
+            <li>
+              <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
+                <%= label %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>

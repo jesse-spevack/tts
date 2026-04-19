@@ -1,15 +1,13 @@
 module Api
   module V1
     class EpisodesController < BaseController
-      include MppPayable
-
       before_action :check_episode_creation_permission, only: [ :create ]
       before_action :check_episode_rate_limit, only: [ :create ]
 
       def index
         episodes = current_user.episodes.newest_first
-        page = (params[:page] || 1).to_i
-        limit = [ (params[:limit] || AppConfig::Api::DEFAULT_PER_PAGE).to_i, AppConfig::Api::MAX_PER_PAGE ].min
+        page = [ (params[:page] || 1).to_i, 1 ].max
+        limit = [ [ (params[:limit] || AppConfig::Api::DEFAULT_PER_PAGE).to_i, 1 ].max, AppConfig::Api::MAX_PER_PAGE ].min
 
         total = episodes.count
         episodes = episodes.offset((page - 1) * limit).limit(limit)
@@ -38,8 +36,12 @@ module Api
           create_from_text(podcast)
         when "extension"
           create_from_extension(podcast)
-        else
+        when "file", "email"
+          return render json: { error: "source_type '#{episode_params[:source_type]}' is read-only and cannot be submitted via this API. Use 'url', 'text', or 'extension'." }, status: :unprocessable_entity
+        when nil, ""
           return render json: { error: "source_type is required. Use 'url', 'text', or 'extension'." }, status: :unprocessable_entity
+        else
+          return render json: { error: "source_type must be 'url', 'text', or 'extension'." }, status: :unprocessable_entity
         end
 
         if result.success?
@@ -105,17 +107,28 @@ module Api
           status: episode.status,
           source_type: episode.source_type,
           source_url: episode.source_url,
+          audio_url: episode.audio_url,
           duration_seconds: episode.duration_seconds,
           error_message: episode.error_message,
           created_at: episode.created_at.iso8601
         }
       end
 
+      # Free-tier users out of credits get a 402 pointing at the billing
+      # upgrade URL. This is Path 1 (bearer-authenticated + credits) only —
+      # MPP pay-to-create lives on /api/v1/mpp/episodes. No WWW-Authenticate
+      # header and no MPP challenge are returned here; clients that want to
+      # pay-per-episode must use the /mpp/* endpoints.
       def check_episode_creation_permission
         result = ChecksEpisodeCreationPermission.call(user: current_user)
         return if result.success?
 
-        render json: { error: "Episode limit reached. Please upgrade your plan." }, status: :forbidden
+        render json: {
+          error: "Payment required",
+          credits_remaining: 0,
+          subscription_active: current_user.premium?,
+          upgrade_url: "#{AppConfig::Domain::BASE_URL}/billing"
+        }, status: :payment_required
       end
 
       def check_episode_rate_limit

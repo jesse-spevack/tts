@@ -105,7 +105,6 @@ class AppConfig
   module Credits
     PACK_SIZE = 5
     PACK_PRICE_DISPLAY = "$4.99"
-    PER_EPISODE_DISPLAY = "$1.00"
   end
 
   module Extension
@@ -120,10 +119,6 @@ class AppConfig
     # See agent-team-0g5 for the full cost model.
     PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
     PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
-    # Legacy flat price — retained for any call site not yet migrated to
-    # per-tier pricing. Removed once agent-team-nkz.4 (tier-aware challenge
-    # generation) lands and all call sites use Voice#price_cents instead.
-    PRICE_CENTS = ENV.fetch("MPP_PRICE_CENTS", 100).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
