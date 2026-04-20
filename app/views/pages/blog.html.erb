@@ -1,0 +1,82 @@
+<% content_for :title, "Writing — PodRead" %>
+<% content_for :head do %>
+  <meta name="description" content="Essays on PodRead, AI tooling, and what we're building — narrated with PodRead.">
+<% end %>
+
+<%# ===== Navbar ===== %>
+<%= render "shared/marketing/navbar_centered_links",
+  links: [
+    { label: "How it works", href: root_path + "#features" },
+    { label: "Pricing", href: root_path + "#pricing" },
+    { label: "Docs", href: docs_authentication_path },
+    { label: "Blog", href: blog_path },
+    { label: "About", href: about_path },
+  ],
+  actions: safe_join([
+    link_to("Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white"),
+    tag.button("Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200")
+  ], "\n    ") %>
+
+<%# ===== Hero ===== %>
+<section class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col items-start gap-6">
+    <div class="text-sm/7 font-semibold text-mist-700 dark:text-mist-400">
+      From the PodRead team
+    </div>
+    <h1 class="font-display text-5xl/12 tracking-tight text-balance sm:text-[4rem]/16 text-mist-950 dark:text-white max-w-4xl">
+      Writing from PodRead.
+    </h1>
+    <p class="text-lg/8 text-mist-700 dark:text-mist-400 max-w-3xl text-pretty">
+      Essays on how we built PodRead, new features, and the ways people use it. Every post is also a PodRead episode — because that's the whole point.
+    </p>
+    <%= tag.button "Create your first episode",
+          type: "button",
+          data: { action: "click->signup-modal#open", plan: "free" },
+          class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-5 py-2.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+  </div>
+</section>
+
+<%# ===== Posts grid ===== %>
+<section class="pb-24">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <%= render partial: "blog_post_card", collection: @posts, as: :post %>
+    </div>
+  </div>
+</section>
+
+<%# ===== Footer ===== %>
+<%= render "shared/marketing/footer_categories",
+  categories: [
+    {
+      title: "Product",
+      links: [
+        { label: "Home", href: root_path },
+        { label: "Pricing", href: root_path + "#pricing" },
+        { label: "How it sounds", href: how_it_sounds_path },
+      ]
+    },
+    {
+      title: "About",
+      links: [
+        { label: "Our story", href: about_path },
+        { label: "Blog", href: blog_path },
+      ]
+    },
+    {
+      title: "Connect",
+      links: [
+        { label: "Twitter", href: "https://x.com/pod_read" },
+        { label: "GitHub", href: "https://github.com/jesse-spevack/tts/blob/main/LICENSE.md" },
+        { label: "Essays", href: "https://verynormal.info" },
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy Policy", href: privacy_path },
+        { label: "Terms of Service", href: terms_path },
+      ]
+    },
+  ],
+  fineprint: "PodRead is built by Jesse Spevack in Denver, CO. © #{Date.today.year} PodRead. All rights reserved." %>
