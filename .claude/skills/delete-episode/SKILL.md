@@ -22,7 +22,7 @@ From a Hub Episode record:
 ## GCS Structure
 
 ```
-gs://verynormal-tts-podcast/podcasts/{podcast_id}/
+gs://podread/podcasts/{podcast_id}/
 ├── episodes/{gcs_episode_id}.mp3
 ├── manifest.json
 └── feed.xml
