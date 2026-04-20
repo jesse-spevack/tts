@@ -61,6 +61,9 @@ namespace :code_quality do
   #     reimplementing update!(deleted_at: ...) inline.
   # Baseline drops to 0 — every finding is either gone or documented in
   # .debride_whitelist. Future new dead code will fail CI immediately.
+  # Settings::AccountDeletionsController#new/#create (added in this branch)
+  # are covered by the categorical controller-action whitelist, so no
+  # ratchet adjustment is needed.
   # Count includes both unused methods and unused constants.
   debride_baseline = 0
 

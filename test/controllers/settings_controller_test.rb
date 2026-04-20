@@ -499,23 +499,14 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#demo']", count: 0
   end
 
-  # --- Account section (kyb-c: agent-team-vm6) ---
-  #
-  # New <section id="account"> at the bottom of /settings with a read-only
-  # email display and a danger-zone Delete account button. Posts to
-  # DELETE /settings/account via button_to with turbo_confirm.
-
-  test "settings page renders Account section with email and Delete account button" do
+  test "settings page renders Account section with email and Delete account link" do
     get settings_path
 
     assert_response :success
     assert_select "section#account" do
       assert_select "h2", text: "Account"
       assert_select "*", text: /#{Regexp.escape(@user.email_address)}/
-      assert_select "form[action=?][method=?]", settings_account_path, "post" do
-        assert_select "input[name=_method][value=delete]"
-        assert_select "button[data-turbo-confirm]", text: "Delete account"
-      end
+      assert_select "a[href=?]", new_settings_account_deletion_path, text: "Delete account"
     end
   end
 end
