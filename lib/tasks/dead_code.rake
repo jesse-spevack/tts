@@ -42,8 +42,17 @@ namespace :code_quality do
   # perform MPP additions (Api::V1::NarrationsController#show, DocsController#mpp,
   # Settings::ApiTokensController#index, Settings::ApiTokensController#reveal)
   # remain as controller-action false positives.
+  # Updated 2026-04-19 (-47) for Phase 1 of epic agent-team-551: whitelisted
+  # framework-dispatched method names that `debride --rails` can't trace.
+  # Three new sections added to .debride_whitelist:
+  #   1. Controller actions reached via routes.rb (show, index, new, and 20
+  #      named actions like home / marketing_home / inbound / stripe / etc.).
+  #   2. ActionCable hooks (connect, subscribed).
+  #   3. ActionMailbox dispatch (process).
+  # Remaining 10 findings are Category D candidates for Phase 2 triage
+  # (agent-team-qzi) — each needs individual investigation.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 57
+  debride_baseline = 10
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do

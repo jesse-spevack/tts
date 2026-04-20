@@ -30,3 +30,52 @@ narration
 # perform_later enqueues the job. debride can't trace the dispatch.
 # ---------------------------------------------------------------------------
 perform
+
+# ---------------------------------------------------------------------------
+# Controller actions dispatched via routes.rb.
+#
+# `debride --rails` uses naming heuristics (it does not parse routes.rb),
+# so it misses many real endpoints. These are live actions invoked by the
+# Rails router. Each name below is present in routes.rb.
+#
+# NOTE: debride whitelist entries match by bare method name (no class
+# qualifier), so `show` silences every `#show` in the codebase. That is the
+# desired behavior for Rails-convention action names — Phase 2 of the
+# dead-code triage is the narrower per-method investigation.
+# ---------------------------------------------------------------------------
+show
+index
+new
+determine_layout
+home
+marketing_home
+add_rss_feed
+extension_help
+cli_help
+claude_code_help
+claude_help
+chatgpt_help
+post_login_path
+icons
+handle
+create_user
+magic_link_token
+inbound
+stripe
+oauth_authorization_server
+oauth_protected_resource
+authentication
+mpp
+
+# ---------------------------------------------------------------------------
+# Rails framework dispatch hooks (ActionCable, ActionMailbox).
+#
+# - ApplicationCable::Connection#connect — invoked by the Rack cable mount
+#   when a WebSocket client opens a connection.
+# - Channel#subscribed — invoked when a client subscribes to a channel.
+# - ActionMailbox::Base#process — invoked by the mailbox router when an
+#   inbound email matches a routing rule.
+# ---------------------------------------------------------------------------
+connect
+subscribed
+process
