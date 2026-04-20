@@ -49,10 +49,20 @@ namespace :code_quality do
   #      named actions like home / marketing_home / inbound / stripe / etc.).
   #   2. ActionCable hooks (connect, subscribed).
   #   3. ActionMailbox dispatch (process).
-  # Remaining 10 findings are Category D candidates for Phase 2 triage
-  # (agent-team-qzi) — each needs individual investigation.
+  # Updated 2026-04-19 (-10) for Phase 2 of epic agent-team-551: per-finding
+  # triage of the remaining ten candidates. Outcomes:
+  #   - Whitelisted (6): llm_usage (has_one reader), redirect_to_last_page
+  #     (rescue_from symbol dispatch), scoped_path / file_path / local_path
+  #     (private implicit-self calls debride's AST treats as local vars).
+  #   - Deleted (3): AppConfig::Tiers.character_limit_for (no callers),
+  #     CreditBalance#sufficient? (no callers), Api::V1::BaseController
+  #     @current_api_token assignment + attr_reader (set but never read).
+  #   - Wired (1): DeletesEpisode now calls Episode#soft_delete! instead of
+  #     reimplementing update!(deleted_at: ...) inline.
+  # Baseline drops to 0 — every finding is either gone or documented in
+  # .debride_whitelist. Future new dead code will fail CI immediately.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 10
+  debride_baseline = 0
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
