@@ -695,6 +695,24 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to episodes_path
   end
 
+  test "URL submission does not write a CreditTransaction at controller time" do
+    # URL pricing defers to ProcessesUrlEpisode because the article's
+    # real length isn't known until fetch + extract. The controller's
+    # only job here is the minimum balance gate.
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    sign_in_as credit_user
+
+    assert_difference -> { Episode.count }, 1 do
+      assert_no_difference -> { CreditTransaction.count } do
+        post episodes_url, params: { url: "https://example.com/article" }
+      end
+    end
+
+    assert_redirected_to episodes_path
+    assert_equal 3, credit_user.reload.credits_remaining
+  end
+
   test "subscriber with zero credits is gated (premium subscription bypass removed)" do
     # Regression guard: subscribers whose credit_user? returns false (due
     # to premium? short-circuit) must still be gated. Only complimentary

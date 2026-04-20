@@ -141,8 +141,13 @@ module Api
         render json: { error: result.error }, status: :too_many_requests
       end
 
+      # URL submissions defer the debit to ProcessesUrlEpisode — the
+      # article's real character count isn't known until after fetch and
+      # extraction, so pricing must wait. Text/extension submissions stay
+      # sync because the content is already in the request.
       def deduct_credit_if_needed(episode)
         return if current_user.complimentary? || current_user.unlimited?
+        return if episode.url?
 
         DeductsCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
       end

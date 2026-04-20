@@ -703,6 +703,26 @@ module Api
         assert_equal 3, credit_user.reload.credits_remaining
       end
 
+      test "create with source_type url does not write a CreditTransaction at controller time" do
+        # URL pricing defers to ProcessesUrlEpisode because the article's
+        # real length isn't known until fetch + extract.
+        credit_user = users(:credit_user)
+        CreditBalance.for(credit_user).update!(balance: 3)
+        token = GeneratesApiToken.call(user: credit_user)
+
+        assert_difference -> { Episode.count }, 1 do
+          assert_no_difference -> { CreditTransaction.count } do
+            post api_v1_episodes_path,
+              params: { source_type: "url", url: "https://example.com/article" },
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
+        end
+
+        assert_response :created
+        assert_equal 3, credit_user.reload.credits_remaining
+      end
+
       # === DESTROY ===
 
       test "destroy returns 401 without token" do

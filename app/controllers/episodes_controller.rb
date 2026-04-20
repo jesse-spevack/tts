@@ -99,8 +99,13 @@ class EpisodesController < ApplicationController
     end
   end
 
+  # URL submissions defer the debit to ProcessesUrlEpisode — the article's
+  # real character count isn't known until after fetch+extract, so pricing
+  # must wait. Paste and file stay sync here because their text is already
+  # in the params.
   def deduct_credit_if_needed(episode)
     return if Current.user.complimentary? || Current.user.unlimited?
+    return if episode.url?
 
     DeductsCredit.call(user: Current.user, episode: episode, cost_in_credits: anticipated_cost)
   end

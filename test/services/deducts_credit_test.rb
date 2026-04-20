@@ -101,4 +101,15 @@ class DeductsCreditTest < ActiveSupport::TestCase
     assert_equal 0, user.reload.credits_remaining
     verify { SendsCreditDepletedNudge.call(user: user) }
   end
+
+  test "sets :insufficient_credits code on failure when balance is short" do
+    user = users(:credit_user)
+    CreditBalance.for(user).update!(balance: 1)
+    episode = episodes(:one)
+
+    result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: 2)
+
+    assert result.failure?
+    assert_equal :insufficient_credits, result.code
+  end
 end

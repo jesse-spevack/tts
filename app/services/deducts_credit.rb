@@ -13,7 +13,7 @@ class DeductsCredit
 
   def call
     balance = CreditBalance.for(user)
-    return Result.failure("No credits available") if balance.balance < cost_in_credits
+    return Result.failure("No credits available", code: :insufficient_credits) if balance.balance < cost_in_credits
 
     balance.deduct!(cost_in_credits)
 
@@ -28,6 +28,8 @@ class DeductsCredit
     SendsCreditDepletedNudge.call(user: user) if balance.balance.zero?
 
     Result.success(balance)
+  rescue CreditBalance::InsufficientCreditsError
+    Result.failure("No credits available", code: :insufficient_credits)
   end
 
   private

@@ -32,9 +32,13 @@ module McpToolHelpers
     nil
   end
 
+  # URL episodes defer the debit to ProcessesUrlEpisode — the article
+  # length isn't known at MCP-tool-submit time. Text episodes debit now,
+  # since the text is already in the tool arguments.
   def record_successful_creation(user:, episode:)
     RecordsEpisodeUsage.call(user: user)
     return if user.complimentary? || user.unlimited?
+    return if episode.url?
 
     cost = CalculatesEpisodeCreditCost.call(
       source_text_length: episode.source_text.to_s.length,

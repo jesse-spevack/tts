@@ -19,6 +19,7 @@ class ProcessesUrlEpisode
     episode.update!(status: :preparing)
     fetch_and_extract
     check_character_limit
+    deduct_credit
     process_with_llm
     update_and_enqueue
 
@@ -56,6 +57,31 @@ class ProcessesUrlEpisode
       limit: user.character_limit
 
     raise EpisodeErrorHandling::ProcessingError, result.error
+  end
+
+  # URL credit debit runs here rather than at controller-submit time,
+  # because the article length isn't known until after FetchesUrl +
+  # ExtractsArticle. Without this the controller would uniformly debit
+  # 1 credit, under-charging Premium voice + >20k articles.
+  def deduct_credit
+    return if user.complimentary? || user.unlimited?
+
+    cost = CalculatesEpisodeCreditCost.call(
+      source_text_length: @extract_result.data.character_count,
+      voice: Voice.find(user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
+    )
+
+    result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost)
+    return if result.success?
+
+    log_warn "insufficient_credits_for_url_episode",
+      cost: cost,
+      balance: user.credits_remaining
+
+    raise EpisodeErrorHandling::ProcessingError,
+      "Insufficient credits: this article needs #{cost} #{'credit'.pluralize(cost)} " \
+      "but you have #{user.credits_remaining}. Buy more at " \
+      "#{AppConfig::Domain::BASE_URL}/billing"
   end
 
   def process_with_llm
