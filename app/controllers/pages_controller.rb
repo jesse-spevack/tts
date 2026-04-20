@@ -2,7 +2,7 @@ class PagesController < ApplicationController
   include Trackable
   allow_unauthenticated_access
 
-  layout "marketing", only: %i[home marketing_home terms privacy about]
+  layout "marketing", only: %i[home marketing_home terms privacy about blog]
 
   def home
     return redirect_to new_episode_path if authenticated?
@@ -42,6 +42,10 @@ class PagesController < ApplicationController
   end
 
   def about
+  end
+
+  def blog
+    @posts = BlogPost.all
   end
 
   private

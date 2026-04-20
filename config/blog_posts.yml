@@ -1,0 +1,38 @@
+# Curated PodRead-themed posts from verynormal.info.
+# Rendered on /blog. Add entries as new PodRead posts are published.
+
+- title: "Pay per narration"
+  url: "https://verynormal.info/pay-per-narration/"
+  published_on: 2026-04-19
+  excerpt: "PodRead offers the first text to speech API that supports the Machine Payments Protocol (MPP)."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/04/jessespevack_A_simple_robotic_arm_passing_money_to_another_ro_f8a22a8e-6240-4d90-8eda-bfe136f6152a_3.png"
+
+- title: "New: Use PodRead from Claude and ChatGPT"
+  url: "https://verynormal.info/new-use-podread-from-claude/"
+  published_on: 2026-03-30
+  excerpt: "You can now create podcast episodes from inside your AI conversations."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/03/jessespevack_A_simple_robotic_arm_holding_operating_a_mechani_5b6c15b2-3b6d-457c-aae0-0a2ed53666bf_1.png"
+
+- title: "New: Credit Packs and Upgraded Voices"
+  url: "https://verynormal.info/new-credit-packs-and-upgraded-voices/"
+  published_on: 2026-03-16
+  excerpt: "Credit packs let you top up without a subscription — $4.99 for five episodes."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/03/jessespevack_A_simple_robotic_arm_holding_a_feather_duster_cl_8e60bdb2-1f5b-406d-85be-746cf95198ea_2.png"
+
+- title: "PodRead Killer Usecase"
+  url: "https://verynormal.info/podread-killer-usecase/"
+  published_on: 2026-02-21
+  excerpt: "I've been using PodRead daily for a few months to turn blog posts into audio episodes in my personal podcast feed — here's the use case worth sharing."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/02/jessespevack_A_simple_robotic_arm_pusing_a_journal_into_a_rad_049614cc-f479-492a-8f77-c9a9824fb917_1.png"
+
+- title: "Very Normal TTS is now PodRead"
+  url: "https://verynormal.info/very-normal-tts-is-now-podread/"
+  published_on: 2026-02-11
+  excerpt: "Very Normal TTS is now PodRead, and lives at https://podread.app."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/02/jessespevack_A_simple_robotic_arm_pusing_a_journal_into_a_rad_5f9fa886-0eb2-409b-aee5-a1fea557356e_3.png"
+
+- title: "Choose your voice"
+  url: "https://verynormal.info/choose-your-voice/"
+  published_on: 2025-12-07
+  excerpt: "Give PodRead a URL or upload a file; it converts the text to audio and drops it into your personal podcast feed — ready to listen in whatever app you already use."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2025/12/jessespevack_A_1940s_commercial_radio_receiver_--ar_169_--v_7_5dbde312-819b-424d-a4e3-17acf74fde90_3.png"

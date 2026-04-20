@@ -1,0 +1,27 @@
+<%# Locals:
+  post - a BlogPost::Entry
+%>
+<a href="<%= post.url %>"
+   target="_blank"
+   rel="noopener"
+   class="group flex flex-col overflow-hidden rounded-xl bg-white outline -outline-offset-1 outline-black/5 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white/5 dark:outline-white/10">
+  <%= image_tag post.cover_image_url,
+        alt: "",
+        loading: "lazy",
+        class: "aspect-[16/9] w-full object-cover" %>
+  <div class="flex flex-1 flex-col gap-3 p-6">
+    <div class="text-xs/5 font-medium text-mist-600 dark:text-mist-500">
+      <time datetime="<%= post.published_on.iso8601 %>">
+        <%= post.published_on.strftime("%b %-d, %Y") %>
+      </time>
+    </div>
+    <h2 class="text-lg/7 font-semibold text-balance text-mist-950 group-hover:underline dark:text-white">
+      <%= post.title %>
+    </h2>
+    <% if post.excerpt.present? %>
+      <p class="line-clamp-3 text-sm/6 text-mist-700 dark:text-mist-400">
+        <%= post.excerpt %>
+      </p>
+    <% end %>
+  </div>
+</a>

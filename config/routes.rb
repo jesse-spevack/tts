@@ -40,6 +40,7 @@ Rails.application.routes.draw do
   get "terms", to: "pages#terms"
   get "privacy", to: "pages#privacy"
   get "about" => "pages#about", as: :about
+  get "blog", to: "pages#blog", as: :blog
   get "how-it-sounds", to: "pages#how_it_sounds"
   get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
   get "help/extension", to: "pages#extension_help", as: :help_extension
