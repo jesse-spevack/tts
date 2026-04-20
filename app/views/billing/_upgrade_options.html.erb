@@ -1,9 +1,0 @@
-<div data-controller="pricing-toggle"
-     data-pricing-toggle-monthly-price-id-value="<%= AppConfig::Stripe::PRICE_ID_MONTHLY %>"
-     data-pricing-toggle-annual-price-id-value="<%= AppConfig::Stripe::PRICE_ID_ANNUAL %>">
-  <div class="mb-6">
-    <%= render "shared/pricing_toggle" %>
-  </div>
-
-  <%= render "shared/premium_card", mode: :billing %>
-</div>

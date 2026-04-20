@@ -1,14 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["dialog", "heading", "subtext", "planField"]
+  static targets = ["dialog", "heading", "subtext", "planField", "packSizeField"]
 
   open(event) {
     event.preventDefault()
-    const { plan, heading, subtext } = event.currentTarget.dataset
+    const { plan, packSize, heading, subtext } = event.currentTarget.dataset
     this.headingTarget.textContent = heading || "Start listening free"
     this.subtextTarget.textContent = subtext || "2 episodes/month, no credit card required"
     this.planFieldTarget.value = plan === "free" ? "" : (plan || "")
+    if (this.hasPackSizeFieldTarget) {
+      this.packSizeFieldTarget.value = packSize || ""
+    }
     this.dialogTarget.showModal()
   }
 

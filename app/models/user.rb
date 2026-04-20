@@ -57,7 +57,7 @@ class User < ApplicationRecord
 
   def character_limit
     return nil if unlimited?
-    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium? || credit_user?
+    return AppConfig::Tiers::EPISODE_CHARACTER_LIMIT if premium? || credit_user?
     AppConfig::Tiers::FREE_CHARACTER_LIMIT
   end
 

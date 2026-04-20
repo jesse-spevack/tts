@@ -9,6 +9,9 @@ class BillingMailer < ApplicationMailer
     )
   end
 
+  # `subscription:` kwarg retained for back-compat with RoutesStripeWebhook,
+  # which still fires this mailer during Jesse's subscription winddown; the
+  # rewritten template no longer branches on @subscription.
   def welcome(user, subscription:)
     @user = user
     @subscription = subscription
@@ -23,12 +26,11 @@ class BillingMailer < ApplicationMailer
 
   def credit_depleted(user)
     @user = user
-    @upgrade_url = upgrade_url
-    @credit_pack_count = user.credit_transactions.where(transaction_type: "purchase").count
+    @billing_url = billing_url
 
     mail(
       to: user.email_address,
-      subject: "Your credits are used up — here's a better deal"
+      subject: "Your credits are used up"
     )
   end
 

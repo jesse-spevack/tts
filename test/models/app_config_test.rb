@@ -7,8 +7,19 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 15_000, AppConfig::Tiers::FREE_CHARACTER_LIMIT
   end
 
-  test "PREMIUM_CHARACTER_LIMIT is 50000" do
-    assert_equal 50_000, AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT
+  # --- iny7 rename: PREMIUM_CHARACTER_LIMIT → EPISODE_CHARACTER_LIMIT ---
+  # Subscription is going away. The 50k cap is no longer "premium"; it's
+  # the universal per-episode cap for every paying user (credit packs and
+  # Jesse's legacy sub alike). Rename reflects that.
+
+  test "EPISODE_CHARACTER_LIMIT is 50000" do
+    assert_equal 50_000, AppConfig::Tiers::EPISODE_CHARACTER_LIMIT
+  end
+
+  test "legacy PREMIUM_CHARACTER_LIMIT constant is removed" do
+    assert_raises(NameError) do
+      AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT
+    end
   end
 
   test "FREE_MONTHLY_EPISODES is 2" do
