@@ -5,6 +5,7 @@ class Episode < ApplicationRecord
   belongs_to :user
   belongs_to :mpp_payment, optional: true
   has_one :llm_usage, dependent: :destroy
+  has_one :tts_usage, as: :usable, dependent: :destroy
 
   delegate :voice, to: :user
 

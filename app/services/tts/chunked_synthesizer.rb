@@ -7,12 +7,19 @@ module Tts
   class ChunkedSynthesizer
     include StructuredLogging
 
+    # Total characters across chunks that successfully returned audio. Set
+    # after #synthesize so the caller can record a TtsUsage row. Excludes
+    # content-filter-skipped chunks (those didn't bill us).
+    attr_reader :billed_characters
+
     def initialize(api_client:, config:)
       @api_client = api_client
       @config = config
+      @billed_characters = 0
     end
 
     def synthesize(chunks, voice)
+      @billed_characters = 0
       return "" if chunks.empty?
 
       log_synthesis_start(chunks)
@@ -23,6 +30,7 @@ module Tts
 
       results = wait_for_completion(promises)
       audio_parts = extract_audio_parts(results)
+      @billed_characters = sum_billed_characters(chunks: chunks, results: results)
 
       cleanup_pool(pool)
       log_synthesis_complete(chunks: chunks, audio_parts: audio_parts, start_time: start_time)
@@ -103,6 +111,11 @@ module Tts
         .sort_by { |idx, _| idx }
         .map { |_, audio| audio }
         .compact
+    end
+
+    def sum_billed_characters(chunks:, results:)
+      successful_indexes = results.compact.select { |_idx, audio| audio }.map { |idx, _| idx }
+      successful_indexes.sum { |idx| chunks[idx].length }
     end
 
     def cleanup_pool(pool)

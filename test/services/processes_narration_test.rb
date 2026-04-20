@@ -201,6 +201,67 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
     assert_match %r{episodes/.*\.mp3}, upload_calls.first.args.last || upload_calls.first.kwargs[:remote_path]
   end
 
+  # --- TtsUsage recording (agent-team-ff05) ---
+
+  test "records a TtsUsage row with source=actual after successful narration synthesis" do
+    stub_successful_fetch
+    stub_successful_llm
+    stub_successful_audio_synthesis(billed_characters: 4_200)
+    stub_cloud_storage
+
+    assert_difference -> { TtsUsage.count }, 1 do
+      ProcessesNarration.call(narration: @narration)
+    end
+
+    usage = @narration.reload.tts_usage
+    assert_not_nil usage
+    assert_equal "actual", usage.source
+    assert_equal @narration.voice, usage.voice_id
+    # narration fixture voice is en-GB-Standard-D → standard tier
+    assert_equal "standard", usage.voice_tier
+    assert_equal 4_200, usage.character_count
+    # 4200 * 400 / 1_000_000 = 1.68 → ceil → 2
+    assert_equal 2, usage.cost_cents
+  end
+
+  test "TtsUsage character_count matches billed count, NOT source_text.length" do
+    text_narration = Narration.create!(
+      mpp_payment: MppPayment.create!(amount_cents: 100, currency: "usd", status: :completed, user: users(:one)),
+      title: "Text Narration",
+      source_type: :text,
+      source_text: "Short source.", # 13 chars
+      voice: "en-GB-Chirp3-HD-Enceladus",
+      expires_at: 24.hours.from_now
+    )
+
+    stub_successful_llm
+    stub_successful_audio_synthesis(billed_characters: 777)
+    stub_cloud_storage
+
+    ProcessesNarration.call(narration: text_narration)
+
+    usage = text_narration.reload.tts_usage
+    assert_equal 777, usage.character_count
+    assert_not_equal text_narration.source_text.length, usage.character_count
+    assert_equal "premium", usage.voice_tier
+  end
+
+  test "does not create a TtsUsage row when synthesis fails" do
+    stub_successful_fetch
+    stub_successful_llm
+
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_no_difference -> { TtsUsage.count } do
+      ProcessesNarration.call(narration: @narration)
+    end
+
+    @narration.reload
+    assert_equal "failed", @narration.status
+  end
+
   test "cleans up orphaned audio when update fails after upload" do
     stub_successful_fetch
     stub_successful_llm
@@ -245,9 +306,10 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
     stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { mock_llm_result }
   end
 
-  def stub_successful_audio_synthesis
+  def stub_successful_audio_synthesis(billed_characters: 0)
     mock_synthesizer = Mocktail.of(SynthesizesAudio)
     stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { "fake audio content" }
+    stubs { mock_synthesizer.last_billed_characters }.with { billed_characters }
     stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
   end
 

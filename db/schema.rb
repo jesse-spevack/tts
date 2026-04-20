@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_19_231951) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_20_052300) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -310,6 +310,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_231951) do
     t.index ["current_period_end"], name: "index_subscriptions_on_current_period_end"
     t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
     t.index ["user_id"], name: "index_subscriptions_on_user_id", unique: true
+  end
+
+  create_table "tts_usages", force: :cascade do |t|
+    t.integer "character_count", null: false
+    t.integer "cost_cents", null: false
+    t.datetime "created_at", null: false
+    t.string "provider", null: false
+    t.string "source", default: "actual", null: false
+    t.datetime "updated_at", null: false
+    t.integer "usable_id", null: false
+    t.string "usable_type", null: false
+    t.string "voice_id", null: false
+    t.string "voice_tier", null: false
+    t.index ["usable_type", "usable_id"], name: "index_tts_usages_on_usable", unique: true
   end
 
   create_table "users", force: :cascade do |t|

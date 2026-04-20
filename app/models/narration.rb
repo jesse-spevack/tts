@@ -4,6 +4,7 @@ class Narration < ApplicationRecord
   has_prefix_id :nar
 
   belongs_to :mpp_payment
+  has_one :tts_usage, as: :usable, dependent: :destroy
 
   enum :source_type, { url: 0, text: 1 }
   enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }

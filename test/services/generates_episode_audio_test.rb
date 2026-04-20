@@ -149,4 +149,79 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     @episode.reload
     assert_equal "complete", @episode.status
   end
+
+  # --- TtsUsage recording (agent-team-ff05) ---
+
+  test "records a TtsUsage row with source=actual after successful synthesis" do
+    mock_synthesizer = stub_synthesizer(audio: "fake audio content", billed_characters: 1_200)
+    _ = mock_synthesizer
+    stub_gcs
+
+    assert_difference -> { TtsUsage.count }, 1 do
+      GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+    end
+
+    usage = @episode.reload.tts_usage
+    assert_not_nil usage
+    assert_equal "actual", usage.source
+    assert_equal "google", usage.provider
+  end
+
+  test "TtsUsage character_count reflects billed count, NOT source_text.length" do
+    # source_text is "Hello, this is a test episode." (30 chars).
+    # The synthesizer reports that Google billed us for 999 characters
+    # (e.g. due to wrapping/normalization). Usage must record 999.
+    assert_equal 30, @episode.source_text.length
+
+    stub_synthesizer(audio: "fake audio", billed_characters: 999)
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    usage = @episode.reload.tts_usage
+    assert_equal 999, usage.character_count
+    assert_not_equal @episode.source_text.length, usage.character_count
+  end
+
+  test "does not create a TtsUsage row when synthesis fails" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_no_difference -> { TtsUsage.count } do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+  end
+
+  test "cost_cents is computed from tier + character_count" do
+    # Episode voice is Standard (derived from user fixture). Synthesizer reports
+    # 2501 billed chars → ceil(2501 * 400 / 1_000_000) = 2 cents.
+    stub_synthesizer(audio: "fake audio", billed_characters: 2_501)
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    usage = @episode.reload.tts_usage
+    assert_equal 2, usage.cost_cents
+  end
+
+  private
+
+  def stub_synthesizer(audio:, billed_characters:)
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { audio }
+    stubs { mock_synthesizer.last_billed_characters }.with { billed_characters }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+    mock_synthesizer
+  end
+
+  def stub_gcs
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs
+  end
 end

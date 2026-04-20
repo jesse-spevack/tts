@@ -137,6 +137,25 @@ class AppConfig
     CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/podread-extension/icgbgfaelfomnobbkecaegeecjpdcdhd"
   end
 
+  module Tts
+    # Google Cloud TTS COGS per million input characters, in whole cents.
+    # Standard voices: $4/M chars → 400¢/M → 0.4¢ per 1000 chars.
+    # Chirp3-HD (premium) voices: $30/M chars → 3000¢/M → 3.0¢ per 1000 chars.
+    # See agent-team-ff05 for where these feed cost tracking.
+    COST_CENTS_PER_MILLION = {
+      "standard" => 400,
+      "premium" => 3_000
+    }.freeze
+
+    # Voice IDs containing this substring are Google's premium Chirp3-HD tier.
+    PREMIUM_VOICE_PATTERN = /Chirp3-HD/i
+
+    def self.tier_for(google_voice_id)
+      return "premium" if google_voice_id.to_s.match?(PREMIUM_VOICE_PATTERN)
+      "standard"
+    end
+  end
+
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
     # Tiered per-narration pricing. Standard voices use Google TTS Standard
