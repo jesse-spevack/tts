@@ -25,7 +25,7 @@
     data: { action: "click->sample-modal#open" }),
   headline: "Turn any article into a podcast episode.",
   subheadline: tag.p("Paste a URL, upload a file, or drop in text. PodRead converts it to audio and delivers it to your private podcast feed. Listen in any podcast app."),
-  cta: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-white text-mist-950 hover:bg-mist-200"),
+  cta: render("shared/marketing/cta_button", label: "Create my feed", plan: "free", class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-white text-mist-950 hover:bg-mist-200"),
   demo: render("pages/hero_demo"),
   wallpaper_color: "blue" %>
 
@@ -169,7 +169,7 @@
           "2 episodes per month",
           "Up to 15,000 characters",
         ],
-        cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
+        cta_html: render("shared/marketing/cta_button", label: "Create my feed", plan: "free", class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
 
       <% AppConfig::Credits::PACKS.each do |pack| %>
         <% dollars = format("%.2f", pack[:price_cents] / 100.0) %>
@@ -187,19 +187,25 @@
             "All voices available",
             "No recurring charges",
           ],
-          cta_html: tag.button("Buy #{pack[:label]}", type: "button", data: { action: "click->signup-modal#open", plan: "credit_pack", pack_size: pack[:size] }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 #{is_best ? 'bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200' : 'bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15'}") %>
+          cta_html: render("shared/marketing/cta_button", label: "Buy #{pack[:label]}", plan: "credit_pack", pack_size: pack[:size], class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 #{is_best ? 'bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200' : 'bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15'}") %>
       <% end %>
     </div>
   </div>
 </section>
 
 <%# ===== Call to Action ===== %>
+<% final_cta_classes = "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+<% final_cta = if authenticated?
+     link_to("Start listening free", new_episode_path, class: final_cta_classes)
+   else
+     tag.button("Start listening free", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: final_cta_classes)
+   end %>
 <%= render "shared/marketing/cta_simple",
   headline: "Your reading list isn't going to listen to itself.",
   subheadline: tag.p("Start converting articles into podcast episodes today. Free to try, no credit card required."),
   cta: tag.div(class: "flex items-center gap-4") do
     safe_join([
-      tag.button("Start listening free", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200"),
+      final_cta,
       link_to("#features", class: "inline-flex items-center gap-2 text-sm/7 font-medium text-mist-950 dark:text-white") do
         safe_join(["See how it works ", tag.svg(tag.path(d: "M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z", fill_rule: "evenodd", clip_rule: "evenodd"), width: "5", height: "8", viewBox: "0 0 5 8", fill: "currentColor", class: "inline-block shrink-0")])
       end
