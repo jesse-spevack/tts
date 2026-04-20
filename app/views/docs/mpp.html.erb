@@ -97,13 +97,13 @@
             npx mppx account create
 
             # Fund the wallet with testnet pathUSD
-            npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
+            npx mppx account fund --rpc-url https://rpc.moderato.tempo.xyz
 
             # Create a narration — mppx handles the 402 flow automatically
             npx mppx http://your-podread-host/api/v1/mpp/narrations \\
               -X POST -H "Content-Type: application/json" \\
               -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
-              --rpc-url https://rpc.testnet.tempo.xyz
+              --rpc-url https://rpc.moderato.tempo.xyz
           BASH
           ) %></code></pre>
         </figure>

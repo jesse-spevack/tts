@@ -24,7 +24,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # MPP-scoped bead edits the file. Last bumped for agent-team-rwzy
   # (MPP USDC swap: user-facing docs page update), replacing the
   # pre-iny7 snapshot.
-  MPP_DOCS_SHA256 = "8d305fcf436af410cb0894bc04131761742067e153efbc5bea7316afc0d54a92"
+  MPP_DOCS_SHA256 = "012147d26d67b508560dc2feadcde19254ce733e10062984e8276ba746174d18"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
