@@ -65,4 +65,18 @@ class AuthenticatesMagicLinkTest < ActiveSupport::TestCase
     assert_not second_result.success?
     assert_nil second_result.data
   end
+
+  test "call with valid token for deactivated user returns failure" do
+    token = GeneratesAuthToken.call(user: @user)
+    @user.update!(active: false)
+
+    result = AuthenticatesMagicLink.call(token: token)
+
+    assert_not result.success?
+    assert_nil result.data
+    # The surviving token stays usable for nothing — but we don't invalidate
+    # it here; InvalidatesAuthToken only runs on the success branch
+    @user.reload
+    assert_not_nil @user.auth_token
+  end
 end

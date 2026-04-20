@@ -347,4 +347,35 @@ class UserTest < ActiveSupport::TestCase
 
     assert_nil user.email_ingest_address
   end
+
+  # active column + deactivation predicate tests
+  test "active defaults to true on create" do
+    user = User.create!(email_address: "active_default@example.com")
+
+    assert user.active?
+  end
+
+  test "active scope returns only active users" do
+    active_user = users(:one)
+    deactivated_user = users(:two)
+    deactivated_user.update!(active: false)
+
+    active_users = User.active
+
+    assert_includes active_users, active_user
+    assert_not_includes active_users, deactivated_user
+  end
+
+  test "deactivated? returns false for active user" do
+    user = users(:one)
+
+    refute user.deactivated?
+  end
+
+  test "deactivated? returns true when active is false" do
+    user = users(:one)
+    user.update!(active: false)
+
+    assert user.deactivated?
+  end
 end

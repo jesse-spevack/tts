@@ -35,8 +35,15 @@ namespace :code_quality do
   # Settings::ApiTokensController#reveal. Both Rails-invoked via routing —
   # same category as existing controller actions already in the baseline
   # (Settings::ExtensionsController#show, SettingsController#show, etc.).
+  # Updated 2026-04-19 after whitelisting `perform` (ActiveJob convention —
+  # the queue executor calls perform after perform_later, invisible to debride).
+  # Retiring the individual ActiveJob#perform ratchet entries above, since
+  # all of them are now covered categorically by the whitelist. The 4 non-
+  # perform MPP additions (Api::V1::NarrationsController#show, DocsController#mpp,
+  # Settings::ApiTokensController#index, Settings::ApiTokensController#reveal)
+  # remain as controller-action false positives.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 66
+  debride_baseline = 57
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do

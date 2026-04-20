@@ -1,5 +1,6 @@
 module Authentication
   extend ActiveSupport::Concern
+  include StructuredLogging
 
   included do
     before_action :require_authentication
@@ -26,7 +27,19 @@ module Authentication
     end
 
     def find_session_by_cookie
-      Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+      return nil unless cookies.signed[:session_id]
+
+      session = Session.find_by(id: cookies.signed[:session_id])
+      return nil unless session
+
+      if session.user&.deactivated?
+        log_info "session_deactivated_user", user_id: session.user_id
+        session.destroy
+        cookies.delete(:session_id)
+        return nil
+      end
+
+      session
     end
 
     def request_authentication

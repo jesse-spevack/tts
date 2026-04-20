@@ -24,7 +24,10 @@ class McpController < ActionController::API
   end
 
   def current_resource_owner
-    @current_resource_owner ||= User.find_by(id: doorkeeper_token.resource_owner_id)
+    return @current_resource_owner if defined?(@current_resource_owner)
+
+    user = User.find_by(id: doorkeeper_token.resource_owner_id)
+    @current_resource_owner = user&.deactivated? ? nil : user
   end
 
   def doorkeeper_authorize!
@@ -39,7 +42,7 @@ class McpController < ActionController::API
     @doorkeeper_token = token
 
     unless current_resource_owner
-      log_warn "mcp_auth_failed", reason: "user_not_found", resource_owner_id: token.resource_owner_id
+      log_warn "mcp_auth_failed", reason: "user_not_found_or_deactivated", resource_owner_id: token.resource_owner_id
       render_unauthorized
       return
     end

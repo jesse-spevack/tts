@@ -299,6 +299,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
 
   create_table "subscriptions", force: :cascade do |t|
     t.datetime "cancel_at"
+    t.datetime "canceled_at"
     t.datetime "created_at", null: false
     t.datetime "current_period_end", null: false
     t.integer "status", default: 0, null: false
@@ -313,6 +314,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
 
   create_table "users", force: :cascade do |t|
     t.integer "account_type", default: 0, null: false
+    t.boolean "active", default: true, null: false
     t.boolean "admin", default: false, null: false
     t.string "auth_token"
     t.datetime "auth_token_expires_at"
@@ -324,6 +326,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.string "stripe_customer_id"
     t.datetime "updated_at", null: false
     t.string "voice_preference"
+    t.index ["active"], name: "index_users_on_active"
     t.index ["auth_token"], name: "index_users_on_auth_token"
     t.index ["auth_token_expires_at"], name: "index_users_on_auth_token_expires_at"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true

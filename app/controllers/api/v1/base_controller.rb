@@ -29,9 +29,15 @@ module Api
         api_token = FindsApiToken.call(plain_token: token)
         return false if api_token.nil?
 
+        user = api_token.user
+        if user.deactivated?
+          log_info "api_token_deactivated_user", user_id: user.id
+          return false
+        end
+
         api_token.update_column(:last_used_at, Time.current)
         @current_api_token = api_token
-        @current_user = api_token.user
+        @current_user = user
         Current.api_token_prefix = api_token.token_prefix
         log_info "api_request_authenticated",
           user_id: api_token.user_id,
@@ -47,8 +53,16 @@ module Api
         return false if doorkeeper_token.revoked?
         return false if doorkeeper_token.expired?
 
-        @current_user = User.find_by(id: doorkeeper_token.resource_owner_id)
-        @current_user.present?
+        user = User.find_by(id: doorkeeper_token.resource_owner_id)
+        return false if user.nil?
+
+        if user.deactivated?
+          log_info "oauth_token_deactivated_user", user_id: user.id
+          return false
+        end
+
+        @current_user = user
+        true
       end
 
       def extract_bearer_token
