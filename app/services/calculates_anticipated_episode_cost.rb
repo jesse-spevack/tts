@@ -20,20 +20,33 @@
 #                                        resolved later in ProcessesUrlEpisode)
 #   anything else                      → 0
 #
+# Callers who already know the content length (e.g. the web cost-preview
+# endpoint, where the client sends `upload_length` pre-computed from
+# `file.size` without uploading the blob) can pass `source_text_length:`
+# directly. When present, it wins over source_type-based extraction.
+#
 # Returns Result.success(Integer) with the 1-or-2 credit cost. Failure only if
 # ResolvesVoice fails, which cannot happen when requested_key is nil (stale
 # preferences silently fall through to the catalog default).
 class CalculatesAnticipatedEpisodeCost
-  def self.call(user:, source_type:, text: nil, url: nil, upload: nil)
-    new(user: user, source_type: source_type, text: text, url: url, upload: upload).call
+  def self.call(user:, source_type:, text: nil, url: nil, upload: nil, source_text_length: nil)
+    new(
+      user: user,
+      source_type: source_type,
+      text: text,
+      url: url,
+      upload: upload,
+      source_text_length: source_text_length
+    ).call
   end
 
-  def initialize(user:, source_type:, text:, url:, upload:)
+  def initialize(user:, source_type:, text:, url:, upload:, source_text_length:)
     @user = user
     @source_type = source_type
     @text = text
     @url = url
     @upload = upload
+    @override_length = source_text_length
   end
 
   def call
@@ -49,9 +62,11 @@ class CalculatesAnticipatedEpisodeCost
 
   private
 
-  attr_reader :user, :source_type, :text, :url, :upload
+  attr_reader :user, :source_type, :text, :url, :upload, :override_length
 
   def source_text_length
+    return override_length.to_i unless override_length.nil?
+
     case source_type.to_s
     when "text", "paste", "extension"
       text.to_s.length

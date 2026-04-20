@@ -735,4 +735,114 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     # permission-gate style). The corresponding API v1 path returns 402.
     assert_response :redirect
   end
+
+  # === New-episode form: credit cost preview UI (agent-team-gq88) ===
+  #
+  # The hardcoded "This episode will use 1 credit" copy is a lie post-cga5
+  # (Premium + >20k = 2 credits). gq88 replaces it with a Stimulus-driven
+  # reactive cost preview. Voice selection is read-only on the form —
+  # users change voice in /settings (locked design decision).
+
+  test "new form for credit user removes hardcoded 1-credit copy" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    credit_user.update!(voice_preference: "callum")
+    sign_in_as credit_user
+
+    get new_episode_url
+
+    assert_response :success
+    assert_not_includes response.body, "This episode will use 1 credit",
+      "Hardcoded 1-credit copy must be removed (incorrect for Premium + >20k)"
+  end
+
+  test "new form for credit user attaches cost_preview Stimulus controller" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    credit_user.update!(voice_preference: "callum")
+    sign_in_as credit_user
+
+    get new_episode_url
+
+    assert_response :success
+    assert_select "[data-controller~='cost-preview']", minimum: 1
+  end
+
+  test "new form for credit user renders a read-only voice badge" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    credit_user.update!(voice_preference: "callum")
+    sign_in_as credit_user
+
+    get new_episode_url
+
+    assert_response :success
+    # Badge shows the user's effective voice name (Callum in this case).
+    assert_match(/Callum/, response.body,
+      "Expected the read-only voice badge to display the user's voice name")
+  end
+
+  test "new form for credit user links to settings voice section" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    credit_user.update!(voice_preference: "felix")
+    sign_in_as credit_user
+
+    get new_episode_url
+
+    assert_response :success
+    # The settings page anchors its voice section at #voice (see
+    # settings/show.html.erb). The "Change in settings" link should
+    # point there so the user can swap voice without inline override.
+    assert_select "a[href=?]", settings_path(anchor: "voice"),
+      text: /Change in settings/i
+  end
+
+  test "new form for credit user includes a cost-preview target div" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    credit_user.update!(voice_preference: "felix")
+    sign_in_as credit_user
+
+    get new_episode_url
+
+    assert_response :success
+    assert_select "[data-cost-preview-target='preview']", minimum: 1
+  end
+
+  test "new form for free tier user does not render cost preview UI" do
+    free = users(:free_user)
+    sign_in_as free
+
+    get new_episode_url
+
+    assert_response :success
+    assert_select "[data-controller~='cost-preview']", count: 0
+    # Existing free-tier quota copy still present (unchanged by gq88).
+    # We don't assert the exact message here — episodes_controller#new
+    # flashes on redirect when over quota; under quota the view renders
+    # without the cost preview block.
+  end
+
+  test "new form for complimentary user does not render cost preview UI" do
+    complimentary = users(:complimentary_user)
+    sign_in_as complimentary
+
+    get new_episode_url
+
+    assert_response :success
+    assert_select "[data-controller~='cost-preview']", count: 0
+    assert_not_includes response.body, "This episode will use 1 credit"
+  end
+
+  test "new form for unlimited user does not render cost preview UI" do
+    unlimited = users(:unlimited_user)
+    sign_in_as unlimited
+
+    get new_episode_url
+
+    assert_response :success
+    assert_select "[data-controller~='cost-preview']", count: 0
+    assert_not_includes response.body, "This episode will use 1 credit"
+  end
 end

@@ -25,5 +25,10 @@ export default class extends Controller {
         panel.classList.add("hidden")
       }
     })
+
+    // Notify other controllers (e.g. cost_preview) that the active tab
+    // changed so they can reset state tied to the previous source type.
+    // Dispatches as `tab-switch:changed` and bubbles through the DOM.
+    this.dispatch("changed", { detail: { selectedTab } })
   }
 }

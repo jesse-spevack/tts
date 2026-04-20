@@ -137,4 +137,44 @@ class CalculatesAnticipatedEpisodeCostTest < ActiveSupport::TestCase
     )
     assert_equal 2, result.data
   end
+
+  # --- source_text_length override -------------------------------------------
+  #
+  # The web cost-preview endpoint (agent-team-gq88) receives upload_length
+  # from the client pre-computed (file.size) rather than an IO-like blob.
+  # Callers can pass source_text_length: directly, bypassing the branching
+  # on source_type. Override wins even when other inputs are present.
+
+  test "source_text_length override wins for upload source_type" do
+    @user.update!(voice_preference: "callum") # Premium
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "upload",
+      source_text_length: 25_000
+    )
+    assert result.success?
+    # Premium + >20k → 2 credits
+    assert_equal 2, result.data
+  end
+
+  test "source_text_length override wins over text content for paste" do
+    @user.update!(voice_preference: "callum") # Premium
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "paste",
+      text: "a" * 100, # ignored
+      source_text_length: 25_000
+    )
+    assert_equal 2, result.data
+  end
+
+  test "source_text_length override below 20k with Premium → 1 credit" do
+    @user.update!(voice_preference: "callum")
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "upload",
+      source_text_length: 10_000
+    )
+    assert_equal 1, result.data
+  end
 end
