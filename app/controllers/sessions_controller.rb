@@ -50,15 +50,6 @@ class SessionsController < ApplicationController
   end
 
   def post_login_path(plan)
-    case plan
-    when "premium_monthly"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
-    when "premium_annual"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
-    when "credit_pack"
-      checkout_path(pack_size: AppConfig::Credits::PACKS.first[:size])
-    else
-      after_authentication_url
-    end
+    ResolvesPostLoginDestination.call(plan: plan) || after_authentication_url
   end
 end
