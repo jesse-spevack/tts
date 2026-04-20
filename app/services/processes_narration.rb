@@ -172,7 +172,16 @@ class ProcessesNarration
       character_count: billed
     )
   rescue StandardError => e
-    log_warn "narration_tts_usage_record_failed", error: e.class, message: e.message
+    # Usage tracking is best-effort — never let accounting break audio generation.
+    # Log at error level with enough context to reconstruct the missed row.
+    log_error "narration_tts_usage_record_failed",
+              usable_type: narration.class.name,
+              usable_id: narration.id,
+              voice_id: narration.voice,
+              character_count: billed,
+              error: e.class,
+              message: e.message,
+              exception: e
   end
 
   def generate_episode_id

@@ -323,7 +323,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_20_052300) do
     t.string "usable_type", null: false
     t.string "voice_id", null: false
     t.string "voice_tier", null: false
-    t.index ["usable_type", "usable_id"], name: "index_tts_usages_on_usable"
+    t.index ["usable_type", "usable_id"], name: "index_tts_usages_on_usable", unique: true
   end
 
   create_table "users", force: :cascade do |t|

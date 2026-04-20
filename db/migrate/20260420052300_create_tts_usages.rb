@@ -1,7 +1,7 @@
 class CreateTtsUsages < ActiveRecord::Migration[8.1]
   def change
     create_table :tts_usages do |t|
-      t.references :usable, polymorphic: true, null: false, index: true
+      t.references :usable, polymorphic: true, null: false, index: { unique: true }
       t.string :provider, null: false
       t.string :voice_id, null: false
       t.string :voice_tier, null: false

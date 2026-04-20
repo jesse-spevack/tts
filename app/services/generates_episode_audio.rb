@@ -84,7 +84,15 @@ class GeneratesEpisodeAudio
     )
   rescue StandardError => e
     # Usage tracking is best-effort — never let accounting break audio generation.
-    log_warn "tts_usage_record_failed", error: e.class, message: e.message
+    # Log at error level with enough context to reconstruct the missed row.
+    log_error "tts_usage_record_failed",
+              usable_type: @episode.class.name,
+              usable_id: @episode.id,
+              voice_id: voice_name,
+              character_count: billed,
+              error: e.class,
+              message: e.message,
+              exception: e
   end
 
   def voice_name
