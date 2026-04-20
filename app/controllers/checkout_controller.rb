@@ -4,11 +4,19 @@ class CheckoutController < ApplicationController
   # GET /checkout - handles redirects from magic link authentication
   # Validates price_id and redirects to Stripe Checkout
   def show
+    if params[:pack_size].present?
+      return handle_pack_size_checkout(params[:pack_size])
+    end
+
     return redirect_to(billing_path, alert: "No plan selected") unless params[:price_id].present?
     handle_checkout(params[:price_id])
   end
 
   def create
+    if params[:pack_size].present?
+      return handle_pack_size_checkout(params[:pack_size])
+    end
+
     handle_checkout(params[:price_id])
   end
 
@@ -20,6 +28,25 @@ class CheckoutController < ApplicationController
   end
 
   private
+
+  # Accepts a pack size (5/10/20), resolves it to the matching Stripe price_id
+  # via AppConfig::Credits::PACKS, then delegates to the price_id checkout path.
+  def handle_pack_size_checkout(raw_pack_size)
+    size =
+      begin
+        Integer(raw_pack_size, 10)
+      rescue ArgumentError, TypeError
+        nil
+      end
+    pack = size && AppConfig::Credits.find_pack_by_size(size)
+
+    unless pack
+      redirect_to billing_path, alert: "Invalid credit pack selected"
+      return
+    end
+
+    handle_checkout(pack[:stripe_price_id])
+  end
 
   def handle_checkout(price_id)
     price_result = ValidatesPrice.call(price_id)

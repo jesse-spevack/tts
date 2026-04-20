@@ -154,32 +154,36 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
   test "checkout.session.completed routes credit pack purchase (no subscription field)" do
     user = users(:one)
     user.update!(stripe_customer_id: "cus_credit_pack")
+    pack_5_price_id = AppConfig::Credits::PACKS.find { |p| p[:size] == 5 }[:stripe_price_id]
 
     event = OpenStruct.new(
       type: "checkout.session.completed",
       data: OpenStruct.new(object: OpenStruct.new(
         id: "cs_credit_pack_test",
         customer: "cus_credit_pack",
-        subscription: nil
+        subscription: nil,
+        metadata: OpenStruct.new(price_id: pack_5_price_id)
       ))
     )
 
     result = RoutesStripeWebhook.call(event: event)
 
     assert result.success?
-    assert_equal AppConfig::Credits::PACK_SIZE, user.credits_remaining
+    assert_equal 5, user.credits_remaining
   end
 
   test "checkout.session.completed for credit pack does not send welcome email" do
     user = users(:one)
     user.update!(stripe_customer_id: "cus_credit_no_email")
+    pack_5_price_id = AppConfig::Credits::PACKS.find { |p| p[:size] == 5 }[:stripe_price_id]
 
     event = OpenStruct.new(
       type: "checkout.session.completed",
       data: OpenStruct.new(object: OpenStruct.new(
         id: "cs_credit_no_email",
         customer: "cus_credit_no_email",
-        subscription: nil
+        subscription: nil,
+        metadata: OpenStruct.new(price_id: pack_5_price_id)
       ))
     )
 

@@ -51,7 +51,10 @@ class CreatesCheckoutSession
       line_items: [ { price: price_id, quantity: 1 } ],
       success_url: success_url,
       cancel_url: cancel_url,
-      metadata: { user_id: user.id }
+      # price_id is echoed into metadata so the webhook handler
+      # (GrantsCreditFromCheckout) can identify which pack was purchased
+      # without a follow-up line_items retrieve.
+      metadata: { user_id: user.id, price_id: price_id }
     )
   end
 

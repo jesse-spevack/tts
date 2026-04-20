@@ -68,7 +68,7 @@
             </p>
             <div class="mt-4">
               <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
-                <%= form.hidden_field :price_id, value: AppConfig::Stripe::PRICE_ID_CREDIT_PACK %>
+                <%= form.hidden_field :pack_size, value: AppConfig::Credits::PACKS.first[:size] %>
                 <%= form.submit "Buy More Credits", class: button_classes(type: :secondary) %>
               <% end %>
             </div>

@@ -56,7 +56,7 @@ class SessionsController < ApplicationController
     when "premium_annual"
       checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
     when "credit_pack"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
+      checkout_path(pack_size: AppConfig::Credits::PACKS.first[:size])
     else
       after_authentication_url
     end

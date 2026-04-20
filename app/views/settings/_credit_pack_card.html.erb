@@ -1,0 +1,17 @@
+<%# locals: (pack:, highlight: false, submit_label: "Buy Credit Pack") %>
+<% dollars = format("%.2f", pack[:price_cents] / 100.0) %>
+<% per_credit = format("%.2f", pack[:price_cents] / 100.0 / pack[:size]) %>
+<div class="relative rounded-xl p-5 ring-1 <%= highlight ? "ring-mist-950 dark:ring-white" : "ring-mist-200 dark:ring-mist-700" %>">
+  <% if highlight %>
+    <span class="absolute -top-2 right-4 rounded-full bg-mist-950 px-2 py-0.5 text-xs font-medium text-white dark:bg-white dark:text-mist-950">Best Value</span>
+  <% end %>
+  <p class="text-sm font-semibold text-mist-950 dark:text-white"><%= pack[:label] %></p>
+  <p class="mt-1 text-2xl font-semibold tracking-tight text-mist-950 dark:text-white">$<%= dollars %></p>
+  <p class="text-xs text-mist-500 dark:text-mist-400"><%= pack[:size] %> episode credits</p>
+  <p class="mt-1 text-xs text-mist-500 dark:text-mist-400">$<%= per_credit %> per credit</p>
+  <%= form_with url: checkout_path, method: :post, class: "mt-4", data: { turbo: false } do |form| %>
+    <%= form.hidden_field :pack_size, value: pack[:size] %>
+    <%= form.submit submit_label,
+                    class: button_classes(type: highlight ? :primary : :secondary, full_width: true) %>
+  <% end %>
+</div>

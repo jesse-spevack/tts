@@ -13,9 +13,12 @@ class GrantsCreditFromCheckout
     user = User.find_by(stripe_customer_id: session.customer)
     return Result.failure("No user found for customer") unless user
 
+    pack = AppConfig::Credits.find_pack_by_price_id(session_price_id)
+    return Result.failure("Unknown credit pack price id") unless pack
+
     GrantsCredits.call(
       user: user,
-      amount: AppConfig::Credits::PACK_SIZE,
+      amount: pack[:size],
       stripe_session_id: session.id
     )
   end
@@ -23,4 +26,8 @@ class GrantsCreditFromCheckout
   private
 
   attr_reader :session
+
+  def session_price_id
+    session.respond_to?(:metadata) && session.metadata&.respond_to?(:price_id) ? session.metadata.price_id : nil
+  end
 end

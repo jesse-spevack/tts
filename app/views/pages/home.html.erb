@@ -183,10 +183,11 @@
       ],
       cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_monthly" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
 
+    <% monthly_starter_pack = AppConfig::Credits::PACKS.first %>
     <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Credit Pack",
-      price: AppConfig::Credits::PACK_PRICE_DISPLAY,
-      period: "/ #{AppConfig::Credits::PACK_SIZE} episodes",
+      price: "$#{format("%.2f", monthly_starter_pack[:price_cents] / 100.0)}",
+      period: "/ #{monthly_starter_pack[:size]} episodes",
       subheadline: "Pay as you go — no subscription required.",
       badge: "Most popular",
       features: [
@@ -226,10 +227,11 @@
       ],
       cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_annual" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
 
+    <% yearly_starter_pack = AppConfig::Credits::PACKS.first %>
     <%= render "shared/marketing/pricing_hero_multi_plan",
       name: "Credit Pack",
-      price: AppConfig::Credits::PACK_PRICE_DISPLAY,
-      period: "/ #{AppConfig::Credits::PACK_SIZE} episodes",
+      price: "$#{format("%.2f", yearly_starter_pack[:price_cents] / 100.0)}",
+      period: "/ #{yearly_starter_pack[:size]} episodes",
       subheadline: "Pay as you go — no subscription required.",
       badge: "Most popular",
       features: [

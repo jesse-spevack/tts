@@ -85,7 +85,6 @@ class AppConfig
   module Stripe
     PRICE_ID_MONTHLY = ENV.fetch("STRIPE_PRICE_ID_MONTHLY", "test_price_monthly")
     PRICE_ID_ANNUAL = ENV.fetch("STRIPE_PRICE_ID_ANNUAL", "test_price_annual")
-    PRICE_ID_CREDIT_PACK = ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK", "test_price_credit_pack")
     WEBHOOK_SECRET = ENV.fetch("STRIPE_WEBHOOK_SECRET", "test_webhook_secret")
 
     PLAN_INFO = {
@@ -95,8 +94,43 @@ class AppConfig
   end
 
   module Credits
-    PACK_SIZE = 5
-    PACK_PRICE_DISPLAY = "$4.99"
+    # PACKS is the authoritative source for pack sizes, prices, and Stripe
+    # price IDs. Callers resolve a pack by size (checkout) or price_id
+    # (webhook) rather than hard-coding any single pack.
+    #
+    # Stripe price IDs must be set via environment. In non-test environments
+    # ENV.fetch raises on boot when a value is missing so a misconfigured
+    # deploy fails loudly instead of silently sending garbage price IDs to
+    # Stripe at checkout time. test_helper.rb sets these before Rails boots.
+    PACKS = [
+      {
+        size: 5,
+        price_cents: 999,
+        stripe_price_id: ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK_5"),
+        label: "Starter"
+      }.freeze,
+      {
+        size: 10,
+        price_cents: 1799,
+        stripe_price_id: ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK_10"),
+        label: "Standard"
+      }.freeze,
+      {
+        size: 20,
+        price_cents: 3299,
+        stripe_price_id: ENV.fetch("STRIPE_PRICE_ID_CREDIT_PACK_20"),
+        label: "Bulk"
+      }.freeze
+    ].freeze
+
+    def self.find_pack_by_price_id(price_id)
+      return nil if price_id.nil?
+      PACKS.find { |pack| pack[:stripe_price_id] == price_id }
+    end
+
+    def self.find_pack_by_size(size)
+      PACKS.find { |pack| pack[:size] == size }
+    end
   end
 
   module Extension
