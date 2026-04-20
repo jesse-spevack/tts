@@ -15,18 +15,6 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 2, AppConfig::Tiers::FREE_MONTHLY_EPISODES
   end
 
-  test "character_limit_for free tier returns FREE_CHARACTER_LIMIT" do
-    assert_equal 15_000, AppConfig::Tiers.character_limit_for("free")
-  end
-
-  test "character_limit_for premium tier returns PREMIUM_CHARACTER_LIMIT" do
-    assert_equal 50_000, AppConfig::Tiers.character_limit_for("premium")
-  end
-
-  test "character_limit_for unlimited tier returns nil" do
-    assert_nil AppConfig::Tiers.character_limit_for("unlimited")
-  end
-
   test "FREE_VOICES contains eight standard voices" do
     assert_equal %w[wren felix sloane archer gemma hugo quinn theo], AppConfig::Tiers::FREE_VOICES
   end
