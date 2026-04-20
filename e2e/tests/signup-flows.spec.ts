@@ -7,8 +7,8 @@ test.describe('Landing Page Signup Flows', () => {
   });
 
   test('free signup opens modal with correct heading', async ({ page }) => {
-    // Click "Start listening free" button
-    await page.click('button[data-plan="free"]');
+    // Click "Start listening free" button (first occurrence — hero CTA)
+    await page.locator('button[data-plan="free"]').first().click();
 
     // Verify modal opens with correct content
     const modal = page.locator('dialog[open]');
@@ -17,35 +17,27 @@ test.describe('Landing Page Signup Flows', () => {
     await expect(modal.locator('text=2 episodes/month')).toBeVisible();
   });
 
-  test('premium annual signup opens modal', async ({ page }) => {
-    // Scroll to pricing section
-    await page.goto('/#pricing');
+  for (const packSize of [5, 10, 20] as const) {
+    test(`credit pack (${packSize}) signup opens modal with pack size populated`, async ({ page }) => {
+      // Scroll to pricing section
+      await page.goto('/#pricing');
 
-    // Switch to Yearly tab (Monthly is selected by default)
-    await page.click('el-tab-list button:has-text("Yearly")');
+      // Click the pack-specific CTA
+      await page
+        .locator(`button[data-plan="credit_pack"][data-pack-size="${packSize}"]`)
+        .click();
 
-    // Click "Get Premium" button (annual plan)
-    await page.click('button[data-plan="premium_annual"]');
+      const modal = page.locator('dialog[open]');
+      await expect(modal).toBeVisible();
 
-    // Verify modal opens
-    const modal = page.locator('dialog[open]');
-    await expect(modal).toBeVisible();
-  });
-
-  test('premium monthly signup opens modal', async ({ page }) => {
-    // Scroll to pricing section (Monthly tab is selected by default)
-    await page.goto('/#pricing');
-
-    // Click "Get Premium" button (monthly plan)
-    await page.click('button[data-plan="premium_monthly"]');
-
-    // Verify modal opens
-    const modal = page.locator('dialog[open]');
-    await expect(modal).toBeVisible();
-  });
+      // Hidden plan + pack_size fields should carry the selection into the form
+      await expect(modal.locator('input[name="plan"]')).toHaveValue('credit_pack');
+      await expect(modal.locator('input[name="pack_size"]')).toHaveValue(String(packSize));
+    });
+  }
 
   test('modal can be closed by clicking backdrop', async ({ page }) => {
-    await page.click('button[data-plan="free"]');
+    await page.locator('button[data-plan="free"]').first().click();
 
     const modal = page.locator('dialog[open]');
     await expect(modal).toBeVisible();
@@ -56,7 +48,7 @@ test.describe('Landing Page Signup Flows', () => {
   });
 
   test('email validation shows error for invalid email', async ({ page }) => {
-    await page.click('button[data-plan="free"]');
+    await page.locator('button[data-plan="free"]').first().click();
 
     // Fill with invalid email
     await page.fill('input[type="email"]', 'not-an-email');
@@ -70,7 +62,7 @@ test.describe('Landing Page Signup Flows', () => {
   });
 
   test('signup form submits and shows confirmation', async ({ page }) => {
-    await page.click('button[data-plan="free"]');
+    await page.locator('button[data-plan="free"]').first().click();
 
     await page.fill('input[type="email"]', 'test-e2e@example.com');
     await page.click('input[type="submit"]');
@@ -83,7 +75,7 @@ test.describe('Landing Page Signup Flows', () => {
     // Use an email that already exists in the database (from fixtures)
     const existingEmail = 'free@example.com';
 
-    await page.click('button[data-plan="free"]');
+    await page.locator('button[data-plan="free"]').first().click();
 
     await page.fill('input[type="email"]', existingEmail);
     await page.click('input[type="submit"]');

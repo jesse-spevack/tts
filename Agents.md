@@ -391,7 +391,7 @@ Reference in tests: `users(:free_user)`
 ```ruby
 # Tier limits
 AppConfig::Tiers::FREE_CHARACTER_LIMIT    # 15,000
-AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT # 50,000
+AppConfig::Tiers::EPISODE_CHARACTER_LIMIT # 50,000
 AppConfig::Tiers::FREE_MONTHLY_EPISODES   # 2
 
 # Content limits

@@ -55,14 +55,18 @@ class SessionsController < ApplicationController
   end
 
   def post_login_path(plan)
-    case plan
+    path = case plan
     when "credit_pack"
       valid_sizes = AppConfig::Credits::PACKS.map { |p| p[:size] }
       size = session[:pack_size].presence_in(valid_sizes) || AppConfig::Credits::PACKS.first[:size]
-      session.delete(:pack_size)
       checkout_path(pack_size: size)
     else
       after_authentication_url
     end
+
+    # Always clear pack_size — prevents a non-credit_pack auth from leaking a
+    # stale pack_size into a subsequent signup intent.
+    session.delete(:pack_size)
+    path
   end
 end
