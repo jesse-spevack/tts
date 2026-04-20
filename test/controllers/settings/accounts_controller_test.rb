@@ -64,7 +64,7 @@ module Settings
 
       delete settings_account_path
 
-      assert_redirected_to root_path
+      assert_redirected_to login_path(return_to: "/settings/account")
     end
 
     test "destroy redirects to settings with alert when DeactivatesUser fails" do

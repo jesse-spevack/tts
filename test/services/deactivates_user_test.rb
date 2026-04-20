@@ -39,8 +39,8 @@ class DeactivatesUserTest < ActiveSupport::TestCase
   end
 
   test "revokes all non-revoked api_tokens" do
-    token_a = @user.api_tokens.create!(token_digest: "digest_a_#{SecureRandom.hex}")
-    token_b = @user.api_tokens.create!(token_digest: "digest_b_#{SecureRandom.hex}")
+    token_a = GeneratesApiToken.call(user: @user)
+    token_b = GeneratesApiToken.call(user: @user)
 
     freeze_time do
       DeactivatesUser.call(user: @user)

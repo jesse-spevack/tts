@@ -36,7 +36,7 @@ class DeactivatedUserAuthTest < ActionDispatch::IntegrationTest
     # A stale cookie referencing a destroyed session should fall through
     # the find_session_by_cookie guard and land the caller at sign-in.
     get settings_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/settings")
   end
 
   test "session cookie for still-present session of deactivated user is rejected" do
@@ -55,7 +55,7 @@ class DeactivatedUserAuthTest < ActionDispatch::IntegrationTest
     end
 
     get settings_path
-    assert_redirected_to root_path
+    assert_redirected_to login_path(return_to: "/settings")
     # Session row should have been cleaned up by the guard
     assert_nil Session.find_by(id: session.id)
   end
