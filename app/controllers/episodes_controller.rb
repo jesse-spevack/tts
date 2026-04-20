@@ -99,15 +99,8 @@ class EpisodesController < ApplicationController
     end
   end
 
-  # URL submissions defer the debit to ProcessesUrlEpisode — the article's
-  # real character count isn't known until after fetch+extract, so pricing
-  # must wait. Paste and file stay sync here because their text is already
-  # in the params.
   def deduct_credit_if_needed(episode)
-    return if Current.user.complimentary? || Current.user.unlimited?
-    return if episode.url?
-
-    DeductsCredit.call(user: Current.user, episode: episode, cost_in_credits: anticipated_cost)
+    DebitsEpisodeCredit.call(user: Current.user, episode: episode, cost_in_credits: anticipated_cost)
   end
 
   def read_uploaded_content
@@ -149,24 +142,23 @@ class EpisodesController < ApplicationController
   end
 
   def anticipated_cost
-    @anticipated_cost ||= CalculatesEpisodeCreditCost.call(
-      source_text_length: source_text_length_for_cost,
-      voice: voice_for_cost
-    )
+    @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
+      user: Current.user,
+      source_type: submission_source_type,
+      text: params[:text],
+      url: params[:url],
+      upload: read_uploaded_content
+    ).data
   end
 
-  def source_text_length_for_cost
+  def submission_source_type
     if params[:url].present?
-      1
+      "url"
     elsif params.key?(:text)
-      params[:text].to_s.length
+      "text"
     else
-      read_uploaded_content&.length || 0
+      "file"
     end
-  end
-
-  def voice_for_cost
-    Voice.find(Current.user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
   end
 
   def load_podcast

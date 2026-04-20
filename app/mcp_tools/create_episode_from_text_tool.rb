@@ -19,10 +19,9 @@ class CreateEpisodeFromTextTool < MCP::Tool
   def self.call(text:, title:, author: nil, server_context: nil)
     user = server_context[:user]
 
-    anticipated_cost = CalculatesEpisodeCreditCost.call(
-      source_text_length: text.to_s.length,
-      voice: Voice.find(user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
-    )
+    anticipated_cost = CalculatesAnticipatedEpisodeCost.call(
+      user: user, source_type: "text", text: text
+    ).data
 
     if (error = check_creation_prerequisites(user: user, anticipated_cost: anticipated_cost))
       return error

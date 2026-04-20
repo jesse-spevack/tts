@@ -141,44 +141,27 @@ module Api
         render json: { error: result.error }, status: :too_many_requests
       end
 
-      # URL submissions defer the debit to ProcessesUrlEpisode — the
-      # article's real character count isn't known until after fetch and
-      # extraction, so pricing must wait. Text/extension submissions stay
-      # sync because the content is already in the request.
       def deduct_credit_if_needed(episode)
-        return if current_user.complimentary? || current_user.unlimited?
-        return if episode.url?
-
-        DeductsCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
+        DebitsEpisodeCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
       end
 
+      # Extension submissions carry the article body in :content (not :text),
+      # so we pass :content through the :text kwarg since the cost service
+      # treats 'extension' as a text variant.
       def anticipated_cost
-        @anticipated_cost ||= CalculatesEpisodeCreditCost.call(
-          source_text_length: source_text_length_for_cost,
-          voice: voice_for_cost
-        )
+        @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
+          user: current_user,
+          source_type: episode_params[:source_type],
+          text: text_for_cost,
+          url: episode_params[:url]
+        ).data
       end
 
-      def source_text_length_for_cost
+      def text_for_cost
         case episode_params[:source_type]
-        when "text"
-          episode_params[:text].to_s.length
-        when "extension"
-          episode_params[:content].to_s.length
-        when "url"
-          1
-        else
-          0
+        when "extension" then episode_params[:content]
+        else episode_params[:text]
         end
-      end
-
-      # The API permits :voice for forward-compatibility but does NOT yet
-      # thread it into Creates*Episode services — synthesis always uses
-      # user.voice_preference. Pricing must match what actually gets
-      # rendered, otherwise a client passing voice=felix (Standard) while
-      # user.voice_preference=callum (Premium) would be under-charged.
-      def voice_for_cost
-        Voice.find(current_user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
       end
     end
   end

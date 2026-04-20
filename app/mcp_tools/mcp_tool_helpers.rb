@@ -34,17 +34,17 @@ module McpToolHelpers
 
   # URL episodes defer the debit to ProcessesUrlEpisode — the article
   # length isn't known at MCP-tool-submit time. Text episodes debit now,
-  # since the text is already in the tool arguments.
+  # since the text is already in the tool arguments. Cost is computed from
+  # the persisted episode's source_text to match actual content.
   def record_successful_creation(user:, episode:)
     RecordsEpisodeUsage.call(user: user)
-    return if user.complimentary? || user.unlimited?
-    return if episode.url?
 
-    cost = CalculatesEpisodeCreditCost.call(
-      source_text_length: episode.source_text.to_s.length,
-      voice: Voice.find(user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
+    cost_result = CalculatesAnticipatedEpisodeCost.call(
+      user: user,
+      source_type: episode.source_type,
+      text: episode.source_text
     )
-    DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost)
+    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost_result.data)
   end
 
   private
