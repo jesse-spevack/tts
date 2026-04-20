@@ -10,58 +10,13 @@ module Api
       attr_reader :current_user
 
       def authenticate_token!
-        token = extract_bearer_token
+        result = AuthenticatesApiRequest.call(bearer: extract_bearer_token)
 
-        # Try API token first (CLI, browser extension)
-        if authenticate_via_api_token(token)
-          return
+        if result.success?
+          @current_user = result.data[:user]
+        else
+          render json: { error: "Unauthorized" }, status: :unauthorized
         end
-
-        # Fall back to Doorkeeper OAuth token (ChatGPT, future OAuth clients)
-        if authenticate_via_doorkeeper(token)
-          return
-        end
-
-        render json: { error: "Unauthorized" }, status: :unauthorized
-      end
-
-      def authenticate_via_api_token(token)
-        api_token = FindsApiToken.call(plain_token: token)
-        return false if api_token.nil?
-
-        user = api_token.user
-        if user.deactivated?
-          log_info "api_token_deactivated_user", user_id: user.id
-          return false
-        end
-
-        api_token.update_column(:last_used_at, Time.current)
-        @current_user = user
-        Current.api_token_prefix = api_token.token_prefix
-        log_info "api_request_authenticated",
-          user_id: api_token.user_id,
-          source: api_token.source
-        true
-      end
-
-      def authenticate_via_doorkeeper(token)
-        return false if token.blank?
-
-        doorkeeper_token = Doorkeeper::AccessToken.by_token(token)
-        return false if doorkeeper_token.nil?
-        return false if doorkeeper_token.revoked?
-        return false if doorkeeper_token.expired?
-
-        user = User.find_by(id: doorkeeper_token.resource_owner_id)
-        return false if user.nil?
-
-        if user.deactivated?
-          log_info "oauth_token_deactivated_user", user_id: user.id
-          return false
-        end
-
-        @current_user = user
-        true
       end
 
       def extract_bearer_token
