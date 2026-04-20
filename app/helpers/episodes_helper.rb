@@ -55,4 +55,30 @@ module EpisodesHelper
   def deletable?(episode)
     episode.user_id == Current.user&.id
   end
+
+  # Per-episode cost label for the Details card on the show page.
+  #
+  # Branches by account state:
+  #   - complimentary / unlimited → "Included"
+  #   - has a usage CreditTransaction → e.g. "1 credit" or "2 credits"
+  #   - otherwise (free-tier user) → "Free tier episode"
+  #
+  # Pre-cga5 legacy usage rows have amount=-1 and display as-is per bead scope.
+  def episode_cost_label(episode)
+    user = episode.user
+    return "Included" if user.complimentary? || user.unlimited?
+
+    usage = CreditTransaction.find_by(episode_id: episode.id, transaction_type: "usage")
+    return pluralize(usage.amount.abs, "credit") if usage
+
+    "Free tier episode"
+  end
+
+  # Voice tier label (Standard / Premium) based on the user's current voice
+  # preference. Episodes don't store voice — we resolve from the user at
+  # render time. Nil preference falls back to Standard.
+  def episode_voice_tier_label(episode)
+    tier = Voice.find(episode.user.voice_preference)&.tier || :standard
+    tier.to_s.capitalize
+  end
 end

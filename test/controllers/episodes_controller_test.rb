@@ -845,4 +845,246 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller~='cost-preview']", count: 0
     assert_not_includes response.body, "This episode will use 1 credit"
   end
+
+  # === Episode show page: character count + credit cost display (agent-team-xgyd) ===
+  #
+  # The owner view of the episode show page surfaces a per-episode receipt:
+  # character count (Episode#source_text_length), credits consumed (from the
+  # usage CreditTransaction), and the voice tier for that episode. This closes
+  # the UX gap where URL-submitted episodes debit credits asynchronously post-
+  # submit and the user otherwise has no durable record of "what did this
+  # episode cost me?".
+  #
+  # Scope covers four account states:
+  #   1. standard credit_user with a usage CreditTransaction (modern pricing)
+  #   2. free-tier user, no CreditTransaction ('Free tier episode')
+  #   3. complimentary / unlimited, no CreditTransaction ('Included')
+  #   4. legacy pre-cga5 usage row (amount=-1 sentinel; display as-is)
+
+  test "show displays formatted character count for credit-debited episode" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard voice
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "Cost Receipt", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 41_204, status: :complete
+    )
+    episode.update_columns(source_text_length: 41_204)
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -1, balance_after: 2, transaction_type: "usage"
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_includes response.body, "41,204",
+      "Expected character count to render with delimiter (e.g., '41,204')"
+  end
+
+  test "show displays credit cost pluralized for 1-credit episode" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard voice
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "One Credit", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 10_000, status: :complete
+    )
+    episode.update_columns(source_text_length: 10_000)
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -1, balance_after: 2, transaction_type: "usage"
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_match(/\b1 credit\b/, response.body,
+      "Expected '1 credit' (singular) for an episode charged 1 credit")
+  end
+
+  test "show displays credit cost pluralized for 2-credit episode" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium voice
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "Two Credits", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 30_000, status: :complete
+    )
+    episode.update_columns(source_text_length: 30_000)
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -2, balance_after: 1, transaction_type: "usage"
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_match(/\b2 credits\b/, response.body,
+      "Expected '2 credits' (plural) for an episode charged 2 credits")
+  end
+
+  test "show displays Standard voice tier label for credit-debited episode with Standard voice" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard voice
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 5_000, status: :complete
+    )
+    episode.update_columns(source_text_length: 5_000)
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -1, balance_after: 2, transaction_type: "usage"
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    # Scope the assertion to the owner-view details <dl> so a stray "Standard"
+    # in a header/link elsewhere can't accidentally satisfy the test.
+    assert_select "dl dd", text: /Standard/i,
+      message: "Expected 'Standard' voice tier label inside the Details <dl>"
+  end
+
+  test "show displays Premium voice tier label for credit-debited episode with Premium voice" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium voice
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 30_000, status: :complete
+    )
+    episode.update_columns(source_text_length: 30_000)
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -2, balance_after: 1, transaction_type: "usage"
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_select "dl dd", text: /Premium/i,
+      message: "Expected 'Premium' voice tier label inside the Details <dl>"
+  end
+
+  test "show displays character count for free-tier episode" do
+    free_user = users(:free_user)
+    # free_user has no subscription, no credit_balance → free? == true
+    assert free_user.free?, "Expected free_user fixture to be on free tier"
+    # Title chosen to not collide with any tier/cost regexes below.
+    episode = free_user.primary_podcast.episodes.create!(
+      user: free_user, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 2_500, status: :complete
+    )
+    episode.update_columns(source_text_length: 2_500)
+
+    sign_in_as free_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_includes response.body, "2,500",
+      "Expected character count to render for free-tier episode"
+  end
+
+  test "show labels free-tier episode distinctively (no credit cost)" do
+    free_user = users(:free_user)
+    assert free_user.free?, "Expected free_user fixture to be on free tier"
+    episode = free_user.primary_podcast.episodes.create!(
+      user: free_user, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 2_500, status: :complete
+    )
+    episode.update_columns(source_text_length: 2_500)
+    # Sanity check: no CreditTransaction exists for this episode.
+    assert_equal 0, CreditTransaction.where(episode_id: episode.id).count
+
+    sign_in_as free_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    # Scope to <dl> so the marketing-layout signup modal copy ("Start listening
+    # free") can't accidentally satisfy this assertion.
+    assert_select "dl dd", text: /Free tier/i,
+      message: "Expected free-tier episode to be labeled 'Free tier' in the Details <dl>"
+  end
+
+  test "show labels complimentary-account episode as Included (no credit cost)" do
+    complimentary = users(:complimentary_user)
+    assert complimentary.complimentary?,
+      "Expected complimentary_user fixture to have account_type=complimentary"
+    episode = complimentary.primary_podcast.episodes.create!(
+      user: complimentary, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 7_500, status: :complete
+    )
+    episode.update_columns(source_text_length: 7_500)
+
+    sign_in_as complimentary
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_includes response.body, "7,500",
+      "Expected character count to render for complimentary episode"
+    assert_select "dl dd", text: /Included/,
+      message: "Expected complimentary episode to be labeled 'Included' in the Details <dl>"
+  end
+
+  test "show labels unlimited-account episode as Included (no credit cost)" do
+    unlimited = users(:unlimited_user)
+    assert unlimited.unlimited?,
+      "Expected unlimited_user fixture to have account_type=unlimited"
+    episode = unlimited.primary_podcast.episodes.create!(
+      user: unlimited, title: "My Article", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 15_000, status: :complete
+    )
+    episode.update_columns(source_text_length: 15_000)
+
+    sign_in_as unlimited
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_includes response.body, "15,000",
+      "Expected character count to render for unlimited episode"
+    assert_select "dl dd", text: /Included/,
+      message: "Expected unlimited episode to be labeled 'Included' in the Details <dl>"
+  end
+
+  test "show renders legacy pre-cga5 episode (amount=-1) without special-casing" do
+    # Pre-cga5 flat-rate-era episodes have CreditTransaction.amount = -1 as a
+    # sentinel. The bead directs: display as-is, no special-casing. We assert
+    # the page renders char count + a credit-style label, without asserting
+    # any "legacy" marker (there isn't one to hardcode against).
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix")
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "Legacy Episode", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 8_888, status: :complete
+    )
+    episode.update_columns(source_text_length: 8_888)
+    # amount: -1 represents both "1 credit (modern)" and "pre-cga5 sentinel".
+    # We can't distinguish — that's the point; display as-is.
+    CreditTransaction.create!(
+      user: credit_user, episode: episode,
+      amount: -1, balance_after: 2, transaction_type: "usage",
+      created_at: 1.year.ago # simulate pre-cga5 era
+    )
+
+    sign_in_as credit_user
+    get episode_url(episode.prefix_id)
+
+    assert_response :success
+    assert_includes response.body, "8,888",
+      "Expected character count to render for legacy episode"
+    assert_match(/credit/i, response.body,
+      "Expected legacy episode to render a credit label (no special-casing)")
+  end
 end
