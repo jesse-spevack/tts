@@ -16,7 +16,9 @@ class BlogPost
 
   def self.all
     raw = YAML.safe_load_file(DATA_PATH, permitted_classes: [ Date ])
-    Array(raw).map { |attrs| build(attrs) }.sort_by(&:published_on).reverse
+    raise "config/blog_posts.yml is empty or malformed" unless raw.is_a?(Array) && raw.any?
+
+    raw.map { |attrs| build(attrs) }.sort_by(&:published_on).reverse
   end
 
   def self.build(attrs)

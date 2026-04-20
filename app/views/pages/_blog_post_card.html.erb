@@ -3,10 +3,10 @@
 %>
 <a href="<%= post.url %>"
    target="_blank"
-   rel="noopener"
+   rel="noopener noreferrer"
    class="group flex flex-col overflow-hidden rounded-xl bg-white outline -outline-offset-1 outline-black/5 transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white/5 dark:outline-white/10">
   <%= image_tag post.cover_image_url,
-        alt: "",
+        alt: post.title,
         loading: "lazy",
         class: "aspect-[16/9] w-full object-cover" %>
   <div class="flex flex-1 flex-col gap-3 p-6">

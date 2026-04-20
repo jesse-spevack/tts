@@ -22,19 +22,41 @@ class BlogPageTest < ActionDispatch::IntegrationTest
   test "page renders headline and meta description for SEO" do
     get "/blog"
     assert_select "title", /Writing — PodRead/
-    assert_select "meta[name=description]"
+    assert_select "meta[name=description][content*=?]", "PodRead"
     assert_select "h1", /Writing from PodRead/
   end
 
-  test "post cards link externally with noopener" do
+  test "every post card links externally with noopener noreferrer" do
     get "/blog"
-    first_post = BlogPost.all.first
-    assert_select "a[href=?][target=_blank][rel=noopener]", first_post.url
+    posts = BlogPost.all
+    assert_select "a[target=_blank][rel='noopener noreferrer']", count: posts.size
+    posts.each do |post|
+      assert_select "a[href=?][target=_blank][rel='noopener noreferrer']", post.url
+    end
   end
 
-  test "hero CTA opens the signup modal" do
+  test "hero CTA button opens the signup modal" do
     get "/blog"
-    assert_select "button[data-action*=signup-modal]"
+    assert_select "button[data-action*=signup-modal]", text: "Create your first episode"
+  end
+
+  test "page renders a post that has no excerpt" do
+    post = BlogPost::Entry.new(
+      title: "No Excerpt Post",
+      url: "https://example.com",
+      published_on: Date.new(2026, 1, 1),
+      excerpt: nil,
+      cover_image_url: "https://example.com/img.png"
+    )
+    original_all = BlogPost.method(:all)
+    BlogPost.define_singleton_method(:all) { [ post ] }
+    begin
+      get "/blog"
+      assert_response :success
+      assert_includes response.body, "No Excerpt Post"
+    ensure
+      BlogPost.define_singleton_method(:all, original_all)
+    end
   end
 
   test "nav includes Blog link" do
@@ -49,6 +71,16 @@ class BlogPageTest < ActionDispatch::IntegrationTest
 
   test "nav on about page includes Blog link" do
     get "/about"
+    assert_select "nav a[href=?]", blog_path, text: "Blog"
+  end
+
+  test "nav on privacy page includes Blog link" do
+    get "/privacy"
+    assert_select "nav a[href=?]", blog_path, text: "Blog"
+  end
+
+  test "nav on terms page includes Blog link" do
+    get "/terms"
     assert_select "nav a[href=?]", blog_path, text: "Blog"
   end
 end

@@ -47,4 +47,14 @@ class BlogPostTest < ActiveSupport::TestCase
       )
     end
   end
+
+  test ".build treats excerpt as optional" do
+    post = BlogPost.build(
+      "title" => "Test",
+      "url" => "https://example.com",
+      "published_on" => Date.new(2026, 1, 1),
+      "cover_image_url" => "https://example.com/img.png"
+    )
+    assert_nil post.excerpt
+  end
 end
