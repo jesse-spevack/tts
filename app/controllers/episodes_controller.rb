@@ -27,12 +27,20 @@ class EpisodesController < ApplicationController
   end
 
   def create
-    if params[:url].present?
-      create_from_url
-    elsif params.key?(:text)
-      create_from_paste
+    result = CreatesEpisode.call(
+      user: Current.user,
+      podcast: @podcast,
+      source_type: submission_source_type,
+      params: facade_params,
+      cost_in_credits: anticipated_cost
+    )
+
+    if result.success?
+      redirect_to episodes_path, notice: success_notice_for(submission_source_type)
     else
-      create_from_file
+      flash.now[:alert] = result.error
+      @episode = @podcast.episodes.build
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -54,53 +62,38 @@ class EpisodesController < ApplicationController
 
   private
 
-  def create_from_url
-    result = CreatesUrlEpisode.call(
-      podcast: @podcast,
-      user: Current.user,
-      url: params[:url]
-    )
-    handle_create_result(result, "Processing article from URL...")
-  end
-
-  def create_from_paste
-    result = CreatesPasteEpisode.call(
-      podcast: @podcast,
-      user: Current.user,
-      text: params[:text],
-      title: params[:title],
-      author: params[:author],
-      source_url: params[:source_url]
-    )
-    handle_create_result(result, "Processing pasted text...")
-  end
-
-  def create_from_file
-    result = CreatesFileEpisode.call(
-      podcast: @podcast,
-      user: Current.user,
-      title: episode_params[:title],
-      author: episode_params[:author],
-      description: episode_params[:description],
-      content: read_uploaded_content
-    )
-    handle_create_result(result, "Episode created! Processing...")
-  end
-
-  def handle_create_result(result, success_notice)
-    if result.success?
-      RecordsEpisodeUsage.call(user: Current.user)
-      deduct_credit_if_needed(result.data)
-      redirect_to episodes_path, notice: success_notice
+  # Shape the HTTP request into the flat params hash the CreatesEpisode
+  # facade expects. Each source_type only needs a subset — unused keys are
+  # simply ignored by the corresponding per-source creator.
+  def facade_params
+    case submission_source_type
+    when "url"
+      { url: params[:url] }
+    when "text"
+      {
+        text: params[:text],
+        title: params[:title],
+        author: params[:author],
+        source_url: params[:source_url]
+      }
+    when "file"
+      {
+        title: episode_params[:title],
+        author: episode_params[:author],
+        description: episode_params[:description],
+        content: read_uploaded_content
+      }
     else
-      flash.now[:alert] = result.error
-      @episode = @podcast.episodes.build
-      render :new, status: :unprocessable_entity
+      {}
     end
   end
 
-  def deduct_credit_if_needed(episode)
-    DebitsEpisodeCredit.call(user: Current.user, episode: episode, cost_in_credits: anticipated_cost)
+  def success_notice_for(source_type)
+    case source_type
+    when "url"  then "Processing article from URL..."
+    when "text" then "Processing pasted text..."
+    when "file" then "Episode created! Processing..."
+    end
   end
 
   def read_uploaded_content

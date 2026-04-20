@@ -27,26 +27,26 @@ module Api
       end
 
       def create
-        podcast = GetsDefaultPodcastForUser.call(user: current_user)
-
-        result = case episode_params[:source_type]
-        when "url"
-          create_from_url(podcast)
-        when "text"
-          create_from_text(podcast)
-        when "extension"
-          create_from_extension(podcast)
+        case episode_params[:source_type]
         when "file", "email"
           return render json: { error: "source_type '#{episode_params[:source_type]}' is read-only and cannot be submitted via this API. Use 'url', 'text', or 'extension'." }, status: :unprocessable_entity
         when nil, ""
           return render json: { error: "source_type is required. Use 'url', 'text', or 'extension'." }, status: :unprocessable_entity
+        when "url", "text", "extension"
+          # fall through to facade
         else
           return render json: { error: "source_type must be 'url', 'text', or 'extension'." }, status: :unprocessable_entity
         end
 
+        result = CreatesEpisode.call(
+          user: current_user,
+          podcast: GetsDefaultPodcastForUser.call(user: current_user),
+          source_type: episode_params[:source_type],
+          params: facade_params,
+          cost_in_credits: anticipated_cost
+        )
+
         if result.success?
-          RecordsEpisodeUsage.call(user: current_user)
-          deduct_credit_if_needed(result.data)
           render json: { id: result.data.prefix_id }, status: :created
         else
           render json: { error: result.error }, status: :unprocessable_entity
@@ -68,34 +68,30 @@ module Api
         params.permit(:title, :author, :description, :content, :url, :source_type, :text, :voice)
       end
 
-      def create_from_url(podcast)
-        CreatesUrlEpisode.call(
-          podcast: podcast,
-          user: current_user,
-          url: episode_params[:url]
-        )
-      end
-
-      def create_from_text(podcast)
-        CreatesPasteEpisode.call(
-          podcast: podcast,
-          user: current_user,
-          text: episode_params[:text],
-          title: episode_params[:title],
-          author: episode_params[:author]
-        )
-      end
-
-      def create_from_extension(podcast)
-        CreatesExtensionEpisode.call(
-          podcast: podcast,
-          user: current_user,
-          title: episode_params[:title],
-          content: episode_params[:content],
-          url: episode_params[:url],
-          author: episode_params[:author],
-          description: episode_params[:description]
-        )
+      # Shape API params into the flat hash CreatesEpisode expects. Note the
+      # API intentionally does NOT forward source_url for text submissions —
+      # that field is web-form-only; preserve that difference.
+      def facade_params
+        case episode_params[:source_type]
+        when "url"
+          { url: episode_params[:url] }
+        when "text"
+          {
+            text: episode_params[:text],
+            title: episode_params[:title],
+            author: episode_params[:author]
+          }
+        when "extension"
+          {
+            title: episode_params[:title],
+            content: episode_params[:content],
+            url: episode_params[:url],
+            author: episode_params[:author],
+            description: episode_params[:description]
+          }
+        else
+          {}
+        end
       end
 
       def serialize_episode(episode)
@@ -139,10 +135,6 @@ module Api
         return if result.success?
 
         render json: { error: result.error }, status: :too_many_requests
-      end
-
-      def deduct_credit_if_needed(episode)
-        DebitsEpisodeCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
       end
 
       # Extension submissions carry the article body in :content (not :text),
