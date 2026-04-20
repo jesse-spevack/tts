@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_19_231951) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -323,6 +323,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.boolean "email_episode_confirmation", default: true, null: false
     t.boolean "email_episodes_enabled", default: false, null: false
     t.string "email_ingest_token"
+    t.boolean "internal", default: false, null: false
     t.string "stripe_customer_id"
     t.datetime "updated_at", null: false
     t.string "voice_preference"
