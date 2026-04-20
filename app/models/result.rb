@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class Result
-  attr_reader :data, :error, :message
+  attr_reader :data, :error, :message, :code
 
-  def initialize(success:, data:, error:, message: nil)
+  def initialize(success:, data:, error:, message: nil, code: nil)
     @success = success
     @data = data
     @error = error
     @message = message
+    @code = code
     freeze
   end
 
@@ -16,8 +17,8 @@ class Result
     new(success: true, data: actual_data, error: nil, message: message)
   end
 
-  def self.failure(error, message: nil)
-    new(success: false, data: nil, error: error, message: message || error)
+  def self.failure(error, message: nil, code: nil)
+    new(success: false, data: nil, error: error, message: message || error, code: code)
   end
 
   def success?

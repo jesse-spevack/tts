@@ -120,12 +120,15 @@ module Api
       # header and no MPP challenge are returned here; clients that want to
       # pay-per-episode must use the /mpp/* endpoints.
       def check_episode_creation_permission
-        result = ChecksEpisodeCreationPermission.call(user: current_user)
+        result = ChecksEpisodeCreationPermission.call(
+          user: current_user,
+          anticipated_cost: anticipated_cost
+        )
         return if result.success?
 
         render json: {
           error: "Payment required",
-          credits_remaining: 0,
+          credits_remaining: current_user.credits_remaining,
           subscription_active: current_user.premium?,
           upgrade_url: "#{AppConfig::Domain::BASE_URL}/billing"
         }, status: :payment_required
@@ -139,9 +142,38 @@ module Api
       end
 
       def deduct_credit_if_needed(episode)
-        return unless current_user.credit_user?
+        return if current_user.complimentary? || current_user.unlimited?
 
-        DeductsCredit.call(user: current_user, episode: episode)
+        DeductsCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
+      end
+
+      def anticipated_cost
+        @anticipated_cost ||= CalculatesEpisodeCreditCost.call(
+          source_text_length: source_text_length_for_cost,
+          voice: voice_for_cost
+        )
+      end
+
+      def source_text_length_for_cost
+        case episode_params[:source_type]
+        when "text"
+          episode_params[:text].to_s.length
+        when "extension"
+          episode_params[:content].to_s.length
+        when "url"
+          1
+        else
+          0
+        end
+      end
+
+      # The API permits :voice for forward-compatibility but does NOT yet
+      # thread it into Creates*Episode services — synthesis always uses
+      # user.voice_preference. Pricing must match what actually gets
+      # rendered, otherwise a client passing voice=felix (Standard) while
+      # user.voice_preference=callum (Premium) would be under-charged.
+      def voice_for_cost
+        Voice.find(current_user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
       end
     end
   end

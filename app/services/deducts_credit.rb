@@ -1,24 +1,25 @@
 # frozen_string_literal: true
 
 class DeductsCredit
-  def self.call(user:, episode:)
-    new(user:, episode:).call
+  def self.call(user:, episode:, cost_in_credits:)
+    new(user: user, episode: episode, cost_in_credits: cost_in_credits).call
   end
 
-  def initialize(user:, episode:)
+  def initialize(user:, episode:, cost_in_credits:)
     @user = user
     @episode = episode
+    @cost_in_credits = cost_in_credits
   end
 
   def call
-    return Result.failure("No credits available") unless user.has_credits?
-
     balance = CreditBalance.for(user)
-    balance.deduct!
+    return Result.failure("No credits available") if balance.balance < cost_in_credits
+
+    balance.deduct!(cost_in_credits)
 
     CreditTransaction.create!(
       user: user,
-      amount: -1,
+      amount: -cost_in_credits,
       balance_after: balance.balance,
       transaction_type: "usage",
       episode: episode
@@ -31,5 +32,5 @@ class DeductsCredit
 
   private
 
-  attr_reader :user, :episode
+  attr_reader :user, :episode, :cost_in_credits
 end

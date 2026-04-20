@@ -102,4 +102,54 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
 
     assert result.failure?
   end
+
+  # --- Anticipated cost pre-check --------------------------------------------
+  #
+  # Callers may pass anticipated_cost:. For credit_users, the service
+  # verifies balance >= anticipated_cost and returns failure with a
+  # user-facing message otherwise. Complimentary/unlimited account_types
+  # continue to skip tracking and never see this gate.
+
+  test "returns success for credit user when balance meets anticipated_cost" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 2)
+
+    result = ChecksEpisodeCreationPermission.call(user: credit_user, anticipated_cost: 2)
+
+    assert result.success?
+    refute result.failure?
+  end
+
+  test "returns success for credit user when balance exceeds anticipated_cost" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 5)
+
+    result = ChecksEpisodeCreationPermission.call(user: credit_user, anticipated_cost: 2)
+
+    assert result.success?
+  end
+
+  test "returns failure for credit user when balance is below anticipated_cost" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 1)
+
+    result = ChecksEpisodeCreationPermission.call(user: credit_user, anticipated_cost: 2)
+
+    assert result.failure?
+    assert result.message.present?, "failure must surface a user-facing message"
+    assert_equal :insufficient_credits, result.code
+  end
+
+  test "free-tier limit failure carries :episode_limit_reached code" do
+    EpisodeUsage.create!(
+      user: @free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: 2
+    )
+
+    result = ChecksEpisodeCreationPermission.call(user: @free_user)
+
+    assert result.failure?
+    assert_equal :episode_limit_reached, result.code
+  end
 end

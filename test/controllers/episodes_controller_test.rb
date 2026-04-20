@@ -615,4 +615,106 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     assert_includes response.location, "q=test"
   end
+
+  # === Credit-cost-by-usage ===
+  #
+  # A credit_user submitting a Premium voice + >20k chars triggers a
+  # 2-credit charge. The pre-check gate must reject before any Episode or
+  # CreditTransaction is written when balance < anticipated_cost.
+  # Subscribers with 0 credits are also gated — only complimentary and
+  # unlimited account_types bypass credit deduction.
+
+  test "credit user with balance 1 cannot create Premium long-form episode (insufficient credits gated before create)" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium voice
+    CreditBalance.for(credit_user).update!(balance: 1)
+    sign_in_as credit_user
+
+    long_text = "A" * 20_001 # >20k chars + Premium = 2 credits
+
+    assert_no_difference -> { Episode.count } do
+      assert_no_difference -> { CreditTransaction.count } do
+        post episodes_url, params: { text: long_text }
+      end
+    end
+
+    assert_response :redirect
+    assert_equal 1, credit_user.reload.credits_remaining
+  end
+
+  test "credit user with balance 2 creates Premium long-form episode and is debited 2 credits" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium voice
+    CreditBalance.for(credit_user).update!(balance: 2)
+    sign_in_as credit_user
+
+    long_text = "A" * 20_001 # >20k chars + Premium = 2 credits
+
+    assert_difference -> { Episode.count }, 1 do
+      assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+        post episodes_url, params: { text: long_text }
+      end
+    end
+
+    assert_redirected_to episodes_path
+
+    transaction = CreditTransaction.where(user: credit_user, transaction_type: "usage").order(:created_at).last
+    assert_equal(-2, transaction.amount)
+    assert_equal 0, credit_user.reload.credits_remaining
+  end
+
+  test "complimentary user creates Premium long-form episode with no CreditTransaction written" do
+    complimentary_user = users(:complimentary_user)
+    complimentary_user.update!(voice_preference: "callum") # Premium voice
+    sign_in_as complimentary_user
+
+    long_text = "A" * 20_001
+
+    assert_difference -> { Episode.count }, 1 do
+      assert_no_difference -> { CreditTransaction.count } do
+        post episodes_url, params: { text: long_text }
+      end
+    end
+
+    assert_redirected_to episodes_path
+  end
+
+  test "unlimited user creates Premium long-form episode with no CreditTransaction written" do
+    unlimited_user = users(:unlimited_user)
+    unlimited_user.update!(voice_preference: "callum") # Premium voice
+    sign_in_as unlimited_user
+
+    long_text = "A" * 20_001
+
+    assert_difference -> { Episode.count }, 1 do
+      assert_no_difference -> { CreditTransaction.count } do
+        post episodes_url, params: { text: long_text }
+      end
+    end
+
+    assert_redirected_to episodes_path
+  end
+
+  test "subscriber with zero credits is gated (premium subscription bypass removed)" do
+    # Regression guard: subscribers whose credit_user? returns false (due
+    # to premium? short-circuit) must still be gated. Only complimentary
+    # and unlimited account_types bypass credit deduction.
+    subscriber = users(:subscriber) # has active_subscription fixture
+    subscriber.update!(voice_preference: "callum") # Premium voice
+    # Ensure zero credit balance (subscribers don't typically have one)
+    CreditBalance.for(subscriber).update!(balance: 0)
+    sign_in_as subscriber
+
+    long_text = "A" * 20_001
+
+    assert_no_difference -> { Episode.count } do
+      assert_no_difference -> { CreditTransaction.count } do
+        post episodes_url, params: { text: long_text }
+      end
+    end
+
+    # Behaviour on the web path is redirect + flash (matches existing
+    # permission-gate style). The corresponding API v1 path returns 402.
+    assert_response :redirect
+  end
 end

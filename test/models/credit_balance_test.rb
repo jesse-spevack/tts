@@ -29,11 +29,11 @@ class CreditBalanceTest < ActiveSupport::TestCase
     assert_equal 0, balance.balance
   end
 
-  test "deduct! decrements balance by 1" do
+  test "deduct! decrements balance by given amount" do
     balance = credit_balances(:with_credits)
     assert_equal 3, balance.balance
 
-    balance.deduct!
+    balance.deduct!(1)
     assert_equal 2, balance.reload.balance
   end
 
@@ -41,7 +41,7 @@ class CreditBalanceTest < ActiveSupport::TestCase
     balance = credit_balances(:empty_balance)
 
     assert_raises(CreditBalance::InsufficientCreditsError) do
-      balance.deduct!
+      balance.deduct!(1)
     end
   end
 
