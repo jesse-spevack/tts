@@ -31,6 +31,7 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
     # Mock the chunked synthesizer
     mock_chunked = Object.new
     mock_chunked.define_singleton_method(:synthesize) { |_chunks, _voice| "chunked audio" }
+    mock_chunked.define_singleton_method(:billed_characters) { 0 }
     synthesizer.instance_variable_set(:@chunked_synthesizer, mock_chunked)
 
     result = synthesizer.call(text: "This is a longer text that will be chunked.")
@@ -65,5 +66,34 @@ class SynthesizesAudioTest < ActiveSupport::TestCase
     calls = Mocktail.calls(mock_api_client, :call)
     assert_equal 1, calls.size
     assert_equal "test-default-voice", calls.first.kwargs[:voice]
+  end
+
+  # --- last_billed_characters (agent-team-ff05) ---
+
+  test "last_billed_characters equals text length after single-chunk synthesis" do
+    config = Tts::Config.new(byte_limit: 1000)
+
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { "audio" }
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
+
+    synthesizer = SynthesizesAudio.new(config: config)
+    text = "Hello world."
+    synthesizer.call(text: text)
+
+    assert_equal text.length, synthesizer.last_billed_characters
+  end
+
+  test "last_billed_characters is nil if synthesis raises" do
+    config = Tts::Config.new(byte_limit: 1000)
+
+    mock_api_client = Mocktail.of(Tts::ApiClient)
+    stubs { |m| mock_api_client.call(text: m.any, voice: m.any) }.with { raise StandardError, "boom" }
+    stubs { |m| Tts::ApiClient.new(config: m.any) }.with { mock_api_client }
+
+    synthesizer = SynthesizesAudio.new(config: config)
+
+    assert_raises(StandardError) { synthesizer.call(text: "Hello") }
+    assert_nil synthesizer.last_billed_characters
   end
 end

@@ -103,6 +103,7 @@ class ProcessesNarration
 
     log_info "narration_synthesizing_audio", voice: narration.voice, text_bytes: wrapped.bytesize
     audio_content = synthesize_audio(wrapped)
+    record_tts_usage
 
     gcs_episode_id = generate_episode_id
     log_info "narration_uploading_audio", gcs_episode_id: gcs_episode_id, audio_bytes: audio_content.bytesize
@@ -157,8 +158,21 @@ class ProcessesNarration
 
   def synthesize_audio(text)
     config = Tts::Config.new(voice_name: narration.voice)
-    synthesizer = SynthesizesAudio.new(config: config)
-    synthesizer.call(text: text, voice: narration.voice)
+    @synthesizer = SynthesizesAudio.new(config: config)
+    @synthesizer.call(text: text, voice: narration.voice)
+  end
+
+  def record_tts_usage
+    billed = @synthesizer&.last_billed_characters
+    return unless billed&.positive?
+
+    RecordsTtsUsage.call(
+      usable: narration,
+      voice_id: narration.voice,
+      character_count: billed
+    )
+  rescue StandardError => e
+    log_warn "narration_tts_usage_record_failed", error: e.class, message: e.message
   end
 
   def generate_episode_id
