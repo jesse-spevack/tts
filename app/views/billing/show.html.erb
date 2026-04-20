@@ -7,7 +7,7 @@
     <div class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-mist-950/10 pb-12 md:grid-cols-3 dark:border-white/10">
       <div>
         <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Current Plan</h2>
-        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Manage your subscription and billing.</p>
+        <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Manage your credits and billing.</p>
       </div>
       <div class="md:col-span-2">
         <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
@@ -66,37 +66,41 @@
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               You have <span class="font-medium text-mist-950 dark:text-white"><%= pluralize(Current.user.credits_remaining, "episode credit") %></span> remaining.
             </p>
-            <div class="mt-4">
-              <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
-                <%= form.hidden_field :pack_size, value: AppConfig::Credits::PACKS.first[:size] %>
-                <%= form.submit "Buy More Credits", class: button_classes(type: :secondary) %>
-              <% end %>
+
+          <% else %>
+            <div class="flex items-center gap-3">
+              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Free</h3>
+              <span class="inline-flex items-center rounded-full bg-mist-100 px-2 py-1 text-xs font-medium text-mist-600 dark:bg-mist-500/10 dark:text-mist-400">Active</span>
             </div>
+            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
+              <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes per month. Buy a credit pack to create more.
+            </p>
           <% end %>
         </div>
       </div>
     </div>
 
     <% if @subscription&.canceled? %>
-      <%# Upgrade section for canceled users %>
+      <%# Resubscribe header retained for context; body offers credits instead of new subscription. %>
       <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
         <div>
           <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Resubscribe</h2>
-          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pick up where you left off with a new subscription.</p>
+          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pick up where you left off with a credit pack.</p>
         </div>
         <div class="md:col-span-2">
-          <%= render "upgrade_options" %>
+          <%= render "credit_pack_options" %>
         </div>
       </div>
-    <% elsif Current.user.credit_user? %>
-      <%# Upgrade section for credit users %>
+    <% elsif Current.user.credit_user? || (Current.user.free? && @subscription.blank?) %>
       <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
         <div>
-          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Save with Premium</h2>
-          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Unlimited episodes for less than 2 credit packs per month.</p>
+          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">
+            <%= Current.user.has_credits? ? "Buy more credits" : "Get started with credits" %>
+          </h2>
+          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Credits never expire. Pay only for what you use.</p>
         </div>
         <div class="md:col-span-2">
-          <%= render "upgrade_options" %>
+          <%= render "credit_pack_options" %>
         </div>
       </div>
     <% end %>

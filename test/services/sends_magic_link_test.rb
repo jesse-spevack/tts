@@ -2,6 +2,7 @@ require "test_helper"
 
 class SendsMagicLinkTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
+  include ActiveJob::TestHelper
   test "call with new email creates user and sends email" do
     email = "newuser@example.com"
 
@@ -80,5 +81,58 @@ class SendsMagicLinkTest < ActiveSupport::TestCase
     expected_expiration = 30.minutes.from_now
 
     assert_in_delta expected_expiration, user.auth_token_expires_at, 1.second
+  end
+
+  # --- pack_size carry through magic link (iny7) ---
+  # iny7 extends the signature to accept pack_size alongside plan. The pack_size
+  # must round-trip through the magic-link URL so post-login can resolve the
+  # correct checkout pack. A nil / missing pack_size leaves existing flows
+  # unchanged.
+
+  test "call accepts pack_size kwarg without error" do
+    # The signature contract — passing pack_size must not raise ArgumentError.
+    result = SendsMagicLink.call(
+      email_address: "test@example.com",
+      plan: "credit_pack",
+      pack_size: 10
+    )
+
+    assert result.success?
+  end
+
+  test "call with pack_size embeds pack_size in the magic link URL" do
+    ActionMailer::Base.perform_deliveries = true
+
+    SendsMagicLink.call(
+      email_address: "test@example.com",
+      plan: "credit_pack",
+      pack_size: 20
+    )
+
+    # Force the enqueued mailer job to deliver so the body is inspectable.
+    perform_enqueued_jobs
+
+    mail = ActionMailer::Base.deliveries.last
+    refute_nil mail, "Expected a magic-link email to have been delivered"
+    assert_includes mail.body.to_s, "pack_size=20"
+    assert_includes mail.body.to_s, "plan=credit_pack"
+  end
+
+  test "call without pack_size does not add pack_size to the magic link URL" do
+    # Back-compat: plan-only or bare calls must not leak an empty pack_size.
+    SendsMagicLink.call(email_address: "test@example.com", plan: "credit_pack")
+    perform_enqueued_jobs
+
+    mail = ActionMailer::Base.deliveries.last
+    refute_match(/pack_size=/, mail.body.to_s,
+      "An absent pack_size must not appear as a URL param")
+  end
+
+  test "call with neither plan nor pack_size still works" do
+    # Smoke check for unchanged existing flows.
+    assert_emails 1 do
+      result = SendsMagicLink.call(email_address: "signup@example.com")
+      assert result.success?
+    end
   end
 end

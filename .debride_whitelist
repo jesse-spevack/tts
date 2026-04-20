@@ -25,6 +25,7 @@ oauth_access_grants
 oauth_access_tokens
 narration
 llm_usage
+credit_transactions
 
 # ---------------------------------------------------------------------------
 # ActiveJob#perform — called dynamically by the queue executor after

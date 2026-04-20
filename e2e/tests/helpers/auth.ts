@@ -82,17 +82,22 @@ export async function signInAsCancelingUser(page: Page) {
 
 /**
  * Signs up a new user via the signup modal.
+ * Clicks the free or credit_pack CTA, fills the email, and waits for confirmation.
+ * For credit_pack signups, optionally pass packSize (5 | 10 | 20) to target a specific pack CTA.
  */
-export async function signupWithEmail(page: Page, email: string, plan: 'free' | 'premium_monthly' | 'premium_annual' = 'free') {
-  // Click the appropriate signup button based on plan
-  if (plan === 'free') {
-    await page.click('button[data-plan="free"]');
+export async function signupWithEmail(
+  page: Page,
+  email: string,
+  options: { plan?: 'free' | 'credit_pack'; packSize?: 5 | 10 | 20 } = {}
+) {
+  const plan = options.plan ?? 'free';
+
+  if (plan === 'credit_pack' && options.packSize) {
+    await page.click(`button[data-plan="credit_pack"][data-pack-size="${options.packSize}"]`);
+  } else if (plan === 'credit_pack') {
+    await page.locator('button[data-plan="credit_pack"]').first().click();
   } else {
-    // For premium plans, first select the plan via toggle if needed
-    if (plan === 'premium_monthly') {
-      await page.click('label:has(input[value="monthly"])');
-    }
-    await page.click('button[data-plan="' + plan + '"], button[data-pricing-toggle-target="premiumLink"]');
+    await page.locator('button[data-plan="free"]').first().click();
   }
 
   // Fill in email in the modal
@@ -107,11 +112,8 @@ export async function signupWithEmail(page: Page, email: string, plan: 'free' | 
 /**
  * Authenticates via magic link token.
  */
-export async function authenticateWithToken(page: Page, token: string, plan?: string) {
-  const url = plan
-    ? `/auth?token=${token}&plan=${plan}`
-    : `/auth?token=${token}`;
-  await page.goto(url);
+export async function authenticateWithToken(page: Page, token: string) {
+  await page.goto(`/auth?token=${token}`);
 }
 
 /**

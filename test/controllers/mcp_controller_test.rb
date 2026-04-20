@@ -296,7 +296,7 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     result = parse_tool_result
     data = JSON.parse(result)
     assert_equal "tier_limit", data["error"]
-    assert_match "upgrade", data["message"].downcase
+    assert_match "billing", data["message"].downcase
   end
 
   test "create_episode_from_text returns tier limit error" do
