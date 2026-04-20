@@ -427,4 +427,29 @@ class UserTest < ActiveSupport::TestCase
 
     assert user.deactivated?
   end
+
+  # internal column tests
+  test "internal defaults to false on create" do
+    user = User.create!(email_address: "internal_default@example.com")
+
+    refute user.internal?
+  end
+
+  test "internal can be set to true" do
+    user = users(:one)
+    user.update!(internal: true)
+
+    assert user.internal?
+  end
+
+  test "where(internal: false) excludes internal users" do
+    internal_user = users(:one)
+    internal_user.update!(internal: true)
+    external_user = users(:two)
+
+    external_users = User.where(internal: false)
+
+    assert_includes external_users, external_user
+    assert_not_includes external_users, internal_user
+  end
 end
