@@ -1,6 +1,15 @@
 ENV["RAILS_ENV"] ||= "test"
 ENV["MAILER_FROM_ADDRESS"] ||= "test@example.com"
 ENV["APP_HOST"] ||= "example.com"
+
+# Test-mode Stripe price IDs for the three credit packs (agent-team-qc7t).
+# These are real test-mode Price objects created in Stripe 2026-04-19.
+# AppConfig::Credits::PACKS reads these at class-load time via ENV.fetch, so
+# they must be set BEFORE requiring the Rails environment below.
+ENV["STRIPE_PRICE_ID_CREDIT_PACK_5"] ||= "price_1TO99OD8ZGZanIYEXCH3vTYw"
+ENV["STRIPE_PRICE_ID_CREDIT_PACK_10"] ||= "price_1TO9A5D8ZGZanIYE56zeSE89"
+ENV["STRIPE_PRICE_ID_CREDIT_PACK_20"] ||= "price_1TO9AMD8ZGZanIYEYnsWPXYg"
+
 require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"

@@ -93,4 +93,93 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_path(return_to: "/checkout")
   end
+
+  # --- pack_size checkout routing (agent-team-qc7t) ---
+  #
+  # POST /checkout with pack_size: 5/10/20 looks up the matching pack in
+  # AppConfig::Credits::PACKS and passes that pack's stripe_price_id to
+  # CreatesCheckoutSession. The WebMock .with(body: hash_including(...))
+  # assertions verify the correct price_id flows through to Stripe.
+
+  test "create with pack_size 5 uses the 5-pack stripe price id" do
+    sign_in_as(@user)
+    pack_5_price_id = AppConfig::Credits::PACKS.find { |p| p[:size] == 5 }[:stripe_price_id]
+
+    stub_request(:get, /api\.stripe\.com\/v1\/customers/)
+      .to_return(status: 200, body: { data: [] }.to_json)
+    stub_request(:post, "https://api.stripe.com/v1/customers")
+      .to_return(status: 200, body: { id: "cus_test" }.to_json)
+    # WebMock is configured with query_values_notation = :flat (test_helper.rb),
+    # which keeps Rack form bodies as flat keys rather than nesting them, so
+    # we match "line_items[0][price]" literally instead of a nested hash.
+    line_item_stub = stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")
+      .with(body: hash_including("line_items[0][price]" => pack_5_price_id))
+      .to_return(status: 200, body: { id: "cs_5", url: "https://checkout.stripe.com/5" }.to_json)
+
+    post checkout_path, params: { pack_size: 5 }
+
+    assert_redirected_to "https://checkout.stripe.com/5"
+    assert_requested line_item_stub
+  end
+
+  test "create with pack_size 10 uses the 10-pack stripe price id" do
+    sign_in_as(@user)
+    pack_10_price_id = AppConfig::Credits::PACKS.find { |p| p[:size] == 10 }[:stripe_price_id]
+
+    stub_request(:get, /api\.stripe\.com\/v1\/customers/)
+      .to_return(status: 200, body: { data: [] }.to_json)
+    stub_request(:post, "https://api.stripe.com/v1/customers")
+      .to_return(status: 200, body: { id: "cus_test" }.to_json)
+    line_item_stub = stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")
+      .with(body: hash_including("line_items[0][price]" => pack_10_price_id))
+      .to_return(status: 200, body: { id: "cs_10", url: "https://checkout.stripe.com/10" }.to_json)
+
+    post checkout_path, params: { pack_size: 10 }
+
+    assert_redirected_to "https://checkout.stripe.com/10"
+    assert_requested line_item_stub
+  end
+
+  test "create with pack_size 20 uses the 20-pack stripe price id" do
+    sign_in_as(@user)
+    pack_20_price_id = AppConfig::Credits::PACKS.find { |p| p[:size] == 20 }[:stripe_price_id]
+
+    stub_request(:get, /api\.stripe\.com\/v1\/customers/)
+      .to_return(status: 200, body: { data: [] }.to_json)
+    stub_request(:post, "https://api.stripe.com/v1/customers")
+      .to_return(status: 200, body: { id: "cus_test" }.to_json)
+    line_item_stub = stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")
+      .with(body: hash_including("line_items[0][price]" => pack_20_price_id))
+      .to_return(status: 200, body: { id: "cs_20", url: "https://checkout.stripe.com/20" }.to_json)
+
+    post checkout_path, params: { pack_size: 20 }
+
+    assert_redirected_to "https://checkout.stripe.com/20"
+    assert_requested line_item_stub
+  end
+
+  test "create with invalid integer pack_size does not call Stripe" do
+    sign_in_as(@user)
+
+    # No Stripe stub — if the controller reaches Stripe we want WebMock to blow up.
+    post checkout_path, params: { pack_size: 7 }
+
+    assert_redirected_to billing_path
+    refute_nil flash[:alert], "expected a flash alert for invalid pack_size"
+  end
+
+  test "create with non-numeric pack_size does not call Stripe" do
+    sign_in_as(@user)
+
+    post checkout_path, params: { pack_size: "xyz" }
+
+    assert_redirected_to billing_path
+    refute_nil flash[:alert], "expected a flash alert for invalid pack_size"
+  end
+
+  test "create with pack_size requires authentication" do
+    post checkout_path, params: { pack_size: 5 }
+
+    assert_redirected_to login_path(return_to: "/checkout")
+  end
 end

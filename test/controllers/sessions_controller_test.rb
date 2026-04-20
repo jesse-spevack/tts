@@ -67,7 +67,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     get auth_url, params: { token: token, plan: "credit_pack" }
 
-    assert_redirected_to checkout_path(price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK)
+    assert_redirected_to checkout_path(pack_size: AppConfig::Credits::PACKS.first[:size])
     assert_nil flash[:notice], "Should not show 'Welcome back!' flash when redirecting to checkout"
   end
 
@@ -79,12 +79,12 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_episode_path
   end
 
-  test "all checkout price IDs have a corresponding plan redirect" do
-    # Map every PRICE_ID_* constant to its plan name
+  test "all subscription price IDs have a corresponding plan redirect" do
+    # Map every subscription PRICE_ID_* constant to its plan name. Credit packs
+    # are routed by pack_size (not price_id), so they are exercised separately.
     plan_names = {
       AppConfig::Stripe::PRICE_ID_MONTHLY => "premium_monthly",
-      AppConfig::Stripe::PRICE_ID_ANNUAL => "premium_annual",
-      AppConfig::Stripe::PRICE_ID_CREDIT_PACK => "credit_pack"
+      AppConfig::Stripe::PRICE_ID_ANNUAL => "premium_annual"
     }
 
     # If a new PRICE_ID_* constant is added to AppConfig::Stripe, this test

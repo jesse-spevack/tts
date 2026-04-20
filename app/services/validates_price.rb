@@ -4,12 +4,16 @@ class ValidatesPrice
     AppConfig::Stripe::PRICE_ID_ANNUAL
   ].freeze
 
-  VALID_PRICE_IDS = (SUBSCRIPTION_PRICE_IDS + [
-    AppConfig::Stripe::PRICE_ID_CREDIT_PACK
-  ]).freeze
+  def self.credit_pack_price_ids
+    AppConfig::Credits::PACKS.map { |pack| pack[:stripe_price_id] }
+  end
+
+  def self.valid_price_ids
+    SUBSCRIPTION_PRICE_IDS + credit_pack_price_ids
+  end
 
   def self.call(price_id)
-    if VALID_PRICE_IDS.include?(price_id)
+    if valid_price_ids.include?(price_id)
       Result.success(price_id)
     else
       Result.failure("Invalid price selected")
@@ -17,6 +21,6 @@ class ValidatesPrice
   end
 
   def self.credit_pack?(price_id)
-    price_id == AppConfig::Stripe::PRICE_ID_CREDIT_PACK
+    credit_pack_price_ids.include?(price_id)
   end
 end

@@ -364,7 +364,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "section#credits" do
       assert_select "*", text: /#{balance}/
       assert_select "form[action=?][method=?]", checkout_path, "post" do
-        assert_select "input[type=hidden][name=?][value=?]", "price_id", AppConfig::Stripe::PRICE_ID_CREDIT_PACK
+        assert_select "input[type=hidden][name='pack_size'][value='5']"
         assert_select "input[type=submit][value=?]", "Buy More Credits"
       end
     end
@@ -481,6 +481,62 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "section#credits", count: 0
+  end
+
+  # --- Three-pack credit purchase UI (agent-team-qc7t) ---
+  #
+  # Empty-state credits section now renders three pack cards (Starter 5 /
+  # Standard 10 / Bulk 20) instead of a single pack. The 20-pack is highlighted
+  # with a "Best Value" badge. Each card has its own form posting to
+  # /checkout with the appropriate pack_size.
+
+  test "credits empty-state renders all three pack labels" do
+    # @user is users(:one) — free, no credits → empty-state branch.
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits" do
+      assert_select "*", text: /Starter/
+      assert_select "*", text: /Standard/
+      assert_select "*", text: /Bulk/
+    end
+  end
+
+  test "credits empty-state renders all three pack prices" do
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits" do
+      assert_select "*", text: /\$9\.99/
+      assert_select "*", text: /\$17\.99/
+      assert_select "*", text: /\$32\.99/
+    end
+  end
+
+  test "credits empty-state renders three checkout forms, one per pack_size" do
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits" do
+      assert_select "form[action=?][method=?]", checkout_path, "post" do
+        assert_select "input[type=hidden][name='pack_size'][value='5']"
+      end
+      assert_select "form[action=?][method=?]", checkout_path, "post" do
+        assert_select "input[type=hidden][name='pack_size'][value='10']"
+      end
+      assert_select "form[action=?][method=?]", checkout_path, "post" do
+        assert_select "input[type=hidden][name='pack_size'][value='20']"
+      end
+    end
+  end
+
+  test "credits empty-state flags the 20-pack with a Best Value badge" do
+    get settings_path
+
+    assert_response :success
+    assert_select "section#credits" do
+      assert_select "*", text: /Best Value/i
+    end
   end
 
   # --- Demo Mode relocated to /admin (agent-team-pte) ---

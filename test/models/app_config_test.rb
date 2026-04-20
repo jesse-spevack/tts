@@ -101,6 +101,97 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_nil AppConfig::Stripe::PLAN_INFO["price_does_not_exist"]
   end
 
+  # --- Credits::PACKS catalog (agent-team-qc7t) ---
+  # Three credit packs replace the legacy single-pack PACK_SIZE/PACK_PRICE_DISPLAY
+  # constants. PACKS is the authoritative catalog used by checkout, webhook
+  # routing, and settings UI. Each entry is frozen so callers can share refs
+  # without fear of mutation.
+
+  PACK_5_TEST_PRICE_ID = "price_1TO99OD8ZGZanIYEXCH3vTYw"
+  PACK_10_TEST_PRICE_ID = "price_1TO9A5D8ZGZanIYE56zeSE89"
+  PACK_20_TEST_PRICE_ID = "price_1TO9AMD8ZGZanIYEYnsWPXYg"
+
+  test "Credits::PACKS is a frozen array of three hashes" do
+    assert_kind_of Array, AppConfig::Credits::PACKS
+    assert AppConfig::Credits::PACKS.frozen?, "PACKS must be frozen"
+    assert_equal 3, AppConfig::Credits::PACKS.length
+    AppConfig::Credits::PACKS.each do |pack|
+      assert_kind_of Hash, pack
+      assert pack.frozen?, "each pack hash must be frozen"
+    end
+  end
+
+  test "Credits::PACKS entries have required keys" do
+    AppConfig::Credits::PACKS.each do |pack|
+      assert pack.key?(:size), "missing :size"
+      assert pack.key?(:price_cents), "missing :price_cents"
+      assert pack.key?(:stripe_price_id), "missing :stripe_price_id"
+      assert pack.key?(:label), "missing :label"
+    end
+  end
+
+  test "Credits::PACKS first entry is the 5-pack Starter at $9.99" do
+    pack = AppConfig::Credits::PACKS[0]
+    assert_equal 5, pack[:size]
+    assert_equal 999, pack[:price_cents]
+    assert_equal "Starter", pack[:label]
+    assert_equal PACK_5_TEST_PRICE_ID, pack[:stripe_price_id]
+  end
+
+  test "Credits::PACKS second entry is the 10-pack Standard at $17.99" do
+    pack = AppConfig::Credits::PACKS[1]
+    assert_equal 10, pack[:size]
+    assert_equal 1799, pack[:price_cents]
+    assert_equal "Standard", pack[:label]
+    assert_equal PACK_10_TEST_PRICE_ID, pack[:stripe_price_id]
+  end
+
+  test "Credits::PACKS third entry is the 20-pack Bulk at $32.99" do
+    pack = AppConfig::Credits::PACKS[2]
+    assert_equal 20, pack[:size]
+    assert_equal 3299, pack[:price_cents]
+    assert_equal "Bulk", pack[:label]
+    assert_equal PACK_20_TEST_PRICE_ID, pack[:stripe_price_id]
+  end
+
+  test "Credits.find_pack_by_price_id returns 5-pack for 5-pack price id" do
+    pack = AppConfig::Credits.find_pack_by_price_id(PACK_5_TEST_PRICE_ID)
+    refute_nil pack
+    assert_equal 5, pack[:size]
+  end
+
+  test "Credits.find_pack_by_price_id returns 10-pack for 10-pack price id" do
+    pack = AppConfig::Credits.find_pack_by_price_id(PACK_10_TEST_PRICE_ID)
+    refute_nil pack
+    assert_equal 10, pack[:size]
+  end
+
+  test "Credits.find_pack_by_price_id returns 20-pack for 20-pack price id" do
+    pack = AppConfig::Credits.find_pack_by_price_id(PACK_20_TEST_PRICE_ID)
+    refute_nil pack
+    assert_equal 20, pack[:size]
+  end
+
+  test "Credits.find_pack_by_price_id returns nil for nil" do
+    assert_nil AppConfig::Credits.find_pack_by_price_id(nil)
+  end
+
+  test "Credits.find_pack_by_price_id returns nil for unknown price id" do
+    assert_nil AppConfig::Credits.find_pack_by_price_id("price_does_not_exist")
+  end
+
+  test "legacy Credits::PACK_SIZE constant is removed" do
+    assert_raises(NameError) do
+      AppConfig::Credits::PACK_SIZE
+    end
+  end
+
+  test "legacy Credits::PACK_PRICE_DISPLAY constant is removed" do
+    assert_raises(NameError) do
+      AppConfig::Credits::PACK_PRICE_DISPLAY
+    end
+  end
+
   test "Storage.public_feed_url returns branded URL" do
     result = AppConfig::Storage.public_feed_url("podcast_abc123")
 

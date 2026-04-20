@@ -58,7 +58,7 @@ class CreatesCheckoutSessionTest < ActiveSupport::TestCase
 
     result = CreatesCheckoutSession.call(
       user: @user,
-      price_id: AppConfig::Stripe::PRICE_ID_CREDIT_PACK,
+      price_id: AppConfig::Credits::PACKS.first[:stripe_price_id],
       success_url: "https://example.com/success",
       cancel_url: "https://example.com/cancel"
     )

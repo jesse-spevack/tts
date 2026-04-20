@@ -52,7 +52,9 @@ jobs:
           fetch_secret STRIPE_WEBHOOK_SECRET stripe-webhook-secret
           fetch_secret STRIPE_PRICE_ID_MONTHLY stripe-price-id-monthly
           fetch_secret STRIPE_PRICE_ID_ANNUAL stripe-price-id-annual
-          fetch_secret STRIPE_PRICE_ID_CREDIT_PACK stripe-price-id-credit-pack
+          fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_5 stripe-price-id-credit-pack-5
+          fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_10 stripe-price-id-credit-pack-10
+          fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_20 stripe-price-id-credit-pack-20
 
           # Generate OAuth2 access token for Artifact Registry
           KAMAL_TOKEN=$(gcloud auth print-access-token)
@@ -89,7 +91,9 @@ jobs:
           STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
           STRIPE_PRICE_ID_MONTHLY=$STRIPE_PRICE_ID_MONTHLY
           STRIPE_PRICE_ID_ANNUAL=$STRIPE_PRICE_ID_ANNUAL
-          STRIPE_PRICE_ID_CREDIT_PACK=$STRIPE_PRICE_ID_CREDIT_PACK
+          STRIPE_PRICE_ID_CREDIT_PACK_5=$STRIPE_PRICE_ID_CREDIT_PACK_5
+          STRIPE_PRICE_ID_CREDIT_PACK_10=$STRIPE_PRICE_ID_CREDIT_PACK_10
+          STRIPE_PRICE_ID_CREDIT_PACK_20=$STRIPE_PRICE_ID_CREDIT_PACK_20
           KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
           EOF
 

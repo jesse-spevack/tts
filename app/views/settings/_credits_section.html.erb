@@ -7,34 +7,37 @@
     </div>
     <div class="md:col-span-2">
       <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <% case variant %>
+        <% when :balance %>
           <div class="space-y-1">
-            <% case variant %>
-            <% when :balance %>
-              <p class="text-sm text-mist-500 dark:text-mist-400">
-                You have <span class="font-medium text-mist-950 dark:text-white"><%= pluralize(Current.user.credits_remaining, "episode credit") %></span> remaining.
-              </p>
-              <p class="text-sm text-mist-500 dark:text-mist-400">Credits never expire.</p>
-            <% when :canceled_grace %>
-              <p class="text-sm text-mist-500 dark:text-mist-400">
-                Your subscription ended on <%= Current.user.subscription.current_period_end.strftime("%B %-d, %Y") %>.
-              </p>
-              <p class="text-sm text-mist-500 dark:text-mist-400">
-                Pay-as-you-go is available if you'd like to keep creating episodes.
-              </p>
-            <% when :empty_state %>
-              <p class="text-sm font-medium text-mist-950 dark:text-white">
-                Pay as you go — no subscription required.
-              </p>
-              <p class="text-sm text-mist-500 dark:text-mist-400">
-                <%= AppConfig::Credits::PACK_SIZE %> episodes per pack for <%= AppConfig::Credits::PACK_PRICE_DISPLAY %>. Credits never expire.
-              </p>
-            <% end %>
+            <p class="text-sm text-mist-500 dark:text-mist-400">
+              You have <span class="font-medium text-mist-950 dark:text-white"><%= pluralize(Current.user.credits_remaining, "episode credit") %></span> remaining.
+            </p>
+            <p class="text-sm text-mist-500 dark:text-mist-400">Credits never expire. Buy more below.</p>
           </div>
-          <%= form_with url: checkout_path, method: :post, data: { turbo: false } do |form| %>
-            <%= form.hidden_field :price_id, value: AppConfig::Stripe::PRICE_ID_CREDIT_PACK %>
-            <%= form.submit(variant == :balance ? "Buy More Credits" : "Buy Credit Pack",
-                            class: "#{button_classes(type: :secondary)} self-start sm:self-auto") %>
+        <% when :canceled_grace %>
+          <div class="space-y-1">
+            <p class="text-sm text-mist-500 dark:text-mist-400">
+              Your subscription ended on <%= Current.user.subscription.current_period_end.strftime("%B %-d, %Y") %>.
+            </p>
+            <p class="text-sm text-mist-500 dark:text-mist-400">
+              Pay-as-you-go is available if you'd like to keep creating episodes.
+            </p>
+          </div>
+        <% when :empty_state %>
+          <p class="text-sm font-medium text-mist-950 dark:text-white">
+            Pay as you go — no subscription required.
+          </p>
+          <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">
+            Pick a pack. Credits never expire.
+          </p>
+        <% end %>
+        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <% AppConfig::Credits::PACKS.each do |pack| %>
+            <%= render "settings/credit_pack_card",
+                       pack: pack,
+                       highlight: pack[:size] == 20,
+                       submit_label: (variant == :balance ? "Buy More Credits" : "Buy Credit Pack") %>
           <% end %>
         </div>
       </div>
