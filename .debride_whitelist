@@ -94,6 +94,15 @@ process
 redirect_to_last_page
 
 # ---------------------------------------------------------------------------
+# Initializer-dispatched gate method.
+#
+# - Mpp::VerifiesChainId.should_run? (app/services/mpp/verifies_chain_id.rb:44)
+#   Called from config/initializers/mpp_chain_id_guard.rb. debride does not
+#   follow initializer callsites, so the method appears unreferenced.
+# ---------------------------------------------------------------------------
+should_run?
+
+# ---------------------------------------------------------------------------
 # Private helper methods called via implicit-self within the same class.
 #
 # debride has a known blindspot here: in a call like `bucket.file(file_path)`,
