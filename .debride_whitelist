@@ -110,3 +110,19 @@ redirect_to_last_page
 scoped_path
 file_path
 local_path
+
+# ---------------------------------------------------------------------------
+# Custom helper methods whose name ends in `_path`.
+#
+# debride-erb filters `*_path` calls from its "called methods" set, treating
+# them as framework-generated Rails route helpers that are always reachable.
+# That filter also hides calls to our own helpers whose name follows the
+# Rails `_path` convention (for methods returning a URL path). Verified by
+# renaming the definition + call site to `_url` / `_href` suffixes in isolation:
+# the finding disappears, confirming it's the suffix filter and not a missing
+# call site. See commit message for PR #302 for the repro.
+#
+# - UiHelper#marketing_cta_path — called from
+#   app/views/shared/marketing/_cta_button.html.erb
+# ---------------------------------------------------------------------------
+marketing_cta_path

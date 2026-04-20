@@ -1,0 +1,23 @@
+<%# Marketing CTA button that branches on auth state.
+  Logged-out: signup-modal trigger bound to the given plan.
+  Logged-in: direct link to the user's next step for that plan
+             (new episode for free, checkout for paid).
+
+  Locals:
+    label     - button text (required)
+    plan      - "free" | "premium_monthly" | "premium_annual" | "credit_pack"
+    class     - CSS classes shared across both branches
+    pack_size - (optional) credit-pack size in episodes. Forwarded to the
+                modal as a data attribute and to the authenticated path
+                so the right pack is checked out.
+%>
+<% pack_size = local_assigns[:pack_size] %>
+<% if authenticated? %>
+  <%= link_to label, marketing_cta_path(plan, pack_size: pack_size), class: local_assigns[:class] %>
+<% else %>
+  <%
+    data = { action: "click->signup-modal#open", plan: plan }
+    data[:pack_size] = pack_size if pack_size
+  %>
+  <%= tag.button label, type: "button", data: data, class: local_assigns[:class] %>
+<% end %>

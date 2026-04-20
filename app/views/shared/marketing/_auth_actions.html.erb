@@ -1,0 +1,12 @@
+<%# Actions block for marketing pages' navbar.
+  When authenticated: "+ New Episode" link + "Logout" button.
+  When not: "Login" link + "Get started" signup-modal trigger.
+  Intended to be passed as the `actions:` local to shared/marketing/navbar_centered_links.
+%>
+<% if authenticated? %>
+  <%= link_to "+ New Episode", new_episode_path, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+  <%= button_to "Logout", session_path, method: :delete, class: "text-sm/7 font-medium text-mist-950 dark:text-white cursor-pointer" %>
+<% else %>
+  <%= link_to "Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
+  <%= tag.button "Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+<% end %>

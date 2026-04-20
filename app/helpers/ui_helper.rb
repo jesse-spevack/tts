@@ -62,6 +62,24 @@ module UiHelper
     :empty_state
   end
 
+  # Destination for a marketing CTA when the user is already authenticated.
+  # Mirrors SessionsController#post_login_path so signed-in clicks land
+  # where a just-authenticated user would via the signup modal. pack_size
+  # overrides the default first-pack checkout for tier-specific credit CTAs.
+  def marketing_cta_path(plan, pack_size: nil)
+    case plan
+    when "premium_monthly"
+      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
+    when "premium_annual"
+      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
+    when "credit_pack"
+      size = pack_size || AppConfig::Credits::PACKS.first[:size]
+      checkout_path(pack_size: size)
+    else
+      new_episode_path
+    end
+  end
+
   def oauth_app_badge(app)
     slug = app.name.to_s.parameterize
     svg_path = Rails.root.join("app/assets/images/oauth_apps/#{slug}.svg") if slug.present?
