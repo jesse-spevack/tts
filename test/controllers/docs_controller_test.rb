@@ -18,19 +18,20 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
-  # --- iny7: MPP docs must be untouched ---
-  # MPP is explicitly out of scope for iny7. This snapshot hash pins the
-  # file's exact bytes so any edit (including an accidental copy sweep) is
-  # caught by test. If MPP docs need to change, a separate bead updates
-  # them and this hash is bumped deliberately.
-  PRE_INY7_MPP_SHA256 = "4ea6c6789266a31c9efbb5933e39747e84cab5fa2a9842de5fdfe4eb3d7836da"
+  # --- Snapshot pin for docs/mpp.html.erb ---
+  # Pins the file's exact bytes so any accidental copy sweep from an
+  # unrelated bead is caught by test. Bumped deliberately whenever an
+  # MPP-scoped bead edits the file. Last bumped for agent-team-rwzy
+  # (MPP USDC swap: user-facing docs page update), replacing the
+  # pre-iny7 snapshot.
+  MPP_DOCS_SHA256 = "8d305fcf436af410cb0894bc04131761742067e153efbc5bea7316afc0d54a92"
 
-  test "app/views/docs/mpp.html.erb is unchanged from pre-iny7 bytes" do
+  test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
     current = Digest::SHA256.hexdigest(File.read(path))
-    assert_equal PRE_INY7_MPP_SHA256, current,
-      "docs/mpp.html.erb has changed. MPP is out of scope for iny7 — " \
-      "if this change is intentional, update PRE_INY7_MPP_SHA256."
+    assert_equal MPP_DOCS_SHA256, current,
+      "docs/mpp.html.erb has changed. If this change is intentional " \
+      "and scoped to an MPP bead, bump MPP_DOCS_SHA256 to the new hash."
   end
 
   # --- iny7: docs/episodes content rewrite ---

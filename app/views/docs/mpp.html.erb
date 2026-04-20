@@ -66,7 +66,7 @@
           <dl class="grid grid-cols-3 gap-6 self-start lg:grid-cols-1 lg:gap-4">
             <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
               <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Currency</dt>
-              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">pathUSD</dd>
+              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">USDC</dd>
             </div>
             <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
               <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Network</dt>
@@ -192,7 +192,7 @@
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
                 {
                   "amount": "750000",
-                  "currency": "0x20c0000000000000000000000000000000000000",
+                  "currency": "0x20c000000000000000000000b9537d11c60e8b50",
                   "recipient": "0x1234abcd…"
                 }
               JSON
@@ -201,9 +201,9 @@
 
             <% decoded_request_fields = [
               { name: "amount", type: "string",
-                description: %(Token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1000000</span> = $1.00 (Premium).).html_safe },
+                description: %(Token base units — the stablecoin has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1000000</span> = $1.00 (Premium).).html_safe },
               { name: "currency", type: "string",
-                description: %(The pathUSD token contract address on Tempo.).html_safe },
+                description: %(The ERC-20 stablecoin contract address on Tempo. On <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> this is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code>; self-hosted testnet deployments default to pathUSD at <code class="ic">0x20c0…0000</code>.).html_safe },
               { name: "recipient", type: "string",
                 description: %(The one-time Stripe-provisioned deposit address.).html_safe }
             ] %>
@@ -216,11 +216,11 @@
               <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">Step 2</span>
               <h3 class="font-serif text-xl text-mist-950 dark:text-white">Pay</h3>
             </div>
-            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a pathUSD transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
+            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a USDC transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
               <li>To the exact <code class="ic">deposit_address</code> returned in the 402 response</li>
               <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1000000</span> for Premium ($1.00)</li>
-              <li>Of the pathUSD token at contract <code class="ic">0x20c0…0000</code></li>
+              <li>Of the stablecoin whose contract address is echoed in the challenge's <code class="ic">request.currency</code> field — on <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> that is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code></li>
               <li>Completed before the challenge <code class="ic">expires</code> timestamp</li>
             </ul>
           </li>
@@ -250,7 +250,7 @@
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit on your behalf via <code class="ic">eth_sendRawTransaction</code>). The signature must be an RLP-encoded signed Ethereum transaction, hex-prefixed — any valid transaction type (legacy, EIP-2930, EIP-1559) is accepted as long as it transfers the right amount of pathUSD to the challenge's deposit address.
+              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit on your behalf via <code class="ic">eth_sendRawTransaction</code>). The signature must be an RLP-encoded signed Ethereum transaction, hex-prefixed — any valid transaction type (legacy, EIP-2930, EIP-1559) is accepted as long as it transfers the right amount of the stablecoin (USDC.e on <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong>) to the challenge's deposit address.
             </p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
@@ -512,7 +512,7 @@
         </p>
 
         <%= render "docs/responsive_table",
-          headers: ["Tier", "Price (USD)", "Base units (pathUSD)", "Voices"],
+          headers: ["Tier", "Price (USD)", "Base units (6 decimals)", "Voices"],
           rows: [
             ["Standard", "$0.75", "750,000", "wren, felix, sloane, archer, gemma, hugo, quinn, theo"],
             ["Premium",  "$1.00", "1,000,000", "elara, callum, lark, nash"]
@@ -531,18 +531,21 @@
 
         <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token</dt>
-            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">0x20c0…0000</dd>
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token (podread.app)</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">USDC.e · 0x20c0…b9537d11c60e8b50</dd>
           </div>
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Decimals</dt>
             <dd class="mt-1 font-mono text-sm text-mist-900 tabular-nums dark:text-mist-100">6 (1 USD = 1,000,000)</dd>
           </div>
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Testnet RPC</dt>
-            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">rpc.testnet.tempo.xyz</dd>
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">RPC</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">rpc.moderato.tempo.xyz</dd>
           </div>
         </dl>
+        <p class="mt-4 max-w-[65ch] text-pretty text-sm text-mist-500 dark:text-mist-400">
+          On <strong class="font-semibold text-mist-700 dark:text-mist-300">podread.app</strong>, payments are settled in <strong class="font-semibold text-mist-700 dark:text-mist-300">USDC.e</strong> — USDC bridged to Tempo via <a href="https://stargate.finance/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Stargate</a>. It is not Circle-native USDC; token balances held on Tempo are bridge-wrapped and must be unwrapped via Stargate to redeem on other chains. Self-hosted deployments targeting Tempo's Moderato testnet can use the predeployed <strong class="font-semibold text-mist-700 dark:text-mist-300">pathUSD</strong> stablecoin (<code class="ic">0x20c0…0000</code>) instead — the faucet dispenses pathUSD, not USDC.e. The <code class="ic">request.currency</code> field in every 402 challenge echoes whichever contract the server is configured for, so clients should read it rather than hardcode either address.
+        </p>
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
           The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 100 = $1.00). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,000,000 for Premium).
         </p>
@@ -620,9 +623,9 @@
             ["MPP_CURRENCY", "usd", "Currency code"],
             ["MPP_CHALLENGE_TTL_SECONDS", "300", "How long a 402 challenge is valid"],
             ["MPP_STRIPE_API_VERSION", "2026-03-04.preview", "Stripe API version pinned to MPP preview channel"],
-            ["TEMPO_RPC_URL", "rpc.testnet.tempo.xyz", "Tempo JSON-RPC endpoint"],
-            ["TEMPO_CURRENCY_TOKEN", "0x20c0…0000", "pathUSD token contract address"],
-            ["TEMPO_TOKEN_DECIMALS", "6", "Decimal places for the stablecoin"],
+            ["TEMPO_RPC_URL", "rpc.moderato.tempo.xyz", "Tempo JSON-RPC endpoint"],
+            ["TEMPO_CURRENCY_TOKEN", "0x20c0…0000", %Q(Stablecoin contract on Tempo. Default is pathUSD (testnet faucet-dispensable). <strong class="font-semibold text-mist-700 dark:text-mist-300">podread.app</strong> overrides this to USDC.e at <code class="font-mono text-[0.9em]">0x20c0…b9537d11c60e8b50</code>.).html_safe],
+            ["TEMPO_TOKEN_DECIMALS", "6", "Decimal places for the stablecoin (both pathUSD and USDC.e are 6)"],
             ["TEMPO_RPC_OPEN_TIMEOUT_SECONDS", "5", "TCP connect timeout"],
             ["TEMPO_RPC_READ_TIMEOUT_SECONDS", "10", "Read timeout"],
             ["APP_HOST", "localhost:3000", "Used as the realm in challenges"]
