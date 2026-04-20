@@ -26,7 +26,7 @@ class DeletesEpisode
   attr_reader :episode
 
   def soft_delete_episode
-    @episode.update!(deleted_at: Time.current) unless @episode.soft_deleted?
+    @episode.soft_delete! unless @episode.soft_deleted?
     log_info "episode_soft_deleted"
   end
 

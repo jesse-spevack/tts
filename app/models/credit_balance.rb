@@ -9,10 +9,6 @@ class CreditBalance < ApplicationRecord
     find_or_create_by(user: user)
   end
 
-  def sufficient?
-    balance > 0
-  end
-
   def deduct!
     with_lock do
       raise InsufficientCreditsError if balance <= 0

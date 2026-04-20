@@ -20,14 +20,6 @@ class AppConfig
     CHIRPHD_VOICES = %w[elara callum lark nash].freeze
     PREMIUM_VOICES = (FREE_VOICES + CHIRPHD_VOICES).freeze
 
-    def self.character_limit_for(tier)
-      case tier.to_s
-      when "free" then FREE_CHARACTER_LIMIT
-      when "premium" then PREMIUM_CHARACTER_LIMIT
-      when "unlimited" then nil
-      end
-    end
-
     def self.voices_for(tier)
       case tier.to_s
       when "free" then FREE_VOICES
