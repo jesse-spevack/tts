@@ -18,6 +18,12 @@ module Api
       ALLOWED_SOURCE_TYPES = %w[paste url upload].freeze
 
       def create
+        # Defense-in-depth (agent-team-yx53): this endpoint returns per-user
+        # balance data, so forbid any intermediary (CDN, proxy, browser
+        # shared cache) from storing the response. Rails defaults are safe
+        # for session-authed JSON today; this makes the contract explicit.
+        response.set_header("Cache-Control", "private, no-store")
+
         source_type = params[:source_type].to_s
         return render_invalid unless ALLOWED_SOURCE_TYPES.include?(source_type)
         return render_invalid unless required_field_present?(source_type)

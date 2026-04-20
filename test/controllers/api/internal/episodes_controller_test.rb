@@ -499,6 +499,18 @@ module Api
           "Endpoint must not leak the subscriber's credit balance to direct fetches"
       end
 
+      # ---------- Response headers (agent-team-yx53) ----------
+
+      test "response sets Cache-Control: private, no-store" do
+        # Defense-in-depth: balance data must never be cached by intermediaries.
+        post "/api/internal/episodes/cost_preview",
+          params: { source_type: "paste", text: "A" * 10_000 },
+          as: :json
+
+        assert_response :success
+        assert_equal "private, no-store", response.headers["Cache-Control"]
+      end
+
       # ---------- Invalid input (422) ----------
 
       test "missing source_type returns 422" do

@@ -114,11 +114,47 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :internal_server_error
   end
 
+  test "logs 'Unknown credit pack price id' when checkout carries a non-pack price_id (agent-team-sz2e)" do
+    # Regression guard: GrantsCreditFromCheckout returns Result.failure with
+    # error="Unknown credit pack price id" when a subscription price_id
+    # lands on the checkout.session.completed path. WebhooksController logs
+    # that error string; a silent log-message refactor would hide the
+    # user-visible pain (charged but no credits granted).
+    payload = { type: "checkout.session.completed", data: { object: { id: "cs_unknown_price" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    Mocktail.replace(RoutesStripeWebhook)
+    stubs { |m| RoutesStripeWebhook.call(event: m.any) }.with { Result.failure("Unknown credit pack price id") }
+
+    log_output = capture_logs do
+      post webhooks_stripe_path,
+        params: payload,
+        headers: {
+          "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+          "CONTENT_TYPE" => "application/json"
+        }
+    end
+
+    assert_response :ok
+    assert_match(/Unknown credit pack price id/, log_output)
+  end
+
   private
 
   def generate_stripe_signature(payload, timestamp)
     secret = AppConfig::Stripe::WEBHOOK_SECRET
     signed_payload = "#{timestamp}.#{payload}"
     OpenSSL::HMAC.hexdigest("SHA256", secret, signed_payload)
+  end
+
+  def capture_logs
+    original_logger = Rails.logger
+    io = StringIO.new
+    Rails.logger = ActiveSupport::Logger.new(io)
+    yield
+    io.string
+  ensure
+    Rails.logger = original_logger
   end
 end
