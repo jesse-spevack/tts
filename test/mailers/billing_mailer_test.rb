@@ -81,6 +81,59 @@ class BillingMailerTest < ActionMailer::TestCase
 
   # --- upgrade_nudge: rewritten for credits OR deleted with callers ---
 
+  # --- legacy_pricing_migration_2026_04 (agent-team-rbpr) ---
+
+  test "legacy_pricing_migration_2026_04 sends to user email with correct subject" do
+    user = users(:credit_user)
+    mail = BillingMailer.legacy_pricing_migration_2026_04(
+      user: user,
+      previous_balance: 5,
+      new_balance: 30
+    )
+
+    assert_equal [ user.email_address ], mail.to
+    assert_equal "Your PodRead credits just got bigger", mail.subject
+  end
+
+  test "legacy_pricing_migration_2026_04 body interpolates previous and new balance" do
+    user = users(:credit_user)
+    mail = BillingMailer.legacy_pricing_migration_2026_04(
+      user: user,
+      previous_balance: 5,
+      new_balance: 30
+    )
+    body = mail.body.encoded
+
+    assert_match "You went from 5 to 30", body
+  end
+
+  test "legacy_pricing_migration_2026_04 includes the approved copy" do
+    user = users(:credit_user)
+    mail = BillingMailer.legacy_pricing_migration_2026_04(
+      user: user,
+      previous_balance: 3,
+      new_balance: 26
+    )
+    body = mail.body.encoded
+
+    assert_match "Thanks for giving PodRead a try", body
+    assert_match "Credits used to be $1 each. They're $2 now.", body
+    assert_match "Long articles over 20,000 characters with a Premium voice cost 2 credits instead of 1", body
+    assert_match "doubled your balance and added 20 credits on top", body
+    assert_match "jesse@podread.app", body
+  end
+
+  test "legacy_pricing_migration_2026_04 uses the default from address" do
+    user = users(:credit_user)
+    mail = BillingMailer.legacy_pricing_migration_2026_04(
+      user: user,
+      previous_balance: 5,
+      new_balance: 30
+    )
+
+    assert_equal [ AppConfig::Domain::MAIL_FROM ], mail.from
+  end
+
   test "upgrade_nudge does not pitch $9/month or $89/year subscription" do
     # Pick up either outcome: if the method still exists it must pitch
     # credits; if callers + action are both deleted this test is moot —

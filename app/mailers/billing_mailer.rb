@@ -54,4 +54,20 @@ class BillingMailer < ApplicationMailer
       subject: "Thanks for giving PodRead a spin"
     )
   end
+
+  # One-off heads-up email for users who bought credits under the old
+  # $1/credit pricing (agent-team-rbpr). Paired with the
+  # pricing:legacy_migration rake task that bumps their balances.
+  # This method + its template should be removed after the migration runs
+  # (see follow-up bead on agent-team-wunn).
+  def legacy_pricing_migration_2026_04(user:, previous_balance:, new_balance:)
+    @user = user
+    @previous_balance = previous_balance
+    @new_balance = new_balance
+
+    mail(
+      to: user.email_address,
+      subject: "Your PodRead credits just got bigger"
+    )
+  end
 end
