@@ -6,6 +6,7 @@ require "ostruct"
 class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
   setup do
     @user = users(:one)
+    @user.update!(account_type: :unlimited)
     @podcast = podcasts(:one)
     @episode = Episode.create!(
       podcast: @podcast,
@@ -86,6 +87,9 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "marks episode as failed when content too long for tier" do
+    # Character limit applies to non-unlimited users; flip this user back
+    # to free for this test so ValidatesCharacterLimit enforces the cap.
+    @user.update!(account_type: :standard)
     long_content = "x" * 20_000
     html = "<article><p>#{long_content}</p></article>"
 
@@ -452,6 +456,138 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
       "Should use known author mapping when HTML extraction returns no author"
   end
 
+  # === URL credit debit (deferred from controller) ===
+  #
+  # Controllers can't know the article length for URL submissions at
+  # pre-check time. The actual debit lands here, once the fetched and
+  # extracted text has been measured — so Premium + >20k URLs get
+  # correctly charged 2 credits instead of silently 1.
+
+  test "debits 1 credit when Standard voice and short article" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard
+    CreditBalance.for(credit_user).update!(balance: 3)
+    episode = create_url_episode(credit_user)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 10_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
+    stub_gcs_and_tasks
+
+    assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    transaction = CreditTransaction.where(user: credit_user).order(:created_at).last
+    assert_equal(-1, transaction.amount)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    episode.reload
+    assert_not_equal "failed", episode.status
+  end
+
+  test "debits 2 credits when Premium voice and long article with sufficient balance" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium
+    CreditBalance.for(credit_user).update!(balance: 2)
+    episode = create_url_episode(credit_user)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 40_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
+    stub_gcs_and_tasks
+
+    assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    transaction = CreditTransaction.where(user: credit_user).order(:created_at).last
+    assert_equal(-2, transaction.amount)
+    assert_equal 0, credit_user.reload.credits_remaining
+
+    episode.reload
+    assert_not_equal "failed", episode.status
+  end
+
+  test "fails episode and skips TTS when Premium voice and long article with balance 1" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium
+    CreditBalance.for(credit_user).update!(balance: 1)
+    episode = create_url_episode(credit_user)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 40_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stub_gcs_and_tasks
+
+    assert_no_difference -> { CreditTransaction.count } do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_includes episode.error_message, "Insufficient credits"
+    assert_equal 1, credit_user.reload.credits_remaining
+    verify(times: 0) { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }
+    verify(times: 0) { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }
+  end
+
+  test "fails episode and skips TTS when Standard voice and balance 0" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard
+    CreditBalance.for(credit_user).update!(balance: 0)
+    episode = create_url_episode(credit_user)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 10_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stub_gcs_and_tasks
+
+    assert_no_difference -> { CreditTransaction.count } do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_includes episode.error_message, "Insufficient credits"
+    verify(times: 0) { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }
+    verify(times: 0) { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }
+  end
+
+  test "does not debit credits for complimentary user" do
+    complimentary = users(:complimentary_user)
+    complimentary.update!(voice_preference: "callum")
+    episode = create_url_episode(complimentary)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 40_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
+    stub_gcs_and_tasks
+
+    assert_no_difference -> { CreditTransaction.count } do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    episode.reload
+    assert_not_equal "failed", episode.status
+  end
+
+  test "does not debit credits for unlimited user" do
+    unlimited = users(:unlimited_user)
+    unlimited.update!(voice_preference: "callum")
+    episode = create_url_episode(unlimited)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 40_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
+    stub_gcs_and_tasks
+
+    assert_no_difference -> { CreditTransaction.count } do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    episode.reload
+    assert_not_equal "failed", episode.status
+  end
+
   teardown do
     Mocktail.reset
   end
@@ -460,5 +596,27 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
 
   def stub_gcs_and_tasks
     stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+  end
+
+  def create_url_episode(user)
+    Episode.create!(
+      podcast: user.podcasts.first || CreatesDefaultPodcast.call(user: user),
+      user: user,
+      title: "Placeholder",
+      author: "Placeholder",
+      description: "Placeholder",
+      source_type: :url,
+      source_url: "https://example.com/article",
+      status: :pending
+    )
+  end
+
+  def standard_llm_result
+    Result.success(ProcessesWithLlm::LlmData.new(
+      title: "Title",
+      author: "Author",
+      description: "Description.",
+      content: "Article content."
+    ))
   end
 end

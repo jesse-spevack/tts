@@ -120,12 +120,15 @@ module Api
       # header and no MPP challenge are returned here; clients that want to
       # pay-per-episode must use the /mpp/* endpoints.
       def check_episode_creation_permission
-        result = ChecksEpisodeCreationPermission.call(user: current_user)
+        result = ChecksEpisodeCreationPermission.call(
+          user: current_user,
+          anticipated_cost: anticipated_cost
+        )
         return if result.success?
 
         render json: {
           error: "Payment required",
-          credits_remaining: 0,
+          credits_remaining: current_user.credits_remaining,
           subscription_active: current_user.premium?,
           upgrade_url: "#{AppConfig::Domain::BASE_URL}/billing"
         }, status: :payment_required
@@ -139,9 +142,26 @@ module Api
       end
 
       def deduct_credit_if_needed(episode)
-        return unless current_user.credit_user?
+        DebitsEpisodeCredit.call(user: current_user, episode: episode, cost_in_credits: anticipated_cost)
+      end
 
-        DeductsCredit.call(user: current_user, episode: episode)
+      # Extension submissions carry the article body in :content (not :text),
+      # so we pass :content through the :text kwarg since the cost service
+      # treats 'extension' as a text variant.
+      def anticipated_cost
+        @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
+          user: current_user,
+          source_type: episode_params[:source_type],
+          text: text_for_cost,
+          url: episode_params[:url]
+        ).data
+      end
+
+      def text_for_cost
+        case episode_params[:source_type]
+        when "extension" then episode_params[:content]
+        else episode_params[:text]
+        end
       end
     end
   end

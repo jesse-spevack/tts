@@ -2,7 +2,8 @@ class EpisodesController < ApplicationController
   layout :determine_layout
 
   before_action :require_authentication, except: [ :show ]
-  before_action :require_can_create_episode, only: [ :new, :create ]
+  before_action :require_can_view_new, only: [ :new ]
+  before_action :require_can_create_episode, only: [ :create ]
   before_action :load_podcast, except: [ :show ]
 
   def index
@@ -99,24 +100,65 @@ class EpisodesController < ApplicationController
   end
 
   def deduct_credit_if_needed(episode)
-    return unless Current.user.credit_user?
-
-    DeductsCredit.call(user: Current.user, episode: episode)
+    DebitsEpisodeCredit.call(user: Current.user, episode: episode, cost_in_credits: anticipated_cost)
   end
 
   def read_uploaded_content
-    return nil unless params.dig(:episode, :content)&.respond_to?(:read)
+    return @read_uploaded_content if defined?(@read_uploaded_content)
 
-    params[:episode][:content].read
+    @read_uploaded_content = if params.dig(:episode, :content)&.respond_to?(:read)
+      params[:episode][:content].read
+    end
   end
 
-  def require_can_create_episode
+  def require_can_view_new
     result = ChecksEpisodeCreationPermission.call(user: Current.user)
     return if result.success?
 
     flash[:alert] = "You've used your 2 free episodes this month! " \
                     "Upgrade to Premium for unlimited episodes, or buy a credit pack."
     redirect_to episodes_path
+  end
+
+  def require_can_create_episode
+    result = ChecksEpisodeCreationPermission.call(
+      user: Current.user,
+      anticipated_cost: anticipated_cost
+    )
+    return if result.success?
+
+    flash[:alert] = flash_for_permission_failure(result)
+    redirect_to episodes_path
+  end
+
+  def flash_for_permission_failure(result)
+    case result.code
+    when :insufficient_credits
+      "You don't have enough credits for this episode. Buy a credit pack to continue."
+    else
+      "You've used your 2 free episodes this month! " \
+      "Upgrade to Premium for unlimited episodes, or buy a credit pack."
+    end
+  end
+
+  def anticipated_cost
+    @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
+      user: Current.user,
+      source_type: submission_source_type,
+      text: params[:text],
+      url: params[:url],
+      upload: read_uploaded_content
+    ).data
+  end
+
+  def submission_source_type
+    if params[:url].present?
+      "url"
+    elsif params.key?(:text)
+      "text"
+    else
+      "file"
+    end
   end
 
   def load_podcast

@@ -396,18 +396,47 @@ module Api
         assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
       end
 
-      test "create returns 201 for subscriber with bearer token (no credit check needed)" do
+      test "create returns 201 for subscriber with bearer token and debits credit" do
+        # Subscribers now need credits like anyone else — only complimentary
+        # and unlimited account_types bypass credit deduction.
         subscriber = users(:subscriber)
+        CreditBalance.for(subscriber).update!(balance: 3)
         token = GeneratesApiToken.call(user: subscriber)
 
         assert_difference "Episode.count", 1 do
-          post api_v1_episodes_path,
-            params: @valid_params,
-            headers: auth_header(token.plain_token),
-            as: :json
+          assert_difference "CreditTransaction.count", 1 do
+            post api_v1_episodes_path,
+              params: @valid_params,
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
         end
 
         assert_response :created
+        assert_equal 2, subscriber.reload.credits_remaining
+
+        transaction = CreditTransaction.where(user: subscriber, transaction_type: "usage").order(:created_at).last
+        assert_equal(-1, transaction.amount)
+        assert_equal 2, transaction.balance_after
+      end
+
+      test "create returns 402 for subscriber with zero credits" do
+        # Regression guard for the subscription-bypass removal. Previously,
+        # subscribers with 0 credits silently got free episodes.
+        subscriber = users(:subscriber)
+        CreditBalance.for(subscriber).update!(balance: 0)
+        token = GeneratesApiToken.call(user: subscriber)
+
+        assert_no_difference -> { Episode.count } do
+          assert_no_difference -> { CreditTransaction.count } do
+            post api_v1_episodes_path,
+              params: @valid_params,
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
+        end
+
+        assert_response :payment_required
       end
 
       test "create records episode usage for free user" do
@@ -580,6 +609,118 @@ module Api
 
         assert_response :unprocessable_entity
         assert_includes response.parsed_body["error"], "'email' is read-only"
+      end
+
+      # === Credit-cost-by-usage ===
+      #
+      # Variable cost: Premium voice + >20k chars = 2 credits. The pre-check
+      # gate in ChecksEpisodeCreationPermission must reject before any
+      # Episode or CreditTransaction is written when balance < cost.
+
+      test "create returns 402 when credit user has balance 1 and submits Premium long-form episode" do
+        credit_user = users(:credit_user)
+        credit_user.update!(voice_preference: "callum") # Premium voice
+        CreditBalance.for(credit_user).update!(balance: 1)
+        token = GeneratesApiToken.call(user: credit_user)
+
+        long_params = {
+          source_type: "text",
+          text: "A" * 20_001, # >20k chars + Premium = 2 credits
+          title: "Long Article",
+          author: "Me"
+        }
+
+        assert_no_difference -> { Episode.count } do
+          assert_no_difference -> { CreditTransaction.count } do
+            post api_v1_episodes_path,
+              params: long_params,
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
+        end
+
+        assert_response :payment_required
+        assert_equal 1, credit_user.reload.credits_remaining
+      end
+
+      test "create succeeds and debits 2 credits when credit user has balance 2 and submits Premium long-form episode" do
+        credit_user = users(:credit_user)
+        credit_user.update!(voice_preference: "callum") # Premium voice
+        CreditBalance.for(credit_user).update!(balance: 2)
+        token = GeneratesApiToken.call(user: credit_user)
+
+        long_params = {
+          source_type: "text",
+          text: "A" * 20_001, # >20k chars + Premium = 2 credits
+          title: "Long Article",
+          author: "Me"
+        }
+
+        assert_difference -> { Episode.count }, 1 do
+          assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+            post api_v1_episodes_path,
+              params: long_params,
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
+        end
+
+        assert_response :created
+
+        transaction = CreditTransaction.where(user: credit_user, transaction_type: "usage").order(:created_at).last
+        assert_equal(-2, transaction.amount)
+        assert_equal 0, credit_user.reload.credits_remaining
+      end
+
+      test "create charges based on user voice_preference even when body voice param is Standard" do
+        # Regression guard against a pricing leak: the API permits :voice
+        # for forward-compat but synthesis uses user.voice_preference, so
+        # the cost must follow the preference — not the body param.
+        credit_user = users(:credit_user)
+        credit_user.update!(voice_preference: "callum") # Premium
+        CreditBalance.for(credit_user).update!(balance: 5)
+        token = GeneratesApiToken.call(user: credit_user)
+
+        long_params = {
+          source_type: "text",
+          text: "A" * 20_001, # >20k chars
+          title: "Long Article",
+          author: "Me",
+          voice: "felix" # Standard — must NOT be used for pricing
+        }
+
+        assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+          post api_v1_episodes_path,
+            params: long_params,
+            headers: auth_header(token.plain_token),
+            as: :json
+        end
+
+        assert_response :created
+
+        transaction = CreditTransaction.where(user: credit_user, transaction_type: "usage").order(:created_at).last
+        assert_equal(-2, transaction.amount)
+        assert_equal 3, credit_user.reload.credits_remaining
+      end
+
+      test "create with source_type url does not write a CreditTransaction at controller time" do
+        # URL pricing defers to ProcessesUrlEpisode because the article's
+        # real length isn't known until fetch + extract.
+        credit_user = users(:credit_user)
+        CreditBalance.for(credit_user).update!(balance: 3)
+        token = GeneratesApiToken.call(user: credit_user)
+
+        assert_difference -> { Episode.count }, 1 do
+          assert_no_difference -> { CreditTransaction.count } do
+            post api_v1_episodes_path,
+              params: { source_type: "url", url: "https://example.com/article" },
+              headers: auth_header(token.plain_token),
+              as: :json
+          end
+        end
+
+        assert_response :created
+        assert_equal 3, credit_user.reload.credits_remaining
       end
 
       # === DESTROY ===

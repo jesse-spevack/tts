@@ -12,10 +12,16 @@ module McpToolHelpers
     )
   end
 
-  def check_creation_prerequisites(user:)
-    permission = ChecksEpisodeCreationPermission.call(user: user)
+  # Pre-flight gate: free-quota / credit-balance / rate-limit check that
+  # runs BEFORE CreatesPasteEpisode or CreatesUrlEpisode. Callers that know
+  # the anticipated credit cost (paste/text tool has the text in hand) must
+  # pass it so ChecksEpisodeCreationPermission rejects before an Episode is
+  # written. Otherwise DeductsCredit silently fails post-create, leaving
+  # orphan episodes.
+  def check_creation_prerequisites(user:, anticipated_cost: nil)
+    permission = ChecksEpisodeCreationPermission.call(user: user, anticipated_cost: anticipated_cost)
     unless permission.success?
-      return error_response("tier_limit", "You've used all your free episodes this month. Upgrade at #{AppConfig::Domain::BASE_URL}/upgrade")
+      return error_response(mcp_error_type(permission), mcp_error_message(permission))
     end
 
     rate_limit = ChecksEpisodeRateLimit.call(user: user)
@@ -26,8 +32,36 @@ module McpToolHelpers
     nil
   end
 
+  # URL episodes defer the debit to ProcessesUrlEpisode — the article
+  # length isn't known at MCP-tool-submit time. Text episodes debit now,
+  # since the text is already in the tool arguments. Cost is computed from
+  # the persisted episode's source_text to match actual content.
   def record_successful_creation(user:, episode:)
     RecordsEpisodeUsage.call(user: user)
-    DeductsCredit.call(user: user, episode: episode) if user.credit_user?
+
+    cost_result = CalculatesAnticipatedEpisodeCost.call(
+      user: user,
+      source_type: episode.source_type,
+      text: episode.source_text
+    )
+    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost_result.data)
+  end
+
+  private
+
+  def mcp_error_type(result)
+    case result.code
+    when :insufficient_credits then "insufficient_credits"
+    else "tier_limit"
+    end
+  end
+
+  def mcp_error_message(result)
+    case result.code
+    when :insufficient_credits
+      "Not enough credits for this episode. Buy more at #{AppConfig::Domain::BASE_URL}/billing"
+    else
+      "You've used all your free episodes this month. Upgrade at #{AppConfig::Domain::BASE_URL}/upgrade"
+    end
   end
 end

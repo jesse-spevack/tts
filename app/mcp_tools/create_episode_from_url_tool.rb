@@ -17,7 +17,10 @@ class CreateEpisodeFromUrlTool < MCP::Tool
   def self.call(url:, server_context: nil)
     user = server_context[:user]
 
-    if (error = check_creation_prerequisites(user: user))
+    # URL source-text isn't fetched yet at gate time, so we assume the
+    # minimum cost of 1 credit. Matches the same URL-length-shortcut
+    # tradeoff used by the web and API v1 paths.
+    if (error = check_creation_prerequisites(user: user, anticipated_cost: 1))
       return error
     end
 
