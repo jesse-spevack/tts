@@ -167,12 +167,27 @@ class AppConfig
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
-    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
+    # Tempo JSON-RPC endpoint. Mainnet (chain 4217) for production, Moderato
+    # testnet (chain 42431) for every other Rails env. The RPC URL and the
+    # TEMPO_CURRENCY_TOKEN contract MUST refer to the same chain — a testnet
+    # RPC paired with a mainnet contract silently strands user payments
+    # (agent-team-tv6e). Mpp::VerifiesChainId (wired in via the initializer
+    # config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
+    # Explicit TEMPO_RPC_URL env var wins when set.
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL") do
+      Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
+    end
+    # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the
+    # Moderato testnet (the testnet faucet only dispenses pathUSD). USDC.e
+    # (0x20c0...0000b9537d11c60e8b50) is USDC bridged via Stargate and is
+    # Stripe's prod guidance for mainnet MPP traffic. The TEMPO_CURRENCY_TOKEN
+    # env var determines which one is active — default stays pathUSD for
+    # testnet safety; prod sets the USDC.e address in its deploy config.
     TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
-    # Decimals for the Tempo stablecoin (pathUSD / USDC). Confirmed by pympp
-    # (mpp/methods/tempo/intents.py) and Stripe's machine-payments sample,
-    # both of which hardcode 6. On-chain Transfer event `data` is in these
-    # base units, so we convert cents -> base units before comparing.
+    # Decimals for the Tempo stablecoin. Both pathUSD and USDC.e use 6
+    # decimals, confirmed by pympp (mpp/methods/tempo/intents.py) and
+    # Stripe's machine-payments sample. On-chain Transfer event `data` is
+    # in these base units, so we convert cents -> base units before comparing.
     TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
     # Timeouts for the Tempo JSON-RPC call. A slow or hung RPC must not
     # block a Rails thread indefinitely.
