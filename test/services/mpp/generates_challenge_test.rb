@@ -4,7 +4,7 @@ require "test_helper"
 
 class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   setup do
-    @amount_cents = 100
+    @amount_cents = 150
     @currency = "usd"
     @recipient = "0x1234567890abcdef1234567890abcdef12345678"
     # agent-team-909 removed the :premium default — callers must pass tier
@@ -171,7 +171,7 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
 
   test "challenge id changes when amount changes" do
     result1 = Mpp::GeneratesChallenge.call(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier

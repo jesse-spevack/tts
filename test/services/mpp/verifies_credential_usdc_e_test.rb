@@ -19,8 +19,8 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   USDC_E_CONTRACT   = "0x20c000000000000000000000b9537d11c60e8b50"
 
   setup do
-    @amount_cents = 100          # matches GeneratesChallenge default tier
-    @amount_base_units = "1000000" # $1 at 6 decimals, what the challenge carries
+    @amount_cents = 150          # matches MPP Premium tier ($1.50)
+    @amount_base_units = "1500000" # $1.50 at 6 decimals, what the challenge carries
     @currency = "usd"
     @tx_hash = "0x#{SecureRandom.hex(32)}"
     @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"

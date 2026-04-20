@@ -31,7 +31,7 @@
           Turn any text into audio — pay per narration.
         </h1>
         <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
-          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Pricing is tiered: Standard voices cost 75¢, Premium voices cost $1.00. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
+          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Pricing is tiered: Standard voices cost 75¢, Premium voices cost $1.50. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
         </p>
 
         <!-- Fact row: two-tier price table + meta -->
@@ -57,7 +57,7 @@
                   <td class="py-3 pl-4 pr-6">
                     <span class="inline-flex items-center rounded-full bg-mist-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-mist-100 dark:text-mist-900">Premium</span>
                   </td>
-                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.00</td>
+                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.50</td>
                   <td class="py-3 pr-4 font-mono text-xs text-mist-700 dark:text-mist-300">elara, callum, lark, nash</td>
                 </tr>
               </tbody>
@@ -111,7 +111,7 @@
           Anonymous MPP calls (this example) hit <code class="ic">POST /api/v1/mpp/narrations</code> and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
         </p>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.00 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.
+          Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.50 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.
         </p>
       </section>
 
@@ -135,7 +135,7 @@
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              Without a Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>. The amount reflects the resolved voice's tier — 75 cents for Standard (the example below), 100 cents if the request asked for a Premium voice.
+              Without a Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>. The amount reflects the resolved voice's tier — 75 cents for Standard (the example below), 150 cents if the request asked for a Premium voice.
             </p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -179,7 +179,7 @@
               { name: "id", type: "string",
                 description: %(HMAC-SHA256 hex over <code class="ic">realm|method|intent|request|expires</code> signed with the server's secret — doubles as challenge identifier and tamper-check. Clients should echo it back unchanged in the credential.).html_safe },
               { name: "amount", type: "integer",
-                description: %(In <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75 for Standard, 100 = $1.00 for Premium). Distinct from <code class="ic">request.amount</code> below, which is in token base units.).html_safe },
+                description: %(In <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75 for Standard, 150 = $1.50 for Premium). Distinct from <code class="ic">request.amount</code> below, which is in token base units.).html_safe },
               { name: "currency", type: "string",
                 description: %(The <strong class="font-semibold text-mist-950 dark:text-white">ISO 4217 code</strong> (<code class="ic">"usd"</code>). Distinct from <code class="ic">request.currency</code> below, which is an ERC-20 contract address.).html_safe },
               { name: "request", type: "string",
@@ -201,7 +201,7 @@
 
             <% decoded_request_fields = [
               { name: "amount", type: "string",
-                description: %(Token base units — the stablecoin has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1000000</span> = $1.00 (Premium).).html_safe },
+                description: %(Token base units — the stablecoin has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1500000</span> = $1.50 (Premium).).html_safe },
               { name: "currency", type: "string",
                 description: %(The ERC-20 stablecoin contract address on Tempo. On <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> this is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code>; self-hosted testnet deployments default to pathUSD at <code class="ic">0x20c0…0000</code>.).html_safe },
               { name: "recipient", type: "string",
@@ -219,7 +219,7 @@
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a USDC transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
               <li>To the exact <code class="ic">deposit_address</code> returned in the 402 response</li>
-              <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1000000</span> for Premium ($1.00)</li>
+              <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1500000</span> for Premium ($1.50)</li>
               <li>Of the stablecoin whose contract address is echoed in the challenge's <code class="ic">request.currency</code> field — on <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> that is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code></li>
               <li>Completed before the challenge <code class="ic">expires</code> timestamp</li>
             </ul>
@@ -446,7 +446,7 @@
       <!-- Voices -->
       <section id="voices" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Voices</h2>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">MPP callers may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available on the MPP paths. Voice tier determines price: Standard voices cost 75¢, Premium voices cost $1.00. The default when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (British male, Standard, 75¢). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">MPP callers may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available on the MPP paths. Voice tier determines price: Standard voices cost 75¢, Premium voices cost $1.50. The default when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (British male, Standard, 75¢). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
         <p class="mt-2 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Voice resolution on MPP endpoints follows a three-step hierarchy: explicit <code class="ic">voice</code> param → user's saved preference (authenticated only) → catalog default (<code class="ic">felix</code>).</p>
 
         <div class="-mx-6 -my-2 mt-6 overflow-x-auto whitespace-nowrap lg:-mx-10">
@@ -515,7 +515,7 @@
           headers: ["Tier", "Price (USD)", "Base units (6 decimals)", "Voices"],
           rows: [
             ["Standard", "$0.75", "750,000", "wren, felix, sloane, archer, gemma, hugo, quinn, theo"],
-            ["Premium",  "$1.00", "1,000,000", "elara, callum, lark, nash"]
+            ["Premium",  "$1.50", "1,500,000", "elara, callum, lark, nash"]
           ],
           cell_class: [
             "text-mist-900 dark:text-mist-100",
@@ -526,7 +526,7 @@
         %>
 
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The default voice when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (Standard), so the cheapest successful call costs $0.75. Requesting a Premium voice shifts the entire 402 → pay → retry flow to $1.00.
+          The default voice when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (Standard), so the cheapest successful call costs $0.75. Requesting a Premium voice shifts the entire 402 → pay → retry flow to $1.50.
         </p>
 
         <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -547,7 +547,7 @@
           On <strong class="font-semibold text-mist-700 dark:text-mist-300">podread.app</strong>, payments are settled in <strong class="font-semibold text-mist-700 dark:text-mist-300">USDC.e</strong> — USDC bridged to Tempo via <a href="https://stargate.finance/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Stargate</a>. It is not Circle-native USDC; token balances held on Tempo are bridge-wrapped and must be unwrapped via Stargate to redeem on other chains. Self-hosted deployments targeting Tempo's Moderato testnet can use the predeployed <strong class="font-semibold text-mist-700 dark:text-mist-300">pathUSD</strong> stablecoin (<code class="ic">0x20c0…0000</code>) instead — the faucet dispenses pathUSD, not USDC.e. The <code class="ic">request.currency</code> field in every 402 challenge echoes whichever contract the server is configured for, so clients should read it rather than hardcode either address.
         </p>
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 100 = $1.00). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,000,000 for Premium).
+          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 150 = $1.50). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,500,000 for Premium).
         </p>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">A challenge is bound to a specific voice tier by an HMAC-signed request blob. A Standard-priced credential cannot be redeemed against a Premium voice (or vice versa) — the server re-issues a fresh 402 at the correct price when the tiers don't match. If narration processing fails after payment succeeds, the payment is automatically refunded.</p>
       </section>
@@ -619,7 +619,7 @@
           rows: [
             ["MPP_SECRET_KEY", "random hex", "HMAC key for signing challenges and receipts. Must be stable across deploys."],
             ["MPP_PRICE_STANDARD_CENTS", "75", "Price for a Standard-voice narration, in USD cents"],
-            ["MPP_PRICE_PREMIUM_CENTS", "100", "Price for a Premium-voice narration, in USD cents"],
+            ["MPP_PRICE_PREMIUM_CENTS", "150", "Price for a Premium-voice narration, in USD cents"],
             ["MPP_CURRENCY", "usd", "Currency code"],
             ["MPP_CHALLENGE_TTL_SECONDS", "300", "How long a 402 challenge is valid"],
             ["MPP_STRIPE_API_VERSION", "2026-03-04.preview", "Stripe API version pinned to MPP preview channel"],

@@ -163,7 +163,7 @@ class AppConfig
     # 7.5× delta on the biggest input cost line justifies a split.
     # See agent-team-0g5 for the full cost model.
     PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
-    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
+    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 150).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
