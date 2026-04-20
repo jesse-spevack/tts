@@ -1,0 +1,50 @@
+<div class="mx-auto max-w-2xl">
+  <%= render "shared/back_link", path: settings_path, text: "Back to Settings" %>
+  <%= render "shared/page_header", title: "Delete account" %>
+
+  <div class="space-y-6">
+    <%# Warning banner — amber, unmissable %>
+    <div class="rounded-lg border-l-4 border-red-500 bg-red-50 p-4 dark:border-red-500 dark:bg-red-500/10" role="alert">
+      <div class="flex items-start gap-3">
+        <span class="shrink-0 text-red-600 dark:text-red-400" aria-hidden="true">
+          <%= render "shared/icons/alert_triangle", css_class: "size-5" %>
+        </span>
+        <div>
+          <p class="text-sm/6 font-semibold text-red-900 dark:text-red-200">This cannot be undone.</p>
+          <p class="mt-1 text-sm/6 text-red-800 dark:text-red-200/80">
+            Deleting your account permanently removes your episodes, audio files, and sign-in. Your active subscription, if any, will be canceled.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <%# Account identity — so the user sees whose account they're about to delete %>
+    <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
+      <p class="text-xs font-semibold tracking-wide text-mist-500 uppercase dark:text-mist-400">You are signed in as</p>
+      <p class="mt-1 text-sm text-mist-950 dark:text-white break-all"><%= Current.user.email_address %></p>
+    </div>
+
+    <%# Confirmation form %>
+    <%= form_with url: settings_account_deletion_path, method: :post, local: true, class: "space-y-4" do |form| %>
+      <div>
+        <%= form.label :confirmation, "Type DELETE to confirm", class: label_classes %>
+        <div class="mt-2">
+          <%= form.text_field :confirmation,
+                              autocomplete: "off",
+                              autocapitalize: "characters",
+                              spellcheck: "false",
+                              aria: { describedby: flash[:alert].present? ? "confirmation-error" : nil },
+                              class: input_classes %>
+        </div>
+        <% if flash[:alert].present? %>
+          <p id="confirmation-error" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert"><%= flash[:alert] %></p>
+        <% end %>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <%= form.submit "Delete account", class: button_classes(type: :danger) %>
+        <%= link_to "Cancel", settings_path, class: button_classes(type: :secondary) %>
+      </div>
+    <% end %>
+  </div>
+</div>

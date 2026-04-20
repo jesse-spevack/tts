@@ -85,7 +85,7 @@ Rails.application.routes.draw do
   resource :settings, only: [ :show, :update ]
 
   namespace :settings do
-    resource :account, only: [ :destroy ]
+    resource :account_deletion, only: [ :new, :create ]
     resource :email_episodes, only: [ :create, :destroy ]
     resource :email_token, only: [ :create ]
     resource :extensions, only: [ :show, :destroy ]

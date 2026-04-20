@@ -279,10 +279,7 @@
               Deleting your account permanently removes your episodes, audio files, and sign-in. This cannot be undone.
             </p>
             <div class="mt-4">
-              <%= button_to "Delete account", settings_account_path,
-                  method: :delete,
-                  class: button_classes(type: :danger),
-                  data: { turbo_confirm: "This will permanently delete your account and all episodes. This cannot be undone." } %>
+              <%= link_to "Delete account", new_settings_account_deletion_path, class: button_classes(type: :danger) %>
             </div>
           </div>
         </div>
