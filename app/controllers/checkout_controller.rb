@@ -32,20 +32,13 @@ class CheckoutController < ApplicationController
   # Accepts a pack size (5/10/20), resolves it to the matching Stripe price_id
   # via AppConfig::Credits::PACKS, then delegates to the price_id checkout path.
   def handle_pack_size_checkout(raw_pack_size)
-    size =
-      begin
-        Integer(raw_pack_size, 10)
-      rescue ArgumentError, TypeError
-        nil
-      end
-    pack = size && AppConfig::Credits.find_pack_by_size(size)
-
-    unless pack
-      redirect_to billing_path, alert: "Invalid credit pack selected"
+    pack_result = ResolvesCreditPack.call(raw_pack_size)
+    unless pack_result.success?
+      redirect_to billing_path, alert: pack_result.error
       return
     end
 
-    handle_checkout(pack[:stripe_price_id])
+    handle_checkout(pack_result.data[:stripe_price_id])
   end
 
   def handle_checkout(price_id)
