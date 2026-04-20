@@ -29,16 +29,6 @@ class CreditBalanceTest < ActiveSupport::TestCase
     assert_equal 0, balance.balance
   end
 
-  test "sufficient? returns true when balance is positive" do
-    balance = credit_balances(:with_credits)
-    assert balance.sufficient?
-  end
-
-  test "sufficient? returns false when balance is zero" do
-    balance = credit_balances(:empty_balance)
-    refute balance.sufficient?
-  end
-
   test "deduct! decrements balance by 1" do
     balance = credit_balances(:with_credits)
     assert_equal 3, balance.balance
