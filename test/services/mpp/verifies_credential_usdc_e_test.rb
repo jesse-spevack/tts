@@ -8,8 +8,9 @@ require "test_helper"
 # testnet default 0x20c0000000000000000000000000000000000000).
 #
 # Scope: agent-team-arak (swap MPP production payment token to USDC.e).
-# These tests exercise the env-gated code path via swap_currency_token to
-# simulate prod without mutating the frozen AppConfig constant permanently.
+# These tests inject `token_address:` into VerifiesCredential to simulate
+# a prod-configured env without touching module constants. The env-driven
+# default is covered by the lock-in test at the bottom of this file.
 class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
@@ -78,42 +79,45 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   # --- 1. Token-filter-respects-env ---
 
   test "verifier filters Transfer events by the USDC.e contract when env is USDC.e" do
-    swap_currency_token(USDC_E_CONTRACT) do
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
 
-      result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: @valid_credential,
+      token_address: USDC_E_CONTRACT
+    )
 
-      assert result.success?, "Expected USDC.e Transfer to be accepted, got: #{result.error}"
-    end
+    assert result.success?, "Expected USDC.e Transfer to be accepted, got: #{result.error}"
   end
 
   # --- 2. Correct-token accepted (USDC.e) ---
 
   test "accepts a Transfer event whose log address matches the USDC.e env" do
-    swap_currency_token(USDC_E_CONTRACT) do
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
 
-      result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: @valid_credential,
+      token_address: USDC_E_CONTRACT
+    )
 
-      assert result.success?, "USDC.e Transfer should credit the payment"
-      assert_equal @tx_hash, result.data[:tx_hash]
-      assert_equal @deposit_address, result.data[:recipient]
-    end
+    assert result.success?, "USDC.e Transfer should credit the payment"
+    assert_equal @tx_hash, result.data[:tx_hash]
+    assert_equal @deposit_address, result.data[:recipient]
   end
 
   test "accepts USDC.e when the contract address is uppercase (case-insensitive match)" do
-    swap_currency_token(USDC_E_CONTRACT) do
-      upper = USDC_E_CONTRACT.upcase.sub(/\A0X/, "0x")
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(token_address: upper))
+    upper = USDC_E_CONTRACT.upcase.sub(/\A0X/, "0x")
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(token_address: upper))
 
-      result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: @valid_credential,
+      token_address: USDC_E_CONTRACT
+    )
 
-      assert result.success?,
-        "Case of log address must not affect acceptance: #{result.error}"
-    end
+    assert result.success?,
+      "Case of log address must not affect acceptance: #{result.error}"
   end
 
   # --- 3. Wrong-token rejected (critical safety) ---
@@ -122,31 +126,33 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     # Prod safety: once TEMPO_CURRENCY_TOKEN flips to USDC.e, a user who
     # accidentally sends pathUSD (old docs, cached wallet config) must NOT
     # be silently credited. The verifier has to reject it.
-    swap_currency_token(USDC_E_CONTRACT) do
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(token_address: PATH_USD_CONTRACT))
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(token_address: PATH_USD_CONTRACT))
 
-      result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: @valid_credential,
+      token_address: USDC_E_CONTRACT
+    )
 
-      assert result.failure?,
-        "pathUSD Transfer must be rejected when env is USDC.e — current env: #{AppConfig::Mpp::TEMPO_CURRENCY_TOKEN}"
-      assert_match(/No matching Transfer event/, result.error,
-        "Rejection reason should indicate no matching Transfer log")
-    end
+    assert result.failure?,
+      "pathUSD Transfer must be rejected when env is USDC.e"
+    assert_match(/No matching Transfer event/, result.error,
+      "Rejection reason should indicate no matching Transfer log")
   end
 
   test "rejects USDC.e Transfer when env is still pathUSD (symmetric safety)" do
     # Mirror of the above — proves the filter is symmetric and there is no
     # hidden 'accept anything starting with 0x20c0' shortcut.
-    swap_currency_token(PATH_USD_CONTRACT) do
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
 
-      result = Mpp::VerifiesCredential.call(credential: @valid_credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: @valid_credential,
+      token_address: PATH_USD_CONTRACT
+    )
 
-      assert result.failure?, "USDC.e Transfer must be rejected when env is pathUSD"
-      assert_match(/No matching Transfer event/, result.error)
-    end
+    assert result.failure?, "USDC.e Transfer must be rejected when env is pathUSD"
+    assert_match(/No matching Transfer event/, result.error)
   end
 
   # --- 4. Decimals unchanged across the swap ---
@@ -187,21 +193,22 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
       payload: { type: "hash", hash: @tx_hash }
     ))
 
-    swap_currency_token(USDC_E_CONTRACT) do
-      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-        .to_return(status: 200, body: rpc_receipt_body(
-          token_address: USDC_E_CONTRACT,
-          deposit_address: deposit_address,
-          amount_cents: amount_cents
-        ))
+    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+      .to_return(status: 200, body: rpc_receipt_body(
+        token_address: USDC_E_CONTRACT,
+        deposit_address: deposit_address,
+        amount_cents: amount_cents
+      ))
 
-      result = Mpp::VerifiesCredential.call(credential: credential)
+    result = Mpp::VerifiesCredential.call(
+      credential: credential,
+      token_address: USDC_E_CONTRACT
+    )
 
-      assert result.success?,
-        "Standard tier $0.75 in USDC.e should verify (both tokens are 6 decimals): #{result.error}"
-      assert_equal "750000", result.data[:amount],
-        "amount in result should still be 750000 base units"
-    end
+    assert result.success?,
+      "Standard tier $0.75 in USDC.e should verify (both tokens are 6 decimals): #{result.error}"
+    assert_equal "750000", result.data[:amount],
+      "amount in result should still be 750000 base units"
   end
 
   # --- 5. Default + RPC URL expectations for Implementer (agent-team-kpxs) ---
@@ -223,19 +230,6 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   end
 
   private
-
-  # Swap AppConfig::Mpp::TEMPO_CURRENCY_TOKEN for the duration of a block.
-  # Restores the original value on exit (including on exception) so parallel
-  # tests don't leak state.
-  def swap_currency_token(new_value)
-    original = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
-    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
-    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, new_value)
-    yield
-  ensure
-    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
-    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, original)
-  end
 
   # Build a JSON-RPC eth_getTransactionReceipt response with a single
   # Transfer log. Defaults match the fixture setup; override the token
