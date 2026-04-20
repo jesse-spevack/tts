@@ -7,7 +7,7 @@ class CleanupStaleMppPaymentsJobTest < ActiveSupport::TestCase
     Stripe.api_key = "sk_test_fake"
 
     @stale_pending = MppPayment.create!(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: "usd",
       challenge_id: "ch_stale_#{SecureRandom.hex(6)}",
       deposit_address: "0xstale123",
@@ -17,7 +17,7 @@ class CleanupStaleMppPaymentsJobTest < ActiveSupport::TestCase
     @stale_pending.update_column(:created_at, (AppConfig::Mpp::CHALLENGE_TTL_SECONDS + 60).seconds.ago)
 
     @recent_pending = MppPayment.create!(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: "usd",
       challenge_id: "ch_recent_#{SecureRandom.hex(6)}",
       deposit_address: "0xrecent456",
@@ -76,7 +76,7 @@ class CleanupStaleMppPaymentsJobTest < ActiveSupport::TestCase
 
   test "handles Stripe API errors gracefully and continues" do
     second_stale = MppPayment.create!(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: "usd",
       challenge_id: "ch_stale2_#{SecureRandom.hex(6)}",
       deposit_address: "0xstale789",
@@ -103,7 +103,7 @@ class CleanupStaleMppPaymentsJobTest < ActiveSupport::TestCase
 
   test "skips Stripe cancellation when no stripe_payment_intent_id" do
     no_pi = MppPayment.create!(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: "usd",
       challenge_id: "ch_nopi_#{SecureRandom.hex(6)}",
       deposit_address: "0xnopi",

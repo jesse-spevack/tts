@@ -74,9 +74,9 @@ class VoiceTest < ActiveSupport::TestCase
     assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, Voice.find("felix").price_cents
   end
 
-  test "default price_cents values reflect the locked rates (75 standard, 100 premium)" do
+  test "default price_cents values reflect the locked rates (75 standard, 150 premium)" do
     assert_equal 75, AppConfig::Mpp::PRICE_STANDARD_CENTS
-    assert_equal 100, AppConfig::Mpp::PRICE_PREMIUM_CENTS
+    assert_equal 150, AppConfig::Mpp::PRICE_PREMIUM_CENTS
   end
 
   test "google_voice_for returns google_voice for valid preference" do

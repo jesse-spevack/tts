@@ -1,11 +1,11 @@
 one:
-  amount_cents: 100
+  amount_cents: 150
   currency: usd
   status: pending
   user: one
 
 completed:
-  amount_cents: 100
+  amount_cents: 150
   currency: usd
   status: completed
   stripe_payment_intent_id: "pi_test_completed_123"
@@ -13,7 +13,7 @@ completed:
   user: one
 
 refunded:
-  amount_cents: 100
+  amount_cents: 150
   currency: usd
   status: refunded
   stripe_payment_intent_id: "pi_test_refunded_456"
@@ -21,7 +21,7 @@ refunded:
   user: one
 
 completed_for_narration:
-  amount_cents: 100
+  amount_cents: 150
   currency: usd
   status: completed
   stripe_payment_intent_id: "pi_test_narration_789"
@@ -29,7 +29,7 @@ completed_for_narration:
   user: one
 
 expired_narration_payment:
-  amount_cents: 100
+  amount_cents: 150
   currency: usd
   status: completed
   stripe_payment_intent_id: "pi_test_expired_narration"

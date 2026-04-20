@@ -52,7 +52,7 @@ class Mpp::VerifiesHmacTest < ActiveSupport::TestCase
     realm = "test.example.com"
     method = "tempo"
     intent = "charge"
-    request_json = '{"amount":"1000000","currency":"0xtoken","recipient":"0xabc"}'
+    request_json = '{"amount":"1500000","currency":"0xtoken","recipient":"0xabc"}'
     request_b64 = Base64.encode64(request_json)
     expires = 5.minutes.from_now.iso8601
 
