@@ -162,8 +162,7 @@ class EpisodesController < ApplicationController
   end
 
   def load_podcast
-    @podcast = Current.user.podcasts.first
-    @podcast ||= CreatesDefaultPodcast.call(user: Current.user)
+    @podcast = GetsDefaultPodcastForUser.call(user: Current.user)
   end
 
   def search_query
