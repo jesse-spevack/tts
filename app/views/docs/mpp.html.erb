@@ -87,10 +87,51 @@
           The fastest path uses the <code class="ic">mppx</code> CLI. It handles the 402 challenge, on-chain payment, and credential construction automatically.
         </p>
 
-        <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+        <h3 class="mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Pay podread.app on mainnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Call the hosted API directly. Requires USDC.e on Tempo mainnet — see <a href="#funding" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Funding on mainnet</a> below.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
           <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
             <span class="font-mono text-mist-400">bash</span>
-            <span class="text-mist-500">one-time setup + paid request</span>
+            <span class="text-mist-500">production — mainnet</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            # Create an MPP wallet (one-time setup) and fund it with USDC.e on Tempo mainnet — see below
+            npx mppx account create
+
+            # Pay a narration on podread.app — mppx handles the 402 flow automatically
+            npx mppx https://podread.app/api/v1/mpp/narrations \\
+              -X POST -H "Content-Type: application/json" \\
+              -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
+              --rpc-url https://rpc.tempo.xyz
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <h3 id="funding" class="mt-10 scroll-mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Funding on mainnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          podread.app accepts payment in <strong class="font-semibold text-mist-950 dark:text-white">USDC.e</strong> (Stargate-bridged USDC) on Tempo at <code class="ic">0x20c0…b9537d11c60e8b50</code>. Native USDC does not exist on Tempo today.
+        </p>
+        <ol class="ml-6 mt-3 list-decimal space-y-2 text-mist-700 dark:text-mist-300">
+          <li>Hold USDC on a chain Stargate supports (Base, Arbitrum, Optimism, and Polygon all work well).</li>
+          <li>Bridge to Tempo via <a href="https://stargate.finance/bridge" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">stargate.finance/bridge</a> — USDC → USDC.e.</li>
+          <li>Send the bridged USDC.e to the address printed by <code class="ic">npx mppx account create</code>.</li>
+        </ol>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Tempo has no native gas token — gas is paid in USDC.e itself, so leave a small buffer above the narration price. About <strong class="font-semibold text-mist-950 dark:text-white">$1</strong> covers several requests.
+        </p>
+
+        <h3 class="mt-10 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Try it on testnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Run a self-hosted PodRead instance against Tempo's Moderato testnet. Faucet-dispensed pathUSD — no real money changes hands.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">self-hosted — testnet</span>
           </figcaption>
           <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
             # Create an MPP wallet (one-time setup)
@@ -99,7 +140,7 @@
             # Fund the wallet with testnet pathUSD
             npx mppx account fund --rpc-url https://rpc.moderato.tempo.xyz
 
-            # Create a narration — mppx handles the 402 flow automatically
+            # Pay a narration on your local server
             npx mppx http://your-podread-host/api/v1/mpp/narrations \\
               -X POST -H "Content-Type: application/json" \\
               -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
@@ -107,8 +148,9 @@
           BASH
           ) %></code></pre>
         </figure>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          Anonymous MPP calls (this example) hit <code class="ic">POST /api/v1/mpp/narrations</code> and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
+
+        <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Both examples hit <code class="ic">POST /api/v1/mpp/narrations</code> anonymously and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
         </p>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
           Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.50 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.

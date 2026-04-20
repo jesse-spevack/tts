@@ -24,7 +24,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # MPP-scoped bead edits the file. Last bumped for agent-team-cd53
   # (raise MPP Premium price from $1.00 to $1.50), replacing the
   # pre-cd53 snapshot from agent-team-rwzy.
-  MPP_DOCS_SHA256 = "5b9fd8fea3387915f37ef4c0e9bd38deca45a5b52c747533167bed7b52851e69"
+  MPP_DOCS_SHA256 = "272b75302a2a30f66206af99eb41d71d335a0f8fa4bce9ea51303b19d890a5df"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
