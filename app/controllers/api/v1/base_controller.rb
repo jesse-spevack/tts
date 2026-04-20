@@ -7,7 +7,7 @@ module Api
 
       private
 
-      attr_reader :current_user, :current_api_token
+      attr_reader :current_user
 
       def authenticate_token!
         token = extract_bearer_token
@@ -36,7 +36,6 @@ module Api
         end
 
         api_token.update_column(:last_used_at, Time.current)
-        @current_api_token = api_token
         @current_user = user
         Current.api_token_prefix = api_token.token_prefix
         log_info "api_request_authenticated",

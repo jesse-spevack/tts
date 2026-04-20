@@ -14,7 +14,7 @@
 # See: https://github.com/seattlerb/debride#whitelist
 
 # ---------------------------------------------------------------------------
-# ActiveRecord has_many / belongs_to generated reader methods.
+# ActiveRecord has_many / belongs_to / has_one generated reader methods.
 # debride sees `has_many :foo` and flags the generated `foo` reader.
 # These are exercised by associations and tests — keep them.
 # ---------------------------------------------------------------------------
@@ -24,9 +24,86 @@ device_codes
 oauth_access_grants
 oauth_access_tokens
 narration
+llm_usage
 
 # ---------------------------------------------------------------------------
 # ActiveJob#perform — called dynamically by the queue executor after
 # perform_later enqueues the job. debride can't trace the dispatch.
 # ---------------------------------------------------------------------------
 perform
+
+# ---------------------------------------------------------------------------
+# Controller actions dispatched via routes.rb.
+#
+# `debride --rails` uses naming heuristics (it does not parse routes.rb),
+# so it misses many real endpoints. These are live actions invoked by the
+# Rails router. Each name below is present in routes.rb.
+#
+# NOTE: debride whitelist entries match by bare method name (no class
+# qualifier), so `show` silences every `#show` in the codebase. That is the
+# desired behavior for Rails-convention action names — Phase 2 of the
+# dead-code triage is the narrower per-method investigation.
+# ---------------------------------------------------------------------------
+show
+index
+new
+determine_layout
+home
+marketing_home
+add_rss_feed
+extension_help
+cli_help
+claude_code_help
+claude_help
+chatgpt_help
+post_login_path
+icons
+handle
+create_user
+magic_link_token
+inbound
+stripe
+oauth_authorization_server
+oauth_protected_resource
+authentication
+mpp
+
+# ---------------------------------------------------------------------------
+# Rails framework dispatch hooks (ActionCable, ActionMailbox).
+#
+# - ApplicationCable::Connection#connect — invoked by the Rack cable mount
+#   when a WebSocket client opens a connection.
+# - Channel#subscribed — invoked when a client subscribes to a channel.
+# - ActionMailbox::Base#process — invoked by the mailbox router when an
+#   inbound email matches a routing rule.
+# ---------------------------------------------------------------------------
+connect
+subscribed
+process
+
+# ---------------------------------------------------------------------------
+# Symbol-dispatched callbacks.
+#
+# - ApplicationController#redirect_to_last_page — dispatched via
+#   `rescue_from Pagy::RangeError, with: :redirect_to_last_page`. Debride
+#   sees only the symbol, not the method definition.
+# ---------------------------------------------------------------------------
+redirect_to_last_page
+
+# ---------------------------------------------------------------------------
+# Private helper methods called via implicit-self within the same class.
+#
+# debride has a known blindspot here: in a call like `bucket.file(file_path)`,
+# the AST treats `file_path` as a local variable reference rather than a
+# method call on self, so the definition looks unreferenced. Same pattern
+# for `@sim_dir.join(scoped_path(x))`. These are all live code paths —
+# listed here with the defining class so reviewers can verify by grep.
+#
+# - CloudStorage#scoped_path (app/services/cloud_storage.rb:38)
+# - GeneratesEpisodeDownloadUrl#file_path (app/services/generates_episode_download_url.rb:82)
+# - Simulates::CloudStorage#local_path (app/services/simulates/cloud_storage.rb:50)
+# - Simulates::CloudStorage#scoped_path (shares name with CloudStorage#scoped_path above)
+# ---------------------------------------------------------------------------
+scoped_path
+file_path
+local_path

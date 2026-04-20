@@ -42,13 +42,30 @@ namespace :code_quality do
   # perform MPP additions (Api::V1::NarrationsController#show, DocsController#mpp,
   # Settings::ApiTokensController#index, Settings::ApiTokensController#reveal)
   # remain as controller-action false positives.
-  # Updated 2026-04-19 (+1 net) for Settings::AccountDeletionsController#new.
-  # Rails-invoked via routing (GET /settings/account_deletion/new), same
-  # category as Settings::ApiTokenRevealsController#show already in the
-  # baseline. Settings::AccountsController#destroy was removed in the same
-  # change, but was not individually in the baseline, so net is +1.
+  # Updated 2026-04-19 (-47) for Phase 1 of epic agent-team-551: whitelisted
+  # framework-dispatched method names that `debride --rails` can't trace.
+  # Three new sections added to .debride_whitelist:
+  #   1. Controller actions reached via routes.rb (show, index, new, and 20
+  #      named actions like home / marketing_home / inbound / stripe / etc.).
+  #   2. ActionCable hooks (connect, subscribed).
+  #   3. ActionMailbox dispatch (process).
+  # Updated 2026-04-19 (-10) for Phase 2 of epic agent-team-551: per-finding
+  # triage of the remaining ten candidates. Outcomes:
+  #   - Whitelisted (6): llm_usage (has_one reader), redirect_to_last_page
+  #     (rescue_from symbol dispatch), scoped_path / file_path / local_path
+  #     (private implicit-self calls debride's AST treats as local vars).
+  #   - Deleted (3): AppConfig::Tiers.character_limit_for (no callers),
+  #     CreditBalance#sufficient? (no callers), Api::V1::BaseController
+  #     @current_api_token assignment + attr_reader (set but never read).
+  #   - Wired (1): DeletesEpisode now calls Episode#soft_delete! instead of
+  #     reimplementing update!(deleted_at: ...) inline.
+  # Baseline drops to 0 — every finding is either gone or documented in
+  # .debride_whitelist. Future new dead code will fail CI immediately.
+  # Settings::AccountDeletionsController#new/#create (added in this branch)
+  # are covered by the categorical controller-action whitelist, so no
+  # ratchet adjustment is needed.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 58
+  debride_baseline = 0
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
