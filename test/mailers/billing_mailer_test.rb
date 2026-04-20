@@ -123,7 +123,7 @@ class BillingMailerTest < ActionMailer::TestCase
     assert_match "jesse@podread.app", body
   end
 
-  test "legacy_pricing_migration_2026_04 uses the default from address" do
+  test "legacy_pricing_migration_2026_04 sends from Jesse's personal address so replies land in his inbox" do
     user = users(:credit_user)
     mail = BillingMailer.legacy_pricing_migration_2026_04(
       user: user,
@@ -131,7 +131,8 @@ class BillingMailerTest < ActionMailer::TestCase
       new_balance: 30
     )
 
-    assert_equal [ AppConfig::Domain::MAIL_FROM ], mail.from
+    assert_equal [ "jesse@podread.app" ], mail.from
+    assert_equal "Jesse <jesse@podread.app>", mail[:from].value
   end
 
   test "upgrade_nudge does not pitch $9/month or $89/year subscription" do
