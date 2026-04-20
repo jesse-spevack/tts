@@ -325,7 +325,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "character_limit returns premium limit for free user with credits" do
     user = users(:credit_user)
-    assert_equal AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT, user.character_limit
+    assert_equal AppConfig::Tiers::EPISODE_CHARACTER_LIMIT, user.character_limit
   end
 
   test "character_limit returns free limit for free user without credits" do

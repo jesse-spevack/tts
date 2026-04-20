@@ -130,7 +130,7 @@
   <%= render "shared/marketing/faq_item",
     id: "faq-1",
     question: "Is it really free?",
-    answer: "Yes. You get 2 episodes per month on the free plan, no credit card required. If you want more, you can upgrade to Premium for $9/month or buy a credit pack to pay as you go." %>
+    answer: "Yes. 2 episodes per month on the free plan, no credit card required. Beyond that, buy a credit pack — starts at $9.99 for 5 episodes." %>
   <%= render "shared/marketing/faq_item",
     id: "faq-2",
     question: "Does it sound robotic?",
@@ -149,101 +149,52 @@
     answer: "NotebookLM generates a podcast-style conversation that summarizes your content. PodRead converts the original text into audio and delivers it straight to your podcast app — Apple Podcasts, Spotify, Overcast, or wherever you already listen. You get the full article, not a summary, and it lives alongside all your other podcasts instead of in a separate app." %>
 <% end %>
 
-<%# ===== Pricing (multi-tier with toggle) ===== %>
-<%= render layout: "shared/marketing/pricing_hero_multi", locals: {
-  id: "pricing",
-  headline: "Simple, honest pricing.",
-  subheadline: "",
-  options: ["Monthly", "Yearly"]
-} do %>
-  <%# Monthly panel %>
-  <div class="grid grid-cols-1 gap-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Free",
-      price: "$0",
-      period: "/month",
-      subheadline: "Try it out, no credit card required.",
-      features: [
-        "Private podcast feed",
-        "Paste links, text, or upload files",
-        "Choose your voice",
-        "2 episodes per month",
-        "Up to 15,000 characters",
-      ],
-      cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
+<%# ===== Pricing (Free + three credit packs) ===== %>
+<section id="pricing" class="py-16">
+  <div class="mx-auto w-full max-w-2xl px-6 md:max-w-3xl lg:max-w-7xl lg:px-10 flex flex-col gap-16">
+    <div class="flex flex-col items-center gap-6">
+      <h1 class="font-display text-5xl/12 tracking-tight text-balance sm:text-[5rem]/20 text-mist-950 dark:text-white">Simple, honest pricing.</h1>
+      <div class="text-lg/8 text-mist-700 dark:text-mist-400 flex max-w-xl flex-col gap-4 text-center">
+        <p>Start free. When you're ready for more, buy a credit pack.</p>
+      </div>
+    </div>
 
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Premium",
-      price: "$9",
-      period: "/month",
-      subheadline: "For serious readers and listeners.",
-      features: [
-        "Everything in Free, plus:",
-        "Unlimited episodes",
-        "Up to 50,000 characters",
-      ],
-      cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_monthly" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
+    <div class="grid grid-cols-1 gap-2 lg:grid-cols-4">
+      <%= render "shared/marketing/pricing_hero_multi_plan",
+        name: "Free",
+        price: "$0",
+        period: "/month",
+        subheadline: "Try it out, no credit card required.",
+        features: [
+          "Private podcast feed",
+          "Paste links, text, or upload files",
+          "Choose your voice",
+          "2 episodes per month",
+          "Up to 15,000 characters",
+        ],
+        cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
 
-    <% monthly_starter_pack = AppConfig::Credits::PACKS.first %>
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Credit Pack",
-      price: "$#{format("%.2f", monthly_starter_pack[:price_cents] / 100.0)}",
-      period: "/ #{monthly_starter_pack[:size]} episodes",
-      subheadline: "Pay as you go — no subscription required.",
-      badge: "Most popular",
-      features: [
-        "Same features as Premium, per episode:",
-        "Up to 50,000 characters",
-        "No subscription needed",
-        "Credits never expire",
-      ],
-      cta_html: tag.button("Buy Credits", type: "button", data: { action: "click->signup-modal#open", plan: "credit_pack" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
+      <% AppConfig::Credits::PACKS.each do |pack| %>
+        <% dollars = format("%.2f", pack[:price_cents] / 100.0) %>
+        <% per_credit = format("%.2f", pack[:price_cents] / 100.0 / pack[:size]) %>
+        <% is_best = pack[:size] == 20 %>
+        <%= render "shared/marketing/pricing_hero_multi_plan",
+          name: pack[:label],
+          price: "$#{dollars}",
+          period: "/ #{pack[:size]} credits",
+          subheadline: "$#{per_credit} per credit. Credits never expire.",
+          badge: (is_best ? "Best value" : nil),
+          features: [
+            "#{pack[:size]} episodes",
+            "Up to 50,000 characters per episode",
+            "All voices available",
+            "No recurring charges",
+          ],
+          cta_html: tag.button("Buy #{pack[:label]}", type: "button", data: { action: "click->signup-modal#open", plan: "credit_pack", pack_size: pack[:size] }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 #{is_best ? 'bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200' : 'bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15'}") %>
+      <% end %>
+    </div>
   </div>
-
-  <%# Yearly panel %>
-  <div class="grid grid-cols-1 gap-2 lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none">
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Free",
-      price: "$0",
-      period: "/month",
-      subheadline: "Try it out, no credit card required.",
-      features: [
-        "Private podcast feed",
-        "Paste links, text, or upload files",
-        "Choose your voice",
-        "2 episodes per month",
-        "Up to 15,000 characters",
-      ],
-      cta_html: tag.button("Create my feed", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
-
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Premium",
-      price: "$89",
-      period: "/year",
-      subheadline: "For serious readers and listeners.",
-      features: [
-        "Everything in Free, plus:",
-        "Unlimited episodes",
-        "Up to 50,000 characters",
-      ],
-      cta_html: tag.button("Get Premium", type: "button", data: { action: "click->signup-modal#open", plan: "premium_annual" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200") %>
-
-    <% yearly_starter_pack = AppConfig::Credits::PACKS.first %>
-    <%= render "shared/marketing/pricing_hero_multi_plan",
-      name: "Credit Pack",
-      price: "$#{format("%.2f", yearly_starter_pack[:price_cents] / 100.0)}",
-      period: "/ #{yearly_starter_pack[:size]} episodes",
-      subheadline: "Pay as you go — no subscription required.",
-      badge: "Most popular",
-      features: [
-        "Same features as Premium, per episode:",
-        "Up to 50,000 characters",
-        "No subscription needed",
-        "Credits never expire",
-      ],
-      cta_html: tag.button("Buy Credits", type: "button", data: { action: "click->signup-modal#open", plan: "credit_pack" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-5 py-2.5 bg-mist-950/5 text-mist-950 hover:bg-mist-950/10 dark:bg-white/10 dark:text-white dark:hover:bg-white/15") %>
-  </div>
-<% end %>
+</section>
 
 <%# ===== Call to Action ===== %>
 <%= render "shared/marketing/cta_simple",

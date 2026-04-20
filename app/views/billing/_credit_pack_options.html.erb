@@ -1,0 +1,5 @@
+<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <% AppConfig::Credits::PACKS.each do |pack| %>
+    <%= render "settings/credit_pack_card", pack: pack, highlight: pack[:size] == 20 %>
+  <% end %>
+</div>

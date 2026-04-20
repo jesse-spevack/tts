@@ -3,12 +3,14 @@
 class AuthenticatesMagicLink
   include StructuredLogging
 
-  def self.call(token:)
-    new(token: token).call
+  def self.call(token:, plan: nil, pack_size: nil)
+    new(token: token, plan: plan, pack_size: pack_size).call
   end
 
-  def initialize(token:)
+  def initialize(token:, plan: nil, pack_size: nil)
     @token = token
+    @plan = plan
+    @pack_size = pack_size
   end
 
   def call

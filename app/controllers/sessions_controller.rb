@@ -13,7 +13,11 @@ class SessionsController < ApplicationController
   end
 
   def create
-    result = SendsMagicLink.call(email_address: params[:email_address], plan: params[:plan])
+    result = SendsMagicLink.call(
+      email_address: params[:email_address],
+      plan: params[:plan],
+      pack_size: params[:pack_size].presence
+    )
 
     if result.success?
       redirect_to root_path, notice: "Check your email for a login link!"
@@ -34,6 +38,7 @@ class SessionsController < ApplicationController
 
     if result.success?
       start_new_session_for result.data
+      session[:pack_size] = params[:pack_size].to_i if params[:pack_size].present?
       # Skip flash message when redirecting to checkout - the checkout success page has its own welcome message
       if checkout_flow?(params[:plan])
         redirect_to post_login_path(params[:plan])
@@ -46,17 +51,16 @@ class SessionsController < ApplicationController
   end
 
   def checkout_flow?(plan)
-    plan.in?(%w[premium_monthly premium_annual credit_pack])
+    plan == "credit_pack"
   end
 
   def post_login_path(plan)
     case plan
-    when "premium_monthly"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
-    when "premium_annual"
-      checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL)
     when "credit_pack"
-      checkout_path(pack_size: AppConfig::Credits::PACKS.first[:size])
+      valid_sizes = AppConfig::Credits::PACKS.map { |p| p[:size] }
+      size = session[:pack_size].presence_in(valid_sizes) || AppConfig::Credits::PACKS.first[:size]
+      session.delete(:pack_size)
+      checkout_path(pack_size: size)
     else
       after_authentication_url
     end

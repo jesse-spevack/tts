@@ -8,10 +8,12 @@ class BillingControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to login_path(return_to: "/billing")
   end
 
-  test "show redirects free user to upgrade" do
+  test "show renders for free user with no subscription (iny7: no upgrade redirect)" do
+    # Pre-iny7 free users without a subscription got bounced to /upgrade.
+    # After iny7 there is no /upgrade; free-no-sub users stay on /billing.
     sign_in_as(users(:free_user))
     get billing_path
-    assert_redirected_to upgrade_path
+    assert_response :success
   end
 
   test "show renders for premium user" do

@@ -61,7 +61,7 @@ module McpToolHelpers
     when :insufficient_credits
       "Not enough credits for this episode. Buy more at #{AppConfig::Domain::BASE_URL}/billing"
     else
-      "You've used all your free episodes this month. Upgrade at #{AppConfig::Domain::BASE_URL}/upgrade"
+      "You've used all your free episodes this month. Buy credits at #{AppConfig::Domain::BASE_URL}/billing"
     end
   end
 end

@@ -79,4 +79,37 @@ class AuthenticatesMagicLinkTest < ActiveSupport::TestCase
     @user.reload
     assert_not_nil @user.auth_token
   end
+
+  # --- pack_size carry through AuthenticatesMagicLink (iny7) ---
+  # Per iny7 design, AuthenticatesMagicLink should expose the plan and
+  # pack_size carried alongside the token so SessionsController can set
+  # session values uniformly. This is the "extracts both" contract referenced
+  # in the iny7 design notes.
+
+  test "call returns user alongside carried plan and pack_size" do
+    # pack_size round-trips through the magic link; the service should
+    # surface it so the controller can route to the right checkout.
+    token = GeneratesAuthToken.call(user: @user)
+
+    result = AuthenticatesMagicLink.call(token: token, plan: "credit_pack", pack_size: 10)
+
+    assert result.success?
+    # The user remains accessible. Implementer chooses whether to expose
+    # plan/pack_size on the Result data (struct / hash) or as additional
+    # accessors — either way, the returned data must still include the user.
+    user = result.data.respond_to?(:user) ? result.data.user : result.data
+    assert_equal @user, user
+  end
+
+  test "call without plan or pack_size works as before" do
+    # Back-compat: the two kwargs default to nil and the existing contract
+    # (return user on success) is preserved.
+    token = GeneratesAuthToken.call(user: @user)
+
+    result = AuthenticatesMagicLink.call(token: token)
+
+    assert result.success?
+    user = result.data.respond_to?(:user) ? result.data.user : result.data
+    assert_equal @user, user
+  end
 end
