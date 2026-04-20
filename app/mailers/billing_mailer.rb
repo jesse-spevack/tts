@@ -68,7 +68,7 @@ class BillingMailer < ApplicationMailer
     mail(
       to: user.email_address,
       from: "Jesse <jesse@podread.app>",
-      subject: "Your PodRead credits just got bigger"
+      subject: "PodRead pricing update"
     )
   end
 end

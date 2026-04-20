@@ -92,7 +92,7 @@ class BillingMailerTest < ActionMailer::TestCase
     )
 
     assert_equal [ user.email_address ], mail.to
-    assert_equal "Your PodRead credits just got bigger", mail.subject
+    assert_equal "PodRead pricing update", mail.subject
   end
 
   test "legacy_pricing_migration_2026_04 body interpolates previous and new balance" do
