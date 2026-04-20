@@ -59,12 +59,16 @@ env:
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
 
-    # MPP (Machine Payments Protocol) on Tempo. Public values — not secrets.
-    # Prod uses USDC.e (Stargate-bridged USDC, 6 decimals) as Stripe's prod
-    # guidance for mainnet. Testnet defaults to pathUSD in AppConfig::Mpp;
+    # MPP (Machine Payments Protocol) on Tempo. Public value — not a secret.
+    # Prod uses USDC.e (Stargate-bridged USDC, 6 decimals) per Stripe's prod
+    # guidance for mainnet. Testnet/dev default to pathUSD via AppConfig::Mpp;
     # this override flips prod only. See agent-team-arak.
     TEMPO_CURRENCY_TOKEN: "0x20c000000000000000000000b9537d11c60e8b50"
-    TEMPO_RPC_URL: "https://rpc.moderato.tempo.xyz"
+    # Intentionally NOT setting TEMPO_RPC_URL here. AppConfig::Mpp derives
+    # the default from Rails.env (prod → rpc.tempo.xyz, non-prod →
+    # rpc.moderato.tempo.xyz) so prod cannot accidentally ship with a
+    # testnet RPC paired with a mainnet token contract. See agent-team-tv6e
+    # for the incident this guards against.
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3

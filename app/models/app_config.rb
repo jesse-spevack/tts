@@ -167,7 +167,16 @@ class AppConfig
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
-    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.moderato.tempo.xyz")
+    # Tempo JSON-RPC endpoint. Mainnet (chain 4217) for production, Moderato
+    # testnet (chain 42431) for every other Rails env. The RPC URL and the
+    # TEMPO_CURRENCY_TOKEN contract MUST refer to the same chain — a testnet
+    # RPC paired with a mainnet contract silently strands user payments
+    # (agent-team-tv6e). Mpp::VerifiesChainId (wired in via the initializer
+    # config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
+    # Explicit TEMPO_RPC_URL env var wins when set.
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL") do
+      Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
+    end
     # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the
     # Moderato testnet (the testnet faucet only dispenses pathUSD). USDC.e
     # (0x20c0...0000b9537d11c60e8b50) is USDC bridged via Stargate and is
