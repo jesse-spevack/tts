@@ -42,8 +42,13 @@ namespace :code_quality do
   # perform MPP additions (Api::V1::NarrationsController#show, DocsController#mpp,
   # Settings::ApiTokensController#index, Settings::ApiTokensController#reveal)
   # remain as controller-action false positives.
+  # Updated 2026-04-19 (+1 net) for Settings::AccountDeletionsController#new.
+  # Rails-invoked via routing (GET /settings/account_deletion/new), same
+  # category as Settings::ApiTokenRevealsController#show already in the
+  # baseline. Settings::AccountsController#destroy was removed in the same
+  # change, but was not individually in the baseline, so net is +1.
   # Count includes both unused methods and unused constants.
-  debride_baseline = 57
+  debride_baseline = 58
 
   desc "Run debride (ratchet: fails if findings > baseline #{debride_baseline})"
   task :debride do
