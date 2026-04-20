@@ -254,9 +254,12 @@ module Api
       # ---------- Routing ----------
 
       test "routes POST /api/internal/episodes/cost_preview to cost_preview action" do
+        # Endpoint lives on a sibling controller (Api::Internal::CostPreviewController)
+        # because it uses session auth rather than the X-Generator-Secret
+        # header auth used by Api::Internal::EpisodesController#update.
         assert_routing(
           { method: :post, path: "/api/internal/episodes/cost_preview" },
-          controller: "api/internal/episodes", action: "cost_preview"
+          controller: "api/internal/cost_preview", action: "create"
         )
       end
 

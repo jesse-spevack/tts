@@ -1,11 +1,27 @@
-<div class="max-w-2xl mx-auto">
+<% current_voice = Voice.find(Current.user.voice_preference) || Voice.find(Voice::DEFAULT_KEY) %>
+<div class="max-w-2xl mx-auto"
+     <% if Current.user.credit_user? %>
+       data-controller="cost-preview"
+       data-cost-preview-endpoint-value="<%= api_internal_episodes_cost_preview_path %>"
+       data-cost-preview-is-credit-user-value="true"
+     <% end %>>
   <%= render "shared/page_header", title: "New Episode" %>
 
   <% if Current.user.credit_user? %>
     <div class="mb-6 rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:ring-blue-500/20">
-      <p class="text-sm/6 text-blue-700 dark:text-blue-300">
-        You have <strong><%= Current.user.credits_remaining %> episode credits</strong> remaining.
-        This episode will use 1 credit.
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200 dark:bg-blue-500/20 dark:text-blue-200 dark:ring-blue-500/30">
+          Voice: <%= current_voice.name %>
+          <% if current_voice.premium? %>
+            <span class="ml-1 text-[10px] uppercase tracking-wide">Premium</span>
+          <% end %>
+        </span>
+        <%= link_to "Change in settings", settings_path(anchor: "voice"),
+                    class: "text-sm text-blue-700 underline hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100" %>
+      </div>
+      <p class="text-sm/6 text-blue-700 dark:text-blue-300" data-cost-preview-target="preview">&mdash;</p>
+      <p class="mt-1 text-xs text-blue-600 dark:text-blue-400">
+        You have <strong><%= Current.user.credits_remaining %> credits</strong> remaining.
       </p>
     </div>
   <% end %>
@@ -54,7 +70,8 @@
               <%= f.url_field :url,
                   class: input_classes,
                   placeholder: "https://example.com/article",
-                  required: true %>
+                  required: true,
+                  data: (Current.user.credit_user? ? { cost_preview_target: "urlField", action: "input->cost-preview#urlChanged" } : {}) %>
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               We'll extract the article content, title, and author automatically.
@@ -107,7 +124,8 @@
                   rows: 12,
                   class: input_classes,
                   placeholder: "Paste your article text here...",
-                  required: true %>
+                  required: true,
+                  data: (Current.user.credit_user? ? { cost_preview_target: "pasteText", action: "input->cost-preview#pasteChanged" } : {}) %>
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               Paste article text. We'll extract the title and author automatically if not provided above.
@@ -169,10 +187,17 @@
               data-action="click->file-upload#triggerInput dragover->file-upload#handleDragOver dragleave->file-upload#handleDragLeave drop->file-upload#handleDrop"
               class="mt-2 flex justify-center rounded-lg border-2 border-dashed border-mist-300 dark:border-mist-700 px-6 py-10 cursor-pointer hover:border-mist-950 dark:hover:border-white transition-colors"
             >
+              <%
+                file_field_data = { file_upload_target: "input", action: "change->file-upload#updateFilename" }
+                if Current.user.credit_user?
+                  file_field_data[:cost_preview_target] = "uploadField"
+                  file_field_data[:action] = "#{file_field_data[:action]} change->cost-preview#uploadChanged"
+                end
+              %>
               <%= f.file_field :content,
                   accept: ".md,.markdown,.txt",
                   required: true,
-                  data: { file_upload_target: "input", action: "change->file-upload#updateFilename" },
+                  data: file_field_data,
                   class: "hidden" %>
               <div class="text-center">
                 <svg class="mx-auto size-12 text-mist-300 dark:text-mist-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
