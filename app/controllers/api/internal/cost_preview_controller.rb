@@ -11,12 +11,9 @@ module Api
     # generator service's PATCH callback with X-Generator-Secret header auth.
     # Different auth model → different controller.
     class CostPreviewController < ApplicationController
-      # Session-authenticated JSON endpoint called by same-origin JS. Rails'
-      # default CSRF protection is driven by the session cookie being
-      # presented — skipping forgery protection here keeps fetch() calls from
-      # the Stimulus controller simple (no token wiring) while still
-      # requiring a valid signed session cookie.
-      skip_forgery_protection
+      # Session-authenticated JSON endpoint called by same-origin JS. The
+      # Stimulus controller forwards the Rails CSRF token in the
+      # X-CSRF-Token header, so standard forgery protection applies.
 
       ALLOWED_SOURCE_TYPES = %w[paste url upload].freeze
 
@@ -27,7 +24,7 @@ module Api
 
         voice = ResolvesVoice.call(requested_key: nil, user: Current.user).data
 
-        if credit_user_path?(Current.user)
+        if Current.user.on_credit_path?
           render json: credit_user_payload(source_type: source_type, voice: voice)
         else
           render json: free_tier_payload(voice: voice)
@@ -35,16 +32,6 @@ module Api
       end
 
       private
-
-      # A user is on the credit path if they have a credit_balance record
-      # (even at zero). Complimentary and unlimited account types always
-      # bypass, regardless of prior credit history. Free users (standard
-      # account, no subscription, never purchased credits) have no balance
-      # row and receive the free_tier marker.
-      def credit_user_path?(user)
-        return false if user.complimentary? || user.unlimited?
-        user.credit_balance.present?
-      end
 
       def required_field_present?(source_type)
         case source_type

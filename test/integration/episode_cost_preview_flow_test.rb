@@ -119,4 +119,29 @@ class EpisodeCostPreviewFlowTest < ActionDispatch::IntegrationTest
     assert File.exist?(path),
       "Expected Stimulus controller at #{path} — create this file as part of gq88 implementation"
   end
+
+  # Structural check for B1 (tab-switch stale preview). The Stimulus layer
+  # must reset the preview when the user switches between URL / Paste /
+  # Upload tabs, otherwise a long-paste "2 credits" reading sticks around
+  # on the URL tab where the real cost is always 1. Exercising this in an
+  # HTTP-only integration suite is impossible — assert the wiring exists
+  # at the source level instead.
+  test "cost_preview controller subscribes to tab-switch:changed" do
+    js_path = Rails.root.join("app/javascript/controllers/cost_preview_controller.js")
+    source = File.read(js_path)
+    assert_includes source, "tabChanged",
+      "cost_preview_controller.js must define a tabChanged handler to reset preview on tab switch"
+
+    view_path = Rails.root.join("app/views/episodes/new.html.erb")
+    erb = File.read(view_path)
+    assert_includes erb, "tab-switch:changed->cost-preview#tabChanged",
+      "new.html.erb must wire the tab-switch:changed event to cost-preview#tabChanged"
+  end
+
+  test "tab_switch controller dispatches the :changed event" do
+    js_path = Rails.root.join("app/javascript/controllers/tab_switch_controller.js")
+    source = File.read(js_path)
+    assert_includes source, 'this.dispatch("changed"',
+      "tab_switch_controller.js must dispatch a :changed event so other controllers can react"
+  end
 end

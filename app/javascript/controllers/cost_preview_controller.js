@@ -12,11 +12,16 @@ import { Controller } from "@hotwired/stimulus"
 // Debounces text-input events at 250ms to avoid chatty requests while typing.
 // Errors are swallowed (preview reverts to em-dash) so a failed preview never
 // blocks submit.
+//
+// Listens for `tab-switch:changed` (dispatched by tab_switch_controller) so
+// switching from Paste→URL→Upload resets the preview and re-triggers it for
+// the newly-active tab's current input. Without this, the preview shows
+// stale copy from the previous tab (e.g. "2 credits" from a long paste
+// while the user is now looking at the URL tab where cost is always 1).
 export default class extends Controller {
   static targets = ["preview", "pasteText", "urlField", "uploadField"]
   static values = {
-    endpoint: String,
-    isCreditUser: Boolean
+    endpoint: String
   }
 
   connect() {
@@ -45,6 +50,45 @@ export default class extends Controller {
     if (!file) return
     // File change is discrete — no debounce needed.
     this._request({ source_type: "upload", upload_length: file.size })
+  }
+
+  // Triggered by tab-switch:changed (dispatched from tab_switch_controller).
+  // Reset preview to the em-dash placeholder, then re-request for the
+  // newly-active tab's current input so we never display a cost derived
+  // from a different source type than the one the user is looking at.
+  tabChanged(event) {
+    // Cancel any in-flight or debounced request from the previous tab so
+    // its late response can't overwrite the preview we're about to set.
+    if (this._debounceTimer) {
+      clearTimeout(this._debounceTimer)
+      this._debounceTimer = null
+    }
+    if (this._abortController) {
+      this._abortController.abort()
+      this._abortController = null
+    }
+
+    this._setPreview("—")
+
+    const selectedTab = event && event.detail && event.detail.selectedTab
+    switch (selectedTab) {
+      case "paste": {
+        const text = this.hasPasteTextTarget ? this.pasteTextTarget.value : ""
+        if (text.length > 0) this._request({ source_type: "paste", text })
+        break
+      }
+      case "url": {
+        const url = this.hasUrlFieldTarget ? this.urlFieldTarget.value : ""
+        if (url.length > 0) this._request({ source_type: "url", url })
+        break
+      }
+      case "file": {
+        if (!this.hasUploadFieldTarget) break
+        const file = this.uploadFieldTarget.files && this.uploadFieldTarget.files[0]
+        if (file) this._request({ source_type: "upload", upload_length: file.size })
+        break
+      }
+    }
   }
 
   _debouncedRequest(payload) {
@@ -77,14 +121,14 @@ export default class extends Controller {
       }
 
       const body = await response.json()
-      this._renderPayload(body)
+      this._renderPayload(body, payload.source_type)
     } catch (err) {
       if (err.name === "AbortError") return
       this._setPreview("—")
     }
   }
 
-  _renderPayload(body) {
+  _renderPayload(body, sourceType) {
     if (body.free_tier) {
       this._setPreview("Included — doesn't use credits.")
       return
@@ -96,12 +140,24 @@ export default class extends Controller {
     const creditWord = cost === 1 ? "credit" : "credits"
 
     if (sufficient) {
-      this._setPreview(`This will cost ${cost} ${creditWord}. You have ${balance} remaining.`)
+      // URL previews always return cost=1 because real length isn't known
+      // until the article is fetched. A long Premium-voice article can
+      // end up costing 2 — surface that caveat so the preview doesn't
+      // lie to the user.
+      if (sourceType === "url") {
+        this._setPreview(`~${cost} ${creditWord} (final cost depends on article length — long Premium-voice articles may cost 2). You have ${balance} remaining.`)
+      } else {
+        this._setPreview(`This will cost ${cost} ${creditWord}. You have ${balance} remaining.`)
+      }
     } else {
       const node = document.createElement("span")
       node.append(`Not enough credits. This costs ${cost}, you have ${balance}. `)
       const link = document.createElement("a")
       link.href = "/billing"
+      // Open in a new tab so the user doesn't lose whatever text / URL
+      // they've already typed into the form when they click through.
+      link.target = "_blank"
+      link.rel = "noopener"
       link.className = "underline font-medium"
       link.textContent = "Buy more"
       node.appendChild(link)

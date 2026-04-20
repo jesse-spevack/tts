@@ -474,6 +474,31 @@ module Api
         assert_equal 0, body["cost"]
       end
 
+      test "active subscriber with historical credit_balance row receives free_tier payload (balance not leaked)" do
+        # Regression guard for the on_credit_path? unification. A user
+        # who had credits in the past but is now on an active subscription
+        # is premium — the UI correctly hides the preview. Before gq88's
+        # fix-up pass the endpoint's gate didn't check premium?, so a
+        # direct fetch would return the credit payload and leak their
+        # historical balance. on_credit_path? closes that leak by
+        # excluding premium? users regardless of credit history.
+        subscriber = users(:subscriber)
+        subscriber.update!(voice_preference: "callum")
+        CreditBalance.create!(user: subscriber, balance: 42)
+        sign_in_as(subscriber)
+
+        post "/api/internal/episodes/cost_preview",
+          params: { source_type: "paste", text: "A" * 25_000 },
+          as: :json
+
+        assert_response :success
+        body = response.parsed_body
+        assert_equal true, body["free_tier"],
+          "Active subscriber must receive free_tier payload even with a credit_balance row"
+        assert_nil body["balance"],
+          "Endpoint must not leak the subscriber's credit balance to direct fetches"
+      end
+
       # ---------- Invalid input (422) ----------
 
       test "missing source_type returns 422" do

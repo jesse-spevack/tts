@@ -47,6 +47,24 @@ class User < ApplicationRecord
     has_credits? && !premium?
   end
 
+  # Single predicate for "this user sees the credit-cost preview" (agent-team-gq88).
+  #
+  # Used on both the view (new-episode form) and the cost_preview endpoint to
+  # prevent divergence. A user is on the credit path iff:
+  #   - They are NOT premium (no active subscription, not complimentary, not
+  #     unlimited) — !premium? covers all three.
+  #   - They have EVER purchased credits — credit_balance.present? captures
+  #     users whose balance is currently zero but who are still credit-path
+  #     (they'll see the "Buy more" CTA).
+  #
+  # This intentionally differs from credit_user? which additionally requires
+  # balance > 0. A zero-balance credit user still belongs on the credit path:
+  # they should see the preview with a "not enough credits" state, not the
+  # free-tier copy.
+  def on_credit_path?
+    !premium? && credit_balance.present?
+  end
+
   def voice
     Voice.google_voice_for(voice_preference, is_premium: premium? || credit_user?)
   end

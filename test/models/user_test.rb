@@ -139,6 +139,55 @@ class UserTest < ActiveSupport::TestCase
     refute user.credit_user?
   end
 
+  # on_credit_path? tests — the predicate used to gate the cost-preview
+  # UI and endpoint. Unlike credit_user?, this returns true even when the
+  # balance is zero, so depleted credit users still see the preview with
+  # a "Buy more" CTA instead of the free-tier copy.
+  test "on_credit_path? returns true for user with credits and no subscription" do
+    user = users(:credit_user)
+    assert user.on_credit_path?
+  end
+
+  test "on_credit_path? returns true for credit user whose balance is zero" do
+    user = users(:credit_user)
+    CreditBalance.for(user).update!(balance: 0)
+    assert user.on_credit_path?,
+      "Zero-balance credit users still belong on the credit path (they should see the Buy more CTA)"
+  end
+
+  test "on_credit_path? returns false for free user (no credit_balance row)" do
+    user = users(:free_user)
+    refute user.on_credit_path?
+  end
+
+  test "on_credit_path? returns false for active subscriber even with credit_balance row" do
+    # Regression guard: subscriber with a historical credit_balance must
+    # NOT be on_credit_path, or the cost_preview endpoint would leak
+    # their balance to direct fetches even though the UI hides the preview.
+    user = users(:subscriber)
+    CreditBalance.create!(user: user, balance: 5)
+    refute user.on_credit_path?,
+      "Active subscribers must never be on_credit_path? regardless of credit history — this would leak balance via the cost_preview endpoint"
+  end
+
+  test "on_credit_path? returns false for complimentary user" do
+    user = users(:complimentary_user)
+    refute user.on_credit_path?
+  end
+
+  test "on_credit_path? returns false for unlimited user" do
+    user = users(:unlimited_user)
+    refute user.on_credit_path?
+  end
+
+  test "on_credit_path? returns true for canceled subscriber with credit_balance" do
+    # A user whose subscription is canceled (not active) is no longer premium,
+    # so if they have any credit_balance row they're back on the credit path.
+    user = users(:canceled_subscriber)
+    CreditBalance.create!(user: user, balance: 3)
+    assert user.on_credit_path?
+  end
+
   # Voice tests
   test "voice returns Standard voice for free user with no preference" do
     user = users(:free_user)

@@ -1,13 +1,13 @@
 <% current_voice = Voice.find(Current.user.voice_preference) || Voice.find(Voice::DEFAULT_KEY) %>
 <div class="max-w-2xl mx-auto"
-     <% if Current.user.credit_user? %>
+     <% if Current.user.on_credit_path? %>
        data-controller="cost-preview"
        data-cost-preview-endpoint-value="<%= api_internal_episodes_cost_preview_path %>"
-       data-cost-preview-is-credit-user-value="true"
+       data-action="tab-switch:changed->cost-preview#tabChanged"
      <% end %>>
   <%= render "shared/page_header", title: "New Episode" %>
 
-  <% if Current.user.credit_user? %>
+  <% if Current.user.on_credit_path? %>
     <div class="mb-6 rounded-xl bg-blue-50 p-4 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:ring-blue-500/20">
       <div class="flex items-center justify-between gap-3 mb-2">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-blue-800 ring-1 ring-blue-200 dark:bg-blue-500/20 dark:text-blue-200 dark:ring-blue-500/30">
@@ -71,7 +71,7 @@
                   class: input_classes,
                   placeholder: "https://example.com/article",
                   required: true,
-                  data: (Current.user.credit_user? ? { cost_preview_target: "urlField", action: "input->cost-preview#urlChanged" } : {}) %>
+                  data: (Current.user.on_credit_path? ? { cost_preview_target: "urlField", action: "input->cost-preview#urlChanged" } : {}) %>
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               We'll extract the article content, title, and author automatically.
@@ -125,7 +125,7 @@
                   class: input_classes,
                   placeholder: "Paste your article text here...",
                   required: true,
-                  data: (Current.user.credit_user? ? { cost_preview_target: "pasteText", action: "input->cost-preview#pasteChanged" } : {}) %>
+                  data: (Current.user.on_credit_path? ? { cost_preview_target: "pasteText", action: "input->cost-preview#pasteChanged" } : {}) %>
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
               Paste article text. We'll extract the title and author automatically if not provided above.
@@ -189,7 +189,7 @@
             >
               <%
                 file_field_data = { file_upload_target: "input", action: "change->file-upload#updateFilename" }
-                if Current.user.credit_user?
+                if Current.user.on_credit_path?
                   file_field_data[:cost_preview_target] = "uploadField"
                   file_field_data[:action] = "#{file_field_data[:action]} change->cost-preview#uploadChanged"
                 end
