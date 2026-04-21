@@ -6,6 +6,10 @@ on:
     types: [completed]
     branches: [main]
 
+concurrency:
+  group: podread-deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy-hub:
     # Only run if CI succeeded
