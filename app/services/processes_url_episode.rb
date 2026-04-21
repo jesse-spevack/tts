@@ -123,4 +123,12 @@ class ProcessesUrlEpisode
   rescue URI::InvalidURIError
     nil
   end
+
+  # Override EpisodeErrorHandling#fail_episode to refund any credit debit
+  # that ran earlier in #deduct_credit. Without this, a URL episode that
+  # fails after debit leaves the user's credit gone — see agent-team-uoqd.
+  def fail_episode(error_message)
+    super
+    RefundsCreditDebit.call(episode: episode)
+  end
 end
