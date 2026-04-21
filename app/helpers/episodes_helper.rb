@@ -78,15 +78,10 @@ module EpisodesHelper
   #
   # Prefers the voice stamped on the episode at synth time (captured in
   # GeneratesEpisodeAudio). Legacy rows with episode.voice = nil fall back
-  # to the user's current voice_preference. Nothing resolves → Standard.
+  # to the user's current voice via Episode#effective_voice. Nothing
+  # resolves → Standard.
   def episode_voice_tier_label(episode)
-    tier =
-      if episode.voice.present?
-        Voice.tier_for(episode.voice)
-      else
-        Voice.find(episode.user.voice_preference)&.tier
-      end
-    tier ||= :standard
+    tier = Voice.tier_for(episode.effective_voice) || :standard
     tier.to_s.capitalize
   end
 end

@@ -47,6 +47,14 @@ class Episode < ApplicationRecord
 
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
+  # Google voice string that was (or would be) used by TTS.
+  # Returns the stamped voice if synth has occurred, otherwise the
+  # user's current voice preference as a fallback for legacy rows
+  # and pre-synth display.
+  def effective_voice
+    voice.presence || user&.voice
+  end
+
   def audio_url
     GeneratesEpisodeAudioUrl.call(self)
   end

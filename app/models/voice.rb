@@ -74,13 +74,23 @@ class Voice
   def self.tier_for(google_voice)
     return nil if google_voice.blank?
 
-    entry = CATALOG.find { |_key, data| data[:google_voice] == google_voice }
-    unless entry
+    tier = tier_by_google_voice[google_voice]
+    unless tier
       Rails.logger.warn "event=voice_tier_lookup_missed google_voice=#{google_voice}"
       return nil
     end
 
-    find(entry.first)&.tier
+    tier
+  end
+
+  # Memoized reverse index: google_voice string → tier symbol. Built once
+  # from CATALOG and frozen. In dev mode Rails reloads the Voice constant
+  # so the memo resets with the catalog.
+  def self.tier_by_google_voice
+    @tier_by_google_voice ||= CATALOG.each_with_object({}) do |(key, _data), h|
+      entry = find(key)
+      h[entry.google_voice] = entry.tier if entry
+    end.freeze
   end
 
   def self.sample_url(key)

@@ -106,7 +106,7 @@ class GeneratesEpisodeAudio
   end
 
   def voice_name
-    @voice_name ||= @voice_override.presence || @episode.voice.presence || @episode.user.voice
+    @voice_name ||= @voice_override.presence || @episode.effective_voice
   end
 
   def content_text

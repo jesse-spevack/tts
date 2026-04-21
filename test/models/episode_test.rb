@@ -354,4 +354,25 @@ class EpisodeTest < ActiveSupport::TestCase
 
     assert_equal Voice::DEFAULT_STANDARD, episode.reload.voice
   end
+
+  # --- effective_voice (agent-team-zmzt) ---
+
+  test "effective_voice returns stamped voice when present" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: Voice::DEFAULT_STANDARD)
+
+    # Stamped voice wins over user.voice even when they disagree.
+    assert_equal Voice::DEFAULT_STANDARD, episode.effective_voice
+  end
+
+  test "effective_voice falls back to user.voice when stamped voice is nil" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: nil)
+
+    assert_equal user.voice, episode.effective_voice
+  end
 end
