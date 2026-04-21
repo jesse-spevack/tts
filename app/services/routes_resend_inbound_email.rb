@@ -15,6 +15,12 @@ class RoutesResendInboundEmail
     mail = build_mail
     inbound_email = ActionMailbox::InboundEmail.create_and_extract_message_id!(mail.to_s)
 
+    if inbound_email.nil?
+      log_info "resend_inbound_email_duplicate_message_id",
+        to: email_data["to"]&.first
+      return Result.success
+    end
+
     log_info "resend_inbound_email_created",
       inbound_email_id: inbound_email.id,
       to: email_data["to"]&.first

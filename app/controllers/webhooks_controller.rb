@@ -10,6 +10,24 @@ class WebhooksController < ApplicationController
       payload, signature, AppConfig::Stripe::WEBHOOK_SECRET
     )
 
+    begin
+      WebhookEvent.create!(
+        provider: "stripe",
+        event_id: event.id,
+        event_type: event.type,
+        received_at: Time.current
+      )
+    rescue ActiveRecord::RecordNotUnique
+      Rails.logger.info("[Stripe Webhook] Duplicate delivery ignored: event_id=#{event.id} type=#{event.type}")
+      return head :ok
+    rescue ActiveRecord::RecordInvalid => e
+      if e.record&.errors&.of_kind?(:event_id, :taken)
+        Rails.logger.info("[Stripe Webhook] Duplicate delivery ignored: event_id=#{event.id} type=#{event.type}")
+        return head :ok
+      end
+      raise
+    end
+
     result = RoutesStripeWebhook.call(event: event)
 
     if result&.failure?
