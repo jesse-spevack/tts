@@ -28,7 +28,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     # The RoutesStripeWebhook service is already tested
 
     # Create a valid test signature
-    payload = { type: "customer.created", data: { object: {} } }.to_json
+    payload = { id: "evt_unhandled_#{SecureRandom.hex(6)}", type: "customer.created", data: { object: {} } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -43,7 +43,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 200 for RecordNotFound (non-retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
+    payload = { id: "evt_missing_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -61,7 +61,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 200 for RecordInvalid (non-retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_invalid" } } }.to_json
+    payload = { id: "evt_invalid_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_invalid" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -196,6 +196,29 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
     verify(times: 1) { SyncsSubscription.call(stripe_subscription_id: subscription_id) }
     assert_equal 1, WebhookEvent.where(provider: "stripe", event_id: event_id).count
+  end
+
+  test "returns 400 when Stripe payload is missing event.id (agent-team-qy30)" do
+    # Fail-closed guard: without an event.id we cannot dedupe. Silently
+    # swallowing (200) would allow Stripe to stop retrying while we
+    # effectively dropped the event. Return 400 with an error log so Stripe
+    # marks the delivery as failed and the operator sees the breakage.
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_no_id" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    log_output = capture_logs do
+      post webhooks_stripe_path,
+        params: payload,
+        headers: {
+          "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+          "CONTENT_TYPE" => "application/json"
+        }
+    end
+
+    assert_response :bad_request
+    assert_match(/Missing event\.id/, log_output)
+    assert_equal 0, WebhookEvent.where(provider: "stripe").count
   end
 
   test "logs 'Unknown credit pack price id' when checkout carries a non-pack price_id (agent-team-sz2e)" do

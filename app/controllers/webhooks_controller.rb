@@ -10,6 +10,11 @@ class WebhooksController < ApplicationController
       payload, signature, AppConfig::Stripe::WEBHOOK_SECRET
     )
 
+    if event.id.blank?
+      Rails.logger.error("[Stripe Webhook] Missing event.id — cannot dedupe. type=#{event.type}")
+      return head :bad_request
+    end
+
     begin
       WebhookEvent.create!(
         provider: "stripe",
