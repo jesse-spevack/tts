@@ -107,43 +107,4 @@ class VoiceTest < ActiveSupport::TestCase
   test "google_voice_for returns default when preference is invalid and premium" do
     assert_equal Voice::DEFAULT_CHIRP, Voice.google_voice_for("invalid_voice", is_premium: true)
   end
-
-  # tier_for reverse lookup (agent-team-cue3)
-
-  test "tier_for returns :premium for a premium google_voice" do
-    assert_equal :premium, Voice.tier_for("en-GB-Chirp3-HD-Enceladus")
-  end
-
-  test "tier_for returns :standard for a standard google_voice" do
-    assert_equal :standard, Voice.tier_for("en-GB-Standard-D")
-  end
-
-  test "tier_for returns nil and stays silent for blank input" do
-    output = StringIO.new
-    original_logger = Rails.logger
-    Rails.logger = Logger.new(output)
-    begin
-      assert_nil Voice.tier_for(nil)
-      assert_nil Voice.tier_for("")
-    ensure
-      Rails.logger = original_logger
-    end
-
-    refute_match(/voice_tier_lookup_missed/, output.string)
-  end
-
-  test "tier_for returns nil and logs a structured warning on catalog miss" do
-    output = StringIO.new
-    original_logger = Rails.logger
-    Rails.logger = Logger.new(output)
-    begin
-      assert_nil Voice.tier_for("not-a-real-voice")
-    ensure
-      Rails.logger = original_logger
-    end
-
-    logs = output.string
-    assert_match(/event=voice_tier_lookup_missed/, logs)
-    assert_match(/google_voice=not-a-real-voice/, logs)
-  end
 end

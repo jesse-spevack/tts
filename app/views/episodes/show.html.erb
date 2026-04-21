@@ -84,7 +84,7 @@
 
           <div class="flex justify-between py-3">
             <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Voice</dt>
-            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= episode_voice_tier_label(@episode) %></dd>
+            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= GetsVoiceTier.call(episode: @episode).to_s.capitalize %></dd>
           </div>
         </dl>
 

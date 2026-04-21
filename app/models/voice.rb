@@ -61,38 +61,6 @@ class Voice
     Entry.new(key: key, sample_url: sample_url(key), **data)
   end
 
-  # Reverse lookup: resolve tier (:premium / :standard) from a google voice
-  # string (e.g. "en-GB-Chirp3-HD-Enceladus"). Returns nil if the string is
-  # not in the catalog. Used by Episode-level tier display where we stamp
-  # the google voice on the episode at synth time.
-  #
-  # Emits a structured warning when a non-blank google_voice misses the
-  # catalog — that's a drift/rename signal worth surfacing, since the
-  # caller's `||= :standard` fallback would otherwise silently mislabel
-  # a premium voice as Standard. Blank input is the normal "not stamped
-  # yet" path and stays silent.
-  def self.tier_for(google_voice)
-    return nil if google_voice.blank?
-
-    tier = tier_by_google_voice[google_voice]
-    unless tier
-      Rails.logger.warn "event=voice_tier_lookup_missed google_voice=#{google_voice}"
-      return nil
-    end
-
-    tier
-  end
-
-  # Memoized reverse index: google_voice string → tier symbol. Built once
-  # from CATALOG and frozen. In dev mode Rails reloads the Voice constant
-  # so the memo resets with the catalog.
-  def self.tier_by_google_voice
-    @tier_by_google_voice ||= CATALOG.each_with_object({}) do |(key, _data), h|
-      entry = find(key)
-      h[entry.google_voice] = entry.tier if entry
-    end.freeze
-  end
-
   def self.sample_url(key)
     AppConfig::Storage.voice_sample_url(key)
   end
