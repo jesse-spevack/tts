@@ -223,6 +223,83 @@ module Api
             headers: { "Content-Type" => "application/json", "X-Generator-Secret" => @secret }
         end
       end
+
+      # === Credit refund on failure callback (agent-team-uoqd) ===
+      #
+      # Symmetric with the existing "refunds episode usage when status is
+      # failed for free user" test above — when a credit user's episode
+      # fails via this callback, their debited credit must be refunded.
+
+      test "refunds debited credit when status is failed for credit user" do
+        credit_user = users(:credit_user)
+        CreditBalance.for(credit_user).update!(balance: 3)
+        @episode.update!(user: credit_user)
+        DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+        assert_equal 2, credit_user.reload.credits_remaining
+
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "failed",
+            error_message: "Processing failed"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        assert_equal 3, credit_user.reload.credits_remaining,
+          "Credit user's debited credit should be refunded on failure callback"
+      end
+
+      test "duplicate failure callback does not double-refund credit" do
+        credit_user = users(:credit_user)
+        CreditBalance.for(credit_user).update!(balance: 3)
+        @episode.update!(user: credit_user)
+        DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+
+        2.times do
+          patch api_internal_episode_url(@episode),
+            params: { status: "failed", error_message: "Processing failed" }.to_json,
+            headers: {
+              "Content-Type" => "application/json",
+              "X-Generator-Secret" => @secret
+            }
+        end
+
+        assert_equal 3, credit_user.reload.credits_remaining,
+          "Two failure callbacks must not double-refund (idempotency via refund_<id> session_id)"
+      end
+
+      test "free-tier monthly counter still decrements on failure (no regression)" do
+        # Guard: wiring RefundsCreditDebit into the update action must not
+        # break the existing RefundsEpisodeUsage behavior for free users.
+        free_user = users(:free_user)
+        @episode.update!(user: free_user)
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: 2
+        )
+
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "failed",
+            error_message: "Processing failed"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        usage = EpisodeUsage.current_for(free_user)
+        assert_equal 1, usage.episode_count,
+          "Free-tier counter must still decrement after RefundsCreditDebit is wired in"
+        # And the free user had no credits involved — no refund txn created.
+        assert_equal 0, CreditTransaction.where(user: free_user).count
+      end
     end
 
     # === Cost-preview endpoint (agent-team-gq88) ===

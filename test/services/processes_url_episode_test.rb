@@ -588,6 +588,57 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     assert_not_equal "failed", episode.status
   end
 
+  # === URL-path failure refund (agent-team-uoqd) ===
+  #
+  # If a URL episode fails AFTER deduct_credit has run (i.e. credits are
+  # already gone), fail_episode must refund them via RefundsCreditDebit.
+  # Before the fix, fail_episode only updated status → the credit stayed
+  # debited and the user had to email support.
+
+  test "refunds debited credit when URL episode fails after deduct_credit" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "felix") # Standard → 1 credit
+    CreditBalance.for(credit_user).update!(balance: 3)
+    episode = create_url_episode(credit_user)
+
+    # Stub so deduct_credit succeeds (debits 1), then LLM fails → fail_episode fires.
+    html = "<article><h1>Title</h1><p>#{"A" * 10_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with {
+      Result.failure("LLM exploded")
+    }
+    stub_gcs_and_tasks
+
+    ProcessesUrlEpisode.call(episode: episode)
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when URL episode fails after deduct_credit"
+  end
+
+  test "refunds 2 credits when premium URL episode fails after deduct_credit" do
+    credit_user = users(:credit_user)
+    credit_user.update!(voice_preference: "callum") # Premium
+    CreditBalance.for(credit_user).update!(balance: 2)
+    episode = create_url_episode(credit_user)
+
+    # >20k chars + premium → 2-credit debit
+    html = "<article><h1>Title</h1><p>#{"A" * 40_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with {
+      Result.failure("LLM exploded")
+    }
+    stub_gcs_and_tasks
+
+    ProcessesUrlEpisode.call(episode: episode)
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_equal 2, credit_user.reload.credits_remaining,
+      "Both debited credits should be refunded on URL-path failure"
+  end
+
   teardown do
     Mocktail.reset
   end
