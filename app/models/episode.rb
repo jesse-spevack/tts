@@ -1,4 +1,6 @@
 class Episode < ApplicationRecord
+  include SynthesizableContent
+
   has_prefix_id :ep
 
   belongs_to :podcast
@@ -45,7 +47,6 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
-  after_update :refund_mpp_payment_on_failure, if: :should_refund_mpp_payment?
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
 
   def audio_url
@@ -78,19 +79,5 @@ class Episode < ApplicationRecord
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
     errors.add(:source_text, result.error) if result.failure?
-  end
-
-  def should_refund_mpp_payment?
-    saved_change_to_status? && failed? && mpp_payment.present?
-  end
-
-  def refund_mpp_payment_on_failure
-    result = Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
-    return if result.success?
-
-    Rails.logger.error(
-      "event=mpp_payment_refund_failed_from_episode " \
-      "episode_id=#{id} payment_id=#{mpp_payment.prefix_id} error=#{result.error}"
-    )
   end
 end

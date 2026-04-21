@@ -135,3 +135,24 @@ local_path
 #   app/views/shared/marketing/_cta_button.html.erb
 # ---------------------------------------------------------------------------
 marketing_cta_path
+
+# ---------------------------------------------------------------------------
+# SynthesizableContent concern interface (app/models/concerns/synthesizable_content.rb).
+#
+# Epic agent-team-sird (brick 2b / agent-team-bzo6) introduces a minimal
+# shared interface for Episode + Narration. These methods are exercised by
+# the shared contract test (test/models/concerns/synthesizable_content_test.rb)
+# against both consumer models, and #cost is the documented consumer point
+# for brick 3 (agent-team-7i24: cost-calc consolidation).
+#
+# #succeed! / #fail! are lifecycle primitives: the concern declares them so
+# future orchestrators can call them instead of duck-typing update!. If brick
+# 3 closes without adopting them, prune these entries and the methods.
+#
+# - SynthesizableContent#cost      — consumed by agent-team-7i24
+# - SynthesizableContent#succeed!  — lifecycle primitive; no production caller yet
+# - SynthesizableContent#fail!     — lifecycle primitive; no production caller yet
+# ---------------------------------------------------------------------------
+cost
+succeed!
+fail!

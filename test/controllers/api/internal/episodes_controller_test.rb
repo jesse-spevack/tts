@@ -300,6 +300,118 @@ module Api
         # And the free user had no credits involved — no refund txn created.
         assert_equal 0, CreditTransaction.where(user: free_user).count
       end
+
+      # === No-op status update must NOT double-decrement free-tier counter ===
+      # (agent-team-bzo6 Skeptical Reviewer Blocker 1)
+      #
+      # Pre-bzo6, the MPP-failure after_update callback was gated by
+      # saved_change_to_status?, which gave every refund path implicit
+      # idempotency against repeat "mark as failed" calls. With brick 2b's
+      # explicit call sites, the gate had to be re-added at each site or
+      # free-tier users would see EpisodeUsage decremented twice.
+      #
+      # Concrete race: worker fails the episode → counter decremented (2→1).
+      # Internal webhook re-fires with status=failed → without the gate, the
+      # controller would decrement AGAIN (1→0), giving the user a free slot.
+      # Credit/MPP refunds have their own idempotency; EpisodeUsage does not.
+
+      test "no-op status=failed update does not double-decrement free-tier counter" do
+        free_user = users(:free_user)
+        @episode.update!(user: free_user, status: :failed, error_message: "Worker failed first")
+
+        EpisodeUsage.create!(
+          user: free_user,
+          period_start: Time.current.beginning_of_month.to_date,
+          episode_count: 2
+        )
+        # Simulate the worker-path refund having already happened.
+        RefundsPayment.call(content: @episode.reload)
+        assert_equal 1, EpisodeUsage.current_for(free_user).episode_count,
+          "setup: first decrement should take counter from 2 to 1"
+
+        # Controller re-fires with status=:failed (episode is already :failed).
+        # The update! is a no-op for status → saved_change_to_status? must be
+        # false → RefundsPayment must NOT be called again.
+        patch api_internal_episode_url(@episode),
+          params: {
+            status: "failed",
+            error_message: "Callback re-fires on already-failed episode"
+          }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+
+        assert_response :success
+        assert_equal 1, EpisodeUsage.current_for(free_user).episode_count,
+          "no-op status=failed webhook must not decrement the counter a second time"
+      end
+
+      test "no-op status=failed update does not double-refund credit user (gate regression guard)" do
+        # Credit path is already idempotent via stripe_session_id, but the
+        # gate must not regress that. Pins the safe behavior end-to-end.
+        credit_user = users(:credit_user)
+        CreditBalance.for(credit_user).update!(balance: 3)
+        @episode.update!(user: credit_user)
+        DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+
+        # First failure webhook — decrements credit debit via refund.
+        patch api_internal_episode_url(@episode),
+          params: { status: "failed", error_message: "Worker failed" }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+        assert_response :success
+        assert_equal 3, credit_user.reload.credits_remaining
+
+        # Second (no-op) webhook — must not create a second refund txn.
+        assert_no_difference -> { CreditTransaction.count } do
+          patch api_internal_episode_url(@episode),
+            params: { status: "failed", error_message: "Callback re-fires" }.to_json,
+            headers: {
+              "Content-Type" => "application/json",
+              "X-Generator-Secret" => @secret
+            }
+          assert_response :success
+        end
+        assert_equal 3, credit_user.reload.credits_remaining
+      end
+
+      test "no-op status=failed update does not double-refund MPP payment (gate regression guard)" do
+        # MPP path is already idempotent via MppPayment.status check; the
+        # gate shouldn't regress that. Pins the safe behavior end-to-end.
+        Stripe.api_key = "sk_test_fake"
+        mpp_payment = mpp_payments(:completed)
+        @episode.update!(mpp_payment: mpp_payment)
+
+        stub_request(:post, "https://api.stripe.com/v1/refunds")
+          .to_return(status: 200, body: {
+            id: "re_bzo6_gate", status: "succeeded",
+            payment_intent: mpp_payment.stripe_payment_intent_id
+          }.to_json)
+
+        patch api_internal_episode_url(@episode),
+          params: { status: "failed", error_message: "Worker failed" }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+        assert_response :success
+        assert_equal "refunded", mpp_payment.reload.status
+        assert_requested(:post, "https://api.stripe.com/v1/refunds", times: 1)
+
+        # Second (no-op) webhook — the gate + MppPayment status check
+        # together must prevent a second Stripe refund request.
+        patch api_internal_episode_url(@episode),
+          params: { status: "failed", error_message: "Callback re-fires" }.to_json,
+          headers: {
+            "Content-Type" => "application/json",
+            "X-Generator-Secret" => @secret
+          }
+        assert_response :success
+        assert_requested(:post, "https://api.stripe.com/v1/refunds", times: 1)
+      end
     end
 
     # === Cost-preview endpoint (agent-team-gq88) ===

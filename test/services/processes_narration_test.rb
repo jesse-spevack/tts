@@ -140,9 +140,9 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
     assert_equal "TTS API error", @narration.error_message
   end
 
-  test "failed narration triggers refund via after_update callback" do
-    Mocktail.replace(Mpp::RefundsPayment)
-    stubs { |m| Mpp::RefundsPayment.call(mpp_payment: m.any) }.with { Result.success }
+  test "failed narration triggers refund via explicit RefundsPayment wiring" do
+    Mocktail.replace(RefundsPayment)
+    stubs { |m| RefundsPayment.call(content: m.any) }.with { nil }
 
     Mocktail.replace(FetchesJinaContent)
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.failure("Could not fetch URL") }
@@ -153,7 +153,7 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
     @narration.reload
     assert_equal "failed", @narration.status
 
-    verify { Mpp::RefundsPayment.call(mpp_payment: @narration.mpp_payment) }
+    verify { RefundsPayment.call(content: @narration) }
   end
 
   # ── Character limit ────────────────────────────────────────────────────

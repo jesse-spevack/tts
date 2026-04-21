@@ -5,10 +5,12 @@ module Api
 
       def update
         if @episode.update(episode_params)
-          if @episode.failed?
-            RefundsEpisodeUsage.call(user: @episode.user)
-            RefundsCreditDebit.call(episode: @episode)
-          end
+          # Gate on saved_change_to_status? so a no-op status update (episode
+          # already :failed when the webhook re-fires) does not trigger a
+          # second RefundsPayment. Without the gate, free-tier users would
+          # see EpisodeUsage decremented twice — credit/MPP refunds have
+          # their own idempotency, but EpisodeUsage#decrement! does not.
+          RefundsPayment.call(content: @episode) if @episode.failed? && @episode.saved_change_to_status?
           notify_completion if @episode.complete?
           Rails.logger.info "event=episode_callback_received episode_id=#{@episode.id} status=#{@episode.status}"
           render json: { status: "success" }

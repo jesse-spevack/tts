@@ -24,7 +24,10 @@ class GeneratesEpisodeAudioJob < ApplicationJob
     return unless episode
 
     episode.update!(status: :failed, error_message: e.message)
-    RefundsCreditDebit.call(episode: episode)
+    # Gate protects the free-tier EpisodeUsage counter from double-decrement
+    # if the episode was already :failed (see fail_episode in
+    # EpisodeErrorHandling for the full rationale).
+    RefundsPayment.call(content: episode) if episode.saved_change_to_status?
   end
 
   def handle_retries_exhausted(error)
@@ -33,7 +36,7 @@ class GeneratesEpisodeAudioJob < ApplicationJob
 
     ChecksAudioCircuitBreaker.increment(episode.user)
     episode.update!(status: :failed, error_message: "Audio generation failed after retries: #{error.message}")
-    RefundsCreditDebit.call(episode: episode)
+    RefundsPayment.call(content: episode) if episode.saved_change_to_status?
   end
 
   private
