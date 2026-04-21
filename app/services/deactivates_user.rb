@@ -42,6 +42,15 @@ class DeactivatesUser
       @user.oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
       @user.oauth_access_grants.where(revoked_at: nil).update_all(revoked_at: Time.current)
       CancelsUserSubscriptionJob.perform_later(user_id: @user.id)
+      if (balance = @user.credit_balance) && balance.balance.positive?
+        CreditTransaction.create!(
+          user: @user,
+          amount: -balance.balance,
+          balance_after: 0,
+          transaction_type: "forfeit"
+        )
+        balance.update!(balance: 0)
+      end
       @user.update!(
         email_address: "deleted-#{@user.id}@deleted.invalid",
         active: false,
