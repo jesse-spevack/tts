@@ -14,6 +14,8 @@
 #   source_type: "text" | "paste"      → text.to_s.length
 #   source_type: "extension"           → text.to_s.length   (API v1 treats
 #                                        extension content as a text variant)
+#   source_type: "email"               → text.to_s.length   (email-ingest
+#                                        content is a text variant)
 #   source_type: "file"  | "upload"    → upload.size (if IO-like) else
 #                                        upload.to_s.length (raw string)
 #   source_type: "url"                 → 1  (URL shortcut — real cost is
@@ -68,7 +70,7 @@ class CalculatesAnticipatedEpisodeCost
     return override_length.to_i unless override_length.nil?
 
     case source_type.to_s
-    when "text", "paste", "extension"
+    when "text", "paste", "extension", "email"
       text.to_s.length
     when "file", "upload"
       if upload.respond_to?(:size)

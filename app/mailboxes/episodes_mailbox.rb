@@ -23,7 +23,32 @@ class EpisodesMailbox < ApplicationMailbox
       return
     end
 
-    result = CreatesEmailEpisode.call(user: user, email_body: email_content)
+    body = email_content
+    cost = CalculatesAnticipatedEpisodeCost.call(
+      user: user,
+      source_type: CreatesEpisode::SOURCE_EMAIL,
+      text: body
+    ).data
+
+    permission_result = ChecksEpisodeCreationPermission.call(
+      user: user,
+      anticipated_cost: cost
+    )
+    unless permission_result.success?
+      log_warn "email_episode_permission_denied",
+        user_id: user.id,
+        code: permission_result.code
+      send_failure_notification(permission_result.error)
+      return
+    end
+
+    result = CreatesEpisode.call(
+      user: user,
+      podcast: user.primary_podcast,
+      source_type: CreatesEpisode::SOURCE_EMAIL,
+      params: { text: body },
+      cost_in_credits: cost
+    )
 
     if result.success?
       log_info "email_episode_created", episode_id: result.data.id
