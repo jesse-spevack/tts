@@ -198,12 +198,14 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
 
     assert_no_difference -> { Episode.where(user: free_user).count } do
       assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
-        receive_inbound_email_from_mail(
-          to: email_address_for(free_user),
-          from: "sender@example.com",
-          subject: "Over-quota newsletter",
-          body: "A" * 150
-        )
+        assert_enqueued_emails 1 do
+          receive_inbound_email_from_mail(
+            to: email_address_for(free_user),
+            from: "sender@example.com",
+            subject: "Over-quota newsletter",
+            body: "A" * 150
+          )
+        end
       end
     end
   end

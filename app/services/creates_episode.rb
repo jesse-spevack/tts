@@ -1,21 +1,22 @@
 # frozen_string_literal: true
 
-# Facade that consolidates the "create an episode" choreography used by both
-# the HTML (EpisodesController) and API v1 (Api::V1::EpisodesController)
-# create actions. Both previously hand-rolled the same two-step dance:
+# Facade that consolidates the "create an episode" choreography used by the
+# HTML (EpisodesController), API v1 (Api::V1::EpisodesController), and
+# inbound email (EpisodesMailbox) create paths. Each previously hand-rolled
+# the same two-step dance:
 #
-#   1. Dispatch to the per-source creator (Creates{Url,Paste,File,Extension}Episode)
-#      based on the submission's source type.
+#   1. Dispatch to the per-source creator (Creates{Url,Paste,File,Extension,
+#      Email}Episode) based on the submission's source type.
 #   2. On success, run post-create side effects: RecordsEpisodeUsage then
 #      DebitsEpisodeCredit.
 #
-# Callers normalize their HTTP-shaped request into a normalized source_type
-# ("url" / "text" / "file" / "extension") and a params hash, and provide the
-# already-computed anticipated cost. Param-shape detection (which field is
-# present in the request) stays in the controller — that's an HTTP concern.
+# Callers normalize their request into a normalized source_type ("url" /
+# "text" / "file" / "extension" / "email") and a params hash, and provide
+# the already-computed anticipated cost. Param-shape detection (which field
+# is present in the request) stays in the caller — that's a transport concern.
 #
 # Order of side effects is load-bearing: usage is recorded BEFORE the credit
-# debit. Do not reorder without reading the history on both controllers.
+# debit. Do not reorder without reading the history on the callers.
 class CreatesEpisode
   SOURCE_TEXT = "text"
   SOURCE_URL = "url"
