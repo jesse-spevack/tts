@@ -61,6 +61,17 @@ class Voice
     Entry.new(key: key, sample_url: sample_url(key), **data)
   end
 
+  # Reverse lookup: resolve tier (:premium / :standard) from a google voice
+  # string (e.g. "en-GB-Chirp3-HD-Enceladus"). Returns nil if the string is
+  # not in the catalog. Used by Episode-level tier display where we stamp
+  # the google voice on the episode at synth time.
+  def self.tier_for(google_voice)
+    entry = CATALOG.find { |_key, data| data[:google_voice] == google_voice }
+    return nil unless entry
+
+    find(entry.first)&.tier
+  end
+
   def self.sample_url(key)
     AppConfig::Storage.voice_sample_url(key)
   end

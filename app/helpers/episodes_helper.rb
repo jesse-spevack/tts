@@ -74,11 +74,19 @@ module EpisodesHelper
     "Free tier episode"
   end
 
-  # Voice tier label (Standard / Premium) based on the user's current voice
-  # preference. Episodes don't store voice — we resolve from the user at
-  # render time. Nil preference falls back to Standard.
+  # Voice tier label (Standard / Premium) for the episode's Details card.
+  #
+  # Prefers the voice stamped on the episode at synth time (captured in
+  # GeneratesEpisodeAudio). Legacy rows with episode.voice = nil fall back
+  # to the user's current voice_preference. Nothing resolves → Standard.
   def episode_voice_tier_label(episode)
-    tier = Voice.find(episode.user.voice_preference)&.tier || :standard
+    tier =
+      if episode.voice.present?
+        Voice.tier_for(episode.voice)
+      else
+        Voice.find(episode.user.voice_preference)&.tier
+      end
+    tier ||= :standard
     tier.to_s.capitalize
   end
 end

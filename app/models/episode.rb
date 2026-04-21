@@ -9,8 +9,6 @@ class Episode < ApplicationRecord
   has_one :llm_usage, dependent: :destroy
   has_one :tts_usage, as: :usable, dependent: :destroy
 
-  delegate :voice, to: :user
-
   enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
   enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
 
