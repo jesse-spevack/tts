@@ -131,6 +131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_20_223943) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.string "voice"
     t.index ["deleted_at"], name: "index_episodes_on_deleted_at"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["mpp_payment_id"], name: "index_episodes_on_mpp_payment_id"

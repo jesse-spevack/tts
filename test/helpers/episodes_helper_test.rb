@@ -72,4 +72,48 @@ class EpisodesHelperTest < ActionView::TestCase
     episode = Episode.new(source_text_length: nil)
     assert_nil processing_eta(episode)
   end
+
+  # --- episode_voice_tier_label (agent-team-cue3) ---
+  #
+  # Tier resolution now prefers the voice stamped on the episode itself
+  # (captured at synth time). Legacy rows (episode.voice = nil) fall back
+  # to the user's current voice_preference.
+
+  test "episode_voice_tier_label reads episode.voice when present (premium)" do
+    user = users(:jesse)
+    # user.voice_preference is nil — prove episode.voice wins regardless.
+    assert_nil user.voice_preference
+
+    episode = Episode.new(user: user, voice: Voice::DEFAULT_CHIRP)
+
+    assert_equal "Premium", episode_voice_tier_label(episode)
+  end
+
+  test "episode_voice_tier_label reads episode.voice when present (standard)" do
+    user = users(:jesse)
+    # Even if the user currently prefers a Premium voice, the stamped voice wins.
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: Voice::DEFAULT_STANDARD)
+
+    assert_equal "Standard", episode_voice_tier_label(episode)
+  end
+
+  test "episode_voice_tier_label falls back to user voice_preference when episode.voice is nil (premium)" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum") # catalog key for a Chirp3-HD (premium) voice
+
+    episode = Episode.new(user: user, voice: nil)
+
+    assert_equal "Premium", episode_voice_tier_label(episode)
+  end
+
+  test "episode_voice_tier_label falls back to default Standard when episode.voice and user preference are nil" do
+    user = users(:jesse)
+    assert_nil user.voice_preference
+
+    episode = Episode.new(user: user, voice: nil)
+
+    assert_equal "Standard", episode_voice_tier_label(episode)
+  end
 end

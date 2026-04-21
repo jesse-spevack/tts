@@ -262,6 +262,60 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
       "Transient errors re-raise for retry — no refund at this layer"
   end
 
+  # --- episodes.voice snapshot at synth time (agent-team-cue3) ---
+  #
+  # Voice stamped on the episode must equal the voice actually passed to TTS,
+  # so the show page's tier label reflects what was synthesized even if the
+  # user later changes their voice preference.
+
+  test "stamps episode.voice with user preference when no override is provided" do
+    stub_synthesizer(audio: "fake audio content", billed_characters: 100)
+    stub_gcs
+
+    # Fixture user :jesse has voice_preference = nil, so user.voice resolves
+    # to Voice::DEFAULT_STANDARD ("en-GB-Standard-D"). Before cue3 the column
+    # is empty; reading via read_attribute avoids the current delegate.
+    expected_voice = @episode.user.voice
+    assert_nil @episode.read_attribute(:voice)
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    assert_equal expected_voice, @episode.reload.read_attribute(:voice)
+  end
+
+  test "stamps episode.voice with voice_override when provided, not user preference" do
+    stub_synthesizer(audio: "fake audio content", billed_characters: 100)
+    stub_gcs
+
+    # Give the user a Standard preference; pass a Premium override. Stored
+    # value must be the override — what TTS actually received.
+    @episode.user.update!(voice_preference: "felix")
+    override = Voice::DEFAULT_CHIRP # "en-GB-Chirp3-HD-Enceladus"
+
+    refute_equal override, @episode.user.voice
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true, voice_override: override)
+
+    assert_equal override, @episode.reload.read_attribute(:voice)
+  end
+
+  test "stamped episode.voice matches the voice passed to the synthesizer" do
+    captured_voice = nil
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { |call|
+      captured_voice = call.kwargs[:voice]
+      "fake audio content"
+    }
+    stubs { mock_synthesizer.last_billed_characters }.with { 100 }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    assert_not_nil captured_voice, "synthesizer should have been called with a :voice kwarg"
+    assert_equal captured_voice, @episode.reload.read_attribute(:voice)
+  end
+
   private
 
   def stub_synthesizer(audio:, billed_characters:)
