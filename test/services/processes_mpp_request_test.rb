@@ -194,7 +194,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
 
   test "episode loser with nil record returns :loser_conflict" do
     mpp_payment = MppPayment.create!(
-      amount_cents: 100, currency: "usd", challenge_id: "chid_#{SecureRandom.hex(4)}",
+      amount_cents: 150, currency: "usd", challenge_id: "chid_#{SecureRandom.hex(4)}",
       deposit_address: "0xaddr", stripe_payment_intent_id: "pi_z", status: :pending
     )
 
@@ -304,7 +304,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
 
   test "finalizer receives user and voice_override as google voice for episode flow" do
     mpp_payment = MppPayment.create!(
-      amount_cents: 100, currency: "usd", challenge_id: "chid_#{SecureRandom.hex(4)}",
+      amount_cents: 150, currency: "usd", challenge_id: "chid_#{SecureRandom.hex(4)}",
       deposit_address: "0xaddr", stripe_payment_intent_id: "pi_e", status: :pending
     )
 
