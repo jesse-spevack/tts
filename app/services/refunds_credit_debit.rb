@@ -10,7 +10,7 @@ class RefundsCreditDebit
   end
 
   def call
-    usage_txn = CreditTransaction.where(episode_id: episode.id, transaction_type: "usage").first
+    usage_txn = CreditTransaction.find_by(episode_id: episode.id, transaction_type: "usage")
     return unless usage_txn
 
     GrantsCredits.call(
