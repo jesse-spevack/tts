@@ -169,6 +169,88 @@ class EpisodesMailboxTest < ActionMailbox::TestCase
     end
   end
 
+  # === Credit gate + debit parity with other create paths (agent-team-7231) ===
+  #
+  # The web, API v1, extension, MCP, and URL-async paths all gate via
+  # ChecksEpisodeCreationPermission and debit via DebitsEpisodeCredit/
+  # RecordsEpisodeUsage. The email-ingest path must match that behavior:
+  #
+  #   * Free-tier users past their monthly quota must be rejected — no episode
+  #     persisted (mirrors EpisodesController#require_can_create_episode).
+  #   * Credit users must be debited for the episode's anticipated cost.
+  #   * Free-tier users within quota must have their monthly usage incremented
+  #     (RecordsEpisodeUsage side effect).
+  #
+  # These tests assert on real side effects (Episode.count, credit balance,
+  # EpisodeUsage counter) rather than stubbing the gate services, so they
+  # remain valid regardless of whether the fix routes through CreatesEpisode
+  # or inlines the gates in ProcessesEmailEpisode.
+
+  test "does not create episode for free-tier user past monthly quota" do
+    free_user = users(:free_user)
+    EnablesEmailEpisodes.call(user: free_user)
+    CreatesDefaultPodcast.call(user: free_user)
+    EpisodeUsage.create!(
+      user: free_user,
+      period_start: Time.current.beginning_of_month.to_date,
+      episode_count: AppConfig::Tiers::FREE_MONTHLY_EPISODES
+    )
+
+    assert_no_difference -> { Episode.where(user: free_user).count } do
+      assert_no_enqueued_jobs(only: ProcessesEmailEpisodeJob) do
+        receive_inbound_email_from_mail(
+          to: email_address_for(free_user),
+          from: "sender@example.com",
+          subject: "Over-quota newsletter",
+          body: "A" * 150
+        )
+      end
+    end
+  end
+
+  test "debits credit user's balance when email episode is created" do
+    credit_user = users(:credit_user)
+    EnablesEmailEpisodes.call(user: credit_user)
+    CreatesDefaultPodcast.call(user: credit_user)
+    starting_balance = credit_user.credits_remaining
+    assert starting_balance > 0, "credit_user fixture must start with credits"
+
+    assert_difference -> { Episode.where(user: credit_user).count }, 1 do
+      assert_difference -> { CreditTransaction.where(user: credit_user, transaction_type: "usage").count }, 1 do
+        receive_inbound_email_from_mail(
+          to: email_address_for(credit_user),
+          from: "sender@example.com",
+          subject: "Paid-tier newsletter",
+          body: "A" * 150
+        )
+      end
+    end
+
+    # 150 chars is well under the 20k threshold, so cost is 1 credit regardless
+    # of voice tier (CalculatesEpisodeCreditCost).
+    assert_equal starting_balance - 1, credit_user.reload.credits_remaining
+
+    transaction = CreditTransaction.where(user: credit_user, transaction_type: "usage").order(:created_at).last
+    assert_equal(-1, transaction.amount)
+  end
+
+  test "increments free-tier monthly usage counter when email episode is created" do
+    free_user = users(:free_user)
+    EnablesEmailEpisodes.call(user: free_user)
+    CreatesDefaultPodcast.call(user: free_user)
+
+    assert_difference -> { EpisodeUsage.current_for(free_user).episode_count }, 1 do
+      receive_inbound_email_from_mail(
+        to: email_address_for(free_user),
+        from: "sender@example.com",
+        subject: "Under-quota newsletter",
+        body: "A" * 150
+      )
+    end
+
+    assert_equal 1, Episode.where(user: free_user).count
+  end
+
   private
 
   def email_address_for(user)

@@ -21,6 +21,7 @@ class CreatesEpisode
   SOURCE_URL = "url"
   SOURCE_FILE = "file"
   SOURCE_EXTENSION = "extension"
+  SOURCE_EMAIL = "email"
 
   def self.call(user:, podcast:, source_type:, params:, cost_in_credits:)
     new(
@@ -89,6 +90,12 @@ class CreatesEpisode
         url: params[:url],
         author: params[:author],
         description: params[:description]
+      )
+    when SOURCE_EMAIL
+      CreatesEmailEpisode.call(
+        podcast: podcast,
+        user: user,
+        text: params[:text]
       )
     else
       Result.failure("Unknown source_type: #{source_type.inspect}")
