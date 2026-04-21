@@ -34,17 +34,6 @@ processing:
   expires_at: <%= 24.hours.from_now.iso8601 %>
   mpp_payment: completed_for_narration
 
-with_refunded_payment:
-  title: Refunded Narration
-  author: Refunded Author
-  description: A narration whose payment was already refunded
-  source_type: 0
-  source_url: https://example.com/refunded-article
-  status: failed
-  voice: en-GB-Standard-D
-  expires_at: <%= 24.hours.from_now.iso8601 %>
-  mpp_payment: refunded
-
 expired:
   title: Expired Narration
   author: Expired Author

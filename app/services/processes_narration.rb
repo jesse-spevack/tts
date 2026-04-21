@@ -229,6 +229,11 @@ class ProcessesNarration
 
   def fail_narration(error_message)
     narration.update!(status: :failed, error_message: error_message)
+    # Gate matches Episode paths (see fail_episode in EpisodeErrorHandling).
+    # Narrations today always route to MPP refund (mpp_payment is non-optional),
+    # which is already idempotent — the gate is defense-in-depth and matches
+    # call-site-wide pattern consistency.
+    RefundsPayment.call(content: narration) if narration.saved_change_to_status?
     log_warn "narration_marked_failed", narration_id: narration.id, error: error_message
   end
 end

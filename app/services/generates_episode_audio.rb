@@ -61,11 +61,14 @@ class GeneratesEpisodeAudio
     else
       @episode.update!(status: :failed, error_message: e.message)
       # Permanent failure at the synthesis layer bypasses EpisodeErrorHandling
-      # (this service doesn't include the concern). Refund credits here so
-      # credit users aren't short a credit after a TTS-layer failure —
-      # agent-team-uoqd. Transient errors re-raise above for job retry and
-      # MUST NOT refund here; retry exhaustion handles that in the job.
-      RefundsCreditDebit.call(episode: @episode)
+      # (this service doesn't include the concern). Refund here so users
+      # aren't short a payment/credit/slot after a TTS-layer failure.
+      # Transient errors re-raise above for job retry and MUST NOT refund
+      # here; retry exhaustion handles that in the job.
+      # The `saved_change_to_status?` gate matches the other call sites —
+      # protects the free-tier counter from double-decrement if the episode
+      # was already :failed when we got here.
+      RefundsPayment.call(content: @episode) if @episode.saved_change_to_status?
     end
   end
 
