@@ -217,7 +217,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :bad_request
-    assert_match(/Missing event\.id/, log_output)
+    assert_match(/webhook_event_missing_event_id/, log_output)
     assert_equal 0, WebhookEvent.where(provider: "stripe").count
   end
 

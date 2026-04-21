@@ -10,28 +10,9 @@ class WebhooksController < ApplicationController
       payload, signature, AppConfig::Stripe::WEBHOOK_SECRET
     )
 
-    if event.id.blank?
-      Rails.logger.error("[Stripe Webhook] Missing event.id — cannot dedupe. type=#{event.type}")
-      return head :bad_request
-    end
-
-    begin
-      WebhookEvent.create!(
-        provider: "stripe",
-        event_id: event.id,
-        event_type: event.type,
-        received_at: Time.current
-      )
-    rescue ActiveRecord::RecordNotUnique
-      Rails.logger.info("[Stripe Webhook] Duplicate delivery ignored: event_id=#{event.id} type=#{event.type}")
-      return head :ok
-    rescue ActiveRecord::RecordInvalid => e
-      if e.record&.errors&.of_kind?(:event_id, :taken)
-        Rails.logger.info("[Stripe Webhook] Duplicate delivery ignored: event_id=#{event.id} type=#{event.type}")
-        return head :ok
-      end
-      raise
-    end
+    dedup = CreatesWebhookEvent.call(provider: "stripe", event_id: event.id, event_type: event.type)
+    return head :bad_request if dedup.failure?
+    return head :ok if dedup.data.nil?
 
     result = RoutesStripeWebhook.call(event: event)
 

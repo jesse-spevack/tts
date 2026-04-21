@@ -20,31 +20,15 @@ module Webhooks
         return head :unauthorized
       end
 
-      svix_id = request.headers["svix-id"]
-      if svix_id.blank?
-        log_warn "resend_webhook_missing_svix_id"
-        return head :bad_request
-      end
-
       event = JSON.parse(raw_payload)
 
-      begin
-        WebhookEvent.create!(
-          provider: "resend",
-          event_id: svix_id,
-          event_type: event["type"],
-          received_at: Time.current
-        )
-      rescue ActiveRecord::RecordNotUnique
-        log_info "resend_webhook_duplicate_ignored", svix_id: svix_id, event_type: event["type"]
-        return head :ok
-      rescue ActiveRecord::RecordInvalid => e
-        if e.record&.errors&.of_kind?(:event_id, :taken)
-          log_info "resend_webhook_duplicate_ignored", svix_id: svix_id, event_type: event["type"]
-          return head :ok
-        end
-        raise
-      end
+      dedup = CreatesWebhookEvent.call(
+        provider: "resend",
+        event_id: request.headers["svix-id"],
+        event_type: event["type"]
+      )
+      return head :bad_request if dedup.failure?
+      return head :ok if dedup.data.nil?
 
       unless event["type"] == "email.received"
         log_info "resend_webhook_ignored", event_type: event["type"]
