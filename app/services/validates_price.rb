@@ -9,7 +9,7 @@ class ValidatesPrice
   end
 
   def self.valid_price_ids
-    SUBSCRIPTION_PRICE_IDS + credit_pack_price_ids
+    credit_pack_price_ids
   end
 
   def self.call(price_id)

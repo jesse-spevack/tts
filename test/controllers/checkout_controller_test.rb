@@ -8,20 +8,18 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     Stripe.api_key = "sk_test_fake"
   end
 
-  test "create redirects to Stripe checkout" do
+  # Post-2026-04 pricing pivot (agent-team-633o): subscription price ids are no
+  # longer accepted by ValidatesPrice, so posting one to /checkout must bounce
+  # back to /billing with the same "Invalid price selected" alert any other
+  # unknown price id gets. This closes the live escape hatch Scout confirmed on
+  # agent-team-nt9f.
+  test "create with subscription price_id is rejected" do
     sign_in_as(@user)
-
-    # Mock Stripe API calls
-    stub_request(:get, /api\.stripe\.com\/v1\/customers/)
-      .to_return(status: 200, body: { data: [] }.to_json)
-    stub_request(:post, "https://api.stripe.com/v1/customers")
-      .to_return(status: 200, body: { id: "cus_test" }.to_json)
-    stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")
-      .to_return(status: 200, body: { id: "cs_test", url: "https://checkout.stripe.com/test" }.to_json)
 
     post checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
 
-    assert_redirected_to "https://checkout.stripe.com/test"
+    assert_redirected_to billing_path
+    assert_equal "Invalid price selected", flash[:alert]
   end
 
   test "create with invalid price redirects back with error" do
@@ -55,19 +53,16 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to billing_path
   end
 
-  test "show redirects to Stripe checkout with valid price_id" do
+  # GET /checkout?price_id=<SUB_ID> was the live escape hatch — confirmed
+  # reachable on agent-team-nt9f. After agent-team-633o it must bounce to
+  # /billing before CreatesCheckoutSession runs.
+  test "show with subscription price_id is rejected" do
     sign_in_as(@user)
-
-    stub_request(:get, /api\.stripe\.com\/v1\/customers/)
-      .to_return(status: 200, body: { data: [] }.to_json)
-    stub_request(:post, "https://api.stripe.com/v1/customers")
-      .to_return(status: 200, body: { id: "cus_test" }.to_json)
-    stub_request(:post, "https://api.stripe.com/v1/checkout/sessions")
-      .to_return(status: 200, body: { id: "cs_test", url: "https://checkout.stripe.com/test" }.to_json)
 
     get checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
 
-    assert_redirected_to "https://checkout.stripe.com/test"
+    assert_redirected_to billing_path
+    assert_equal "Invalid price selected", flash[:alert]
   end
 
   test "show with invalid price redirects to billing with error" do

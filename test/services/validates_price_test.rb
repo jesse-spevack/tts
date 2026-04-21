@@ -1,16 +1,28 @@
 require "test_helper"
 
 class ValidatesPriceTest < ActiveSupport::TestCase
-  test "returns success for monthly price" do
+  # Subscription price ids were retired as valid checkout inputs in the
+  # 2026-04 pricing pivot (agent-team-633o). Any subscription price id hitting
+  # /checkout must now be rejected before CreatesCheckoutSession runs so the
+  # subscription checkout branch is unreachable from the public route.
+  test "returns failure for monthly subscription price" do
     result = ValidatesPrice.call(AppConfig::Stripe::PRICE_ID_MONTHLY)
-    assert result.success?
-    assert_equal AppConfig::Stripe::PRICE_ID_MONTHLY, result.data
+    assert result.failure?, "monthly subscription price id must not validate"
+    assert_equal "Invalid price selected", result.error
   end
 
-  test "returns success for annual price" do
+  test "returns failure for annual subscription price" do
     result = ValidatesPrice.call(AppConfig::Stripe::PRICE_ID_ANNUAL)
-    assert result.success?
-    assert_equal AppConfig::Stripe::PRICE_ID_ANNUAL, result.data
+    assert result.failure?, "annual subscription price id must not validate"
+    assert_equal "Invalid price selected", result.error
+  end
+
+  test "every SUBSCRIPTION_PRICE_IDS entry is rejected" do
+    ValidatesPrice::SUBSCRIPTION_PRICE_IDS.each do |sub_price_id|
+      result = ValidatesPrice.call(sub_price_id)
+      assert result.failure?, "subscription price id #{sub_price_id} must be rejected"
+      assert_equal "Invalid price selected", result.error
+    end
   end
 
   test "returns failure for invalid price" do
