@@ -76,6 +76,16 @@ class CreditTransactionTest < ActiveSupport::TestCase
     assert_includes transaction.errors[:transaction_type], "is not included in the list"
   end
 
+  test "allows transaction_type forfeit" do
+    transaction = CreditTransaction.new(
+      user: users(:credit_user),
+      amount: -3,
+      balance_after: 0,
+      transaction_type: "forfeit"
+    )
+    assert transaction.valid?, transaction.errors.full_messages.to_sentence
+  end
+
   test "validates stripe_session_id uniqueness" do
     CreditTransaction.create!(
       user: users(:one),
