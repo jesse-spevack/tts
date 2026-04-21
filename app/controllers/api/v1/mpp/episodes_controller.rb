@@ -27,7 +27,7 @@ module Api
             finalizer: ::Mpp::FinalizesEpisode,
             user: current_user,
             params: params,
-            request: request
+            credential: extract_payment_credential
           )
           render_mpp_result(result)
         end

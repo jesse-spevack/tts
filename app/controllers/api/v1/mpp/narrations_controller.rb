@@ -52,7 +52,7 @@ module Api
             finalizer: ::Mpp::FinalizesNarration,
             user: nil,
             params: params,
-            request: request
+            credential: extract_payment_credential
           )
           render_mpp_result(result)
         end

@@ -7,10 +7,12 @@
 #
 # Steps:
 #
-#   1. Resolve voice BEFORE touching the Payment header. Invalid voice is
-#      always 422, regardless of payment state — otherwise a caller with a
-#      good credential but bad voice loops on 402.
-#   2. Extract Payment credential. Missing → 402 challenge.
+#   1. Resolve voice BEFORE touching the Payment credential. Invalid voice
+#      is always 422, regardless of payment state — otherwise a caller with
+#      a good credential but bad voice loops on 402.
+#   2. Check for Payment credential (parsed by the controller from the
+#      Authorization header via BaseController#extract_payment_credential).
+#      Blank → 402 challenge.
 #   3. Verify credential. Any failure → fresh 402 challenge.
 #   4. Tier-mismatch check. Credential tier != request tier → fresh 402.
 #   5. Finalize: atomic pending→completed MppPayment flip + record creation
@@ -49,11 +51,11 @@ class ProcessesMppRequest
     new(**kwargs).call
   end
 
-  def initialize(finalizer:, user:, params:, request:)
+  def initialize(finalizer:, user:, params:, credential:)
     @finalizer = finalizer
     @user = user
     @params = params
-    @request = request
+    @credential = credential
   end
 
   def call
@@ -66,7 +68,6 @@ class ProcessesMppRequest
     voice_tier = voice.tier
 
     # Step 2: no credential → 402.
-    credential = extract_payment_credential
     return challenge_response(amount_cents: amount_cents, voice_tier: voice_tier) if credential.blank?
 
     # Step 3: verify credential. Any failure → 402.
@@ -138,20 +139,7 @@ class ProcessesMppRequest
 
   private
 
-  attr_reader :finalizer, :user, :params, :request
-
-  # Parse "Payment <credential>" from Authorization. RFC 9110 permits
-  # multiple auth schemes comma-separated; we only care about Payment.
-  def extract_payment_credential
-    header = request.headers["Authorization"]
-    return nil if header.blank?
-
-    header.split(",").each do |part|
-      part = part.strip
-      return part.split(" ", 2).last if part.start_with?("Payment ")
-    end
-    nil
-  end
+  attr_reader :finalizer, :user, :params, :credential
 
   # Dispatch to the right finalizer with the right kwargs. Narration and
   # Episode finalizers have different signatures by design — keep them

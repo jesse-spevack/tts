@@ -13,8 +13,6 @@ require "ostruct"
 # These tests pin the Outcome contract the controller's render_mpp_result
 # relies on — each outcome symbol maps 1:1 to an HTTP response.
 class ProcessesMppRequestTest < ActiveSupport::TestCase
-  FakeRequest = Struct.new(:headers)
-
   setup do
     Stripe.api_key = "sk_test_fake"
     @user = users(:free_user)
@@ -28,10 +26,6 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
     }
   end
 
-  def build_request(auth_header: nil)
-    FakeRequest.new(auth_header ? { "Authorization" => auth_header } : {})
-  end
-
   # =======================================================================
   # :invalid_voice — bogus voice_id
   # =======================================================================
@@ -41,7 +35,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "totally_made_up_voice"),
-      request: build_request
+      credential: nil
     )
 
     assert result.success?
@@ -56,7 +50,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "nope"),
-      request: build_request
+      credential: nil
     )
 
     assert_equal 0, Mocktail.calls(::Mpp::FinalizesNarration, :call).size
@@ -72,7 +66,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "felix"),
-      request: build_request
+      credential: nil
     )
 
     assert result.success?
@@ -89,7 +83,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesEpisode,
       user: @user,
       params: @valid_params.merge(voice: "callum"),
-      request: build_request
+      credential: nil
     )
 
     assert_equal :challenge_issued, result.data.outcome
@@ -107,7 +101,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params,
-      request: build_request(auth_header: "Payment not_a_valid_credential")
+      credential: "not_a_valid_credential"
     )
 
     assert_equal :challenge_issued, result.data.outcome
@@ -126,7 +120,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params,
-      request: build_request
+      credential: nil
     )
 
     assert_equal :challenge_provisioning_failed, result.data.outcome
@@ -153,7 +147,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "felix"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     assert_equal :created, result.data.outcome
@@ -181,7 +175,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "felix"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     assert_equal :created, result.data.outcome
@@ -208,7 +202,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesEpisode,
       user: @user,
       params: @valid_params.merge(voice: "callum"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     assert_equal :loser_conflict, result.data.outcome
@@ -234,7 +228,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "felix"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     assert_equal :creation_failed, result.data.outcome
@@ -259,7 +253,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "callum"), # premium
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     assert_equal :challenge_issued, result.data.outcome
@@ -288,7 +282,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesNarration,
       user: nil,
       params: @valid_params.merge(voice: "felix"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     # Narration finalizer signature does not include :user — if the service
@@ -318,7 +312,7 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
       finalizer: ::Mpp::FinalizesEpisode,
       user: @user,
       params: @valid_params.merge(voice: "callum"),
-      request: build_request(auth_header: "Payment stub")
+      credential: "stub"
     )
 
     call = Mocktail.calls(::Mpp::FinalizesEpisode, :call).first
