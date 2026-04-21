@@ -65,9 +65,20 @@ class Voice
   # string (e.g. "en-GB-Chirp3-HD-Enceladus"). Returns nil if the string is
   # not in the catalog. Used by Episode-level tier display where we stamp
   # the google voice on the episode at synth time.
+  #
+  # Emits a structured warning when a non-blank google_voice misses the
+  # catalog — that's a drift/rename signal worth surfacing, since the
+  # caller's `||= :standard` fallback would otherwise silently mislabel
+  # a premium voice as Standard. Blank input is the normal "not stamped
+  # yet" path and stays silent.
   def self.tier_for(google_voice)
+    return nil if google_voice.blank?
+
     entry = CATALOG.find { |_key, data| data[:google_voice] == google_voice }
-    return nil unless entry
+    unless entry
+      Rails.logger.warn "event=voice_tier_lookup_missed google_voice=#{google_voice}"
+      return nil
+    end
 
     find(entry.first)&.tier
   end
