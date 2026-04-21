@@ -55,6 +55,20 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/2 credits/, response.body)
   end
 
+  # --- Snapshot pin for docs/episodes.html.erb ---
+  # Pins the file's exact bytes so any accidental copy sweep from an
+  # unrelated bead is caught by test. Bumped deliberately whenever an
+  # episodes-scoped bead edits the file. Established by agent-team-zhnc.
+  EPISODES_DOCS_SHA256 = "4dc8911d7a029394007ce917b617656c44719c16a8524917affd28dc48769c1b"
+
+  test "app/views/docs/episodes.html.erb bytes match the pinned snapshot" do
+    path = Rails.root.join("app/views/docs/episodes.html.erb")
+    current = Digest::SHA256.hexdigest(File.read(path))
+    assert_equal EPISODES_DOCS_SHA256, current,
+      "docs/episodes.html.erb has changed. If this change is intentional " \
+      "and scoped to an episodes bead, bump EPISODES_DOCS_SHA256 to the new hash."
+  end
+
   # --- iny7: docs/authentication rewrite ---
 
   test "GET /docs/authentication explains credit-based API access" do
@@ -63,5 +77,19 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     # Language signals that API use consumes credits, not a subscription.
     assert_match(/credits?/i, response.body)
     refute_match(/subscription-gated/i, response.body)
+  end
+
+  # --- Snapshot pin for docs/authentication.html.erb ---
+  # Pins the file's exact bytes so any accidental copy sweep from an
+  # unrelated bead is caught by test. Bumped deliberately whenever an
+  # authentication-scoped bead edits the file. Established by agent-team-zhnc.
+  AUTHENTICATION_DOCS_SHA256 = "83a61c9ffdc048f30eb2b22391932ffe8c380486a56121a03c884e184d438792"
+
+  test "app/views/docs/authentication.html.erb bytes match the pinned snapshot" do
+    path = Rails.root.join("app/views/docs/authentication.html.erb")
+    current = Digest::SHA256.hexdigest(File.read(path))
+    assert_equal AUTHENTICATION_DOCS_SHA256, current,
+      "docs/authentication.html.erb has changed. If this change is intentional " \
+      "and scoped to an authentication bead, bump AUTHENTICATION_DOCS_SHA256 to the new hash."
   end
 end
