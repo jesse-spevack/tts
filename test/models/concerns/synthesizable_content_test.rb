@@ -96,53 +96,6 @@ module SynthesizableContentContract
   end
 
   # ---------------------------------------------------------------------------
-  # Lifecycle: succeed!(audio_blob:, duration:) / fail!(reason:)
-  # ---------------------------------------------------------------------------
-
-  def test_succeed_bang_transitions_status_to_terminal_success_state
-    content = build_content
-    content.succeed!(audio_blob: "\x00\x01\x02fake mp3 bytes", duration: 42)
-    content.reload
-    # Existing enum uses "complete" for the terminal success state. If the
-    # concern renames to "succeeded", update both models + this assertion
-    # together (migration required).
-    assert_equal "complete", content.status,
-      "#succeed! must transition status to the terminal success state"
-  end
-
-  def test_succeed_bang_records_duration
-    content = build_content
-    content.succeed!(audio_blob: "\x00\x01\x02fake mp3 bytes", duration: 123)
-    content.reload
-    assert_equal 123, content.duration_seconds,
-      "#succeed! must persist the supplied duration"
-  end
-
-  def test_succeed_bang_records_audio_size_from_blob
-    blob = "\x00\x01\x02\x03fake mp3 bytes for size tracking"
-    content = build_content
-    content.succeed!(audio_blob: blob, duration: 10)
-    content.reload
-    assert_equal blob.bytesize, content.audio_size_bytes,
-      "#succeed! must record audio_size_bytes from the blob"
-  end
-
-  def test_fail_bang_transitions_status_to_failed
-    content = build_content
-    content.fail!(reason: "synthesis exploded")
-    content.reload
-    assert_equal "failed", content.status
-  end
-
-  def test_fail_bang_stores_reason_in_error_message
-    content = build_content
-    content.fail!(reason: "tts provider 500")
-    content.reload
-    assert_equal "tts provider 500", content.error_message,
-      "#fail! must persist the reason on the content row"
-  end
-
-  # ---------------------------------------------------------------------------
   # #cost — value object, not persisted (brick 3 makes it persisted)
   # ---------------------------------------------------------------------------
 
@@ -253,5 +206,63 @@ class Narration::SynthesizableContentTest < ActiveSupport::TestCase
 
   def build_content_with_mpp_payment
     build_content
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Brick 3 prune pass (agent-team-7i24)
+# ---------------------------------------------------------------------------
+#
+# #succeed! and #fail! were introduced in brick 2b as speculative lifecycle
+# hooks awaiting adoption by brick 3's consumer pattern. Scout spot-check
+# (2026-04-21) confirmed zero production callers across app/ and lib/: brick 3
+# is cost-calc (pre-synthesis) and #succeed!/#fail! are lifecycle hooks
+# (post-synthesis) — orthogonal concerns, no adoption possible.
+#
+# These assertions pass when Implementer removes the methods from the concern
+# and drops their entries from .debride_whitelist. Until then, they fail
+# (methods still defined, whitelist entries still present).
+class SynthesizableContentBrick3PruneTest < ActiveSupport::TestCase
+  test "concern does not define #succeed! (pruned in brick 3)" do
+    refute_includes SynthesizableContent.instance_methods, :succeed!,
+      "SynthesizableContent#succeed! should be pruned in brick 3 — zero production callers"
+  end
+
+  test "concern does not define #fail! (pruned in brick 3)" do
+    refute_includes SynthesizableContent.instance_methods, :fail!,
+      "SynthesizableContent#fail! should be pruned in brick 3 — zero production callers"
+  end
+
+  test "Episode does not expose #succeed! (concern no longer provides it)" do
+    refute_includes Episode.instance_methods, :succeed!,
+      "Episode#succeed! should be gone once the concern's method is pruned"
+  end
+
+  test "Episode does not expose #fail! (concern no longer provides it)" do
+    refute_includes Episode.instance_methods, :fail!,
+      "Episode#fail! should be gone once the concern's method is pruned"
+  end
+
+  test "Narration does not expose #succeed! (concern no longer provides it)" do
+    refute_includes Narration.instance_methods, :succeed!,
+      "Narration#succeed! should be gone once the concern's method is pruned"
+  end
+
+  test "Narration does not expose #fail! (concern no longer provides it)" do
+    refute_includes Narration.instance_methods, :fail!,
+      "Narration#fail! should be gone once the concern's method is pruned"
+  end
+
+  test ".debride_whitelist no longer lists the pruned lifecycle methods" do
+    whitelist_path = Rails.root.join(".debride_whitelist")
+    content = File.read(whitelist_path)
+    # Strip comments — debride uses bare method names on non-comment lines.
+    bare_entries = content.lines
+      .map { |line| line.sub(/#.*$/, "").strip }
+      .reject(&:empty?)
+    refute_includes bare_entries, "succeed!",
+      ".debride_whitelist should no longer list succeed! — method pruned in brick 3"
+    refute_includes bare_entries, "fail!",
+      ".debride_whitelist should no longer list fail! — method pruned in brick 3"
   end
 end
