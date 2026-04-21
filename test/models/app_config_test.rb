@@ -203,6 +203,24 @@ class AppConfigTest < ActiveSupport::TestCase
     end
   end
 
+  # --- Snapshot pin for Credits::PACKS pricing (agent-team-e6hd) ---
+  # Pins the [size, price_cents] pairs for every credit pack so any
+  # accidental price edit from an unrelated bead is caught by test.
+  # Bumped deliberately whenever a pricing-scoped bead changes pack
+  # prices. Established by agent-team-e6hd.
+  CREDIT_PACK_PRICING_PIN = [
+    [ 5, 999 ],
+    [ 10, 1799 ],
+    [ 20, 3299 ]
+  ].freeze
+
+  test "Credits::PACKS pricing matches the pinned snapshot" do
+    current = AppConfig::Credits::PACKS.map { |p| [ p[:size], p[:price_cents] ] }
+    assert_equal CREDIT_PACK_PRICING_PIN, current,
+      "Credit pack pricing has changed. If this change is intentional " \
+      "and scoped to a pricing bead, bump CREDIT_PACK_PRICING_PIN to the new values."
+  end
+
   test "Storage.public_feed_url returns branded URL" do
     result = AppConfig::Storage.public_feed_url("podcast_abc123")
 
