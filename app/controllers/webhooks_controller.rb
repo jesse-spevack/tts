@@ -10,6 +10,10 @@ class WebhooksController < ApplicationController
       payload, signature, AppConfig::Stripe::WEBHOOK_SECRET
     )
 
+    dedup = CreatesWebhookEvent.call(provider: "stripe", event_id: event.id, event_type: event.type)
+    return head :bad_request if dedup.failure?
+    return head :ok if dedup.data.nil?
+
     result = RoutesStripeWebhook.call(event: event)
 
     if result&.failure?

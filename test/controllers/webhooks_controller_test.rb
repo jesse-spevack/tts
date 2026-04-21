@@ -28,7 +28,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     # The RoutesStripeWebhook service is already tested
 
     # Create a valid test signature
-    payload = { type: "customer.created", data: { object: {} } }.to_json
+    payload = { id: "evt_unhandled_#{SecureRandom.hex(6)}", type: "customer.created", data: { object: {} } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -43,7 +43,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 200 for RecordNotFound (non-retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
+    payload = { id: "evt_missing_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_missing" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -61,7 +61,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 200 for RecordInvalid (non-retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_invalid" } } }.to_json
+    payload = { id: "evt_invalid_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_invalid" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -79,7 +79,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 500 for Stripe errors (retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_stripe_err" } } }.to_json
+    payload = { id: "evt_stripe_err_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_stripe_err" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -97,7 +97,7 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 500 for unexpected errors (retryable)" do
-    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_unexpected" } } }.to_json
+    payload = { id: "evt_unexpected_#{SecureRandom.hex(6)}", type: "customer.subscription.updated", data: { object: { id: "sub_unexpected" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 
@@ -114,13 +114,120 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     assert_response :internal_server_error
   end
 
+  # Idempotency (agent-team-qy30): duplicate Stripe deliveries must not re-run
+  # handlers. Stripe retries on 5xx and under pause/resume and can deliver the
+  # same event.id more than once. Without deduping on event.id, the second
+  # delivery re-runs GrantsCreditFromCheckout/SyncsSubscription side effects
+  # (welcome emails, subscription reprocessing, etc.) even though the
+  # CreditTransaction uniqueness validation prevents a duplicate credit row.
+  test "duplicate checkout.session.completed for credit pack invokes GrantsCreditFromCheckout exactly once (agent-team-qy30)" do
+    event_id = "evt_dup_credit_#{SecureRandom.hex(6)}"
+    payload = {
+      id: event_id,
+      type: "checkout.session.completed",
+      data: { object: { id: "cs_test_dup_credit", subscription: nil } }
+    }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+    headers = {
+      "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+      "CONTENT_TYPE" => "application/json"
+    }
+
+    Mocktail.replace(GrantsCreditFromCheckout)
+    stubs { |m| GrantsCreditFromCheckout.call(session: m.any) }.with { Result.success }
+
+    post webhooks_stripe_path, params: payload, headers: headers
+    assert_response :ok
+
+    post webhooks_stripe_path, params: payload, headers: headers
+    assert_response :ok
+
+    verify(times: 1) { |m| GrantsCreditFromCheckout.call(session: m.any) }
+  end
+
+  test "duplicate customer.subscription.updated invokes SyncsSubscription exactly once (agent-team-qy30)" do
+    event_id = "evt_dup_sub_#{SecureRandom.hex(6)}"
+    subscription_id = "sub_dup_#{SecureRandom.hex(6)}"
+    payload = {
+      id: event_id,
+      type: "customer.subscription.updated",
+      data: { object: { id: subscription_id } }
+    }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+    headers = {
+      "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+      "CONTENT_TYPE" => "application/json"
+    }
+
+    Mocktail.replace(SyncsSubscription)
+    stubs { |m| SyncsSubscription.call(stripe_subscription_id: m.any) }.with { Result.success }
+
+    post webhooks_stripe_path, params: payload, headers: headers
+    assert_response :ok
+
+    post webhooks_stripe_path, params: payload, headers: headers
+    assert_response :ok
+
+    verify(times: 1) { SyncsSubscription.call(stripe_subscription_id: subscription_id) }
+  end
+
+  test "first-time Stripe delivery persists a WebhookEvent row and runs the handler once (agent-team-qy30)" do
+    event_id = "evt_first_#{SecureRandom.hex(6)}"
+    subscription_id = "sub_first_#{SecureRandom.hex(6)}"
+    payload = {
+      id: event_id,
+      type: "customer.subscription.updated",
+      data: { object: { id: subscription_id } }
+    }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+    headers = {
+      "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+      "CONTENT_TYPE" => "application/json"
+    }
+
+    Mocktail.replace(SyncsSubscription)
+    stubs { |m| SyncsSubscription.call(stripe_subscription_id: m.any) }.with { Result.success }
+
+    post webhooks_stripe_path, params: payload, headers: headers
+
+    assert_response :ok
+    verify(times: 1) { SyncsSubscription.call(stripe_subscription_id: subscription_id) }
+    assert_equal 1, WebhookEvent.where(provider: "stripe", event_id: event_id).count
+  end
+
+  test "returns 400 when Stripe payload is missing event.id (agent-team-qy30)" do
+    # Fail-closed guard: without an event.id we cannot dedupe. Silently
+    # swallowing (200) would allow Stripe to stop retrying while we
+    # effectively dropped the event. Return 400 with an error log so Stripe
+    # marks the delivery as failed and the operator sees the breakage.
+    payload = { type: "customer.subscription.updated", data: { object: { id: "sub_no_id" } } }.to_json
+    timestamp = Time.now.to_i
+    signature = generate_stripe_signature(payload, timestamp)
+
+    log_output = capture_logs do
+      post webhooks_stripe_path,
+        params: payload,
+        headers: {
+          "Stripe-Signature" => "t=#{timestamp},v1=#{signature}",
+          "CONTENT_TYPE" => "application/json"
+        }
+    end
+
+    assert_response :bad_request
+    assert_match(/webhook_event_missing_event_id/, log_output)
+    assert_equal 0, WebhookEvent.where(provider: "stripe").count
+  end
+
   test "logs 'Unknown credit pack price id' when checkout carries a non-pack price_id (agent-team-sz2e)" do
     # Regression guard: GrantsCreditFromCheckout returns Result.failure with
     # error="Unknown credit pack price id" when a subscription price_id
     # lands on the checkout.session.completed path. WebhooksController logs
     # that error string; a silent log-message refactor would hide the
     # user-visible pain (charged but no credits granted).
-    payload = { type: "checkout.session.completed", data: { object: { id: "cs_unknown_price" } } }.to_json
+    payload = { id: "evt_unknown_price_#{SecureRandom.hex(6)}", type: "checkout.session.completed", data: { object: { id: "cs_unknown_price" } } }.to_json
     timestamp = Time.now.to_i
     signature = generate_stripe_signature(payload, timestamp)
 

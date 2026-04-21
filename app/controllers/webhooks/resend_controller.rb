@@ -22,6 +22,14 @@ module Webhooks
 
       event = JSON.parse(raw_payload)
 
+      dedup = CreatesWebhookEvent.call(
+        provider: "resend",
+        event_id: request.headers["svix-id"],
+        event_type: event["type"]
+      )
+      return head :bad_request if dedup.failure?
+      return head :ok if dedup.data.nil?
+
       unless event["type"] == "email.received"
         log_info "resend_webhook_ignored", event_type: event["type"]
         return head :ok

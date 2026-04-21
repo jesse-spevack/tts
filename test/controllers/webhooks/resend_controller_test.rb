@@ -128,6 +128,88 @@ module Webhooks
       assert_response :unprocessable_entity
     end
 
+    # Idempotency (agent-team-qy30): Svix retries non-2xx responses for ~24h.
+    # ActionMailbox::InboundEmail.create_and_extract_message_id! returns nil on
+    # duplicate Message-ID (RecordNotUnique rescued internally), and the next
+    # line in RoutesResendInboundEmail reads .id on nil → NoMethodError → the
+    # controller's rescue StandardError → 500. Dedup on svix-id must return
+    # 200 immediately without running the downstream routing service.
+    test "duplicate Resend inbound delivery returns 200 without re-running routing (agent-team-qy30)" do
+      svix_id = "msg_#{SecureRandom.hex(8)}"
+      svix_timestamp = Time.now.to_i.to_s
+
+      email_data = {
+        "from" => "sender@example.com",
+        "to" => [ "readtome+test_token_123@example.com" ],
+        "subject" => "Dup Article",
+        "html" => "<p>Body</p>",
+        "text" => "Body",
+        "message_id" => "<dup-#{SecureRandom.hex(6)}@example.com>"
+      }
+      stub_request(:get, "https://api.resend.com/emails/receiving/email_dup123")
+        .to_return(status: 200, body: email_data.to_json, headers: { "Content-Type" => "application/json" })
+
+      payload = {
+        type: "email.received",
+        data: { email_id: "email_dup123", from: "sender@example.com" }
+      }.to_json
+      signature = generate_svix_signature(svix_id, svix_timestamp, payload)
+      headers = {
+        "Content-Type" => "application/json",
+        "svix-id" => svix_id,
+        "svix-timestamp" => svix_timestamp,
+        "svix-signature" => "v1,#{signature}"
+      }
+
+      Mocktail.replace(RoutesResendInboundEmail)
+      stubs { |m| RoutesResendInboundEmail.call(email_data: m.any) }.with { Result.success }
+
+      post webhooks_resend_inbound_url, params: payload, headers: headers
+      assert_response :ok
+
+      post webhooks_resend_inbound_url, params: payload, headers: headers
+      assert_response :ok
+
+      verify(times: 1) { |m| RoutesResendInboundEmail.call(email_data: m.any) }
+    end
+
+    test "first-time Resend delivery persists a WebhookEvent row and runs routing once (agent-team-qy30)" do
+      svix_id = "msg_#{SecureRandom.hex(8)}"
+      svix_timestamp = Time.now.to_i.to_s
+
+      email_data = {
+        "from" => "sender@example.com",
+        "to" => [ "readtome+test_token_123@example.com" ],
+        "subject" => "Fresh Article",
+        "html" => "<p>Body</p>",
+        "text" => "Body",
+        "message_id" => "<fresh-#{SecureRandom.hex(6)}@example.com>"
+      }
+      stub_request(:get, "https://api.resend.com/emails/receiving/email_fresh123")
+        .to_return(status: 200, body: email_data.to_json, headers: { "Content-Type" => "application/json" })
+
+      payload = {
+        type: "email.received",
+        data: { email_id: "email_fresh123", from: "sender@example.com" }
+      }.to_json
+      signature = generate_svix_signature(svix_id, svix_timestamp, payload)
+      headers = {
+        "Content-Type" => "application/json",
+        "svix-id" => svix_id,
+        "svix-timestamp" => svix_timestamp,
+        "svix-signature" => "v1,#{signature}"
+      }
+
+      Mocktail.replace(RoutesResendInboundEmail)
+      stubs { |m| RoutesResendInboundEmail.call(email_data: m.any) }.with { Result.success }
+
+      post webhooks_resend_inbound_url, params: payload, headers: headers
+
+      assert_response :ok
+      verify(times: 1) { |m| RoutesResendInboundEmail.call(email_data: m.any) }
+      assert_equal 1, WebhookEvent.where(provider: "resend", event_id: svix_id).count
+    end
+
     private
 
     def post_with_signature(payload)

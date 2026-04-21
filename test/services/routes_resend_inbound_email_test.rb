@@ -103,4 +103,33 @@ class RoutesResendInboundEmailTest < ActiveSupport::TestCase
     assert result.success?
     assert_kind_of ActionMailbox::InboundEmail, result.data
   end
+
+  # Belt-and-suspenders (agent-team-qy30): ActionMailbox::InboundEmail
+  # .create_and_extract_message_id! rescues ActiveRecord::RecordNotUnique
+  # internally and returns nil when the Message-ID is a duplicate. The service
+  # currently dereferences .id on that nil → NoMethodError → controller's
+  # rescue StandardError → 500 → Svix retry storm. Even with controller-level
+  # svix-id dedup, two concurrent deliveries with the same Message-ID could
+  # both pass the DB check and race into this path; the service must treat
+  # a nil return as "already processed" and return Result.success.
+  test "returns success when ActionMailbox reports duplicate Message-ID (agent-team-qy30)" do
+    email_data = {
+      "from" => "sender@example.com",
+      "to" => [ ROUTABLE_TO ],
+      "subject" => "Dup",
+      "text" => "body",
+      "message_id" => "<already-seen@example.com>"
+    }
+
+    Mocktail.replace(ActionMailbox::InboundEmail)
+    stubs { |m| ActionMailbox::InboundEmail.create_and_extract_message_id!(m.any) }.with { nil }
+
+    result = nil
+    assert_nothing_raised do
+      result = RoutesResendInboundEmail.call(email_data: email_data)
+    end
+
+    assert_not_nil result
+    assert result.success?, "expected success Result when Message-ID is a duplicate; got #{result.inspect}"
+  end
 end

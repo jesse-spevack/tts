@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_20_052300) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_20_223943) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -347,6 +347,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_20_052300) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["email_ingest_token"], name: "index_users_on_email_ingest_token", unique: true
     t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true
+  end
+
+  create_table "webhook_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_id", null: false
+    t.string "event_type"
+    t.json "payload_summary"
+    t.string "provider", null: false
+    t.datetime "received_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "event_id"], name: "index_webhook_events_on_provider_and_event_id", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
