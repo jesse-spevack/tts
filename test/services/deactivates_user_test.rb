@@ -156,6 +156,52 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     assert_match(/user_id=#{@user.id}/, log_output)
   end
 
+  test "rolls back all cleanup steps when user.update! raises" do
+    api_token = GeneratesApiToken.call(user: @user)
+    session = @user.sessions.create!(ip_address: "1.2.3.4", user_agent: "test")
+    app = Doorkeeper::Application.create!(
+      name: "Test App",
+      uid: "test_uid_#{SecureRandom.hex}",
+      redirect_uri: "http://localhost/callback",
+      scopes: "podread",
+      confidential: false
+    )
+    oauth_access_token = Doorkeeper::AccessToken.create!(
+      application: app,
+      resource_owner_id: @user.id,
+      scopes: "podread",
+      expires_in: 1.hour
+    )
+    oauth_access_grant = Doorkeeper::AccessGrant.create!(
+      application: app,
+      resource_owner_id: @user.id,
+      scopes: "podread",
+      expires_in: 10.minutes,
+      redirect_uri: "http://localhost/callback"
+    )
+
+    original_email = @user.email_address
+    original_active = @user.active
+    original_session_count = @user.sessions.count
+
+    def @user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    result = DeactivatesUser.call(user: @user)
+
+    assert result.failure?
+    assert_nil api_token.reload.revoked_at, "api_token should NOT be revoked after rollback"
+    assert_equal original_session_count, @user.sessions.count, "sessions should be intact after rollback"
+    assert @user.sessions.exists?(id: session.id), "original session should still exist"
+    assert_nil oauth_access_token.reload.revoked_at, "oauth_access_token should NOT be revoked after rollback"
+    assert_nil oauth_access_grant.reload.revoked_at, "oauth_access_grant should NOT be revoked after rollback"
+
+    @user.reload
+    assert_equal original_active, @user.active, "active flag should be unchanged after rollback"
+    assert_equal original_email, @user.email_address, "email_address should be unchanged after rollback"
+  end
+
   private
 
   def capture_logs

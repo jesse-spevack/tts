@@ -32,18 +32,24 @@ class DeactivatesUser
     @user.episodes.find_each do |episode|
       DeleteEpisodeJob.perform_later(episode_id: episode.id)
     end
-    @user.sessions.destroy_all
-    @user.api_tokens.update_all(revoked_at: Time.current)
-    @user.oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
-    @user.oauth_access_grants.where(revoked_at: nil).update_all(revoked_at: Time.current)
-    CancelsUserSubscriptionJob.perform_later(user_id: @user.id)
-    @user.update!(
-      email_address: "deleted-#{@user.id}@deleted.invalid",
-      active: false,
-      auth_token: nil,
-      auth_token_expires_at: nil,
-      email_ingest_token: nil
-    )
+
+    # Steps 2-6 run in a transaction so a failure at any step (e.g. email
+    # uniqueness collision on update!) rolls back the whole cleanup and
+    # leaves the user in a consistent state.
+    ActiveRecord::Base.transaction do
+      @user.sessions.destroy_all
+      @user.api_tokens.update_all(revoked_at: Time.current)
+      @user.oauth_access_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
+      @user.oauth_access_grants.where(revoked_at: nil).update_all(revoked_at: Time.current)
+      CancelsUserSubscriptionJob.perform_later(user_id: @user.id)
+      @user.update!(
+        email_address: "deleted-#{@user.id}@deleted.invalid",
+        active: false,
+        auth_token: nil,
+        auth_token_expires_at: nil,
+        email_ingest_token: nil
+      )
+    end
 
     log_info "user_deactivated", user_id: @user.id, episode_count: episode_count
     Result.success(user: @user)
