@@ -208,6 +208,60 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     assert_equal 2, usage.cost_cents
   end
 
+  # === Credit refund on TTS synthesis failure (agent-team-uoqd round 2) ===
+  #
+  # GeneratesEpisodeAudio is the highest-traffic real-world failure path.
+  # When the synthesizer raises a permanent error, the rescue branch at
+  # generates_episode_audio.rb:62 writes status=failed directly — bypassing
+  # both the EpisodeErrorHandling concern and the API controller wire-in.
+  # A credit user whose TTS fails here currently loses the debited credit.
+
+  test "refunds debited credit when permanent synthesis error fails the episode" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    # Mirror the CreatesEpisode-time debit that already ran before the job.
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    GeneratesEpisodeAudio.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when TTS synthesis hits a permanent error"
+  end
+
+  test "does not refund credits for transient errors that re-raise for retry" do
+    # Guard: transient errors bubble up for retry and do NOT mark the
+    # episode failed at this layer — so the refund must NOT fire here.
+    # (Retry exhaustion is covered in GeneratesEpisodeAudioJob.)
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with {
+      raise Google::Cloud::DeadlineExceededError, "timeout"
+    }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_raises(Google::Cloud::DeadlineExceededError) do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    assert_equal 2, credit_user.reload.credits_remaining,
+      "Transient errors re-raise for retry — no refund at this layer"
+  end
+
   private
 
   def stub_synthesizer(audio:, billed_characters:)

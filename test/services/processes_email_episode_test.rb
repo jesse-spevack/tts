@@ -99,6 +99,39 @@ class ProcessesEmailEpisodeTest < ActiveSupport::TestCase
     assert true
   end
 
+  # === Credit refund on email-path failure (agent-team-uoqd round 2) ===
+  #
+  # Email episodes debit at CreatesEpisode#call. If the sync processor
+  # fails, fail_episode must refund — same contract as paste/file/url.
+
+  test "refunds debited credit when email episode fails on LLM error" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+
+    episode = Episode.create!(
+      podcast: podcasts(:one),
+      user: credit_user,
+      title: "Processing...",
+      author: "Processing...",
+      description: "Processing email content...",
+      source_type: :email,
+      source_text: @text,
+      status: :processing
+    )
+
+    DeductsCredit.call(user: credit_user, episode: episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { Result.failure("LLM exploded") }
+
+    ProcessesEmailEpisode.call(episode: episode)
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when email episode fails after debit"
+  end
+
   teardown do
     Mocktail.reset
   end
