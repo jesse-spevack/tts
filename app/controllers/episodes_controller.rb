@@ -136,12 +136,14 @@ class EpisodesController < ApplicationController
 
   def anticipated_cost
     @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
-      user: Current.user,
-      source_type: submission_source_type,
-      text: params[:text],
-      url: params[:url],
-      upload: read_uploaded_content
-    ).data
+      EpisodeCostRequest.new(
+        user: Current.user,
+        source_type: submission_source_type,
+        text: params[:text],
+        url: params[:url],
+        upload: read_uploaded_content
+      )
+    ).data.credits
   end
 
   def submission_source_type

@@ -891,7 +891,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       description: "desc", source_type: :paste,
       source_text: "A" * 10_000, status: :complete
     )
-    episode.update_columns(source_text_length: 10_000)
+    episode.update_columns(source_text_length: 10_000, credit_cost: 1)
     CreditTransaction.create!(
       user: credit_user, episode: episode,
       amount: -1, balance_after: 2, transaction_type: "usage"
@@ -913,7 +913,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       description: "desc", source_type: :paste,
       source_text: "A" * 30_000, status: :complete
     )
-    episode.update_columns(source_text_length: 30_000)
+    episode.update_columns(source_text_length: 30_000, credit_cost: 2)
     CreditTransaction.create!(
       user: credit_user, episode: episode,
       amount: -2, balance_after: 1, transaction_type: "usage"
@@ -1001,7 +1001,7 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
       description: "desc", source_type: :paste,
       source_text: "A" * 2_500, status: :complete
     )
-    episode.update_columns(source_text_length: 2_500)
+    episode.update_columns(source_text_length: 2_500, credit_cost: 0)
     # Sanity check: no CreditTransaction exists for this episode.
     assert_equal 0, CreditTransaction.where(episode_id: episode.id).count
 

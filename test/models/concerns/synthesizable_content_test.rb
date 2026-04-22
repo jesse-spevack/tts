@@ -102,18 +102,18 @@ module SynthesizableContentContract
   def test_cost_returns_a_value_object_with_a_numeric_amount
     content = build_content
     cost = content.cost
-    # Intentionally loose: implementer can return a Money, a Struct, a plain
-    # Integer cents, or a dedicated EpisodeCost value object. The pin is
-    # "non-nil, responds to some amount method, does NOT touch a persisted
-    # cost column". Brick 3 (agent-team-7i24) makes it persisted.
+    # Intentionally loose: Episode returns a Cost value object (gafe);
+    # Narration still returns Integer USD cents via TtsUsage. Contract is
+    # "non-nil, exposes some amount method or is a dedicated Cost type".
     assert_not_nil cost, "#cost must not be nil"
 
     has_amount = cost.respond_to?(:cents) ||
                  cost.respond_to?(:amount) ||
                  cost.respond_to?(:to_i) ||
-                 cost.is_a?(Numeric)
+                 cost.is_a?(Numeric) ||
+                 cost.is_a?(Cost)
     assert has_amount,
-      "#cost should expose a numeric amount (via #cents, #amount, #to_i, or be Numeric); got #{cost.class}"
+      "#cost should expose a numeric amount (via #cents, #amount, #to_i, be Numeric, or be a Cost); got #{cost.class}"
   end
 
   def test_cost_is_not_persisted_in_brick_2b

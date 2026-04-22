@@ -142,11 +142,13 @@ module Api
       # treats 'extension' as a text variant.
       def anticipated_cost
         @anticipated_cost ||= CalculatesAnticipatedEpisodeCost.call(
-          user: current_user,
-          source_type: episode_params[:source_type],
-          text: text_for_cost,
-          url: episode_params[:url]
-        ).data
+          EpisodeCostRequest.new(
+            user: current_user,
+            source_type: episode_params[:source_type],
+            text: text_for_cost,
+            url: episode_params[:url]
+          )
+        ).data.credits
       end
 
       def text_for_cost

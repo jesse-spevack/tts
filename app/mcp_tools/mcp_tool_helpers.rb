@@ -39,12 +39,14 @@ module McpToolHelpers
   def record_successful_creation(user:, episode:)
     RecordsEpisodeUsage.call(user: user)
 
-    cost_result = CalculatesAnticipatedEpisodeCost.call(
-      user: user,
-      source_type: episode.source_type,
-      text: episode.source_text
-    )
-    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost_result.data)
+    cost = CalculatesAnticipatedEpisodeCost.call(
+      EpisodeCostRequest.new(
+        user: user,
+        source_type: episode.source_type,
+        text: episode.source_text
+      )
+    ).data
+    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost.credits)
   end
 
   private
