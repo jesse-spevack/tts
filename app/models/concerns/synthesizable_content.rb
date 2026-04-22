@@ -9,13 +9,12 @@
 # publishing / routing symbols. Enforced by
 # code_quality:synthesizable_content_purity.
 #
-# Interface (9 methods):
-#   source_text, voice, provider, status, tts_usage, mpp_payment,
-#   succeed!(audio_blob:, duration:), fail!(reason:), cost
+# Interface (7 methods):
+#   source_text, voice, provider, status, tts_usage, mpp_payment, cost
 #
 # status / tts_usage / mpp_payment come from the including model (enum +
 # associations); the concern provides source_text/provider defaults
-# and the lifecycle + cost methods below.
+# and the cost method below.
 #
 # `voice` is defined by each including model — Episode delegates to
 # user.voice, Narration has its own column with a before_validation
@@ -31,19 +30,6 @@ module SynthesizableContent
 
   def provider
     tts_usage&.provider || "google"
-  end
-
-  def succeed!(audio_blob:, duration:)
-    update!(
-      status: :complete,
-      audio_size_bytes: audio_blob.bytesize,
-      duration_seconds: duration,
-      processing_completed_at: Time.current
-    )
-  end
-
-  def fail!(reason:)
-    update!(status: :failed, error_message: reason)
   end
 
   # Value object — NOT persisted in brick 2b. Brick 3 (agent-team-7i24)

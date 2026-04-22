@@ -66,10 +66,11 @@ class ProcessesUrlEpisode
   def deduct_credit
     return if user.complimentary? || user.unlimited?
 
-    cost = CalculatesEpisodeCreditCost.call(
-      source_text_length: @extract_result.data.character_count,
-      voice: Voice.find(user.voice_preference) || Voice.find(Voice::DEFAULT_KEY)
-    )
+    cost = CalculatesAnticipatedEpisodeCost.call(
+      user: user,
+      source_type: "text",
+      source_text_length: @extract_result.data.character_count
+    ).data
 
     result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost)
     return if result.success?

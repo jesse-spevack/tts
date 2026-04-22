@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Orchestrates the "how many credits will this episode cost?" computation that
-# the web, API v1, and MCP text-tool paths all need before they attempt to
-# create an Episode. Composes:
+# the web, API v1, MCP text-tool, email-ingest, cost-preview, and URL-async
+# paths all need. Composes:
 #
 #   ResolvesVoice.call(requested_key: nil, user:)       # user's voice tier
 #   CalculatesEpisodeCreditCost.call(source_text_length:, voice:)
@@ -18,16 +18,22 @@
 #                                        content is a text variant)
 #   source_type: "file"  | "upload"    → upload.size (if IO-like) else
 #                                        upload.to_s.length (raw string)
-#   source_type: "url"                 → 1  (URL shortcut — real cost is
-#                                        resolved later in ProcessesUrlEpisode)
+#   source_type: "url"                 → nil (deferred — real article length
+#                                        isn't known until FetchesArticleContent
+#                                        runs inside ProcessesUrlEpisode)
 #   anything else                      → 0
 #
 # Callers who already know the content length (e.g. the web cost-preview
-# endpoint, where the client sends `upload_length` pre-computed from
-# `file.size` without uploading the blob) can pass `source_text_length:`
-# directly. When present, it wins over source_type-based extraction.
+# endpoint sending pre-computed `upload_length`, or ProcessesUrlEpisode
+# after fetch+extract knows the article's character_count) can pass
+# `source_text_length:` directly. When present, it wins over source_type-based
+# extraction — so passing `source_type: "url", source_text_length: N`
+# computes the real cost rather than returning nil.
 #
-# Returns Result.success(Integer) with the 1-or-2 credit cost. Failure only if
+# Returns Result.success(Integer) when a cost can be computed, or
+# Result.success(nil) for the deferred-URL case. Callers explicitly handle
+# nil (see ChecksEpisodeCreationPermission#check_credit_balance and
+# DebitsEpisodeCredit's episode.url? short-circuit). Failure only if
 # ResolvesVoice fails, which cannot happen when requested_key is nil (stale
 # preferences silently fall through to the catalog default).
 class CalculatesAnticipatedEpisodeCost
@@ -55,8 +61,11 @@ class CalculatesAnticipatedEpisodeCost
     voice_result = ResolvesVoice.call(requested_key: nil, user: user)
     return voice_result if voice_result.failure?
 
+    length = source_text_length
+    return Result.success(nil) if length.nil?
+
     cost = CalculatesEpisodeCreditCost.call(
-      source_text_length: source_text_length,
+      source_text_length: length,
       voice: voice_result.data
     )
     Result.success(cost)
@@ -79,7 +88,7 @@ class CalculatesAnticipatedEpisodeCost
         upload.to_s.length
       end
     when "url"
-      1
+      nil
     else
       0
     end
