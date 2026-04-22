@@ -84,12 +84,17 @@ class EpisodeCostPreviewFlowTest < ActionDispatch::IntegrationTest
   test "switching source_type between calls does not leak state" do
     @credit_user.update!(voice_preference: "callum")
 
-    # User on URL tab — always 1 credit.
+    # User on URL tab — cost is deferred (length unknown at preview time).
+    # Brick 3 (agent-team-7i24) kills the source_type=='url' → 1 sentinel.
+    # The endpoint now returns cost: nil for URL previews; the client is
+    # expected to render a "cost shown after fetch" placeholder rather than
+    # the misleading "1 credit" that under-prices Premium + >20k articles.
     post "/api/internal/episodes/cost_preview",
       params: { source_type: "url", url: "https://example.com/article" },
       as: :json
     assert_response :success
-    assert_equal 1, response.parsed_body["cost"]
+    assert_nil response.parsed_body["cost"],
+      "URL preview must return cost: nil (deferred); client renders placeholder"
 
     # User switches to Paste with 25k chars — now 2 credits.
     post "/api/internal/episodes/cost_preview",
@@ -104,6 +109,40 @@ class EpisodeCostPreviewFlowTest < ActionDispatch::IntegrationTest
       as: :json
     assert_response :success
     assert_equal 1, response.parsed_body["cost"]
+  end
+
+  # --- URL cost-preview deferral (agent-team-7i24) ----------------------------
+  #
+  # Dedicated coverage for the sentinel-kill landing at the HTTP boundary.
+  # A URL preview used to return cost: 1 — the Premium + >20k URL case
+  # was silently mis-priced until ProcessesUrlEpisode re-computed cost.
+  # The fix: return cost: nil at preview time; the client renders
+  # "cost shown after fetch" and the true debit happens in the async job.
+
+  test "URL source_type returns cost: nil (deferred), independent of voice tier" do
+    @credit_user.update!(voice_preference: "callum") # Premium — matters most for URL
+    post "/api/internal/episodes/cost_preview",
+      params: { source_type: "url", url: "https://example.com/a-very-long-article" },
+      as: :json
+
+    assert_response :success
+    body = response.parsed_body
+    assert_nil body["cost"],
+      "URL preview cost must be nil (deferred) — old sentinel '1' under-priced Premium + >20k URLs"
+    assert_equal "premium", body["voice_tier"]
+  end
+
+  test "URL source_type with Standard voice also returns cost: nil" do
+    @credit_user.update!(voice_preference: "felix") # Standard
+    post "/api/internal/episodes/cost_preview",
+      params: { source_type: "url", url: "https://example.com/short-article" },
+      as: :json
+
+    assert_response :success
+    body = response.parsed_body
+    assert_nil body["cost"],
+      "URL preview cost must be nil regardless of voice tier"
+    assert_equal "standard", body["voice_tier"]
   end
 
   # ---------- Structural: Stimulus controller file exists ----------

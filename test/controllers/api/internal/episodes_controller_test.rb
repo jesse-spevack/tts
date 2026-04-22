@@ -538,7 +538,7 @@ module Api
 
       # ---------- Source-type variants ----------
 
-      test "url source_type returns cost 1 regardless of preview length" do
+      test "url source_type returns cost: nil (deferred — agent-team-7i24)" do
         @credit_user.update!(voice_preference: "callum")
 
         post "/api/internal/episodes/cost_preview",
@@ -547,9 +547,13 @@ module Api
 
         assert_response :success
         body = response.parsed_body
-        # URL shortcut: real length isn't known until fetch; CalculatesAnticipatedEpisodeCost
-        # scores URL sources as length=1, which is always 1 credit.
-        assert_equal 1, body["cost"]
+        # Brick 3 kills the source_type=='url' → 1 sentinel. Real article
+        # length isn't known until FetchesArticleContent inside
+        # ProcessesUrlEpisode. Returning nil at preview time forces the
+        # client to render a "cost shown after fetch" placeholder rather
+        # than the misleading "1 credit" that under-priced Premium + >20k
+        # URLs — the actual debit happens in the async job.
+        assert_nil body["cost"]
         assert_equal "premium", body["voice_tier"]
       end
 

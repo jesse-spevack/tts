@@ -65,6 +65,19 @@ class DebitsEpisodeCreditTest < ActiveSupport::TestCase
     end
   end
 
+  test "returns success with no_cost reason when cost_in_credits is nil and episode is not a url" do
+    user = users(:credit_user)
+    episode = build_paste_episode(user)
+
+    assert_no_difference -> { CreditTransaction.where(user: user).count } do
+      result = DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: nil)
+
+      assert result.success?
+      assert_equal :skipped, result.data[:status]
+      assert_equal :no_cost, result.data[:reason]
+    end
+  end
+
   # --- Delegation -----------------------------------------------------------
 
   test "delegates to DeductsCredit for credit user with balance, balance decreases" do

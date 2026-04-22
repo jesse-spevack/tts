@@ -48,14 +48,25 @@ module Api
       end
 
       def credit_user_payload(source_type:, voice:)
-        length = length_for(source_type: source_type)
-        cost = CalculatesEpisodeCreditCost.call(source_text_length: length, voice: voice)
+        cost = CalculatesAnticipatedEpisodeCost.call(
+          user: Current.user,
+          source_type: source_type,
+          text: params[:text],
+          url: params[:url],
+          source_text_length: source_type == "upload" ? params[:upload_length].to_i : nil
+        ).data
         balance = Current.user.credits_remaining
 
+        # cost is nil for URL previews (brick 3 / agent-team-7i24): real
+        # article length isn't known until FetchesArticleContent runs in
+        # ProcessesUrlEpisode. The client renders a "cost shown after fetch"
+        # placeholder. sufficient: true because we can't reject at preview
+        # time — the async job debits the true cost and fails there if the
+        # balance is short.
         {
           cost: cost,
           balance: balance,
-          sufficient: balance >= cost,
+          sufficient: cost.nil? || balance >= cost,
           voice_tier: voice.tier.to_s
         }
       end
@@ -66,14 +77,6 @@ module Api
           cost: 0,
           voice_tier: voice.tier.to_s
         }
-      end
-
-      def length_for(source_type:)
-        case source_type
-        when "paste"  then params[:text].to_s.length
-        when "url"    then 1
-        when "upload" then params[:upload_length].to_i
-        end
       end
 
       def render_invalid

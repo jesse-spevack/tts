@@ -140,6 +140,18 @@ class ChecksEpisodeCreationPermissionTest < ActiveSupport::TestCase
     assert_equal :insufficient_credits, result.code
   end
 
+  test "credit user with zero balance + nil anticipated cost returns success (URL deferred case)" do
+    # A credit user with no remaining balance still passes the gate when cost is deferred
+    # (e.g., URL source). Brick 3 (agent-team-7i24) relies on this short-circuit so URL
+    # submissions reach the async job where the real cost is computed from fetched content.
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 0)
+
+    result = ChecksEpisodeCreationPermission.call(user: credit_user, anticipated_cost: nil)
+
+    assert result.success?, "Expected success when anticipated_cost is nil, got #{result.inspect}"
+  end
+
   test "free-tier limit failure carries :episode_limit_reached code" do
     EpisodeUsage.create!(
       user: @free_user,

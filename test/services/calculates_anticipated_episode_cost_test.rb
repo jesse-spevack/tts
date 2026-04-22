@@ -57,10 +57,66 @@ class CalculatesAnticipatedEpisodeCostTest < ActiveSupport::TestCase
     assert_equal 2, result.data
   end
 
-  test "source_type url always returns 1 (URL-length shortcut)" do
+  # --- URL source_type: deferred cost (agent-team-7i24) ---------------------
+  #
+  # Brick 3 kills the source_type=='url' → 1 sentinel. The real article length
+  # isn't known at controller-submit / preview time for URL episodes, so the
+  # unified service returns Result.success(nil) and callers explicitly handle
+  # the deferred case (ChecksEpisodeCreationPermission.check_credit_balance
+  # already short-circuits on nil cost — see checks_episode_creation_permission.rb:43).
+  #
+  # ProcessesUrlEpisode then re-calls this service with the extracted length
+  # (pass-through via source_type: 'text' + source_text_length: extracted_chars)
+  # to compute the real deferred cost before debiting.
+
+  test "source_type url without length override returns nil (deferred cost)" do
     @user.update!(voice_preference: "callum") # Premium, would otherwise be 2
     result = CalculatesAnticipatedEpisodeCost.call(
       user: @user, source_type: "url", url: "https://example.com/huge-article"
+    )
+    assert result.success?
+    assert_nil result.data,
+      "URL source_type without known length must return nil, not a magic 1 sentinel"
+  end
+
+  test "source_type url with source_text_length override computes real cost (post-extract)" do
+    # ProcessesUrlEpisode re-calls the unified service after FetchesArticleContent
+    # knows the article's character_count. Passing source_type: 'url' +
+    # source_text_length: extracted_chars must compute the real credit cost,
+    # not short-circuit to nil.
+    @user.update!(voice_preference: "callum") # Premium
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "url",
+      url: "https://example.com/huge-article",
+      source_text_length: 30_000
+    )
+    assert result.success?
+    # Premium + >20k → 2 credits
+    assert_equal 2, result.data
+  end
+
+  test "source_type text with source_text_length override routes post-extract (URL async path)" do
+    # Alternate post-extract pattern: ProcessesUrlEpisode can pass
+    # source_type: 'text' + source_text_length: extracted_chars and reach
+    # the same computed cost. This proves both source_types with the
+    # length override hit the same calculator.
+    @user.update!(voice_preference: "callum") # Premium
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "text",
+      source_text_length: 30_000
+    )
+    assert result.success?
+    assert_equal 2, result.data
+  end
+
+  test "source_type url with short-article length override returns 1 (Standard voice)" do
+    @user.update!(voice_preference: "felix") # Standard
+    result = CalculatesAnticipatedEpisodeCost.call(
+      user: @user,
+      source_type: "url",
+      source_text_length: 5_000
     )
     assert result.success?
     assert_equal 1, result.data
