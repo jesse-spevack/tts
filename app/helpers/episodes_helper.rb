@@ -73,12 +73,4 @@ module EpisodesHelper
 
     "Free tier episode"
   end
-
-  # Voice tier label (Standard / Premium) based on the user's current voice
-  # preference. Episodes don't store voice — we resolve from the user at
-  # render time. Nil preference falls back to Standard.
-  def episode_voice_tier_label(episode)
-    tier = Voice.find(episode.user.voice_preference)&.tier || :standard
-    tier.to_s.capitalize
-  end
 end

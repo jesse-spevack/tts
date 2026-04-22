@@ -306,4 +306,73 @@ class EpisodeTest < ActiveSupport::TestCase
       episode.update!(description: "Updated description")
     end
   end
+
+  # --- episodes.voice is its own attribute (agent-team-cue3) ---
+  #
+  # Episode previously delegated #voice to the owning User. After cue3,
+  # Episode has its own voice column and #voice reads that attribute
+  # directly. No delegation: episode.voice must be independent of
+  # user.voice_preference / user.voice.
+
+  test "Episode#voice returns the stored attribute, not a delegated user voice" do
+    # Episode owns a voice column now, so setting voice on a new record
+    # must round-trip through the attribute — no delegate, no user required.
+    episode = Episode.new(voice: "some-explicit-voice")
+    assert_equal "some-explicit-voice", episode.voice
+  end
+
+  test "Episode#voice is independent of user.voice_preference" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: nil)
+
+    # Before cue3, this would delegate through user.voice and return a
+    # google voice string. After cue3, episode.voice is its own column
+    # and must return nil when nothing was stamped.
+    assert_nil episode.voice
+  end
+
+  test "Episode#voice ignores later changes to user.voice_preference" do
+    user = users(:jesse)
+    episode = Episode.create!(
+      podcast: podcasts(:one),
+      user: user,
+      title: "Test",
+      author: "Author",
+      description: "Description",
+      source_type: :url,
+      source_url: "https://example.com/test",
+      status: :complete,
+      voice: Voice::DEFAULT_STANDARD
+    )
+
+    # User changes their preference to a Premium voice — episode's stamped
+    # voice must not move. If the delegate were still in place, episode.voice
+    # would follow user.voice and this would fail.
+    user.update!(voice_preference: "callum")
+
+    assert_equal Voice::DEFAULT_STANDARD, episode.reload.voice
+  end
+
+  # --- effective_voice (agent-team-zmzt) ---
+
+  test "effective_voice returns stamped voice when present" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: Voice::DEFAULT_STANDARD)
+
+    # Stamped voice wins over user.voice even when they disagree.
+    assert_equal Voice::DEFAULT_STANDARD, episode.effective_voice
+  end
+
+  test "effective_voice falls back to user.voice when stamped voice is nil" do
+    user = users(:jesse)
+    user.update!(voice_preference: "callum")
+
+    episode = Episode.new(user: user, voice: nil)
+
+    assert_equal user.voice, episode.effective_voice
+  end
 end

@@ -36,6 +36,7 @@ class GeneratesEpisodeAudio
     log_info "updating_episode", duration_seconds: duration_seconds
     @episode.update!(
       status: :complete,
+      voice: voice_name,
       gcs_episode_id: gcs_episode_id,
       audio_size_bytes: audio_content.bytesize,
       duration_seconds: duration_seconds,
@@ -105,7 +106,7 @@ class GeneratesEpisodeAudio
   end
 
   def voice_name
-    @voice_override.presence || @episode.voice
+    @voice_name ||= @voice_override.presence || @episode.effective_voice
   end
 
   def content_text

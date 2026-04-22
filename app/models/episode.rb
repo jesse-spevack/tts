@@ -9,8 +9,6 @@ class Episode < ApplicationRecord
   has_one :llm_usage, dependent: :destroy
   has_one :tts_usage, as: :usable, dependent: :destroy
 
-  delegate :voice, to: :user
-
   enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
   enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
 
@@ -37,6 +35,8 @@ class Episode < ApplicationRecord
   default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
 
+  before_validation :set_default_voice, on: :create
+
   def soft_delete!
     raise "Episode already deleted" if soft_deleted?
 
@@ -48,6 +48,14 @@ class Episode < ApplicationRecord
   end
 
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
+
+  # Google voice string that was (or would be) used by TTS.
+  # Returns the stamped voice if synth has occurred, otherwise the
+  # user's current voice preference as a fallback for legacy rows
+  # and pre-synth display.
+  def effective_voice
+    voice.presence || user&.voice
+  end
 
   def audio_url
     GeneratesEpisodeAudioUrl.call(self)
@@ -79,5 +87,9 @@ class Episode < ApplicationRecord
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
     errors.add(:source_text, result.error) if result.failure?
+  end
+
+  def set_default_voice
+    self.voice ||= user&.voice
   end
 end
