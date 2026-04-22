@@ -19,3 +19,6 @@ production:
   cleanup_stale_mpp_payments:
     class: CleanupStaleMppPaymentsJob
     schedule: every hour
+  reconcile_credits:
+    class: ReconcileCreditsJob
+    schedule: every day at 3am
