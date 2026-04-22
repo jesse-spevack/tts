@@ -35,6 +35,8 @@ class Episode < ApplicationRecord
   default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
 
+  before_validation :set_default_voice, on: :create
+
   def soft_delete!
     raise "Episode already deleted" if soft_deleted?
 
@@ -85,5 +87,9 @@ class Episode < ApplicationRecord
   def content_within_tier_limit
     result = ValidatesCharacterLimit.call(user: user, character_count: source_text.length)
     errors.add(:source_text, result.error) if result.failure?
+  end
+
+  def set_default_voice
+    self.voice ||= user&.voice
   end
 end
