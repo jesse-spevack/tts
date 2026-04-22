@@ -67,7 +67,7 @@ class UrlEpisodeFlowTest < ActionDispatch::IntegrationTest
         content: "Cleaned long content."
       ))
     }
-    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any, voice_override: m.any) }.with { true }
 
     # Run the job — triggers fetch → extract → deduct → LLM → submit.
     assert_difference -> { CreditTransaction.where(user: @credit_user, transaction_type: "usage").count }, 1 do
@@ -92,7 +92,7 @@ class UrlEpisodeFlowTest < ActionDispatch::IntegrationTest
         title: "Short", author: "Author", description: "Short.", content: "Short."
       ))
     }
-    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }.with { true }
+    stubs { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any, voice_override: m.any) }.with { true }
 
     perform_enqueued_jobs
 
