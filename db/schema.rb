@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_21_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_22_000000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -82,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_230000) do
     t.index ["episode_id"], name: "index_credit_transactions_on_episode_id"
     t.index ["stripe_session_id"], name: "index_credit_transactions_on_stripe_session_id", unique: true
     t.index ["transaction_type"], name: "index_credit_transactions_on_transaction_type"
+    t.index ["user_id", "episode_id"], name: "idx_credit_transactions_usage_unique", unique: true, where: "transaction_type = 'usage'"
     t.index ["user_id"], name: "index_credit_transactions_on_user_id"
   end
 
