@@ -3,7 +3,7 @@
 require "test_helper"
 
 # Shared contract test for SynthesizableContent (agent-team-bzo6, epic
-# agent-team-sird). The concern defines the minimal 9-method interface
+# agent-team-sird). The concern defines the minimal 7-method interface
 # shared by Episode and Narration; this test pins each method against
 # BOTH real consumers so the interface can't drift between them.
 #
@@ -17,8 +17,8 @@ require "test_helper"
 # All tests MUST fail until the concern is created and both models
 # include it. Acceptable failure modes:
 #   - NameError: uninitialized constant SynthesizableContent
-#   - NoMethodError on #source_text / #voice / #provider / #succeed! /
-#     #fail! / #cost / #tts_usage / #mpp_payment
+#   - NoMethodError on #source_text / #voice / #provider / #cost /
+#     #tts_usage / #mpp_payment / #status
 #   - Type mismatch (e.g. #voice returning a raw string instead of a
 #     Voice::Entry, once the concern starts normalizing that)
 module SynthesizableContentContract

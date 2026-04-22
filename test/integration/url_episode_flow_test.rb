@@ -123,12 +123,12 @@ class UrlEpisodeFlowTest < ActionDispatch::IntegrationTest
       Result.success
     }
 
-    post episodes_url, params: { url: "https://example.com/article" }
+    assert_enqueued_with(job: ProcessesUrlEpisodeJob) do
+      post episodes_url, params: { url: "https://example.com/article" }
+    end
 
     # Assert the pre-check was called with nil cost (deferred) for URL.
     # Pre-brick-3 it was called with 1 (the sentinel).
-    verify {
-      |m| ChecksEpisodeCreationPermission.call(user: m.any, anticipated_cost: nil)
-    }
+    verify { |m| ChecksEpisodeCreationPermission.call(user: m.any, anticipated_cost: nil) }
   end
 end

@@ -32,8 +32,7 @@ module SynthesizableContent
     tts_usage&.provider || "google"
   end
 
-  # Value object — NOT persisted in brick 2b. Brick 3 (agent-team-7i24)
-  # replaces this with a persisted cost_cents column.
+  # Value object — NOT persisted. Column promotion deferred to agent-team-0rwa.
   def cost
     tts_usage&.cost_cents || 0
   end
