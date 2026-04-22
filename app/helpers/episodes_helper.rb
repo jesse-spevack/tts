@@ -60,7 +60,7 @@ module EpisodesHelper
   #
   # Branches by account state + episode cost (agent-team-gafe):
   #   - complimentary / unlimited → "Included"
-  #   - credit_cost deferred (URL mid-fetch) → "Cost shown after fetch"
+  #   - credit_cost deferred (URL mid-fetch) → "Checking credit cost..."
   #   - credit_cost == 0 (free tier) → "Free tier episode"
   #   - credit_cost > 0 → "1 credit" / "2 credits"
   def episode_cost_label(episode)
@@ -68,7 +68,7 @@ module EpisodesHelper
     return "Included" if user.complimentary? || user.unlimited?
 
     cost = episode.cost
-    return "Cost shown after fetch" if cost.deferred?
+    return "Checking credit cost..." if cost.deferred?
     return "Free tier episode" if cost == Cost.none
 
     pluralize(cost.credits, "credit")

@@ -77,11 +77,11 @@ class EpisodesHelperTest < ActionView::TestCase
   #
   # Branches by account state + Episode#cost (backed by credit_cost column):
   #   - complimentary / unlimited           → "Included"
-  #   - credit_cost IS NULL (URL deferred)  → "Cost shown after fetch"
+  #   - credit_cost IS NULL (URL deferred)  → "Checking credit cost..."
   #   - credit_cost == 0 (free tier)        → "Free tier episode"
   #   - credit_cost > 0                     → "1 credit" / "2 credits"
 
-  test "episode_cost_label returns 'Cost shown after fetch' for deferred URL episode" do
+  test "episode_cost_label returns 'Checking credit cost...' for deferred URL episode" do
     credit_user = users(:credit_user)
     CreditBalance.for(credit_user).update!(balance: 3)
     episode = credit_user.primary_podcast.episodes.create!(
@@ -92,7 +92,7 @@ class EpisodesHelperTest < ActionView::TestCase
     # credit_cost defaults to NULL on a fresh URL episode pre-extract.
     assert_nil episode.credit_cost
 
-    assert_equal "Cost shown after fetch", episode_cost_label(episode)
+    assert_equal "Checking credit cost...", episode_cost_label(episode)
   end
 
   test "episode_cost_label returns 'Included' for unlimited user regardless of credit_cost" do
