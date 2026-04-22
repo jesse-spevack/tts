@@ -4,6 +4,23 @@
 # actually used through a Rails convention or framework mechanism that
 # debride can't see. Every entry must have a comment explaining why.
 #
+# ⚠️  ADDING TO THIS FILE IS AN ANTI-PATTERN.
+#
+# Before adding an entry, first try:
+#   1. Delete the method. Debride flagged it for a reason — if nothing calls
+#      it, the method is dead code. Deleting is almost always the right fix.
+#   2. Delete any test that exists *only* to exercise the method. A test that
+#      pins a speculative capability ("value object supports hash-key use")
+#      is still YAGNI if no production code uses that capability.
+#   3. If it's genuinely called via a Rails convention / framework mechanism
+#      debride can't trace (ActiveRecord reader, route action, lifecycle
+#      hook), then and only then whitelist it with a comment showing the
+#      implicit call site.
+#
+# Every new entry is developer-friction debt: reviewers must re-verify the
+# justification, and it becomes a landing spot for future drift. Start from
+# "delete the code" before reaching for "silence the linter."
+#
 # NOTE: the repo currently exceeds 50 findings even with `--rails`, so the
 # code_quality:debride rake task uses a RATCHET approach: it records a
 # baseline count in the task itself and fails only if the count increases.
