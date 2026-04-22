@@ -15,17 +15,25 @@ class GrantsCredits
     return Result.success if already_granted?
 
     balance = CreditBalance.for(user)
-    balance.add!(amount)
 
-    CreditTransaction.create!(
-      user: user,
-      amount: amount,
-      balance_after: balance.balance,
-      transaction_type: "purchase",
-      stripe_session_id: stripe_session_id
-    )
+    ActiveRecord::Base.transaction do
+      balance.add!(amount)
+
+      CreditTransaction.create!(
+        user: user,
+        amount: amount,
+        balance_after: balance.balance,
+        transaction_type: "purchase",
+        stripe_session_id: stripe_session_id
+      )
+    end
 
     Result.success(balance)
+  rescue ActiveRecord::RecordNotUnique
+    # Concurrent webhook retry raced us and inserted the transaction first.
+    # The unique index on credit_transactions.stripe_session_id rolled back
+    # our balance.add!, so treat this as the already-granted path.
+    Result.success
   end
 
   private
