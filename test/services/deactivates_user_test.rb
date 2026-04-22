@@ -156,6 +156,74 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     assert_match(/user_id=#{@user.id}/, log_output)
   end
 
+  test "zeros credit_balance.balance for user with positive balance" do
+    user = users(:credit_user)
+    balance = credit_balances(:with_credits)
+    assert_equal 3, balance.balance, "fixture precondition"
+
+    DeactivatesUser.call(user: user)
+
+    assert_equal 0, balance.reload.balance
+  end
+
+  test "creates a single forfeit CreditTransaction for user with positive balance" do
+    user = users(:credit_user)
+    prior_balance = credit_balances(:with_credits).balance
+    assert_equal 3, prior_balance, "fixture precondition"
+
+    assert_difference -> { CreditTransaction.where(user: user, transaction_type: "forfeit").count }, 1 do
+      DeactivatesUser.call(user: user)
+    end
+
+    forfeit = CreditTransaction.where(user: user, transaction_type: "forfeit").last
+    assert_equal(-prior_balance, forfeit.amount)
+    assert_equal 0, forfeit.balance_after
+    assert_equal "forfeit", forfeit.transaction_type
+  end
+
+  test "succeeds and creates no forfeit transaction when user has no credit_balance" do
+    user = users(:free_user)
+    assert_nil user.credit_balance, "fixture precondition: free_user has no credit_balance"
+
+    assert_no_difference -> { CreditTransaction.where(transaction_type: "forfeit").count } do
+      result = DeactivatesUser.call(user: user)
+      assert result.success?
+    end
+  end
+
+  test "creates no forfeit transaction when credit_balance is zero" do
+    user = users(:jesse)
+    balance = credit_balances(:empty_balance)
+    assert_equal 0, balance.balance, "fixture precondition"
+
+    assert_no_difference -> { CreditTransaction.where(transaction_type: "forfeit").count } do
+      result = DeactivatesUser.call(user: user)
+      assert result.success?
+    end
+
+    assert_equal 0, balance.reload.balance
+  end
+
+  test "rolls back credit forfeit when user.update! raises" do
+    user = users(:credit_user)
+    balance = credit_balances(:with_credits)
+    prior_balance_value = balance.balance
+    assert_equal 3, prior_balance_value, "fixture precondition"
+    prior_forfeit_count = CreditTransaction.where(user: user, transaction_type: "forfeit").count
+
+    def user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    result = DeactivatesUser.call(user: user)
+
+    assert result.failure?
+    assert_equal prior_balance_value, balance.reload.balance, "balance should NOT be zeroed after rollback"
+    assert_equal prior_forfeit_count,
+      CreditTransaction.where(user: user, transaction_type: "forfeit").count,
+      "no forfeit transaction should be persisted after rollback"
+  end
+
   test "rolls back all cleanup steps when user.update! raises" do
     api_token = GeneratesApiToken.call(user: @user)
     session = @user.sessions.create!(ip_address: "1.2.3.4", user_agent: "test")
