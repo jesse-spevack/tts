@@ -531,7 +531,14 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     verify(times: 0) { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }
   end
 
-  test "fails episode and skips TTS when Standard voice and balance 0" do
+  # A credit user who depletes their balance to 0 is free? per User#free?
+  # (standard account, no subscription, has_credits? false). Gafe aligns the
+  # async debit with the anticipated-cost gate and the sync debit: zero-balance
+  # users fall through to free-tier treatment, no debit, episode proceeds.
+  # Prior behavior failed with "Insufficient credits" — an inconsistency with
+  # ChecksEpisodeCreationPermission#check_free_quota which routes the same
+  # user through the free-quota path at submit time.
+  test "does not debit credits when credit user has depleted balance (treated as free tier)" do
     credit_user = users(:credit_user)
     credit_user.update!(voice_preference: "felix") # Standard
     CreditBalance.for(credit_user).update!(balance: 0)
@@ -539,6 +546,7 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
 
     html = "<article><h1>Title</h1><p>#{"A" * 10_000}</p></article>"
     stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
     stub_gcs_and_tasks
 
     assert_no_difference -> { CreditTransaction.count } do
@@ -546,10 +554,8 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
     end
 
     episode.reload
-    assert_equal "failed", episode.status
-    assert_includes episode.error_message, "Insufficient credits"
-    verify(times: 0) { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }
-    verify(times: 0) { |m| SubmitsEpisodeForProcessing.call(episode: m.any, content: m.any) }
+    assert_not_equal "failed", episode.status,
+      "Depleted-balance user should process under free-tier policy (failed with: #{episode.error_message.inspect})"
   end
 
   test "does not debit credits for complimentary user" do
@@ -586,6 +592,31 @@ class ProcessesUrlEpisodeTest < ActiveSupport::TestCase
 
     episode.reload
     assert_not_equal "failed", episode.status
+  end
+
+  # Free users submit URLs under their monthly free quota (2/mo, ≤15k chars).
+  # The sync debit path (DebitsEpisodeCredit) already skips url_deferred for
+  # everyone, so URL episodes reach the async job without a sync debit.
+  # The async #deduct_credit path must also skip free users — otherwise it
+  # tries to debit credits from a zero balance and the episode fails with
+  # "Insufficient credits" despite the user being within their free quota.
+  # Symmetric with the complimentary/unlimited cases above (agent-team-gafe).
+  test "does not debit credits for free user" do
+    free = users(:free_user)
+    episode = create_url_episode(free)
+
+    html = "<article><h1>Title</h1><p>#{"A" * 10_000}</p></article>"
+    stubs { |m| FetchesUrl.call(url: m.any) }.with { Result.success(html) }
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { standard_llm_result }
+    stub_gcs_and_tasks
+
+    assert_no_difference -> { CreditTransaction.count } do
+      ProcessesUrlEpisode.call(episode: episode)
+    end
+
+    episode.reload
+    assert_not_equal "failed", episode.status,
+      "Free user's URL episode should process without debiting credits (failed with: #{episode.error_message.inspect})"
   end
 
   # === URL-path failure refund (agent-team-uoqd) ===

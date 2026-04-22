@@ -3,12 +3,18 @@
 require "test_helper"
 
 class CreateEpisodeFromUrlToolTest < ActiveSupport::TestCase
-  test "subscriber with zero credits gets insufficient-credits error without creating Episode" do
+  # URL MCP submissions route through the unified cost service (gafe), which
+  # returns Cost.deferred for URL source — real article length is unknown at
+  # gate time. The anticipated-cost gate passes any balance, consistent with
+  # the web / API v1 / email paths (all post-brick-3). Episode is created;
+  # the async job handles the real debit once FetchesArticleContent knows the
+  # length, and fails the episode async if balance falls short at that point.
+  test "URL MCP submission defers the cost gate (pkbe) and creates the episode" do
     subscriber = users(:subscriber)
     CreditBalance.for(subscriber).update!(balance: 0)
 
     response = nil
-    assert_no_difference -> { Episode.count } do
+    assert_difference -> { Episode.count }, 1 do
       assert_no_difference -> { CreditTransaction.count } do
         response = CreateEpisodeFromUrlTool.call(
           url: "https://example.com/article",
@@ -17,9 +23,8 @@ class CreateEpisodeFromUrlToolTest < ActiveSupport::TestCase
       end
     end
 
-    assert response.error?, "Response should be flagged as an error"
-    payload = JSON.parse(response.content.first[:text])
-    assert_equal "insufficient_credits", payload["error"]
+    refute response.error?,
+      "URL MCP submission must not fail at gate time — cost is deferred until fetch"
   end
 
   test "credit user with balance 1 creates URL episode without syncing debit (defers to job)" do

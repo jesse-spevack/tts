@@ -272,4 +272,74 @@ class CreatesEpisodeTest < ActiveSupport::TestCase
     assert_nil verify(times: 0) { |m| RecordsEpisodeUsage.call(user: m.any) }
     assert_nil verify(times: 0) { |m| DebitsEpisodeCredit.call(user: m.any, episode: m.any, cost_in_credits: m.numeric) }
   end
+
+  # --- credit_cost persistence (agent-team-gafe / 0rwa absorbed) -------------
+
+  test "persists credit_cost = cost_in_credits for a credit user" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 5)
+    stubs { |_m| CreatesPasteEpisode.call(podcast: @podcast, user: credit_user, text: "hi", title: nil, author: nil, source_url: nil) }
+      .with { Result.success(@episode) }
+
+    CreatesEpisode.call(
+      user: credit_user,
+      podcast: @podcast,
+      source_type: "text",
+      params: { text: "hi" },
+      cost_in_credits: 2
+    )
+
+    assert_equal 2, @episode.reload.credit_cost
+  end
+
+  test "persists credit_cost = 0 for a free-tier user (no debit applies)" do
+    free = users(:free_user)
+    stubs { |_m| CreatesPasteEpisode.call(podcast: @podcast, user: free, text: "hi", title: nil, author: nil, source_url: nil) }
+      .with { Result.success(@episode) }
+
+    CreatesEpisode.call(
+      user: free,
+      podcast: @podcast,
+      source_type: "text",
+      params: { text: "hi" },
+      cost_in_credits: 1
+    )
+
+    assert_equal 0, @episode.reload.credit_cost
+  end
+
+  test "persists credit_cost = 0 for an unlimited user" do
+    unlimited = users(:unlimited_user)
+    stubs { |_m| CreatesPasteEpisode.call(podcast: @podcast, user: unlimited, text: "hi", title: nil, author: nil, source_url: nil) }
+      .with { Result.success(@episode) }
+
+    CreatesEpisode.call(
+      user: unlimited,
+      podcast: @podcast,
+      source_type: "text",
+      params: { text: "hi" },
+      cost_in_credits: 2
+    )
+
+    assert_equal 0, @episode.reload.credit_cost
+  end
+
+  test "persists credit_cost = nil (deferred) when cost_in_credits is nil for URL" do
+    # ProcessesUrlEpisode writes the real credit_cost post-extract once the
+    # article length is known.
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 2)
+    stubs { |_m| CreatesUrlEpisode.call(podcast: @podcast, user: credit_user, url: "https://example.com/a") }
+      .with { Result.success(@episode) }
+
+    CreatesEpisode.call(
+      user: credit_user,
+      podcast: @podcast,
+      source_type: "url",
+      params: { url: "https://example.com/a" },
+      cost_in_credits: nil
+    )
+
+    assert_nil @episode.reload.credit_cost
+  end
 end

@@ -46,6 +46,7 @@ class CreatesEpisode
     result = dispatch
     return result if result.failure?
 
+    result.data.update!(credit_cost: initial_credit_cost)
     RecordsEpisodeUsage.call(user: user)
     DebitsEpisodeCredit.call(user: user, episode: result.data, cost_in_credits: cost_in_credits)
 
@@ -55,6 +56,17 @@ class CreatesEpisode
   private
 
   attr_reader :user, :podcast, :source_type, :params, :cost_in_credits
+
+  # Credits to persist on Episode#credit_cost at submit:
+  # - URL source: nil (deferred — ProcessesUrlEpisode writes post-extract)
+  # - Complimentary / unlimited / free-tier: 0 (no debit applies)
+  # - Credit users: cost_in_credits (anticipated == actual on debit success)
+  def initial_credit_cost
+    return nil if cost_in_credits.nil?
+    return 0 if user.complimentary? || user.unlimited? || user.free?
+
+    cost_in_credits
+  end
 
   def dispatch
     case source_type

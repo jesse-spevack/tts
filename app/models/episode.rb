@@ -74,6 +74,18 @@ class Episode < ApplicationRecord
     )
   end
 
+  # Overrides SynthesizableContent#cost to read from the persisted credit_cost
+  # column (agent-team-0rwa, absorbed by agent-team-gafe). Returns a Cost:
+  #   credit_cost IS NULL  → Cost.deferred (URL submitted, fetch pending)
+  #   credit_cost == 0     → Cost.none     (free tier / complimentary / unlimited)
+  #   credit_cost > 0      → Cost.credits(n)
+  def cost
+    return Cost.deferred if credit_cost.nil?
+    return Cost.none if credit_cost.zero?
+
+    Cost.credits(credit_cost)
+  end
+
   private
 
   def source_url_required?

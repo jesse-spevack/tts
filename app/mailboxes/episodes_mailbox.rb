@@ -25,14 +25,16 @@ class EpisodesMailbox < ApplicationMailbox
 
     body = email_content
     cost = CalculatesAnticipatedEpisodeCost.call(
-      user: user,
-      source_type: CreatesEpisode::SOURCE_EMAIL,
-      text: body
+      EpisodeCostRequest.new(
+        user: user,
+        source_type: CreatesEpisode::SOURCE_EMAIL,
+        text: body
+      )
     ).data
 
     permission_result = ChecksEpisodeCreationPermission.call(
       user: user,
-      anticipated_cost: cost
+      anticipated_cost: cost.credits
     )
     unless permission_result.success?
       log_warn "email_episode_permission_denied",
@@ -47,7 +49,7 @@ class EpisodesMailbox < ApplicationMailbox
       podcast: user.primary_podcast,
       source_type: CreatesEpisode::SOURCE_EMAIL,
       params: { text: body },
-      cost_in_credits: cost
+      cost_in_credits: cost.credits
     )
 
     if result.success?

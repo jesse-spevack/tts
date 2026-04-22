@@ -72,4 +72,37 @@ class EpisodesHelperTest < ActionView::TestCase
     episode = Episode.new(source_text_length: nil)
     assert_nil processing_eta(episode)
   end
+
+  # --- episode_cost_label (agent-team-gafe) ----------------------------------
+  #
+  # Branches by account state + Episode#cost (backed by credit_cost column):
+  #   - complimentary / unlimited           → "Included"
+  #   - credit_cost IS NULL (URL deferred)  → "Checking credit cost..."
+  #   - credit_cost == 0 (free tier)        → "Free tier episode"
+  #   - credit_cost > 0                     → "1 credit" / "2 credits"
+
+  test "episode_cost_label returns 'Checking credit cost...' for deferred URL episode" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "Pending URL", author: "Author",
+      description: "desc", source_type: :url,
+      source_url: "https://example.com/article", status: :preparing
+    )
+    # credit_cost defaults to NULL on a fresh URL episode pre-extract.
+    assert_nil episode.credit_cost
+
+    assert_equal "Checking credit cost...", episode_cost_label(episode)
+  end
+
+  test "episode_cost_label returns 'Included' for unlimited user regardless of credit_cost" do
+    unlimited = users(:unlimited_user)
+    episode = unlimited.primary_podcast.episodes.create!(
+      user: unlimited, title: "Whatever", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 120, status: :complete, credit_cost: 0
+    )
+
+    assert_equal "Included", episode_cost_label(episode)
+  end
 end

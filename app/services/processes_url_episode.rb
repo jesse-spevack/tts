@@ -64,23 +64,31 @@ class ProcessesUrlEpisode
   # ExtractsArticle. Without this the controller would uniformly debit
   # 1 credit, under-charging Premium voice + >20k articles.
   def deduct_credit
-    return if user.complimentary? || user.unlimited?
+    if user.complimentary? || user.unlimited? || user.free?
+      episode.update!(credit_cost: 0)
+      return
+    end
 
     cost = CalculatesAnticipatedEpisodeCost.call(
-      user: user,
-      source_type: "text",
-      source_text_length: @extract_result.data.character_count
+      EpisodeCostRequest.new(
+        user: user,
+        source_type: "url",
+        source_text_length: @extract_result.data.character_count
+      )
     ).data
 
-    result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost)
-    return if result.success?
+    result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost.credits)
+    if result.success?
+      episode.update!(credit_cost: cost.credits)
+      return
+    end
 
     log_warn "insufficient_credits_for_url_episode",
-      cost: cost,
+      cost: cost.credits,
       balance: user.credits_remaining
 
     raise EpisodeErrorHandling::ProcessingError,
-      "Insufficient credits: this article needs #{cost} #{'credit'.pluralize(cost)} " \
+      "Insufficient credits: this article needs #{cost.credits} #{'credit'.pluralize(cost.credits)} " \
       "but you have #{user.credits_remaining}. Buy more at " \
       "#{AppConfig::Domain::BASE_URL}/billing"
   end
