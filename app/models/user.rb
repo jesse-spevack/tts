@@ -47,6 +47,10 @@ class User < ApplicationRecord
     has_credits? && !premium?
   end
 
+  def paid?
+    premium? || credit_user?
+  end
+
   # Single predicate for "this user sees the credit-cost preview" (agent-team-gq88).
   #
   # Used on both the view (new-episode form) and the cost_preview endpoint to
