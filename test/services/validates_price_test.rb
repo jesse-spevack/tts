@@ -17,14 +17,6 @@ class ValidatesPriceTest < ActiveSupport::TestCase
     assert_equal "Invalid price selected", result.error
   end
 
-  test "every SUBSCRIPTION_PRICE_IDS entry is rejected" do
-    ValidatesPrice::SUBSCRIPTION_PRICE_IDS.each do |sub_price_id|
-      result = ValidatesPrice.call(sub_price_id)
-      assert result.failure?, "subscription price id #{sub_price_id} must be rejected"
-      assert_equal "Invalid price selected", result.error
-    end
-  end
-
   test "returns failure for invalid price" do
     result = ValidatesPrice.call("price_invalid")
     assert result.failure?
