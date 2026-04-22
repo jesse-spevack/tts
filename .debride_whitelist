@@ -150,3 +150,13 @@ marketing_cta_path
 #   named contract method on the concern.
 # ---------------------------------------------------------------------------
 cost
+
+# ---------------------------------------------------------------------------
+# Cost value object (app/models/cost.rb, agent-team-gafe).
+#
+# - Cost#eql? — aliased to Cost#== so hash-key semantics work (Ruby calls
+#   #eql? + #hash when comparing hash keys). Exercised by
+#   test/models/cost_test.rb "can be used as a hash key", and implicitly
+#   anywhere Cost values go into Set or Hash keys.
+# ---------------------------------------------------------------------------
+eql?
