@@ -49,9 +49,4 @@ class Cost
   def ==(other)
     other.is_a?(Cost) && other.kind == kind && other.credits == credits
   end
-  alias_method :eql?, :==
-
-  def hash
-    [ self.class, kind, credits ].hash
-  end
 end

@@ -70,15 +70,6 @@ class CostTest < ActiveSupport::TestCase
     refute_equal Cost.deferred, nil
   end
 
-  test "can be used as a hash key" do
-    counts = Hash.new(0)
-    counts[Cost.credits(1)] += 1
-    counts[Cost.credits(1)] += 1
-    counts[Cost.credits(2)] += 1
-    assert_equal 2, counts[Cost.credits(1)]
-    assert_equal 1, counts[Cost.credits(2)]
-  end
-
   # --- Immutability ---------------------------------------------------------
 
   test "instances are frozen" do
