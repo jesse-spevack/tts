@@ -5,9 +5,10 @@ import { Controller } from "@hotwired/stimulus"
 // Hits POST /api/internal/episodes/cost_preview with the current source-type
 // inputs and updates the preview element with human-readable copy:
 //
-//   credit user, sufficient  → "This will cost N credit(s). You have M remaining."
-//   credit user, insufficient → "Not enough credits. Costs N, you have M. Buy more."
-//   free tier                 → "Included — doesn't use credits."
+//   credit user, URL (deferred) → "Checking credit cost..."
+//   credit user, sufficient     → "This will cost N credit(s). You have M remaining."
+//   credit user, insufficient   → "Not enough credits. Costs N, you have M. Buy more."
+//   free tier                   → "Included — doesn't use credits."
 //
 // Debounces text-input events at 250ms to avoid chatty requests while typing.
 // Errors are swallowed (preview reverts to em-dash) so a failed preview never
@@ -16,8 +17,7 @@ import { Controller } from "@hotwired/stimulus"
 // Listens for `tab-switch:changed` (dispatched by tab_switch_controller) so
 // switching from Paste→URL→Upload resets the preview and re-triggers it for
 // the newly-active tab's current input. Without this, the preview shows
-// stale copy from the previous tab (e.g. "2 credits" from a long paste
-// while the user is now looking at the URL tab where cost is always 1).
+// stale copy from the previous tab.
 export default class extends Controller {
   static targets = ["preview", "pasteText", "urlField", "uploadField"]
   static values = {
@@ -121,14 +121,14 @@ export default class extends Controller {
       }
 
       const body = await response.json()
-      this._renderPayload(body, payload.source_type)
+      this._renderPayload(body)
     } catch (err) {
       if (err.name === "AbortError") return
       this._setPreview("—")
     }
   }
 
-  _renderPayload(body, sourceType) {
+  _renderPayload(body) {
     if (body.free_tier) {
       this._setPreview("Included — doesn't use credits.")
       return
@@ -137,18 +137,19 @@ export default class extends Controller {
     const cost = body.cost
     const balance = body.balance
     const sufficient = body.sufficient
+
+    // Cost is null for URL source — real article length isn't known until
+    // FetchesArticleContent runs post-submit in ProcessesUrlEpisode. Match
+    // the show-page's deferred label so the user sees consistent copy.
+    if (cost === null) {
+      this._setPreview("Checking credit cost...")
+      return
+    }
+
     const creditWord = cost === 1 ? "credit" : "credits"
 
     if (sufficient) {
-      // URL previews always return cost=1 because real length isn't known
-      // until the article is fetched. A long Premium-voice article can
-      // end up costing 2 — surface that caveat so the preview doesn't
-      // lie to the user.
-      if (sourceType === "url") {
-        this._setPreview(`~${cost} ${creditWord} (final cost depends on article length — long Premium-voice articles may cost 2). You have ${balance} remaining.`)
-      } else {
-        this._setPreview(`This will cost ${cost} ${creditWord}. You have ${balance} remaining.`)
-      }
+      this._setPreview(`This will cost ${cost} ${creditWord}. You have ${balance} remaining.`)
     } else {
       const node = document.createElement("span")
       node.append(`Not enough credits. This costs ${cost}, you have ${balance}. `)
