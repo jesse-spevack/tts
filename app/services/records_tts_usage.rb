@@ -28,18 +28,12 @@ class RecordsTtsUsage
   end
 
   def call
-    voice_tier = AppConfig::Tts.tier_for(@voice_id)
+    voice_tier = GetsVoiceTier.tier_for(@voice_id)
     cost_cents = ComputesTtsCost.call(voice_tier: voice_tier, character_count: @character_count)
 
-    # Idempotent upsert keyed on the polymorphic `usable` (agent-team-ete2).
-    # GeneratesEpisodeAudio records usage before the GCS upload / feed
-    # upload steps, any of which can raise a TransientAudioErrors error and
-    # trigger a full job retry. The retry re-invokes RecordsTtsUsage for
-    # the same episode; a raw create! would hit the (usable_type, usable_id)
-    # unique index and raise RecordNotUnique. find_or_initialize_by paired
-    # with save! keeps the row at most once per usable and lets the latest
-    # synth's billed figures win (chunk-level failures between retries can
-    # shift the billed character count).
+    # Idempotent on retry: GeneratesEpisodeAudio can re-enter after a
+    # transient upload failure, so let the latest synth's figures win
+    # instead of colliding on the unique (usable_type, usable_id) index.
     usage = TtsUsage.find_or_initialize_by(usable: @usable)
     was_new = usage.new_record?
     usage.assign_attributes(

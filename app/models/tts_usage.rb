@@ -1,11 +1,4 @@
 class TtsUsage < ApplicationRecord
-  # cost_cents is an integer — intentional divergence from
-  # LlmUsage.cost_cents, which uses decimal(10, 4) for sub-cent LLM token
-  # math. TTS COGS round cleanly at the cent boundary (COST_CENTS_PER_MILLION
-  # is {standard: 400, premium: 3_000}, both whole cents per million chars)
-  # and aligns with Mpp::PRICE_PREMIUM_CENTS plus every other _cents column
-  # in the schema. Keep it integer; convert at the edges if fractional-cent
-  # math is ever needed here. (agent-team-a23y)
   SOURCES = %w[actual estimate].freeze
   VOICE_TIERS = %w[standard premium].freeze
 
