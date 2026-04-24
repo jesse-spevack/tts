@@ -60,23 +60,20 @@
 <% end %>
 
 <%# Call To Action %>
-<% about_cta_classes = "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 bg-mist-950 text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+<% about_cta_classes = marketing_primary_button_classes("px-7 py-3.5") %>
 <% about_cta = if authenticated?
      link_to("Try PodRead free", new_episode_path, class: about_cta_classes)
    else
      tag.button("Try PodRead free", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: about_cta_classes)
    end %>
+<%
+  chevron_svg = tag.svg(tag.path(d: "M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z", fill_rule: "evenodd", clip_rule: "evenodd"), width: "5", height: "8", viewBox: "0 0 5 8", fill: "currentColor", role: "image", class: "inline-block shrink-0")
+  pricing_link = link_to(safe_join(["View pricing ", chevron_svg]), "/#pricing", class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white")
+%>
 <%= render "shared/marketing/cta_simple",
   headline: "Ready to listen to your reading list?",
   subheadline: tag.p("Try PodRead free. Two episodes a month, no credit card required. Upgrade anytime for unlimited episodes and premium voices."),
-  cta: tag.div(class: "flex items-center gap-4") do
-    safe_join([
-      about_cta,
-      link_to("/#pricing", class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full text-sm/7 font-medium px-7 py-3.5 text-mist-950 dark:text-white") do
-        safe_join(["View pricing ", tag.svg(tag.path(d: "M.22.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L1.28 7.78A.75.75 0 01.22 6.72L2.94 4 .22 1.28a.75.75 0 010-1.06z", fill_rule: "evenodd", clip_rule: "evenodd"), width: "5", height: "8", viewBox: "0 0 5 8", fill: "currentColor", role: "image", class: "inline-block shrink-0")])
-      end
-    ])
-  end %>
+  cta: tag.div(safe_join([about_cta, pricing_link]), class: "flex items-center gap-4") %>
 
 <%# ===== Footer (link categories) ===== %>
 <%= render "shared/marketing/footer_categories",

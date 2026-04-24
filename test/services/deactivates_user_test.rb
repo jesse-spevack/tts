@@ -224,6 +224,77 @@ class DeactivatesUserTest < ActiveSupport::TestCase
       "no forfeit transaction should be persisted after rollback"
   end
 
+  # agent-team-h60: DeleteEpisodeJob must be gated on transaction commit so
+  # the user is not left in a still-active state while delete jobs fire.
+  test "enqueues no DeleteEpisodeJob when user.update! raises" do
+    podcast = podcasts(:one)
+    2.times do |i|
+      Episode.create!(
+        user: @user,
+        podcast: podcast,
+        title: "Episode #{i}",
+        author: "Test Author",
+        description: "Test description",
+        source_type: :url,
+        source_url: "https://example.com/#{i}",
+        status: :complete
+      )
+    end
+
+    def @user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    assert_no_enqueued_jobs only: DeleteEpisodeJob do
+      DeactivatesUser.call(user: @user)
+    end
+  end
+
+  # agent-team-h60: CancelsUserSubscriptionJob must also be gated on commit.
+  test "enqueues no CancelsUserSubscriptionJob when user.update! raises" do
+    def @user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    assert_no_enqueued_jobs only: CancelsUserSubscriptionJob do
+      DeactivatesUser.call(user: @user)
+    end
+  end
+
+  # agent-team-k15: persist a durable audit row inside the same transaction.
+  test "creates a Deactivation audit row inside the transaction" do
+    freeze_time do
+      assert_difference -> { Deactivation.where(user: @user).count }, 1 do
+        DeactivatesUser.call(user: @user)
+      end
+
+      record = Deactivation.where(user: @user).last
+      assert_equal Time.current, record.deactivated_at
+    end
+  end
+
+  test "does not create a Deactivation audit row when update! raises" do
+    def @user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    assert_no_difference -> { Deactivation.where(user: @user).count } do
+      DeactivatesUser.call(user: @user)
+    end
+  end
+
+  test "leaves user.active unchanged when update! raises" do
+    assert @user.active, "fixture precondition"
+
+    def @user.update!(*)
+      raise ActiveRecord::RecordInvalid.new(self)
+    end
+
+    DeactivatesUser.call(user: @user)
+
+    assert @user.reload.active, "user.active should remain true after rollback"
+  end
+
   test "rolls back all cleanup steps when user.update! raises" do
     api_token = GeneratesApiToken.call(user: @user)
     session = @user.sessions.create!(ip_address: "1.2.3.4", user_agent: "test")

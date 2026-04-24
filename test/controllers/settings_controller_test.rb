@@ -119,6 +119,44 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert @user.reload.email_episode_confirmation?
   end
 
+  # --- Email confirmation toggle accessibility (agent-team-wk6) ---
+  #
+  # Hand-rolled toggle in app/views/settings/show.html.erb. Must be announced
+  # as a switch to screen readers and must respect prefers-reduced-motion.
+
+  test "email confirmation toggle has role=switch and aria-checked reflecting state (on)" do
+    EnablesEmailEpisodes.call(user: @user)
+    @user.update!(email_episode_confirmation: true)
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#email input[type=checkbox][name=email_episode_confirmation][role=switch][aria-checked=true]"
+  end
+
+  test "email confirmation toggle has aria-checked=false when preference is off" do
+    EnablesEmailEpisodes.call(user: @user)
+    @user.update!(email_episode_confirmation: false)
+
+    get settings_path
+
+    assert_response :success
+    assert_select "section#email input[type=checkbox][name=email_episode_confirmation][role=switch][aria-checked=false]"
+  end
+
+  test "email confirmation toggle respects prefers-reduced-motion" do
+    EnablesEmailEpisodes.call(user: @user)
+
+    get settings_path
+
+    assert_response :success
+    # Tailwind's motion-safe: variant gates the transition on users without
+    # prefers-reduced-motion: reduce. Presence on the track is enough to
+    # guarantee reduced-motion users don't get the slide animation.
+    assert_select "section#email span.motion-safe\\:transition-colors"
+    assert_select "section#email span.motion-safe\\:after\\:transition-transform"
+  end
+
   # --- Billing card: inline plan + renewal + price (agent-team-bwz) ---
   #
   # Card only renders for premium users (Current.user.premium? — active sub,

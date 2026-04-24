@@ -15,7 +15,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_new",
       customer: "cus_new",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i
     )
 
@@ -32,7 +32,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     subscription = Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_existing",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.week.from_now
     )
@@ -41,7 +41,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_existing",
       customer: "cus_existing",
       status: "past_due",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i
     )
 
@@ -59,7 +59,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_canceled",
       customer: "cus_canceled",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -76,7 +76,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_trial",
       customer: "cus_trial",
       status: "trialing",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i
     )
 
@@ -94,7 +94,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_cancel_at",
       customer: "cus_cancel_at",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at: cancel_timestamp
     )
@@ -113,7 +113,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_period_end",
       customer: "cus_period_end",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: period_end,
       cancel_at_period_end: true
     )
@@ -131,7 +131,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_not_canceling",
       customer: "cus_not_canceling",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: false,
       cancel_at: nil
@@ -148,7 +148,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_cancel_email",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.month.from_now,
       cancel_at: nil
@@ -158,7 +158,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_cancel_email",
       customer: "cus_cancel_email",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: true
     )
@@ -173,7 +173,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_already_canceling",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.month.from_now,
       cancel_at: 1.month.from_now
@@ -183,7 +183,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_already_canceling",
       customer: "cus_already_canceling",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: true
     )
@@ -200,7 +200,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_new_active",
       customer: "cus_new_active",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: false
     )
@@ -215,7 +215,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_ended",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.day.ago
     )
@@ -224,7 +224,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_ended",
       customer: "cus_ended",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -238,7 +238,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_already_canceled",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :canceled,
       current_period_end: 1.day.ago
     )
@@ -247,7 +247,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_already_canceled",
       customer: "cus_already_canceled",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -261,7 +261,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_past_due_ended",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :past_due,
       current_period_end: 1.day.ago
     )
@@ -270,7 +270,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_past_due_ended",
       customer: "cus_past_due_ended",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -284,7 +284,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_immediate",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.day.ago,
       cancel_at: nil
@@ -294,7 +294,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_immediate",
       customer: "cus_immediate",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i,
       cancel_at: 1.day.ago.to_i
     )
@@ -312,7 +312,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_new_canceled",
       customer: "cus_new_canceled",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -326,7 +326,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_cancel_race",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.month.from_now,
       cancel_at: nil
@@ -336,7 +336,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_cancel_race",
       customer: "cus_cancel_race",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: true
     )
@@ -362,7 +362,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_ended_race",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.day.ago
     )
@@ -371,7 +371,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_ended_race",
       customer: "cus_ended_race",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
@@ -395,7 +395,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_cancel_commit",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.month.from_now,
       cancel_at: nil
@@ -405,7 +405,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_cancel_commit",
       customer: "cus_cancel_commit",
       status: "active",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.month.from_now.to_i,
       cancel_at_period_end: true
     )
@@ -433,7 +433,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_ended_commit",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.day.ago
     )
@@ -442,7 +442,7 @@ class SyncsSubscriptionTest < ActiveSupport::TestCase
       id: "sub_ended_commit",
       customer: "cus_ended_commit",
       status: "canceled",
-      price_id: "price_monthly",
+      price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       current_period_end: 1.day.ago.to_i
     )
 
