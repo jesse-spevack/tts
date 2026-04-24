@@ -28,11 +28,15 @@ class RecordsTtsUsage
   end
 
   def call
-    voice_tier = AppConfig::Tts.tier_for(@voice_id)
+    voice_tier = GetsVoiceTier.tier_for(@voice_id)
     cost_cents = ComputesTtsCost.call(voice_tier: voice_tier, character_count: @character_count)
 
-    usage = TtsUsage.create!(
-      usable: @usable,
+    # Idempotent on retry: GeneratesEpisodeAudio can re-enter after a
+    # transient upload failure, so let the latest synth's figures win
+    # instead of colliding on the unique (usable_type, usable_id) index.
+    usage = TtsUsage.find_or_initialize_by(usable: @usable)
+    was_new = usage.new_record?
+    usage.assign_attributes(
       provider: @provider,
       voice_id: @voice_id,
       voice_tier: voice_tier,
@@ -40,6 +44,7 @@ class RecordsTtsUsage
       cost_cents: cost_cents,
       source: @source
     )
+    usage.save!
 
     log_info "tts_usage_recorded",
              tts_usage_id: usage.id,
@@ -49,7 +54,8 @@ class RecordsTtsUsage
              voice_tier: voice_tier,
              character_count: @character_count,
              cost_cents: cost_cents,
-             source: @source
+             source: @source,
+             action: was_new ? "created" : "updated"
 
     usage
   end

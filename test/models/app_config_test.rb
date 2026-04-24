@@ -243,20 +243,4 @@ class AppConfigTest < ActiveSupport::TestCase
   test "Tts::COST_CENTS_PER_MILLION premium rate is 3000 (= $30/M chars)" do
     assert_equal 3_000, AppConfig::Tts::COST_CENTS_PER_MILLION["premium"]
   end
-
-  test "Tts.tier_for Chirp3-HD voice returns premium" do
-    assert_equal "premium", AppConfig::Tts.tier_for("en-GB-Chirp3-HD-Enceladus")
-    assert_equal "premium", AppConfig::Tts.tier_for("en-US-Chirp3-HD-Callirrhoe")
-  end
-
-  test "Tts.tier_for Standard voice returns standard" do
-    assert_equal "standard", AppConfig::Tts.tier_for("en-GB-Standard-D")
-    assert_equal "standard", AppConfig::Tts.tier_for("en-US-Standard-C")
-  end
-
-  test "Tts.tier_for unknown voice defaults to standard" do
-    assert_equal "standard", AppConfig::Tts.tier_for("en-US-Neural2-F")
-    assert_equal "standard", AppConfig::Tts.tier_for(nil)
-    assert_equal "standard", AppConfig::Tts.tier_for("")
-  end
 end
