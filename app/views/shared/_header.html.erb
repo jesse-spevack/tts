@@ -31,7 +31,7 @@
       <div class="flex flex-1 items-center justify-end gap-4">
         <div class="flex shrink-0 items-center gap-5">
           <% if authenticated? %>
-            <%= link_to new_episode_path, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200 max-sm:hidden" do %>
+            <%= link_to new_episode_path, class: marketing_primary_button_classes(extra: "max-sm:hidden") do %>
               + New Episode
             <% end %>
 

@@ -62,6 +62,21 @@ module UiHelper
     :empty_state
   end
 
+  # Shared Tailwind classes for the marketing primary CTA button/link.
+  # Used by home/about/blog/header to keep the pill-shaped dark button
+  # style consistent. Pass a sizing fragment (e.g. "px-4 py-1.5" or
+  # "px-5 py-2.5") to control button size per context.
+  def marketing_primary_button_classes(sizing = "px-4 py-1.5", extra: nil)
+    [
+      "inline-flex shrink-0 items-center justify-center gap-1 rounded-full",
+      "bg-mist-950 text-white hover:bg-mist-800",
+      "dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200",
+      "text-sm/7 font-medium",
+      sizing,
+      extra
+    ].compact.join(" ")
+  end
+
   # Destination for a marketing CTA when the user is already authenticated.
   # Mirrors SessionsController#post_login_path so signed-in clicks land
   # where a just-authenticated user would via the signup modal. pack_size

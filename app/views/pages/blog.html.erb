@@ -28,12 +28,12 @@
     </p>
     <% if authenticated? %>
       <%= link_to "+ New Episode", new_episode_path,
-            class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-5 py-2.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+            class: marketing_primary_button_classes("px-5 py-2.5") %>
     <% else %>
       <%= tag.button "Create your first episode",
             type: "button",
             data: { action: "click->signup-modal#open", plan: "free" },
-            class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-5 py-2.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+            class: marketing_primary_button_classes("px-5 py-2.5") %>
     <% end %>
   </div>
 </section>
