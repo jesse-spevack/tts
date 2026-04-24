@@ -19,6 +19,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resource :analytics, only: [ :show ], controller: "analytics"
+    resource :metrics, only: [ :show ], controller: "metrics"
     resource :processing_times, only: [ :show ], controller: "processing_times"
     resource :demo_mode, only: [ :create ], controller: "demo_modes"
   end
