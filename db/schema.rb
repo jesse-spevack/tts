@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_050243) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -84,6 +84,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000000) do
     t.index ["transaction_type"], name: "index_credit_transactions_on_transaction_type"
     t.index ["user_id", "episode_id"], name: "idx_credit_transactions_usage_unique", unique: true, where: "transaction_type = 'usage'"
     t.index ["user_id"], name: "index_credit_transactions_on_user_id"
+  end
+
+  create_table "deactivations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deactivated_at", null: false
+    t.string "reason"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_deactivations_on_user_id"
   end
 
   create_table "device_codes", force: :cascade do |t|
@@ -369,6 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_000000) do
   add_foreign_key "credit_balances", "users"
   add_foreign_key "credit_transactions", "episodes"
   add_foreign_key "credit_transactions", "users"
+  add_foreign_key "deactivations", "users"
   add_foreign_key "device_codes", "users"
   add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "mpp_payments"
