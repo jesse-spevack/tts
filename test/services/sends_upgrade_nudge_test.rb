@@ -36,7 +36,7 @@ class SendsUpgradeNudgeTest < ActiveSupport::TestCase
   end
 
   test "does not send to premium user" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
 
     assert_no_enqueued_emails do
       result = SendsUpgradeNudge.call(user: premium_user)

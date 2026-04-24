@@ -75,7 +75,7 @@ class ChecksEpisodeRateLimitTest < ActiveSupport::TestCase
   end
 
   test "applies to all user types including premium" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
     create_recent_episodes(20, user: premium_user)
 
     result = ChecksEpisodeRateLimit.call(user: premium_user)

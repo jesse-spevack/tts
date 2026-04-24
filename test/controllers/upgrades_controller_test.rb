@@ -17,12 +17,6 @@ class UpgradesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to billing_path
   end
 
-  test "show redirects subscriber to billing" do
-    sign_in_as(users(:subscriber))
-    get upgrade_path
-    assert_redirected_to billing_path
-  end
-
   test "show redirects credit user to billing" do
     sign_in_as(users(:credit_user))
     get upgrade_path

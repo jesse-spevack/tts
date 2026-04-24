@@ -88,28 +88,18 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 5, AppConfig::Network::DNS_TIMEOUT_SECONDS
   end
 
-  test "Stripe module has price constants" do
-    assert_equal "test_price_monthly", AppConfig::Stripe::PRICE_ID_MONTHLY
-    assert_equal "test_price_annual", AppConfig::Stripe::PRICE_ID_ANNUAL
+  # --- Subscription pricing constants are gone post-winddown (agent-team-9rt7) ---
+  # PRICE_ID_MONTHLY, PRICE_ID_ANNUAL, and PLAN_INFO are deleted.
+  test "legacy PRICE_ID_MONTHLY constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PRICE_ID_MONTHLY }
   end
 
-  # --- PLAN_INFO map (agent-team-bwz) ---
-  # Behavior is primarily tested via Subscription#plan_name and
-  # Subscription#plan_display_price. These tests assert the module contract:
-  # a frozen lookup keyed by Stripe price ID that returns nil for unknown keys.
-
-  test "PLAN_INFO is a frozen hash" do
-    assert_kind_of Hash, AppConfig::Stripe::PLAN_INFO
-    assert AppConfig::Stripe::PLAN_INFO.frozen?, "PLAN_INFO must be frozen"
+  test "legacy PRICE_ID_ANNUAL constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PRICE_ID_ANNUAL }
   end
 
-  test "PLAN_INFO is keyed by stripe price id" do
-    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_MONTHLY
-    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_ANNUAL
-  end
-
-  test "PLAN_INFO returns nil for unknown price id" do
-    assert_nil AppConfig::Stripe::PLAN_INFO["price_does_not_exist"]
+  test "legacy PLAN_INFO constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PLAN_INFO }
   end
 
   # --- Credits::PACKS catalog (agent-team-qc7t) ---

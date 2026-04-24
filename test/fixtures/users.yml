@@ -29,32 +29,7 @@ jesse:
   email_address: jesse@example.com
   account_type: 0
 
-subscriber:
-  email_address: subscriber@example.com
-  account_type: 0
-  stripe_customer_id: cus_test_active
-
-canceled_subscriber:
-  email_address: canceled@example.com
-  account_type: 0
-  stripe_customer_id: cus_test_canceled
-
-past_due_subscriber:
-  email_address: pastdue@example.com
-  account_type: 0
-  stripe_customer_id: cus_test_past_due
-
-canceling_subscriber:
-  email_address: canceling@example.com
-  account_type: 0
-  stripe_customer_id: cus_test_canceling
-
 credit_user:
   email_address: credit@example.com
   account_type: 0
   stripe_customer_id: cus_test_credit
-
-annual_subscriber:
-  email_address: annual@example.com
-  account_type: 0
-  stripe_customer_id: cus_test_annual

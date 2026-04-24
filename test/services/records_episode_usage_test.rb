@@ -5,7 +5,7 @@ class RecordsEpisodeUsageTest < ActiveSupport::TestCase
 
   setup do
     @free_user = users(:free_user)
-    @premium_user = users(:subscriber)
+    @premium_user = users(:complimentary_user)
   end
 
   test "creates usage record and increments for free user" do

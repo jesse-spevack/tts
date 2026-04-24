@@ -71,12 +71,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   # Premium/Free status tests
-  test "premium? returns true for user with active subscription" do
-    user = users(:subscriber)
-    assert user.premium?
-  end
-
-  test "premium? returns false for user without subscription" do
+  test "premium? returns false for free user" do
     user = users(:free_user)
     refute user.premium?
   end
@@ -91,19 +86,9 @@ class UserTest < ActiveSupport::TestCase
     assert user.premium?
   end
 
-  test "premium? returns false for user with canceled subscription" do
-    user = users(:canceled_subscriber)
-    refute user.premium?
-  end
-
-  test "free? returns true for standard user without subscription" do
+  test "free? returns true for standard user without credits" do
     user = users(:free_user)
     assert user.free?
-  end
-
-  test "free? returns false for user with active subscription" do
-    user = users(:subscriber)
-    refute user.free?
   end
 
   test "free? returns false for complimentary user" do
@@ -122,7 +107,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   # credit_user? tests
-  test "credit_user? returns true for user with credits and no subscription" do
+  test "credit_user? returns true for user with credits and not premium" do
     user = users(:credit_user)
     assert user.credit_user?
   end
@@ -133,8 +118,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "credit_user? returns false for premium user with credits" do
-    user = users(:subscriber)
-    # Give subscriber some credits
+    user = users(:complimentary_user)
     CreditBalance.create!(user: user, balance: 5)
     refute user.credit_user?
   end
@@ -143,7 +127,7 @@ class UserTest < ActiveSupport::TestCase
   # UI and endpoint. Unlike credit_user?, this returns true even when the
   # balance is zero, so depleted credit users still see the preview with
   # a "Buy more" CTA instead of the free-tier copy.
-  test "on_credit_path? returns true for user with credits and no subscription" do
+  test "on_credit_path? returns true for user with credits" do
     user = users(:credit_user)
     assert user.on_credit_path?
   end
@@ -160,16 +144,6 @@ class UserTest < ActiveSupport::TestCase
     refute user.on_credit_path?
   end
 
-  test "on_credit_path? returns false for active subscriber even with credit_balance row" do
-    # Regression guard: subscriber with a historical credit_balance must
-    # NOT be on_credit_path, or the cost_preview endpoint would leak
-    # their balance to direct fetches even though the UI hides the preview.
-    user = users(:subscriber)
-    CreditBalance.create!(user: user, balance: 5)
-    refute user.on_credit_path?,
-      "Active subscribers must never be on_credit_path? regardless of credit history — this would leak balance via the cost_preview endpoint"
-  end
-
   test "on_credit_path? returns false for complimentary user" do
     user = users(:complimentary_user)
     refute user.on_credit_path?
@@ -178,14 +152,6 @@ class UserTest < ActiveSupport::TestCase
   test "on_credit_path? returns false for unlimited user" do
     user = users(:unlimited_user)
     refute user.on_credit_path?
-  end
-
-  test "on_credit_path? returns true for canceled subscriber with credit_balance" do
-    # A user whose subscription is canceled (not active) is no longer premium,
-    # so if they have any credit_balance row they're back on the credit path.
-    user = users(:canceled_subscriber)
-    CreditBalance.create!(user: user, balance: 3)
-    assert user.on_credit_path?
   end
 
   # Voice tests
@@ -198,13 +164,6 @@ class UserTest < ActiveSupport::TestCase
 
   test "voice returns Chirp3-HD voice for unlimited user with no preference" do
     user = users(:unlimited_user)
-    user.voice_preference = nil
-
-    assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
-  end
-
-  test "voice returns Chirp3-HD voice for premium subscriber with no preference" do
-    user = users(:subscriber)
     user.voice_preference = nil
 
     assert_equal "en-GB-Chirp3-HD-Enceladus", user.voice
@@ -328,12 +287,6 @@ class UserTest < ActiveSupport::TestCase
     assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
   end
 
-  test "available_voices returns PREMIUM_VOICES for premium user" do
-    user = users(:subscriber)
-
-    assert_equal AppConfig::Tiers::PREMIUM_VOICES, user.available_voices
-  end
-
   test "available_voices returns PREMIUM_VOICES for credit user" do
     user = users(:credit_user)
 
@@ -353,7 +306,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "credits_remaining returns 0 for user without credit_balance" do
-    user = users(:subscriber)
+    user = users(:complimentary_user)
     assert_equal 0, user.credits_remaining
   end
 
@@ -368,7 +321,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "has_credits? returns false for user without credit_balance" do
-    user = users(:subscriber)
+    user = users(:complimentary_user)
     refute user.has_credits?
   end
 

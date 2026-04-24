@@ -21,7 +21,7 @@ class CreditBalanceTest < ActiveSupport::TestCase
   end
 
   test ".for creates balance for user without one" do
-    user = users(:subscriber)
+    user = users(:complimentary_user)
     assert_nil user.credit_balance
 
     balance = CreditBalance.for(user)

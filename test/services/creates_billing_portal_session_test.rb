@@ -2,7 +2,7 @@ require "test_helper"
 
 class CreatesBillingPortalSessionTest < ActiveSupport::TestCase
   setup do
-    @user = users(:subscriber)
+    @user = users(:credit_user)
     Stripe.api_key = "sk_test_fake"
   end
 
