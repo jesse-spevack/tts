@@ -2,11 +2,23 @@
   When authenticated: "+ New Episode" link + "Logout" button.
   When not: "Login" link + "Get started" signup-modal trigger.
   Intended to be passed as the `actions:` local to shared/marketing/navbar_centered_links.
+
+  Styling notes:
+  - Logout intentionally uses button_to (renders a <form>) to match the
+    authenticated shared/_header.html.erb pattern. The <form> is a flex
+    child of .flex.items-center.gap-5 in _navbar_centered_links and the
+    inner <button> carries the text styling; gap layout is visually
+    equivalent to the pre-existing authenticated header.
+  - max-lg:hidden / max-sm:hidden from shared/_header.html.erb are
+    intentionally NOT copied here. The marketing navbar's mobile dialog
+    does render actions (see _navbar_centered_links.html.erb line ~112),
+    so hiding them on narrow viewports would leave mobile users with no
+    way to log out or reach New Episode.
 %>
 <% if authenticated? %>
-  <%= link_to "+ New Episode", new_episode_path, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+  <%= link_to "+ New Episode", new_episode_path, class: marketing_primary_button_classes %>
   <%= button_to "Logout", session_path, method: :delete, class: "text-sm/7 font-medium text-mist-950 dark:text-white cursor-pointer" %>
 <% else %>
   <%= link_to "Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white" %>
-  <%= tag.button "Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+  <%= tag.button "Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: marketing_primary_button_classes %>
 <% end %>
