@@ -38,7 +38,7 @@ class GetsVoiceTierTest < ActiveSupport::TestCase
       Rails.logger = original_logger
     end
 
-    refute_match(/voice_tier_lookup_missed/, output.string)
+    refute_match(/tts_tier_lookup_missed/, output.string)
   end
 
   test "returns :standard without logging when effective_voice is empty string" do
@@ -53,7 +53,7 @@ class GetsVoiceTierTest < ActiveSupport::TestCase
       Rails.logger = original_logger
     end
 
-    refute_match(/voice_tier_lookup_missed/, output.string)
+    refute_match(/tts_tier_lookup_missed/, output.string)
   end
 
   # --- catalog miss ---
@@ -72,7 +72,7 @@ class GetsVoiceTierTest < ActiveSupport::TestCase
     end
 
     logs = output.string
-    assert_match(/event=voice_tier_lookup_missed/, logs)
+    assert_match(/event=tts_tier_lookup_missed/, logs)
     assert_match(/google_voice=not-a-real-voice/, logs)
   end
 

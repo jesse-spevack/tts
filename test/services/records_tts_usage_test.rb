@@ -87,4 +87,51 @@ class RecordsTtsUsageTest < ActiveSupport::TestCase
     assert_instance_of TtsUsage, result
     assert_equal episode, result.usable
   end
+
+  # --- idempotency on retry (agent-team-ete2) ---
+  #
+  # GeneratesEpisodeAudio#call records usage after a successful synth, then
+  # continues with GCS upload / duration / feed upload. Any of those can
+  # raise a TransientAudioErrors::TRANSIENT_ERRORS which triggers a job
+  # retry. The retry re-invokes the entire service, including a second
+  # RecordsTtsUsage.call for the same usable. The (usable_type, usable_id)
+  # unique index must not turn that retry into a RecordNotUnique.
+
+  test "second call for the same usable does not raise and does not create a duplicate" do
+    episode = episodes(:one)
+
+    assert_difference -> { TtsUsage.count }, 1 do
+      2.times do
+        RecordsTtsUsage.call(
+          usable: episode,
+          voice_id: "en-GB-Standard-D",
+          character_count: 1_000
+        )
+      end
+    end
+  end
+
+  test "second call overwrites the first with the later (authoritative) billed figures" do
+    # Chunk-level failures between retries can shift the billed character
+    # count — the latest successful synth is the truth.
+    episode = episodes(:one)
+
+    RecordsTtsUsage.call(
+      usable: episode,
+      voice_id: "en-GB-Standard-D",
+      character_count: 1_000
+    )
+    RecordsTtsUsage.call(
+      usable: episode,
+      voice_id: "en-GB-Chirp3-HD-Enceladus",
+      character_count: 2_000
+    )
+
+    usage = TtsUsage.find_by!(usable: episode)
+    assert_equal "en-GB-Chirp3-HD-Enceladus", usage.voice_id
+    assert_equal "premium", usage.voice_tier
+    assert_equal 2_000, usage.character_count
+    # premium @ 2000 chars: 2000 * 3000 / 1_000_000 = 6
+    assert_equal 6, usage.cost_cents
+  end
 end

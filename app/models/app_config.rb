@@ -147,12 +147,31 @@ class AppConfig
       "premium" => 3_000
     }.freeze
 
-    # Voice IDs containing this substring are Google's premium Chirp3-HD tier.
-    PREMIUM_VOICE_PATTERN = /Chirp3-HD/i
-
+    # Catalog-driven tier resolution. Voice::CATALOG is the authoritative
+    # source — each entry knows its own tier. A regex fallback
+    # (pre-agent-team-s5jo) silently under-billed by 8x whenever Google
+    # shipped a new premium family (Studio, Neural2, future Chirp4, etc.)
+    # that landed in Voice::CATALOG but didn't match /Chirp3-HD/. Unknown
+    # voice_ids default to "standard" (conservative accounting) and emit
+    # a structured warn so catalog drift is observable rather than silent.
     def self.tier_for(google_voice_id)
-      return "premium" if google_voice_id.to_s.match?(PREMIUM_VOICE_PATTERN)
+      return "standard" if google_voice_id.to_s.empty?
+
+      tier = tier_by_google_voice[google_voice_id]
+      return tier.to_s if tier
+
+      Rails.logger.warn "event=tts_tier_lookup_missed google_voice=#{google_voice_id}"
       "standard"
+    end
+
+    # Reverse index: google_voice string → tier symbol. Built once from
+    # Voice::CATALOG and frozen. Rails reloads constants in dev, which
+    # resets this memo alongside the catalog.
+    def self.tier_by_google_voice
+      @tier_by_google_voice ||= Voice::CATALOG.each_key.each_with_object({}) do |key, h|
+        entry = Voice.find(key)
+        h[entry.google_voice] = entry.tier if entry
+      end.freeze
     end
   end
 

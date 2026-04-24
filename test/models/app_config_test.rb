@@ -259,4 +259,51 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal "standard", AppConfig::Tts.tier_for(nil)
     assert_equal "standard", AppConfig::Tts.tier_for("")
   end
+
+  # --- catalog-driven lookup (agent-team-s5jo) ---
+
+  test "Tts.tier_for returns the tier from Voice::CATALOG for every catalog entry" do
+    # Every key in Voice::CATALOG must round-trip through tier_for via its
+    # google_voice. This is the guard against tier_for drifting away from
+    # Voice::CATALOG when new voices are added.
+    Voice::CATALOG.each_key do |key|
+      voice = Voice.find(key)
+      expected_tier = voice.tier.to_s
+      actual_tier = AppConfig::Tts.tier_for(voice.google_voice)
+      assert_equal expected_tier, actual_tier,
+        "Expected #{voice.google_voice} (#{key}) to resolve to #{expected_tier}, got #{actual_tier}"
+    end
+  end
+
+  test "Tts.tier_for logs a structured warning when voice_id is not in Voice::CATALOG" do
+    # A voice ID that matches Google's premium pattern but is not in our
+    # catalog is still a drift signal — under-billing today (standard fallback)
+    # is preferable to silent misclassification, but the miss must be visible.
+    output = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(output)
+    begin
+      AppConfig::Tts.tier_for("en-US-Neural2-F")
+    ensure
+      Rails.logger = original_logger
+    end
+
+    assert_match(/event=tts_tier_lookup_missed/, output.string)
+    assert_match(/google_voice=en-US-Neural2-F/, output.string)
+  end
+
+  test "Tts.tier_for does not warn for blank voice_id (pre-synth path)" do
+    # Blank input is the normal pre-synth path; don't spam logs.
+    output = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(output)
+    begin
+      AppConfig::Tts.tier_for(nil)
+      AppConfig::Tts.tier_for("")
+    ensure
+      Rails.logger = original_logger
+    end
+
+    refute_match(/tts_tier_lookup_missed/, output.string)
+  end
 end
