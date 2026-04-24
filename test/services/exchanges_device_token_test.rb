@@ -69,4 +69,33 @@ class ExchangesDeviceTokenTest < ActiveSupport::TestCase
     assert second_result.failure?
     assert_equal "expired_token", second_result.error
   end
+
+  # agent-team-u5l: a device_code that was confirmed before the user was
+  # deactivated must NOT mint a token — even though the token would die on
+  # the next API request, leaking a token at all is inconsistent with the
+  # "all auth surfaces reject deactivated users" guarantee.
+  test "returns failure when the confirmed user is deactivated" do
+    dc = device_codes(:confirmed)
+    dc.user.update!(active: false)
+
+    result = ExchangesDeviceToken.call(device_code: dc)
+
+    assert result.failure?
+    assert_equal "expired_token", result.error
+  end
+
+  test "does not call GeneratesApiToken when the confirmed user is deactivated" do
+    dc = device_codes(:confirmed)
+    dc.user.update!(active: false)
+
+    Mocktail.replace(GeneratesApiToken)
+    stubs { |m| GeneratesApiToken.call(user: m.any) }.with { raise "must not be called" }
+
+    result = ExchangesDeviceToken.call(device_code: dc)
+
+    assert result.failure?
+    # No exception reached us — proves the stub was never triggered.
+    dc.reload
+    assert_nil dc.token_digest, "token_digest must not be written for deactivated users"
+  end
 end

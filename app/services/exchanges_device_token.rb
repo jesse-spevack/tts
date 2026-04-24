@@ -25,6 +25,14 @@ class ExchangesDeviceToken
         return Result.failure("expired_token")
       end
 
+      # agent-team-u5l: reject device_codes whose user has been deactivated
+      # between confirmation and exchange. Mirrors the deactivated? guard
+      # used in Api::V1::BaseController and McpController so all auth
+      # surfaces fail closed for deactivated users.
+      if @device_code.user.deactivated?
+        return Result.failure("expired_token")
+      end
+
       api_token = GeneratesApiToken.call(user: @device_code.user)
       @device_code.update!(token_digest: HashesToken.call(plain_token: api_token.plain_token))
 

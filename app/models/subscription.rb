@@ -21,7 +21,18 @@ class Subscription < ApplicationRecord
 
   private
 
+  # Returns the PLAN_INFO entry for this subscription's stripe_price_id, or
+  # nil when AppConfig::Stripe::PLAN_INFO has drifted from live Stripe price
+  # IDs (e.g. a price ID was rotated or a new plan was added without
+  # updating AppConfig). agent-team-01q.1: emit a structured warning on
+  # miss so drift surfaces in logs instead of silently returning nil.
   def plan_info
-    AppConfig::Stripe::PLAN_INFO[stripe_price_id]
+    info = AppConfig::Stripe::PLAN_INFO[stripe_price_id]
+    if info.nil?
+      Rails.logger.warn(
+        "event=subscription_plan_info_miss user_id=#{user_id} stripe_price_id=#{stripe_price_id}"
+      )
+    end
+    info
   end
 end

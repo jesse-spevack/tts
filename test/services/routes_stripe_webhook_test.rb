@@ -21,7 +21,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_test",
           status: "active",
           cancel_at_period_end: false,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
@@ -42,7 +42,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     subscription = Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_test",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.week.from_now
     )
@@ -55,7 +55,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_test",
           status: "past_due",
           cancel_at_period_end: false,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
@@ -77,7 +77,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     subscription = Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_deleted",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.week.from_now
     )
@@ -90,7 +90,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_del",
           status: "canceled",
           cancel_at_period_end: false,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.day.ago.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.day.ago.to_i } ] }
         }.to_json
       )
 
@@ -112,7 +112,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     subscription = Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_failed",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.week.from_now
     )
@@ -125,7 +125,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_fail",
           status: "past_due",
           cancel_at_period_end: false,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
@@ -213,7 +213,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           customer: "cus_welcome",
           status: "active",
           cancel_at_period_end: false,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
@@ -232,7 +232,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
     Subscription.create!(
       user: @user,
       stripe_subscription_id: "sub_cancel",
-      stripe_price_id: "price_monthly",
+      stripe_price_id: AppConfig::Stripe::PRICE_ID_MONTHLY,
       status: :active,
       current_period_end: 1.month.from_now
     )
@@ -246,7 +246,7 @@ class RoutesStripeWebhookTest < ActiveSupport::TestCase
           status: "active",
           cancel_at_period_end: true,
           current_period_end: 1.month.from_now.to_i,
-          items: { data: [ { price: { id: "price_monthly" }, current_period_end: 1.month.from_now.to_i } ] }
+          items: { data: [ { price: { id: AppConfig::Stripe::PRICE_ID_MONTHLY }, current_period_end: 1.month.from_now.to_i } ] }
         }.to_json
       )
 
