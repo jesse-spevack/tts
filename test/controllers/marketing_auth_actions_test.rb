@@ -3,6 +3,8 @@
 require "test_helper"
 
 class MarketingAuthActionsTest < ActionDispatch::IntegrationTest
+  include SessionTestHelper
+
   MARKETING_PATHS = %w[/home /blog /about /terms /privacy].freeze
 
   # --- Navbar (all 5 pages) ---
@@ -84,8 +86,6 @@ class MarketingAuthActionsTest < ActionDispatch::IntegrationTest
     end
 
     # No credit-pack signup-modal buttons should remain for authenticated users.
-    # (agent-team-x4e6 tracks a pre-existing bug in the final-CTA block
-    # rendering — not covered here.)
     assert_select "button[data-action*=signup-modal][data-plan=credit_pack]", count: 0
   end
 
@@ -96,5 +96,68 @@ class MarketingAuthActionsTest < ActionDispatch::IntegrationTest
     AppConfig::Credits::PACKS.each do |pack|
       assert_select "button[data-action*=signup-modal][data-plan=credit_pack][data-pack-size=?]", pack[:size].to_s, text: "Buy #{pack[:label]}"
     end
+  end
+
+  # --- Final CTA block (home + about) — regression coverage for agent-team-x4e6 ---
+  # The final CTA used to render an empty <div class="flex items-center gap-4"></div>
+  # because a nested link_to-with-block inside safe_join inside tag.div-with-block
+  # confused Rails' capture/output-buffer interaction. These tests lock in that
+  # both the primary CTA and the secondary "see more" link render inside the
+  # flex row.
+
+  test "home final CTA renders primary button and secondary link when logged out" do
+    get "/home"
+    assert_response :success
+    assert_select "div.flex.items-center.gap-4" do
+      assert_select "button[data-action*=signup-modal][data-plan=free]", text: "Start listening free"
+      assert_select "a[href='#features']", text: /See how it works/
+    end
+  end
+
+  test "home final CTA renders primary link and secondary link when authenticated" do
+    sign_in_as(users(:one))
+    get "/home"
+    assert_response :success
+    assert_select "div.flex.items-center.gap-4" do
+      assert_select "a[href=?]", new_episode_path, text: "Start listening free"
+      assert_select "a[href='#features']", text: /See how it works/
+    end
+  end
+
+  test "about final CTA renders primary button and secondary link when logged out" do
+    get "/about"
+    assert_response :success
+    assert_select "div.flex.items-center.gap-4" do
+      assert_select "button[data-action*=signup-modal][data-plan=free]", text: "Try PodRead free"
+      assert_select "a[href='/#pricing']", text: /View pricing/
+    end
+  end
+
+  test "about final CTA renders primary link and secondary link when authenticated" do
+    sign_in_as(users(:one))
+    get "/about"
+    assert_response :success
+    assert_select "div.flex.items-center.gap-4" do
+      assert_select "a[href=?]", new_episode_path, text: "Try PodRead free"
+      assert_select "a[href='/#pricing']", text: /View pricing/
+    end
+  end
+
+  # --- Behavioral logout test (agent-team-rl97) ---
+  # The other tests assert the Logout form RENDERS. This test exercises the
+  # form: DELETE /session must actually terminate the session, so a subsequent
+  # marketing page renders as logged-out.
+
+  test "posting to the logout form ends the session" do
+    sign_in_as(users(:one))
+    get "/home"
+    assert_select "nav a[href=?]", new_episode_path, text: /New Episode/
+
+    delete session_path
+    follow_redirect!
+
+    get "/home"
+    assert_select "nav a[href=?]", login_path, text: "Login"
+    assert_select "nav a[href=?]", new_episode_path, count: 0
   end
 end
