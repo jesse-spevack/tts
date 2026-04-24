@@ -675,7 +675,7 @@ module Api
         # direct fetch would return the credit payload and leak their
         # historical balance. on_credit_path? closes that leak by
         # excluding premium? users regardless of credit history.
-        subscriber = users(:subscriber)
+        subscriber = users(:complimentary_user)
         subscriber.update!(voice_preference: "callum")
         CreditBalance.create!(user: subscriber, balance: 42)
         sign_in_as(subscriber)

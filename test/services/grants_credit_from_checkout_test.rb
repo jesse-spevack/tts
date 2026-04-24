@@ -20,7 +20,7 @@ class GrantsCreditFromCheckoutTest < ActiveSupport::TestCase
   # as long as these behaviors hold.
 
   setup do
-    @user = users(:subscriber)
+    @user = users(:complimentary_user)
     @user.update!(stripe_customer_id: "cus_credit_#{SecureRandom.hex(4)}")
   end
 
@@ -84,22 +84,6 @@ class GrantsCreditFromCheckoutTest < ActiveSupport::TestCase
     after_balance = @user.credit_balance&.reload&.balance || 0
     assert_equal before_balance, after_balance,
       "balance must not change when price id is unknown"
-  end
-
-  test "does not grant credits for a subscription price id" do
-    session = OpenStruct.new(
-      id: "cs_subscription_leak_#{SecureRandom.hex(4)}",
-      customer: @user.stripe_customer_id,
-      metadata: OpenStruct.new(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY)
-    )
-
-    before_balance = @user.credit_balance&.balance || 0
-
-    result = GrantsCreditFromCheckout.call(session: session)
-
-    assert result.failure?, "subscription price must not grant credits"
-    after_balance = @user.credit_balance&.reload&.balance || 0
-    assert_equal before_balance, after_balance
   end
 
   test "returns failure when no user found for customer" do

@@ -307,7 +307,7 @@ module Api
         json = response.parsed_body
         assert_equal "Payment required", json["error"]
         assert_equal 0, json["credits_remaining"]
-        assert_equal false, json["subscription_active"]
+        assert_equal false, json["paid_user"]
         assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
       end
 
@@ -396,10 +396,10 @@ module Api
         assert_equal "#{AppConfig::Domain::BASE_URL}/billing", json["upgrade_url"]
       end
 
-      test "create returns 201 for subscriber with bearer token and debits credit" do
-        # Subscribers now need credits like anyone else — only complimentary
-        # and unlimited account_types bypass credit deduction.
-        subscriber = users(:subscriber)
+      test "create returns 201 for credit user with bearer token and debits credit" do
+        # Credit users need credits — only complimentary and unlimited
+        # account_types bypass credit deduction.
+        subscriber = users(:credit_user)
         CreditBalance.for(subscriber).update!(balance: 3)
         token = GeneratesApiToken.call(user: subscriber)
 
@@ -420,10 +420,11 @@ module Api
         assert_equal 2, transaction.balance_after
       end
 
-      test "create returns 402 for subscriber with zero credits" do
+      test "create returns 402 for credit user with zero credits" do
         # Regression guard for the subscription-bypass removal. Previously,
-        # subscribers with 0 credits silently got free episodes.
-        subscriber = users(:subscriber)
+        # subscribers with 0 credits silently got free episodes. Credit
+        # users without a balance fall through to the 402.
+        subscriber = users(:credit_user)
         CreditBalance.for(subscriber).update!(balance: 0)
         token = GeneratesApiToken.call(user: subscriber)
 

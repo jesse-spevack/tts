@@ -10,7 +10,7 @@ class CreateEpisodeFromUrlToolTest < ActiveSupport::TestCase
   # the async job handles the real debit once FetchesArticleContent knows the
   # length, and fails the episode async if balance falls short at that point.
   test "URL MCP submission defers the cost gate (pkbe) and creates the episode" do
-    subscriber = users(:subscriber)
+    subscriber = users(:complimentary_user)
     CreditBalance.for(subscriber).update!(balance: 0)
 
     response = nil

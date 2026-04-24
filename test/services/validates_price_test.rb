@@ -2,20 +2,9 @@ require "test_helper"
 
 class ValidatesPriceTest < ActiveSupport::TestCase
   # Subscription price ids were retired as valid checkout inputs in the
-  # 2026-04 pricing pivot (agent-team-633o). Any subscription price id hitting
-  # /checkout must now be rejected before CreatesCheckoutSession runs so the
-  # subscription checkout branch is unreachable from the public route.
-  test "returns failure for monthly subscription price" do
-    result = ValidatesPrice.call(AppConfig::Stripe::PRICE_ID_MONTHLY)
-    assert result.failure?, "monthly subscription price id must not validate"
-    assert_equal "Invalid price selected", result.error
-  end
-
-  test "returns failure for annual subscription price" do
-    result = ValidatesPrice.call(AppConfig::Stripe::PRICE_ID_ANNUAL)
-    assert result.failure?, "annual subscription price id must not validate"
-    assert_equal "Invalid price selected", result.error
-  end
+  # 2026-04 pricing pivot (agent-team-633o) and the subscription code was
+  # fully removed in agent-team-9rt7. Only credit-pack price ids now
+  # validate as acceptable checkout inputs.
 
   test "returns failure for invalid price" do
     result = ValidatesPrice.call("price_invalid")
@@ -27,10 +16,6 @@ class ValidatesPriceTest < ActiveSupport::TestCase
     result = ValidatesPrice.call(nil)
     assert result.failure?
     assert_equal "Invalid price selected", result.error
-  end
-
-  test "credit_pack? returns false for subscription price" do
-    refute ValidatesPrice.credit_pack?(AppConfig::Stripe::PRICE_ID_MONTHLY)
   end
 
   # --- Multi-pack credit price ids (agent-team-qc7t) ---

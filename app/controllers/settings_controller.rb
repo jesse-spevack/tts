@@ -8,7 +8,6 @@ class SettingsController < ApplicationController
     @selected_voice = Current.user.voice_preference
     @email_ingest_address = Current.user.email_ingest_address
     @connected_apps = ListsConnectedOauthApplications.call(user: Current.user)
-    @subscription = Current.user.subscription
   end
 
   def update

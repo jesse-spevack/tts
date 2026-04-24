@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 # Anonymize-in-place account deactivation. Rotates the user's identifiable
-# data to a sentinel value, flips active=false, and enqueues blob/Stripe
-# cleanup so the synchronous path commits immediately.
+# data to a sentinel value, flips active=false, and enqueues blob cleanup
+# so the synchronous path commits immediately.
 #
 # Order matters:
 #   1. Sessions destroyed (forces logout everywhere)
@@ -11,19 +11,17 @@
 #   4. Credit balance forfeited (transaction recorded; balance zeroed)
 #   5. Email rotated, auth/ingest tokens nulled, active=false (the thing
 #      that makes future auth fail)
-#   6. (Post-commit) Episode blob cleanup + Stripe subscription cancellation
-#      enqueued as background jobs.
+#   6. (Post-commit) Episode blob cleanup enqueued as background jobs.
 #
 # Email rotation happens LAST inside the transaction because once the
 # unique-constrained email_address is mutated, a re-signup with the original
 # address succeeds naturally — that path must not race against any of the
 # cleanup above.
 #
-# Background jobs (DeleteEpisodeJob, CancelsUserSubscriptionJob) are
-# enqueued ONLY after the transaction commits (agent-team-h60). Enqueuing
-# them inside the transaction would let them fire — and destroy blobs or
-# cancel Stripe — even if the deactivation rolled back, leaving the user
-# still active but with data missing.
+# DeleteEpisodeJob is enqueued ONLY after the transaction commits
+# (agent-team-h60). Enqueuing it inside the transaction would let it fire —
+# and destroy blobs — even if the deactivation rolled back, leaving the
+# user still active but with data missing.
 class DeactivatesUser
   include StructuredLogging
 
@@ -66,7 +64,6 @@ class DeactivatesUser
     end
 
     episode_ids.each { |id| DeleteEpisodeJob.perform_later(episode_id: id) }
-    CancelsUserSubscriptionJob.perform_later(user_id: @user.id)
 
     log_info "user_deactivated", user_id: @user.id, episode_count: episode_ids.size
     Result.success(user: @user)

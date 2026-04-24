@@ -79,12 +79,6 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     assert grant.reload.revoked?
   end
 
-  test "enqueues CancelsUserSubscriptionJob exactly once" do
-    assert_enqueued_with(job: CancelsUserSubscriptionJob, args: [ { user_id: @user.id } ]) do
-      DeactivatesUser.call(user: @user)
-    end
-  end
-
   test "rotates email and sets active false" do
     original_id = @user.id
 
@@ -246,17 +240,6 @@ class DeactivatesUserTest < ActiveSupport::TestCase
     end
 
     assert_no_enqueued_jobs only: DeleteEpisodeJob do
-      DeactivatesUser.call(user: @user)
-    end
-  end
-
-  # agent-team-h60: CancelsUserSubscriptionJob must also be gated on commit.
-  test "enqueues no CancelsUserSubscriptionJob when user.update! raises" do
-    def @user.update!(*)
-      raise ActiveRecord::RecordInvalid.new(self)
-    end
-
-    assert_no_enqueued_jobs only: CancelsUserSubscriptionJob do
       DeactivatesUser.call(user: @user)
     end
   end

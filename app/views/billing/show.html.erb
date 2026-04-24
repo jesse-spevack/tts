@@ -27,37 +27,6 @@
             </div>
             <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">You have complimentary premium access.</p>
 
-          <% elsif @subscription&.active? %>
-            <div class="flex items-center gap-3">
-              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
-              <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-500/10 dark:text-green-400">Active</span>
-            </div>
-            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
-              <%= @subscription.canceling? ? "Ends" : "Renews" %> on <%= (@subscription.canceling? ? @subscription.cancel_at : @subscription.current_period_end).strftime("%B %-d, %Y") %>
-            </p>
-            <div class="mt-4">
-              <%= button_to "Manage Subscription", portal_session_path, class: button_classes(type: :secondary), data: { turbo: false } %>
-            </div>
-
-          <% elsif @subscription&.past_due? %>
-            <div class="flex items-center gap-3">
-              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
-              <span class="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400">Past Due</span>
-            </div>
-            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">Please update your payment method to restore Premium access.</p>
-            <div class="mt-4">
-              <%= button_to "Fix Payment", portal_session_path, class: button_classes(type: :primary), data: { turbo: false } %>
-            </div>
-
-          <% elsif @subscription&.canceled? %>
-            <div class="flex items-center gap-3">
-              <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Premium</h3>
-              <span class="inline-flex items-center rounded-full bg-mist-100 px-2 py-1 text-xs font-medium text-mist-600 dark:bg-mist-500/10 dark:text-mist-400">Canceled</span>
-            </div>
-            <p class="mt-2 text-sm/6 text-mist-500 dark:text-mist-400">
-              Your subscription ended on <%= @subscription.current_period_end.strftime("%B %-d, %Y") %>.
-            </p>
-
           <% elsif Current.user.has_credits? %>
             <div class="flex items-center gap-3">
               <h3 class="text-lg font-semibold text-mist-950 dark:text-white">Free + Credits</h3>
@@ -80,18 +49,7 @@
       </div>
     </div>
 
-    <% if @subscription&.canceled? %>
-      <%# Resubscribe header retained for context; body offers credits instead of new subscription. %>
-      <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
-        <div>
-          <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">Resubscribe</h2>
-          <p class="mt-1 text-sm/6 text-mist-500 dark:text-mist-400">Pick up where you left off with a credit pack.</p>
-        </div>
-        <div class="md:col-span-2">
-          <%= render "credit_pack_options" %>
-        </div>
-      </div>
-    <% elsif Current.user.credit_user? || (Current.user.free? && @subscription.blank?) %>
+    <% if Current.user.credit_user? || Current.user.free? %>
       <div class="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
         <div>
           <h2 class="text-base/7 font-semibold text-mist-950 dark:text-white">

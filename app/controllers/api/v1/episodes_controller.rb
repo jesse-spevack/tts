@@ -125,7 +125,7 @@ module Api
         render json: {
           error: "Payment required",
           credits_remaining: current_user.credits_remaining,
-          subscription_active: current_user.premium?,
+          paid_user: current_user.paid?,
           upgrade_url: "#{AppConfig::Domain::BASE_URL}/billing"
         }, status: :payment_required
       end

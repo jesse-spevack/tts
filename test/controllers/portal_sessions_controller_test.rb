@@ -8,7 +8,7 @@ class PortalSessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create redirects to Stripe" do
-    user = users(:subscriber)
+    user = users(:credit_user)
     sign_in_as(user)
 
     stub_request(:post, "https://api.stripe.com/v1/billing_portal/sessions")

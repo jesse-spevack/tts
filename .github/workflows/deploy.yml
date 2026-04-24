@@ -54,8 +54,6 @@ jobs:
           fetch_secret STRIPE_SECRET_KEY stripe-secret-key
           fetch_secret STRIPE_PUBLISHABLE_KEY stripe-publishable-key
           fetch_secret STRIPE_WEBHOOK_SECRET stripe-webhook-secret
-          fetch_secret STRIPE_PRICE_ID_MONTHLY stripe-price-id-monthly
-          fetch_secret STRIPE_PRICE_ID_ANNUAL stripe-price-id-annual
           fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_5 stripe-price-id-credit-pack-5
           fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_10 stripe-price-id-credit-pack-10
           fetch_secret STRIPE_PRICE_ID_CREDIT_PACK_20 stripe-price-id-credit-pack-20
@@ -93,8 +91,6 @@ jobs:
           STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
           STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY
           STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET
-          STRIPE_PRICE_ID_MONTHLY=$STRIPE_PRICE_ID_MONTHLY
-          STRIPE_PRICE_ID_ANNUAL=$STRIPE_PRICE_ID_ANNUAL
           STRIPE_PRICE_ID_CREDIT_PACK_5=$STRIPE_PRICE_ID_CREDIT_PACK_5
           STRIPE_PRICE_ID_CREDIT_PACK_10=$STRIPE_PRICE_ID_CREDIT_PACK_10
           STRIPE_PRICE_ID_CREDIT_PACK_20=$STRIPE_PRICE_ID_CREDIT_PACK_20

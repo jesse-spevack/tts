@@ -8,20 +8,6 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     Stripe.api_key = "sk_test_fake"
   end
 
-  # Post-2026-04 pricing pivot (agent-team-633o): subscription price ids are no
-  # longer accepted by ValidatesPrice, so posting one to /checkout must bounce
-  # back to /billing with the same "Invalid price selected" alert any other
-  # unknown price id gets. This closes the live escape hatch Scout confirmed on
-  # agent-team-nt9f.
-  test "create with subscription price_id is rejected" do
-    sign_in_as(@user)
-
-    post checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
-
-    assert_redirected_to billing_path
-    assert_equal "Invalid price selected", flash[:alert]
-  end
-
   test "create with invalid price redirects back with error" do
     sign_in_as(@user)
 
@@ -32,7 +18,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create requires authentication" do
-    post checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
+    post checkout_path, params: { price_id: "some_price" }
 
     assert_redirected_to login_path(return_to: "/checkout")
   end
@@ -51,18 +37,6 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     get checkout_cancel_path
 
     assert_redirected_to billing_path
-  end
-
-  # GET /checkout?price_id=<SUB_ID> was the live escape hatch — confirmed
-  # reachable on agent-team-nt9f. After agent-team-633o it must bounce to
-  # /billing before CreatesCheckoutSession runs.
-  test "show with subscription price_id is rejected" do
-    sign_in_as(@user)
-
-    get checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
-
-    assert_redirected_to billing_path
-    assert_equal "Invalid price selected", flash[:alert]
   end
 
   test "show with invalid price redirects to billing with error" do
@@ -84,7 +58,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show requires authentication" do
-    get checkout_path, params: { price_id: AppConfig::Stripe::PRICE_ID_MONTHLY }
+    get checkout_path, params: { price_id: "some_price" }
 
     assert_redirected_to login_path(return_to: "/checkout")
   end

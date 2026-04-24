@@ -14,7 +14,6 @@ class User < ApplicationRecord
     class_name: "Doorkeeper::AccessToken",
     foreign_key: :resource_owner_id,
     dependent: :destroy
-  has_one :subscription, dependent: :destroy
   has_one :credit_balance, dependent: :destroy
   has_many :credit_transactions, dependent: :destroy
 
@@ -36,11 +35,11 @@ class User < ApplicationRecord
   end
 
   def premium?
-    subscription&.active? || complimentary? || unlimited?
+    complimentary? || unlimited?
   end
 
   def free?
-    standard? && !subscription&.active? && !has_credits?
+    standard? && !has_credits?
   end
 
   def credit_user?

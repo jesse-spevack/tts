@@ -383,9 +383,9 @@
           <!-- Path 1 -->
           <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 1</div>
-            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Subscriber / credits</h3>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Credits</h3>
             <p class="mt-1 font-mono text-xs text-mist-500 dark:text-mist-400">POST /api/v1/episodes</p>
-            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with an active subscription or remaining credits. No MPP. Free-tier users who are out of credits get a 402 pointing at the billing upgrade URL — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge.</p>
+            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with remaining credits. No MPP. Free-tier users who are out of credits get a 402 pointing at the billing upgrade URL — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge.</p>
             <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
               <div>Authorization:</div>
               <div class="pl-4">Bearer &lt;token&gt;</div>
@@ -452,7 +452,7 @@
 
         <!-- POST /api/v1/episodes -->
         <h3 class="mt-10 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/episodes</h3>
-        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 1 — Bearer-authenticated with active subscription or credits. The <code class="ic">voice</code> param is ignored; Episodes use the user's stored voice preference.</p>
+        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 1 — Bearer-authenticated with credits. The <code class="ic">voice</code> param is ignored; Episodes use the user's stored voice preference.</p>
 
         <%= render "docs/responsive_table",
           headers: ["Parameter", "Type", "Required", "Description"],
@@ -542,7 +542,7 @@
 
         <aside class="mt-8 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
           <strong class="font-semibold text-mist-950 dark:text-white">Where <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> is honored.</strong>
-          The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param is read on both MPP endpoints (<code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/narrations</code> and <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/episodes</code>). It is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> read on the subscriber-credits endpoint <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/api/v1/episodes</code> — there, Episodes use the user's stored voice preference.
+          The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param is read on both MPP endpoints (<code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/narrations</code> and <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/episodes</code>). It is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> read on the credits endpoint <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/api/v1/episodes</code> — there, Episodes use the user's stored voice preference.
         </aside>
       </section>
 
