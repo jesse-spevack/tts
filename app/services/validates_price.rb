@@ -14,8 +14,4 @@ class ValidatesPrice
       Result.failure("Invalid price selected")
     end
   end
-
-  def self.credit_pack?(price_id)
-    credit_pack_price_ids.include?(price_id)
-  end
 end
