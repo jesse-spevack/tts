@@ -44,6 +44,7 @@ Rails.application.routes.draw do
   get "blog", to: "pages#blog", as: :blog
   get "how-it-sounds", to: "pages#how_it_sounds"
   get "help/add-rss-feed", to: "pages#add_rss_feed", as: :help_add_rss_feed
+  get "help/splitting-articles", to: "pages#splitting_articles", as: :help_splitting_articles
   get "help/extension", to: "pages#extension_help", as: :help_extension
   get "help/cli", to: "pages#cli_help", as: :help_cli
   get "help/claude-code", to: "pages#claude_code_help", as: :help_claude_code

@@ -56,6 +56,10 @@ module EpisodesHelper
     episode.user_id == Current.user&.id
   end
 
+  def char_limit_failure?(episode)
+    episode.failed? && ValidatesCharacterLimit.error?(episode.error_message)
+  end
+
   # Per-episode cost label for the Details card on the show page.
   #
   # Branches by account state + episode cost (agent-team-gafe):

@@ -76,6 +76,7 @@ cli_help
 claude_code_help
 claude_help
 chatgpt_help
+splitting_articles
 post_login_path
 icons
 handle
