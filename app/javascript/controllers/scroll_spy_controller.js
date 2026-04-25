@@ -14,24 +14,33 @@ export default class extends Controller {
   static targets = ["step", "link"]
 
   connect() {
-    if (this.stepTargets.length === 0 || typeof IntersectionObserver === "undefined") return
+    if (this.stepTargets.length === 0) return
 
-    this.observer = new IntersectionObserver(
-      entries => this.#onIntersect(entries),
-      { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
-    )
-
-    this.stepTargets.forEach(step => this.observer.observe(step))
+    this.onScroll = () => this.#updateActive()
+    window.addEventListener("scroll", this.onScroll, { passive: true })
+    window.addEventListener("resize", this.onScroll, { passive: true })
+    this.#updateActive()
   }
 
   disconnect() {
-    this.observer?.disconnect()
+    window.removeEventListener("scroll", this.onScroll)
+    window.removeEventListener("resize", this.onScroll)
   }
 
-  #onIntersect(entries) {
-    const visible = entries.find(e => e.isIntersecting)
-    if (!visible) return
-    this.#activate(visible.target.dataset.step)
+  // Active step = the last one whose top has scrolled above the activation
+  // line (40% from the viewport top). Steps are evaluated in DOM order, so
+  // scrolling back to the top correctly reverts to step 1.
+  #updateActive() {
+    const activationLine = window.innerHeight * 0.4
+    let active = this.stepTargets[0]
+    for (const step of this.stepTargets) {
+      if (step.getBoundingClientRect().top <= activationLine) {
+        active = step
+      } else {
+        break
+      }
+    }
+    this.#activate(active.dataset.step)
   }
 
   #activate(step) {
