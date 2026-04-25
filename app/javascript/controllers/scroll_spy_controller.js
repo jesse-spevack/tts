@@ -1,51 +1,55 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Highlights the nav link whose `data-step` matches the section currently in
-// view. Used by the Splitting Long Articles help page.
+// Sets `aria-current="step"` on the nav link whose `data-step` matches the
+// section currently in view, and removes it from the others. Style the active
+// state in markup with the `aria-[current=step]:…` Tailwind variant.
 //
 // Usage:
-//   <section data-controller="scroll-spy"
-//            data-scroll-spy-active-class="font-medium text-mist-950"
-//            data-scroll-spy-inactive-class="text-mist-500">
-//     <a data-scroll-spy-target="link" data-step="1">…</a>
+//   <section data-controller="scroll-spy">
+//     <a data-scroll-spy-target="link" data-step="1"
+//        class="… aria-[current=step]:bg-mist-950 …">…</a>
 //     <article data-scroll-spy-target="step" data-step="1">…</article>
 //   </section>
 export default class extends Controller {
   static targets = ["step", "link"]
-  static classes = ["active", "inactive"]
 
   connect() {
-    if (this.stepTargets.length === 0 || typeof IntersectionObserver === "undefined") return
+    if (this.stepTargets.length === 0) return
 
-    this.observer = new IntersectionObserver(
-      entries => this.#onIntersect(entries),
-      { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
-    )
-
-    this.stepTargets.forEach(step => this.observer.observe(step))
+    this.onScroll = () => this.#updateActive()
+    window.addEventListener("scroll", this.onScroll, { passive: true })
+    window.addEventListener("resize", this.onScroll, { passive: true })
+    this.#updateActive()
   }
 
   disconnect() {
-    this.observer?.disconnect()
+    window.removeEventListener("scroll", this.onScroll)
+    window.removeEventListener("resize", this.onScroll)
   }
 
-  #onIntersect(entries) {
-    const visible = entries.find(e => e.isIntersecting)
-    if (!visible) return
-    this.#activate(visible.target.dataset.step)
+  // Active step = the last one whose top has scrolled above the activation
+  // line (40% from the viewport top). Steps are evaluated in DOM order, so
+  // scrolling back to the top correctly reverts to step 1.
+  #updateActive() {
+    const activationLine = window.innerHeight * 0.4
+    let active = this.stepTargets[0]
+    for (const step of this.stepTargets) {
+      if (step.getBoundingClientRect().top <= activationLine) {
+        active = step
+      } else {
+        break
+      }
+    }
+    this.#activate(active.dataset.step)
   }
 
   #activate(step) {
     this.linkTargets.forEach(link => {
-      const isActive = link.dataset.step === step
-      this.#applyClasses(link, isActive)
+      if (link.dataset.step === step) {
+        link.setAttribute("aria-current", "step")
+      } else {
+        link.removeAttribute("aria-current")
+      }
     })
-  }
-
-  #applyClasses(link, isActive) {
-    const add = isActive ? this.activeClasses : this.inactiveClasses
-    const remove = isActive ? this.inactiveClasses : this.activeClasses
-    link.classList.add(...add)
-    link.classList.remove(...remove)
   }
 }
