@@ -21,10 +21,10 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/mpp.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # MPP-scoped bead edits the file. Last bumped for agent-team-cd53
-  # (raise MPP Premium price from $1.00 to $1.50), replacing the
-  # pre-cd53 snapshot from agent-team-rwzy.
-  MPP_DOCS_SHA256 = "1524e574e5527722158214ff55f75c17ea947e6c2c9a64fb6ff75f541d6bb92b"
+  # MPP-scoped bead edits the file. Last bumped for agent-team-3ore
+  # (add 'Other clients' subsection — mppx + @stripe/link-cli
+  # positioning), replacing the pre-3ore snapshot from agent-team-cd53.
+  MPP_DOCS_SHA256 = "fb60b0c194c20598efb133163388a458ee90ddf71e86dbcc8c457709648304a7"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
