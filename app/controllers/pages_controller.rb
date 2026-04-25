@@ -26,6 +26,9 @@ class PagesController < ApplicationController
   def add_rss_feed
   end
 
+  def splitting_articles
+  end
+
   def extension_help
   end
 

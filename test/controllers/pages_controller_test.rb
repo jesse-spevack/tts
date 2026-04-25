@@ -99,4 +99,33 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     # The Starter-pack entry-point price from the rewritten FAQ.
     assert_match "$9.99 for 5 episodes", @body
   end
+
+  # --- Splitting Long Articles help page (agent-team-qc8o) -------------------
+  #
+  # Reached from the inline tip rendered on a failed-with-char-limit episode
+  # card. The page walks users through the paste-and-split workaround.
+
+  test "splitting articles help page renders successfully" do
+    get help_splitting_articles_path
+    assert_response :success
+  end
+
+  test "splitting articles help page mounts the scroll-spy controller" do
+    get help_splitting_articles_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 step articles for the scroll-spy to observe"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 steps"
+  end
+
+  test "splitting articles help page links to the paste form deep-link" do
+    get help_splitting_articles_path
+    assert_select %(a[href="#{new_episode_path(source: "paste")}"])
+  end
+
+  test "splitting articles is reachable from the help nav" do
+    get help_add_rss_feed_path
+    assert_select %(a[href="#{help_splitting_articles_path}"])
+  end
 end
