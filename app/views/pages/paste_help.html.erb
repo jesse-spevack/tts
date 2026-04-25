@@ -1,0 +1,182 @@
+<%= render layout: "shared/help_layout", locals: { current: :paste_help } do %>
+
+  <section class="pb-12" data-controller="scroll-spy">
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Paste text directly
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      If a URL doesn't work — paywall, dynamic content, or you just have raw
+      text — paste it directly and we'll convert it.
+    </p>
+
+    <%# Step jump-links. Active state is driven by aria-current="step",       %>
+    <%# set by the scroll-spy controller.                                     %>
+    <nav aria-label="Steps in this guide" class="mt-8 mb-10">
+      <ol role="list" class="flex flex-wrap gap-1 text-sm/5 text-mist-500 dark:text-mist-400">
+        <% steps = [
+             { n: 1, label: "Copy text" },
+             { n: 2, label: "Open paste tab" },
+             { n: 3, label: "Paste & title" },
+             { n: 4, label: "Wait for episode" }
+           ] %>
+        <% steps.each do |s| %>
+          <li>
+            <a href="#step-<%= s[:n] %>"
+               data-scroll-spy-target="link" data-step="<%= s[:n] %>"
+               class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-mist-500 hover:text-mist-950 hover:bg-mist-200/60 dark:text-mist-400 dark:hover:text-white dark:hover:bg-mist-800/60 aria-[current=step]:bg-mist-200 aria-[current=step]:text-mist-950 dark:aria-[current=step]:bg-mist-800 dark:aria-[current=step]:text-white">
+              <span class="tabular-nums"><%= s[:n] %>.</span>
+              <span><%= s[:label] %></span>
+            </a>
+          </li>
+        <% end %>
+      </ol>
+    </nav>
+
+    <%# Step body --------------------------------------------------------- %>
+    <ol role="list" class="space-y-12">
+
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Copy the text
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Select the article body in your browser, or grab text from a
+              document, note, or email.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <p class="text-xs/5 text-mist-700 dark:text-mist-300">
+                    The morning fog still hung over the bay when the team
+                    gathered at the dock.
+                    <span class="bg-mist-950/70 text-white dark:bg-white/80 dark:text-mist-950">They had spent weeks preparing for this run, checking lines, packing rations, and arguing about the best route through the channel.</span>
+                    By sunrise the boat was loaded and the engines were warm.
+                  </p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Open the Paste Text tab
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Click <strong class="text-mist-950 dark:text-white">+ New Episode</strong>,
+              then switch to <strong class="text-mist-950 dark:text-white">Paste Text</strong>.
+              The button at the bottom of this guide takes you straight there.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <nav class="flex gap-6 border-b border-mist-200 dark:border-mist-700">
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">From URL</span>
+                    <span class="border-b-2 border-mist-950 dark:border-white pb-2 text-sm font-medium text-mist-950 dark:text-white">Paste Text</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Upload File</span>
+                  </nav>
+                  <div class="mt-4 space-y-3">
+                    <div class="h-3 w-1/2 rounded bg-mist-100 dark:bg-mist-800"></div>
+                    <div class="h-32 w-full rounded-md border border-mist-200 dark:border-mist-700 bg-mist-50 dark:bg-mist-800/50"></div>
+                    <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                      Create Episode
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Add a title and paste your text
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Give it a clear title and drop the text in.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Title</p>
+                    <div class="rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 py-2 text-sm text-mist-950 dark:text-white">
+                      Notes from a meeting
+                    </div>
+                  </div>
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Text</p>
+                    <div class="h-24 overflow-hidden rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 p-3 text-xs/5 text-mist-700 dark:text-mist-300">
+                      <p>We opened with the quarterly numbers. Sales were up but margins compressed by the new freight contract. The team agreed to revisit pricing in six weeks...</p>
+                    </div>
+                    <p class="mt-1 text-xs text-mist-500 dark:text-mist-400 tabular-nums">
+                      <span class="text-mist-950 dark:text-white">3,420</span> / 15,000 characters
+                    </p>
+                  </div>
+                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                    Create Episode
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Episode appears in your feed
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              About a minute later it's playable.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">Notes from a meeting</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">3:18</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Open the paste form", new_episode_path(source: "paste"),
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+  </section>
+<% end %>
