@@ -35,6 +35,9 @@ class PagesController < ApplicationController
   def file_help
   end
 
+  def email_help
+  end
+
   def extension_help
   end
 

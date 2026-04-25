@@ -183,4 +183,28 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_file_path}"])
   end
+
+  # --- Email-articles help page (agent-team-e1sh / epic agent-team-dewz) ----
+
+  test "email help page renders successfully" do
+    get help_email_path
+    assert_response :success
+  end
+
+  test "email help page mounts the scroll-spy controller" do
+    get help_email_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4
+    assert_select %([data-scroll-spy-target="link"]), 4
+  end
+
+  test "email help page links to settings (where the user enables email episodes)" do
+    get help_email_path
+    assert_select %(a[href="#{settings_path}"])
+  end
+
+  test "email help is reachable from the help nav" do
+    get help_add_rss_feed_path
+    assert_select %(a[href="#{help_email_path}"])
+  end
 end
