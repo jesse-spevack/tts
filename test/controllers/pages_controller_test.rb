@@ -207,4 +207,25 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_email_path}"])
   end
+
+  # --- Browser extension help page (agent-team-3njp / epic agent-team-dewz) -
+
+  test "extension help page renders successfully" do
+    get help_extension_path
+    assert_response :success
+  end
+
+  test "extension help page mounts the scroll-spy controller" do
+    get help_extension_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 step articles for the scroll-spy to observe"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 steps"
+  end
+
+  test "extension help page links to the Chrome Web Store" do
+    get help_extension_path
+    assert_select %(a[href="#{AppConfig::Extension::CHROME_WEB_STORE_URL}"])
+  end
 end
