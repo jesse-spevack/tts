@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 
 class ValidatesCharacterLimit
+  ERROR_PREFIX = "exceeds your plan's"
+
   def self.call(user:, character_count:)
     new(user: user, character_count: character_count).call
+  end
+
+  # True when an episode's error_message was produced by this validator —
+  # used by the episode card to surface the split-and-paste tip.
+  def self.error?(error_message)
+    error_message.to_s.start_with?(ERROR_PREFIX)
   end
 
   def initialize(user:, character_count:)
@@ -26,7 +34,7 @@ class ValidatesCharacterLimit
   end
 
   def error_message
-    "exceeds your plan's #{limit.to_fs(:delimited)} character limit " \
+    "#{ERROR_PREFIX} #{limit.to_fs(:delimited)} character limit " \
     "(#{character_count.to_fs(:delimited)} characters)"
   end
 end

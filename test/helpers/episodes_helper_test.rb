@@ -105,4 +105,29 @@ class EpisodesHelperTest < ActionView::TestCase
 
     assert_equal "Included", episode_cost_label(episode)
   end
+
+  # --- char_limit_failure? -----------------------------------------------
+  # Detects the specific failure mode where the source content exceeded the
+  # user's tier character limit (ValidatesCharacterLimit#error_message).
+  # Used by the episode card to render an actionable split-and-paste tip.
+
+  test "char_limit_failure? is true when error_message matches the limit-exceeded prefix" do
+    episode = Episode.new(status: :failed, error_message: "exceeds your plan's 15,000 character limit (16,305 characters)")
+    assert char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false for other failure modes" do
+    episode = Episode.new(status: :failed, error_message: "Could not fetch URL")
+    refute char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false for non-failed episodes" do
+    episode = Episode.new(status: :complete, error_message: nil)
+    refute char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false when error_message is blank" do
+    episode = Episode.new(status: :failed, error_message: nil)
+    refute char_limit_failure?(episode)
+  end
 end

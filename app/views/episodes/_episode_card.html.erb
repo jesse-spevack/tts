@@ -47,6 +47,14 @@
               <% end %>
             <% end %>
           </p>
+          <% if char_limit_failure?(episode) %>
+            <p class="text-sm/6 text-mist-500 dark:text-mist-400 mt-1">
+              Try
+              <%= link_to "pasting the text and splitting it across two episodes",
+                          new_episode_path(source: "paste"),
+                          class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>.
+            </p>
+          <% end %>
         </div>
         <% if deletable?(episode) %>
           <%= button_to episode_path(episode, page: params[:page]),
