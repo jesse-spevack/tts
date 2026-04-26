@@ -1,0 +1,181 @@
+<%= render layout: "shared/help_layout", locals: { current: :url_help } do %>
+
+  <section class="pb-12" data-controller="scroll-spy">
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Convert an article URL
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      Paste any article URL and PodRead fetches it, extracts the text, and
+      turns it into a podcast episode.
+    </p>
+
+    <%# Step jump-links. Active state is driven by aria-current="step",       %>
+    <%# set by the scroll-spy controller.                                     %>
+    <nav aria-label="Steps in this guide" class="mt-8 mb-10">
+      <ol role="list" class="flex flex-wrap gap-1 text-sm/5 text-mist-500 dark:text-mist-400">
+        <% steps = [
+             { n: 1, label: "Find article" },
+             { n: 2, label: "Open URL tab" },
+             { n: 3, label: "Paste & convert" },
+             { n: 4, label: "Wait for episode" }
+           ] %>
+        <% steps.each do |s| %>
+          <li>
+            <a href="#step-<%= s[:n] %>"
+               data-scroll-spy-target="link" data-step="<%= s[:n] %>"
+               class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-mist-500 hover:text-mist-950 hover:bg-mist-200/60 dark:text-mist-400 dark:hover:text-white dark:hover:bg-mist-800/60 aria-[current=step]:bg-mist-200 aria-[current=step]:text-mist-950 dark:aria-[current=step]:bg-mist-800 dark:aria-[current=step]:text-white">
+              <span class="tabular-nums"><%= s[:n] %>.</span>
+              <span><%= s[:label] %></span>
+            </a>
+          </li>
+        <% end %>
+      </ol>
+    </nav>
+
+    <%# Step body --------------------------------------------------------- %>
+    <ol role="list" class="space-y-12">
+
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Find an article you want to listen to
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Open it in your browser and copy the URL from the address bar.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <div class="flex items-center gap-2 rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 h-10 overflow-hidden">
+                    <span class="text-mist-500 dark:text-mist-400">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </span>
+                    <span class="flex-1 truncate text-sm text-mist-950 dark:text-white">bitsaboutmoney.com/archive/gift-card-accountability-sink</span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Open the URL tab on the New Episode form
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              It's the default tab when you click
+              <strong class="text-mist-950 dark:text-white">+ New Episode</strong>
+              in the navigation.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <nav class="flex gap-6 border-b border-mist-200 dark:border-mist-700">
+                    <span class="border-b-2 border-mist-950 dark:border-white pb-2 text-sm font-medium text-mist-950 dark:text-white">From URL</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Paste Text</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Upload File</span>
+                  </nav>
+                  <div class="mt-4 space-y-3">
+                    <p class="text-xs font-medium text-mist-500 dark:text-mist-400">Article URL</p>
+                    <div class="h-10 w-full rounded-md border border-mist-200 dark:border-mist-700 bg-mist-50 dark:bg-mist-800/50"></div>
+                    <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                      Convert
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Paste the URL and click Convert
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Drop the URL into the field and click
+              <strong class="text-mist-950 dark:text-white">Convert</strong>.
+              We start fetching the article immediately.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Article URL</p>
+                    <div class="rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 py-2 text-sm text-mist-950 dark:text-white truncate">
+                      bitsaboutmoney.com/archive/gift-card-accountability-sink
+                    </div>
+                  </div>
+                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                    Convert
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Episode appears in your feed
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Roughly a minute later it's playable in your podcast app.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">Gift Card Accountability Sink</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">5:42</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Open the URL form", new_episode_path,
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+
+    <p class="mt-6 max-w-[60ch] text-xs text-pretty text-mist-500 dark:text-mist-400">
+      Most articles work. If a site blocks fetchers, paste the article text
+      directly using the <%= link_to "Paste Text tab", new_episode_path(source: "paste"), class: "underline" %> instead.
+    </p>
+  </section>
+<% end %>

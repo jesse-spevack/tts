@@ -29,6 +29,9 @@ class PagesController < ApplicationController
   def splitting_articles
   end
 
+  def url_help
+  end
+
   def extension_help
   end
 

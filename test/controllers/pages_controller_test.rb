@@ -128,4 +128,33 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_splitting_articles_path}"])
   end
+
+  # --- Convert-a-URL help page (agent-team-wo80) ---------------------------
+  #
+  # Walks a user through the URL-source episode-creation flow. Mirrors the
+  # splitting-articles page structure (4 steps, scroll-spy nav, demo frames).
+
+  test "url_help page renders successfully" do
+    get help_url_path
+    assert_response :success
+  end
+
+  test "url_help page mounts the scroll-spy controller" do
+    get help_url_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 step articles for the scroll-spy to observe"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 steps"
+  end
+
+  test "url_help page links to the new-episode form" do
+    get help_url_path
+    assert_select %(a[href="#{new_episode_path}"])
+  end
+
+  test "url_help is reachable from the help nav" do
+    get help_add_rss_feed_path
+    assert_select %(a[href="#{help_url_path}"])
+  end
 end
