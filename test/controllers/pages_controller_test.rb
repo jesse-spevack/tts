@@ -292,6 +292,19 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{new_episode_path(source: "paste")}"])
   end
 
+  # Right-rail "On this page" ToC (agent-team-377f, sweep agent-team-s4zp).
+  # Mirrors the splitting-articles assertion from PR #357 — same partial,
+  # same scroll-spy targets, same 4-step shape.
+  test "paste help page renders the right-rail ToC" do
+    get help_paste_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#step-1"])
+      assert_select %(a[href="#step-2"])
+      assert_select %(a[href="#step-3"])
+      assert_select %(a[href="#step-4"])
+    end
+  end
+
   test "paste help is reachable from the help nav" do
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_paste_path}"])
