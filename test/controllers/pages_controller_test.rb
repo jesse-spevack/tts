@@ -335,4 +335,37 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_paste_path}"])
   end
+
+  # --- Add RSS feed help page (agent-team-e399 / epic agent-team-fvh1) ------
+  #
+  # Reference doc, not a 4-step walkthrough. Sections are arbitrary
+  # (Apple Podcasts / Overcast / Pocket Casts / Other apps), so the
+  # right-rail ToC uses the unnumbered shape — `_help_right_toc.html.erb`
+  # accepts `{ id:, label: }` items and matches the API-docs ToC pattern.
+  # Same shared partial as the walkthrough pages, same scroll-spy controller;
+  # only the data-step keys differ (id strings instead of step numbers).
+
+  test "add rss feed help page renders successfully" do
+    get help_add_rss_feed_path
+    assert_response :success
+  end
+
+  test "add rss feed help page mounts the scroll-spy controller" do
+    get help_add_rss_feed_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 section headings (Apple Podcasts / Overcast / Pocket Casts / Other apps)"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 sections"
+  end
+
+  test "add rss feed help page renders the right-rail ToC with section anchors" do
+    get help_add_rss_feed_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#apple-podcasts"])
+      assert_select %(a[href="#overcast"])
+      assert_select %(a[href="#pocket-casts"])
+      assert_select %(a[href="#other-apps"])
+    end
+  end
 end

@@ -1,3 +1,12 @@
+<% sections = [
+     { id: "apple-podcasts", label: "Apple Podcasts" },
+     { id: "overcast", label: "Overcast" },
+     { id: "pocket-casts", label: "Pocket Casts" },
+     { id: "other-apps", label: "Other apps" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: sections %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :add_rss_feed } do %>
 
   <section class="pb-12">
@@ -6,8 +15,13 @@
       Copy your RSS feed URL from your episodes page, then follow the instructions for your podcast app below.
     </p>
 
+    <%# Section body. Active state in the right-rail ToC is driven by      %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb). Each      %>
+    <%# section heading is the scroll-spy target — its data-step matches   %>
+    <%# the link's data-step in shared/_help_right_toc.html.erb.           %>
     <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
-      <h3 class="text-base font-semibold text-mist-950 dark:text-white">Apple Podcasts (iPhone)</h3>
+      <h3 id="apple-podcasts" data-scroll-spy-target="step" data-step="apple-podcasts" class="scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Apple Podcasts (iPhone)</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li>Open the <strong class="text-mist-950 dark:text-white">Apple Podcasts</strong> app</li>
         <li>Tap <strong class="text-mist-950 dark:text-white">Library</strong> at the bottom</li>
@@ -16,7 +30,7 @@
         <li>Paste your RSS feed URL and tap <strong class="text-mist-950 dark:text-white">Follow</strong></li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Overcast</h3>
+      <h3 id="overcast" data-scroll-spy-target="step" data-step="overcast" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Overcast</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li>Open <strong class="text-mist-950 dark:text-white">Overcast</strong></li>
         <li>Tap the <strong class="text-mist-950 dark:text-white">+</strong> button</li>
@@ -24,7 +38,7 @@
         <li>Paste your RSS feed URL and tap <strong class="text-mist-950 dark:text-white">Add</strong></li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Pocket Casts</h3>
+      <h3 id="pocket-casts" data-scroll-spy-target="step" data-step="pocket-casts" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Pocket Casts</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li>Open <strong class="text-mist-950 dark:text-white">Pocket Casts</strong></li>
         <li>Tap <strong class="text-mist-950 dark:text-white">Search</strong> (magnifying glass)</li>
@@ -32,7 +46,7 @@
         <li>Paste your RSS feed URL and tap <strong class="text-mist-950 dark:text-white">Subscribe</strong></li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Other Apps</h3>
+      <h3 id="other-apps" data-scroll-spy-target="step" data-step="other-apps" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Other Apps</h3>
       <p class="mt-3">
         Most podcast apps have an "Add by URL" or "Add RSS feed" option in their menu. Look for it in settings or when adding a new podcast.
       </p>
