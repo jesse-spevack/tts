@@ -228,4 +228,30 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_extension_path
     assert_select %(a[href="#{AppConfig::Extension::CHROME_WEB_STORE_URL}"])
   end
+
+  # --- Paste text help page (agent-team-k8ph / epic agent-team-dewz) -------
+
+  test "paste help page renders successfully" do
+    get help_paste_path
+    assert_response :success
+  end
+
+  test "paste help page mounts the scroll-spy controller" do
+    get help_paste_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 step articles for the scroll-spy to observe"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 steps"
+  end
+
+  test "paste help page links to the paste form deep-link" do
+    get help_paste_path
+    assert_select %(a[href="#{new_episode_path(source: "paste")}"])
+  end
+
+  test "paste help is reachable from the help nav" do
+    get help_add_rss_feed_path
+    assert_select %(a[href="#{help_paste_path}"])
+  end
 end

@@ -48,6 +48,7 @@ Rails.application.routes.draw do
   get "help/url", to: "pages#url_help", as: :help_url
   get "help/file", to: "pages#file_help", as: :help_file
   get "help/email", to: "pages#email_help", as: :help_email
+  get "help/paste", to: "pages#paste_help", as: :help_paste
   get "help/extension", to: "pages#extension_help", as: :help_extension
   get "help/cli", to: "pages#cli_help", as: :help_cli
   get "help/claude-code", to: "pages#claude_code_help", as: :help_claude_code
