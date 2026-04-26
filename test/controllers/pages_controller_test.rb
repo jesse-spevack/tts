@@ -157,4 +157,30 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_url_path}"])
   end
+
+  # --- Upload-a-file help page (agent-team-90no / epic agent-team-dewz) ----
+
+  test "file help page renders successfully" do
+    get help_file_path
+    assert_response :success
+  end
+
+  test "file help page mounts the scroll-spy controller" do
+    get help_file_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 step articles for the scroll-spy to observe"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 steps"
+  end
+
+  test "file help page links to the upload form deep-link" do
+    get help_file_path
+    assert_select %(a[href="#{new_episode_path(source: "file")}"])
+  end
+
+  test "file help is reachable from the help nav" do
+    get help_add_rss_feed_path
+    assert_select %(a[href="#{help_file_path}"])
+  end
 end

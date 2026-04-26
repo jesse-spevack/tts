@@ -32,6 +32,9 @@ class PagesController < ApplicationController
   def url_help
   end
 
+  def file_help
+  end
+
   def extension_help
   end
 
