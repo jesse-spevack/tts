@@ -236,6 +236,20 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{help_email_path}"])
   end
 
+  # Right-rail "On this page" ToC (agent-team-kz29). Pattern matches
+  # docs/{authentication,episodes,mpp}.html.erb so help and API docs share one
+  # visual language. Hidden below xl via Tailwind classes; we assert it's in
+  # the rendered HTML and that all 4 step targets are linked.
+  test "email help page renders the right-rail ToC" do
+    get help_email_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#step-1"])
+      assert_select %(a[href="#step-2"])
+      assert_select %(a[href="#step-3"])
+      assert_select %(a[href="#step-4"])
+    end
+  end
+
   # --- Browser extension help page (agent-team-3njp / epic agent-team-dewz) -
 
   test "extension help page renders successfully" do

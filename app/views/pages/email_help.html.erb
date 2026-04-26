@@ -1,6 +1,15 @@
+<% steps = [
+     { n: 1, label: "Enable in settings" },
+     { n: 2, label: "Save address" },
+     { n: 3, label: "Forward email" },
+     { n: 4, label: "Wait for episode" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: steps %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :email_help } do %>
 
-  <section class="pb-12" data-controller="scroll-spy">
+  <section class="pb-12">
     <%# Page intro -------------------------------------------------------- %>
     <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
       Email articles to your podcast
@@ -11,31 +20,10 @@
       and they land as episodes in your feed.
     </p>
 
-    <%# Step jump-links. Active state via aria-current="step", set by      %>
-    <%# scroll_spy_controller.                                             %>
-    <nav aria-label="Steps in this guide" class="mt-8 mb-10">
-      <ol role="list" class="flex flex-wrap gap-1 text-sm/5 text-mist-500 dark:text-mist-400">
-        <% steps = [
-             { n: 1, label: "Enable in settings" },
-             { n: 2, label: "Save address" },
-             { n: 3, label: "Forward email" },
-             { n: 4, label: "Wait for episode" }
-           ] %>
-        <% steps.each do |s| %>
-          <li>
-            <a href="#step-<%= s[:n] %>"
-               data-scroll-spy-target="link" data-step="<%= s[:n] %>"
-               class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-mist-500 hover:text-mist-950 hover:bg-mist-200/60 dark:text-mist-400 dark:hover:text-white dark:hover:bg-mist-800/60 aria-[current=step]:bg-mist-200 aria-[current=step]:text-mist-950 dark:aria-[current=step]:bg-mist-800 dark:aria-[current=step]:text-white">
-              <span class="tabular-nums"><%= s[:n] %>.</span>
-              <span><%= s[:label] %></span>
-            </a>
-          </li>
-        <% end %>
-      </ol>
-    </nav>
-
-    <%# Step body --------------------------------------------------------- %>
-    <ol role="list" class="space-y-12">
+    <%# Step body. Active state in the right-rail ToC is driven by         %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb).           %>
+    <ol role="list" class="mt-10 space-y-12">
 
       <%# Step 1 --------------------------------------------------------- %>
       <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
@@ -46,24 +34,37 @@
               Enable email episodes in Settings
             </h3>
             <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
-              Open <strong class="text-mist-950 dark:text-white">Settings</strong>
-              and toggle <strong class="text-mist-950 dark:text-white">Email episodes</strong>
-              on. We generate a unique forwarding address tied to your account.
+              Open <%= link_to "Settings", settings_path, class: "underline" %>
+              and scroll to the <strong class="text-mist-950 dark:text-white">Email to Podcast</strong>
+              section. Click <strong class="text-mist-950 dark:text-white">Enable Email Episodes</strong> —
+              we generate a unique forwarding address tied to your account and
+              show it in the same panel.
             </p>
 
             <div class="mt-4 max-w-md">
               <%= render "shared/demo_browser_frame" do %>
-                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-2">
-                  <p class="text-sm font-medium text-mist-950 dark:text-white">Email episodes</p>
-                  <div class="flex items-center justify-between gap-4">
-                    <p class="text-xs text-mist-500 dark:text-mist-400">Forward articles to your unique address.</p>
-                    <span class="inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-mist-950 dark:bg-white p-0.5">
-                      <span class="size-4 rounded-full bg-white dark:bg-mist-950 translate-x-4"></span>
-                    </span>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div>
+                    <p class="text-sm font-semibold text-mist-950 dark:text-white">Email to Podcast</p>
+                    <p class="mt-0.5 text-xs text-mist-500 dark:text-mist-400">Create podcast episodes by forwarding content via email.</p>
+                  </div>
+                  <div class="rounded-md bg-mist-50 dark:bg-mist-800/50 p-3">
+                    <p class="text-xs/5 text-mist-500 dark:text-mist-400">
+                      Enable email episodes to get a unique email address for
+                      creating episodes by forwarding content.
+                    </p>
+                    <button class="mt-3 rounded-md bg-mist-950 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-mist-950">
+                      Enable Email Episodes
+                    </button>
                   </div>
                 </div>
               <% end %>
             </div>
+
+            <p class="mt-3 max-w-[60ch] text-xs text-pretty text-mist-500 dark:text-mist-400">
+              Already enabled? You'll see your address in the same panel
+              instead of the button — skip ahead to step 2.
+            </p>
           </div>
         </article>
       </li>
