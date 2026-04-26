@@ -368,4 +368,41 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select %(a[href="#other-apps"])
     end
   end
+
+  # --- CLI help page (agent-team-gbhp / sweep agent-team-ypqj) -------------
+  #
+  # Reference doc, not a 4-step walkthrough. Sections are arbitrary
+  # (Install / Log in / Create an episode / Choose a voice / Manage episodes
+  # / Get your feed / More info), so the right-rail ToC uses the unnumbered
+  # shape — `_help_right_toc.html.erb` accepts `{ id:, label: }` items and
+  # matches the API-docs ToC pattern. Same shared partial as the walkthrough
+  # pages, same scroll-spy controller; only the data-step keys differ (id
+  # strings instead of step numbers).
+
+  test "cli help page renders successfully" do
+    get help_cli_path
+    assert_response :success
+  end
+
+  test "cli help page mounts the scroll-spy controller" do
+    get help_cli_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 7,
+      "Expected 7 section headings (Install / Log in / Create an episode / Choose a voice / Manage episodes / Get your feed / More info)"
+    assert_select %([data-scroll-spy-target="link"]), 7,
+      "Expected 7 nav links matching the 7 sections"
+  end
+
+  test "cli help page renders the right-rail ToC with section anchors" do
+    get help_cli_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#install"])
+      assert_select %(a[href="#log-in"])
+      assert_select %(a[href="#create-an-episode"])
+      assert_select %(a[href="#choose-a-voice"])
+      assert_select %(a[href="#manage-episodes"])
+      assert_select %(a[href="#get-your-feed"])
+      assert_select %(a[href="#more-info"])
+    end
+  end
 end
