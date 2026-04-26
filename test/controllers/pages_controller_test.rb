@@ -405,4 +405,38 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select %(a[href="#more-info"])
     end
   end
+
+  # --- Claude Code help page (agent-team-bxw3 / sweep agent-team-ypqj) ------
+  #
+  # Reference doc, not a 4-step walkthrough. Sections are arbitrary
+  # (What is it? / Prerequisites / Install / Usage / Troubleshooting), so the
+  # right-rail ToC uses the unnumbered shape — `_help_right_toc.html.erb`
+  # accepts `{ id:, label: }` items and matches the API-docs ToC pattern.
+  # Same shared partial as the walkthrough pages, same scroll-spy controller;
+  # only the data-step keys differ (id strings instead of step numbers).
+
+  test "claude code help page renders successfully" do
+    get help_claude_code_path
+    assert_response :success
+  end
+
+  test "claude code help page mounts the scroll-spy controller" do
+    get help_claude_code_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 5,
+      "Expected 5 section headings (What is it? / Prerequisites / Install / Usage / Troubleshooting)"
+    assert_select %([data-scroll-spy-target="link"]), 5,
+      "Expected 5 nav links matching the 5 sections"
+  end
+
+  test "claude code help page renders the right-rail ToC with section anchors" do
+    get help_claude_code_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#what-is-it"])
+      assert_select %(a[href="#prerequisites"])
+      assert_select %(a[href="#install"])
+      assert_select %(a[href="#usage"])
+      assert_select %(a[href="#troubleshooting"])
+    end
+  end
 end
