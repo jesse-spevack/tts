@@ -1,0 +1,184 @@
+<%= render layout: "shared/help_layout", locals: { current: :email_help } do %>
+
+  <section class="pb-12" data-controller="scroll-spy">
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Email articles to your podcast
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      Each account can opt into a unique forwarding address. Send articles
+      or text to it from anywhere — your inbox, a newsletter, your phone —
+      and they land as episodes in your feed.
+    </p>
+
+    <%# Step jump-links. Active state via aria-current="step", set by      %>
+    <%# scroll_spy_controller.                                             %>
+    <nav aria-label="Steps in this guide" class="mt-8 mb-10">
+      <ol role="list" class="flex flex-wrap gap-1 text-sm/5 text-mist-500 dark:text-mist-400">
+        <% steps = [
+             { n: 1, label: "Enable in settings" },
+             { n: 2, label: "Save address" },
+             { n: 3, label: "Forward email" },
+             { n: 4, label: "Wait for episode" }
+           ] %>
+        <% steps.each do |s| %>
+          <li>
+            <a href="#step-<%= s[:n] %>"
+               data-scroll-spy-target="link" data-step="<%= s[:n] %>"
+               class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-mist-500 hover:text-mist-950 hover:bg-mist-200/60 dark:text-mist-400 dark:hover:text-white dark:hover:bg-mist-800/60 aria-[current=step]:bg-mist-200 aria-[current=step]:text-mist-950 dark:aria-[current=step]:bg-mist-800 dark:aria-[current=step]:text-white">
+              <span class="tabular-nums"><%= s[:n] %>.</span>
+              <span><%= s[:label] %></span>
+            </a>
+          </li>
+        <% end %>
+      </ol>
+    </nav>
+
+    <%# Step body --------------------------------------------------------- %>
+    <ol role="list" class="space-y-12">
+
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Enable email episodes in Settings
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Open <strong class="text-mist-950 dark:text-white">Settings</strong>
+              and toggle <strong class="text-mist-950 dark:text-white">Email episodes</strong>
+              on. We generate a unique forwarding address tied to your account.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-2">
+                  <p class="text-sm font-medium text-mist-950 dark:text-white">Email episodes</p>
+                  <div class="flex items-center justify-between gap-4">
+                    <p class="text-xs text-mist-500 dark:text-mist-400">Forward articles to your unique address.</p>
+                    <span class="inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-mist-950 dark:bg-white p-0.5">
+                      <span class="size-4 rounded-full bg-white dark:bg-mist-950 translate-x-4"></span>
+                    </span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Save your forwarding address as a contact
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Settings shows your address — it looks like
+              <code class="rounded bg-mist-200/60 px-1 py-0.5 text-xs text-mist-950 dark:bg-mist-800/60 dark:text-white">readtome+xxxxx@…</code>.
+              Copy it and save it in your contacts as <strong class="text-mist-950 dark:text-white">PodRead</strong>
+              so it autocompletes when you forward.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-2">
+                  <p class="text-xs text-mist-500 dark:text-mist-400">Send content to this address to create podcast episodes:</p>
+                  <div class="flex items-stretch gap-px rounded-md bg-mist-950/5 ring-1 ring-mist-950/10 dark:bg-white/5 dark:ring-white/10">
+                    <code class="flex-1 rounded-l-md bg-white/60 px-3 py-2 font-mono text-xs break-all text-mist-950 dark:bg-mist-800/60 dark:text-white">readtome+ab12cd34@ingest.podread.app</code>
+                    <span class="flex shrink-0 items-center rounded-r-md bg-white/60 px-3 text-mist-500 dark:bg-mist-800/60 dark:text-mist-400">
+                      <%= render "shared/icons/copy" %>
+                    </span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Forward an article (or compose new with text)
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Newsletter forwards work well — hit Forward and address it to
+              PodRead. You can also compose a new email and paste article
+              text into the body.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div class="flex items-baseline gap-3 border-b border-mist-200 pb-2 dark:border-mist-700">
+                    <span class="text-xs font-medium text-mist-500 dark:text-mist-400">To:</span>
+                    <span class="text-sm text-mist-950 dark:text-white">PodRead</span>
+                  </div>
+                  <div class="flex items-baseline gap-3 border-b border-mist-200 pb-2 dark:border-mist-700">
+                    <span class="text-xs font-medium text-mist-500 dark:text-mist-400">Subject:</span>
+                    <span class="text-sm text-mist-950 dark:text-white">Fwd: This week's reading</span>
+                  </div>
+                  <div class="h-16 rounded-md bg-mist-50 dark:bg-mist-800/50"></div>
+                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                    Send
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Episode appears in your feed
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Roughly a minute after we receive the email, the episode is
+              ready in your podcast app.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">This week's reading</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">8:14</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Open Settings", settings_path,
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+
+    <p class="mt-6 max-w-[60ch] text-xs text-pretty text-mist-500 dark:text-mist-400">
+      Email episodes share the same character limit as URL and paste
+      episodes — long content can be split. See
+      <%= link_to "Splitting Long Articles", help_splitting_articles_path, class: "underline" %>.
+    </p>
+  </section>
+<% end %>
