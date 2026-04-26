@@ -439,4 +439,32 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select %(a[href="#troubleshooting"])
     end
   end
+
+  # --- How It Sounds page (agent-team-t58q / epic agent-team-fvh1) ---------
+  #
+  # Reference doc, not a 4-step walkthrough. Two arbitrary sections (the
+  # audio sample and the how-it-works overview), so the right-rail ToC uses
+  # the unnumbered { id:, label: } shape — same pattern as add_rss_feed.
+
+  test "how it sounds page renders successfully" do
+    get how_it_sounds_path
+    assert_response :success
+  end
+
+  test "how it sounds page mounts the scroll-spy controller" do
+    get how_it_sounds_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 2,
+      "Expected 2 section headings (Sample audio / How it works)"
+    assert_select %([data-scroll-spy-target="link"]), 2,
+      "Expected 2 nav links matching the 2 sections"
+  end
+
+  test "how it sounds page renders the right-rail ToC with section anchors" do
+    get how_it_sounds_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#sample-audio"])
+      assert_select %(a[href="#how-it-works"])
+    end
+  end
 end
