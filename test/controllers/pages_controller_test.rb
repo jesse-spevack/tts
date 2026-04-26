@@ -467,4 +467,36 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select %(a[href="#how-it-works"])
     end
   end
+
+  # --- ChatGPT help page (agent-team-ovaf / sweep agent-team-ypqj) ---------
+  #
+  # Reference doc, not a 4-step walkthrough. Sections are arbitrary
+  # (Getting started / Example prompts / What you can do / Troubleshooting),
+  # so the right-rail ToC uses the unnumbered { id:, label: } shape — same
+  # shared partial, same scroll-spy controller, just id-string data-step
+  # keys instead of step numbers. Mirrors add_rss_feed (PR #365).
+
+  test "chatgpt help page renders successfully" do
+    get help_chatgpt_path
+    assert_response :success
+  end
+
+  test "chatgpt help page mounts the scroll-spy controller" do
+    get help_chatgpt_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 section headings (Getting started / Example prompts / What you can do / Troubleshooting)"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 sections"
+  end
+
+  test "chatgpt help page renders the right-rail ToC with section anchors" do
+    get help_chatgpt_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#getting-started"])
+      assert_select %(a[href="#example-prompts"])
+      assert_select %(a[href="#what-you-can-do"])
+      assert_select %(a[href="#troubleshooting"])
+    end
+  end
 end
