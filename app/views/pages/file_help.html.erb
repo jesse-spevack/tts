@@ -1,6 +1,15 @@
+<% steps = [
+     { n: 1, label: "Have file ready" },
+     { n: 2, label: "Open file tab" },
+     { n: 3, label: "Drop in file" },
+     { n: 4, label: "Wait for episode" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: steps %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :file_help } do %>
 
-  <section class="pb-12" data-controller="scroll-spy">
+  <section class="pb-12">
     <%# Page intro -------------------------------------------------------- %>
     <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
       Upload a file
@@ -9,31 +18,10 @@
       Have a markdown or text file? Upload it and PodRead converts it to audio.
     </p>
 
-    <%# Step jump-links. Active state is driven by aria-current="step",       %>
-    <%# set by the scroll-spy controller.                                     %>
-    <nav aria-label="Steps in this guide" class="mt-8 mb-10">
-      <ol role="list" class="flex flex-wrap gap-1 text-sm/5 text-mist-500 dark:text-mist-400">
-        <% steps = [
-             { n: 1, label: "Have file ready" },
-             { n: 2, label: "Open file tab" },
-             { n: 3, label: "Drop in file" },
-             { n: 4, label: "Wait for episode" }
-           ] %>
-        <% steps.each do |s| %>
-          <li>
-            <a href="#step-<%= s[:n] %>"
-               data-scroll-spy-target="link" data-step="<%= s[:n] %>"
-               class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-mist-500 hover:text-mist-950 hover:bg-mist-200/60 dark:text-mist-400 dark:hover:text-white dark:hover:bg-mist-800/60 aria-[current=step]:bg-mist-200 aria-[current=step]:text-mist-950 dark:aria-[current=step]:bg-mist-800 dark:aria-[current=step]:text-white">
-              <span class="tabular-nums"><%= s[:n] %>.</span>
-              <span><%= s[:label] %></span>
-            </a>
-          </li>
-        <% end %>
-      </ol>
-    </nav>
-
-    <%# Step body --------------------------------------------------------- %>
-    <ol role="list" class="space-y-12">
+    <%# Step body. Active state in the right-rail ToC is driven by         %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb).           %>
+    <ol role="list" class="mt-10 space-y-12">
 
       <%# Step 1 --------------------------------------------------------- %>
       <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">

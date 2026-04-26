@@ -193,6 +193,20 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{new_episode_path(source: "file")}"])
   end
 
+  # Right-rail "On this page" ToC (agent-team-ozxg). Pattern matches
+  # /help/splitting-articles (PR #357) and docs/{authentication,episodes,mpp}.
+  # Hidden below xl via Tailwind classes; we assert it's in the rendered HTML
+  # and that all 4 step targets are linked.
+  test "file help page renders the right-rail ToC" do
+    get help_file_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#step-1"])
+      assert_select %(a[href="#step-2"])
+      assert_select %(a[href="#step-3"])
+      assert_select %(a[href="#step-4"])
+    end
+  end
+
   test "file help is reachable from the help nav" do
     get help_add_rss_feed_path
     assert_select %(a[href="#{help_file_path}"])
