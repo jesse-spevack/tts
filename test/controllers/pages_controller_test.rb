@@ -172,6 +172,20 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{help_url_path}"])
   end
 
+  # Right-rail "On this page" ToC (agent-team-1yb3). Mirrors the
+  # splitting-articles ToC test — same shared partial, same markup, same
+  # 4-step shape. Hidden below xl via Tailwind classes; we assert it's in
+  # the rendered HTML and that all 4 step targets are linked.
+  test "url_help page renders the right-rail ToC" do
+    get help_url_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#step-1"])
+      assert_select %(a[href="#step-2"])
+      assert_select %(a[href="#step-3"])
+      assert_select %(a[href="#step-4"])
+    end
+  end
+
   # --- Upload-a-file help page (agent-team-90no / epic agent-team-dewz) ----
 
   test "file help page renders successfully" do
