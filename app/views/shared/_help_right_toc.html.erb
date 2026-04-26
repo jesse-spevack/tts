@@ -1,0 +1,26 @@
+<%# locals: (steps:) %>
+<%#                                                                        %>
+<%# Right-rail "On this page" ToC for help walkthrough pages. Markup       %>
+<%# mirrors app/views/docs/{authentication,episodes,mpp}.html.erb so the   %>
+<%# help docs and the API docs share one ToC visual language.              %>
+<%#                                                                        %>
+<%# `steps` is the array of { n:, label: } hashes the page already defines %>
+<%# for its scroll-spy nav. Each link gets data-scroll-spy-target="link"   %>
+<%# and data-step="<n>" so the existing scroll_spy_controller drives the   %>
+<%# active state via aria-current="step" — no controller changes needed.   %>
+<%#                                                                        %>
+<%# Hidden below xl (matches the API docs ToC behavior).                   %>
+<nav aria-label="On this page" class="sticky top-24">
+  <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
+  <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+    <% steps.each do |s| %>
+      <li>
+        <a href="#step-<%= s[:n] %>"
+           data-scroll-spy-target="link" data-step="<%= s[:n] %>"
+           class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 aria-[current=step]:border-mist-950 aria-[current=step]:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white dark:aria-[current=step]:border-white dark:aria-[current=step]:text-white">
+          <%= s[:label] %>
+        </a>
+      </li>
+    <% end %>
+  </ul>
+</nav>

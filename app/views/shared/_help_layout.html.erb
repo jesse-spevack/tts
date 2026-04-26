@@ -1,5 +1,14 @@
 <%# locals: (current:) %>
-<div class="max-w-5xl mx-auto">
+<%# Pages can opt into the right-rail "On this page" ToC by setting        %>
+<%# content_for(:right_toc) { render "shared/help_right_toc", steps: ... } %>
+<%# (see app/views/shared/_help_right_toc.html.erb). When unset, the layout %>
+<%# collapses to the original two-column shape.                            %>
+<% has_right_toc = content_for?(:right_toc) %>
+<%# When a page provides a right_toc, the scroll-spy controller is mounted %>
+<%# on the layout root so its scope covers BOTH the step articles in the   %>
+<%# main column AND the link targets in the right-rail nav.                %>
+<%= tag.div class: "#{has_right_toc ? "max-w-7xl" : "max-w-5xl"} mx-auto",
+            data: (has_right_toc ? { controller: "scroll-spy" } : {}) do %>
   <%= render "shared/page_header", title: "Help", size: "2xl" %>
   <div class="flex gap-10">
     <aside class="hidden md:block w-48 shrink-0">
@@ -12,5 +21,10 @@
       </div>
       <%= yield %>
     </div>
+    <% if has_right_toc %>
+      <div class="hidden xl:block w-[220px] shrink-0">
+        <%= yield :right_toc %>
+      </div>
+    <% end %>
   </div>
-</div>
+<% end %>
