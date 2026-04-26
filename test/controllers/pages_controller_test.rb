@@ -285,6 +285,18 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select %(a[href="#{AppConfig::Extension::CHROME_WEB_STORE_URL}"])
   end
 
+  # Right-rail "On this page" ToC (agent-team-td0g, sweep of agent-team-s4zp).
+  # Same pattern as splitting_articles — see PR #357 / agent-team-q8nk.
+  test "extension help page renders the right-rail ToC" do
+    get help_extension_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#step-1"])
+      assert_select %(a[href="#step-2"])
+      assert_select %(a[href="#step-3"])
+      assert_select %(a[href="#step-4"])
+    end
+  end
+
   # --- Paste text help page (agent-team-k8ph / epic agent-team-dewz) -------
 
   test "paste help page renders successfully" do
