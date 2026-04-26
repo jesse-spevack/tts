@@ -47,6 +47,15 @@
             <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
               Open it in your browser and copy the URL from the address bar.
             </p>
+            <p class="mt-3 max-w-[60ch] text-sm/6 text-pretty text-mist-500 dark:text-mist-400">
+              <strong class="font-medium text-mist-700 dark:text-mist-300">Heads up:</strong>
+              paywalled articles and pages that render in JavaScript often can't
+              be fetched by URL. If a URL fails, use the
+              <%= link_to "Paste text tab", new_episode_path(source: "paste"), class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>
+              (copy the article body from your browser) or the
+              <%= link_to "browser extension", help_extension_path, class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>
+              (it sends from inside your authenticated session).
+            </p>
 
             <div class="mt-4 max-w-md">
               <%= render "shared/demo_browser_frame" do %>
@@ -144,7 +153,9 @@
               Episode appears in your feed
             </h3>
             <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
-              Roughly a minute later it's playable in your podcast app.
+              Audio generation takes a few minutes. When it finishes, the new
+              episode shows up in your podcast app — exactly when depends on
+              how often your player checks the feed.
             </p>
 
             <div class="mt-4 max-w-md">
@@ -172,10 +183,5 @@
       <%= link_to "Back to your episodes", episodes_path,
                   class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
     </div>
-
-    <p class="mt-6 max-w-[60ch] text-xs text-pretty text-mist-500 dark:text-mist-400">
-      Most articles work. If a site blocks fetchers, paste the article text
-      directly using the <%= link_to "Paste Text tab", new_episode_path(source: "paste"), class: "underline" %> instead.
-    </p>
   </section>
 <% end %>
