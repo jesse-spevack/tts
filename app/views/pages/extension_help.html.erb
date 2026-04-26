@@ -68,20 +68,24 @@
               Connect your account
             </h3>
             <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
-              The first click on the extension icon redirects you to PodRead to
-              authorize. After that, the extension knows where to send articles.
+              The first click on the extension icon opens a PodRead tab that
+              connects your account automatically — you'll see an
+              <strong class="text-mist-950 dark:text-white">Extension Connected</strong>
+              confirmation. After that, the extension knows where to send articles.
             </p>
 
             <div class="mt-4 max-w-md">
               <%= render "shared/demo_browser_frame" do %>
-                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
-                  <p class="text-sm font-semibold text-mist-950 dark:text-white">Authorize PodRead</p>
-                  <p class="text-sm/6 text-mist-700 dark:text-mist-400">
-                    Allow the extension to send articles to your podcast feed.
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-6 text-center space-y-3">
+                  <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-green-600/10 dark:bg-green-400/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600 dark:text-green-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p class="text-sm font-semibold text-mist-950 dark:text-white">Extension Connected</p>
+                  <p class="text-xs text-mist-500 dark:text-mist-400">
+                    Connecting to extension...
                   </p>
-                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
-                    Authorize
-                  </button>
                 </div>
               <% end %>
             </div>
