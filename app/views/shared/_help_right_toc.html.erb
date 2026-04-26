@@ -1,22 +1,43 @@
 <%# locals: (steps:) %>
 <%#                                                                        %>
-<%# Right-rail "On this page" ToC for help walkthrough pages. Markup       %>
-<%# mirrors app/views/docs/{authentication,episodes,mpp}.html.erb so the   %>
-<%# help docs and the API docs share one ToC visual language.              %>
+<%# Right-rail "On this page" ToC for help pages. Markup mirrors           %>
+<%# app/views/docs/{authentication,episodes,mpp}.html.erb so the help docs %>
+<%# and the API docs share one ToC visual language.                        %>
 <%#                                                                        %>
-<%# `steps` is the array of { n:, label: } hashes the page already defines %>
-<%# for its scroll-spy nav. Each link gets data-scroll-spy-target="link"   %>
-<%# and data-step="<n>" so the existing scroll_spy_controller drives the   %>
-<%# active state via aria-current="step" — no controller changes needed.   %>
+<%# `steps` accepts two shapes:                                            %>
 <%#                                                                        %>
-<%# Hidden below xl (matches the API docs ToC behavior).                   %>
+<%# 1. Numbered walkthrough steps — each item is { n:, label: }. Anchors   %>
+<%#    link to "#step-<n>" and the scroll-spy key is the integer step.     %>
+<%#    Used by the 4-step walkthrough pages (splitting_articles, url,      %>
+<%#    file, email, paste, extension).                                     %>
+<%#                                                                        %>
+<%# 2. Reference doc sections — each item is { id:, label: }. Anchors      %>
+<%#    link to "#<id>" and the scroll-spy key is the id string. Used by    %>
+<%#    pages whose structure is N arbitrary sections, not 4 ordered steps  %>
+<%#    (add_rss_feed, claude, chatgpt, …).                                 %>
+<%#                                                                        %>
+<%# Both shapes get data-scroll-spy-target="link" + data-step="<key>" so   %>
+<%# the existing scroll_spy_controller drives the active state via         %>
+<%# aria-current="step" — no controller changes needed. Section pages set  %>
+<%# the matching data-step on each section heading.                        %>
+<%#                                                                        %>
+<%# Hidden below xl by the help_layout wrapper.                            %>
 <nav aria-label="On this page" class="sticky top-24">
   <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
   <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
     <% steps.each do |s| %>
+      <%
+        if s[:n]
+          href = "#step-#{s[:n]}"
+          step_key = s[:n].to_s
+        else
+          href = "##{s[:id]}"
+          step_key = s[:id].to_s
+        end
+      %>
       <li>
-        <a href="#step-<%= s[:n] %>"
-           data-scroll-spy-target="link" data-step="<%= s[:n] %>"
+        <a href="<%= href %>"
+           data-scroll-spy-target="link" data-step="<%= step_key %>"
            class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 aria-[current=step]:border-mist-950 aria-[current=step]:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white dark:aria-[current=step]:border-white dark:aria-[current=step]:text-white">
           <%= s[:label] %>
         </a>
