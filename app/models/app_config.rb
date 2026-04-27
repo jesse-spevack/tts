@@ -57,7 +57,7 @@ class AppConfig
   end
 
   module Storage
-    BUCKET = ENV.fetch("GOOGLE_CLOUD_BUCKET", "verynormal-tts-podcast")
+    BUCKET = ENV.fetch("GOOGLE_CLOUD_BUCKET", "podread")
     BASE_URL = "https://storage.googleapis.com/#{BUCKET}".freeze
     SIGNED_URL_EXPIRY_SECONDS = 300  # 5 minutes
 

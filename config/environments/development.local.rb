@@ -2,7 +2,7 @@
 require "json"
 
 # Set development defaults for Google Cloud
-ENV["GOOGLE_CLOUD_BUCKET"] ||= "verynormal-tts-podcast"
+ENV["GOOGLE_CLOUD_BUCKET"] ||= "podread"
 ENV["GOOGLE_CLOUD_PROJECT"] ||= "very-normal"
 ENV["GOOGLE_APPLICATION_CREDENTIALS"] ||= File.expand_path("../../../very-normal-text-to-speech-098b554468a4.json", __dir__)
 
