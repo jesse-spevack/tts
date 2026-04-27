@@ -92,6 +92,7 @@ oauth_authorization_server
 oauth_protected_resource
 authentication
 mpp
+mpp_getting_started
 
 # ---------------------------------------------------------------------------
 # Rails framework dispatch hooks (ActionCable, ActionMailbox).
