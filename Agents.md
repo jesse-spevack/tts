@@ -530,10 +530,6 @@ bin/rails db:rollback
 - Sessions: Signed cookies, httponly
 - Rate limiting: 10 magic link requests per 3 minutes
 
-### API Security
-
-Internal API (`/api/internal/episodes`) requires `X-Generator-Secret` header matching `GENERATOR_CALLBACK_SECRET` env var.
-
 ## File Reference Quick Lookup
 
 | Need to... | Look in... |

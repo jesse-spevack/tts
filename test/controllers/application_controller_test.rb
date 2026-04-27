@@ -30,8 +30,8 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "does not redirect internal API paths on legacy domain" do
-    patch "/api/internal/episodes/1", headers: { "HOST" => "tts.verynormal.dev" }
+    post "/api/internal/episodes/cost_preview", headers: { "HOST" => "tts.verynormal.dev" }
 
-    assert_response :unauthorized
+    assert_not_equal 301, response.status
   end
 end
