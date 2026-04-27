@@ -36,7 +36,6 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     freeze_time do
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
-        currency: @currency,
         recipient: @deposit_address,
         voice_tier: :premium
       )
@@ -117,7 +116,6 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
     travel_to(10.minutes.ago) do
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
-        currency: @currency,
         recipient: @deposit_address,
         voice_tier: :premium
       )
@@ -497,7 +495,6 @@ class Mpp::VerifiesCredentialTest < ActiveSupport::TestCase
 
     challenge = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: integration_deposit_address,
       voice_tier: :premium
     ).data
