@@ -2,19 +2,14 @@
 
 require "test_helper"
 
-# Unit tests for Mpp::VerifiesChainId. The service makes a single
-# eth_chainId JSON-RPC request and compares the returned chain id to the
-# one the Rails env expects (production = mainnet, anything else = Moderato
-# testnet). The bug this guards against is agent-team-tv6e: a prod deploy
-# shipping a mainnet token contract paired with a testnet RPC URL, which
-# silently strands user payments.
+# Single eth_chainId RPC call, compared to Rails-env expectation
+# (production=mainnet, else=Moderato testnet). Guards against shipping a
+# mainnet token contract paired with a testnet RPC (or vice versa).
 class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
   MAINNET_CHAIN_ID = 4217       # 0x1079, rpc.tempo.xyz
   TESTNET_CHAIN_ID = 42431      # 0xa5bf, rpc.moderato.tempo.xyz
   MAINNET_RPC_URL  = "https://rpc.tempo.xyz"
   TESTNET_RPC_URL  = "https://rpc.moderato.tempo.xyz"
-
-  # --- expected_chain_id_for: env → chain mapping ---
 
   test "expected_chain_id_for maps production to mainnet" do
     assert_equal MAINNET_CHAIN_ID,
@@ -32,29 +27,24 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
   end
 
   test "expected_chain_id_for maps staging to testnet" do
-    # Staging runs against Moderato so we can exercise the MPP flow without
-    # spending real USDC.e. Any non-'production' string routes to testnet.
+    # Staging runs Moderato — anything non-'production' routes to testnet.
     assert_equal TESTNET_CHAIN_ID,
       Mpp::VerifiesChainId.expected_chain_id_for("staging")
   end
 
   test "expected_chain_id_for accepts an ActiveSupport::StringInquirer" do
-    # Rails.env is a StringInquirer, not a bare String — confirm the .to_s
-    # path works so the initializer's default wiring is correct.
+    # Rails.env is a StringInquirer, not a bare String.
     inquirer = ActiveSupport::StringInquirer.new("production")
     assert_equal MAINNET_CHAIN_ID,
       Mpp::VerifiesChainId.expected_chain_id_for(inquirer)
   end
-
-  # --- should_run?: gate logic for the initializer ---
 
   test "should_run? is true in production by default" do
     assert Mpp::VerifiesChainId.should_run?(env: "production", env_vars: {}, rake_task_running: false)
   end
 
   test "should_run? is false in test by default" do
-    # Test suite boots Rails constantly; blocking on Tempo RPC would
-    # be intolerable. Default to off.
+    # Test suite boots constantly; blocking on RPC would be intolerable.
     refute Mpp::VerifiesChainId.should_run?(env: "test", env_vars: {}, rake_task_running: false)
   end
 
@@ -86,11 +76,8 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     )
   end
 
-  # --- bypassed?: surface the silent-skip env var (agent-team-vo2c) ---
-
   test "bypassed? returns true when TEMPO_SKIP_CHAINID_GUARD=1" do
-    # Initializer uses this to emit a WARN log on every bypassed boot —
-    # without it the env var quietly stays set post-incident.
+    # Initializer uses this to WARN on every bypassed boot.
     assert Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "1" })
   end
 
@@ -103,8 +90,6 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     refute Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "0" })
     refute Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "" })
   end
-
-  # --- matching chain: success ---
 
   test "succeeds when mainnet RPC returns mainnet chain id and prod is expected" do
     stub_eth_chain_id(MAINNET_RPC_URL, "0x1079")
@@ -131,12 +116,9 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     assert_equal TESTNET_CHAIN_ID, result.data[:chain_id]
   end
 
-  # --- mismatch: failure (this is the test that would have caught tv6e) ---
-
-  test "fails when testnet RPC is paired with mainnet expectation (the tv6e bug)" do
-    # Simulates the original kpxs mistake: deploy.yml overrode the RPC
-    # URL to Moderato (testnet) while the token contract was USDC.e
-    # (mainnet only). The guard must catch this.
+  test "fails when testnet RPC is paired with mainnet expectation" do
+    # Mainnet token contract paired with testnet RPC — the misconfiguration
+    # that motivated this guard.
     stub_eth_chain_id(TESTNET_RPC_URL, "0xa5bf")
 
     result = Mpp::VerifiesChainId.call(
@@ -161,8 +143,6 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     assert result.failure?, "Guard must reject mainnet RPC when testnet is expected"
     assert_match(/Chain ID mismatch/, result.error)
   end
-
-  # --- RPC transport failures: failure ---
 
   test "fails when the RPC returns a non-2xx response" do
     stub_request(:post, TESTNET_RPC_URL)
@@ -219,10 +199,9 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
   end
 
   test "tags additional network failure classes as transient" do
-    # Cold-start containers and rotating infra surface a wider class of
-    # transient failures than the original (timeout / refused / reset /
-    # SocketError) set. Without these, fail-closed behavior tempts
-    # operators into setting TEMPO_SKIP_CHAINID_GUARD=1 permanently.
+    # Cold-start containers and rotating infra surface failures beyond
+    # the original timeout/refused/reset/SocketError set. Fail-closed
+    # here pushes operators toward permanent TEMPO_SKIP_CHAINID_GUARD=1.
     [
       Errno::EHOSTUNREACH,
       Errno::ENETUNREACH,
@@ -247,9 +226,7 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
   end
 
   test "tags transient HTTP codes (408/425/429/5xx) as transient" do
-    # Each code in TRANSIENT_HTTP_CODES indicates upstream-busy / retry-able.
-    # The initializer downgrades :transient to WARN and boots; only confirmed
-    # mismatches fail-closed.
+    # Initializer downgrades :transient to WARN; only confirmed mismatches fail-closed.
     Mpp::VerifiesChainId::TRANSIENT_HTTP_CODES.each do |status|
       stub_request(:post, TESTNET_RPC_URL).to_return(status: status, body: "")
 
@@ -266,7 +243,6 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
 
   test "does not tag non-transient 4xx HTTP responses as transient (config error)" do
     # 400/401/403/404 mean the URL/auth is wrong — retries can't help.
-    # Stay fail-closed so the misconfiguration surfaces during deploy.
     [ 400, 401, 403, 404 ].each do |status|
       stub_request(:post, TESTNET_RPC_URL).to_return(status: status, body: "")
 
@@ -282,7 +258,7 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
   end
 
   test "does not tag a confirmed chain mismatch as transient" do
-    # Mismatch is THE bug the guard exists to catch. Must always fail-closed.
+    # The bug the guard exists to catch — must always fail-closed.
     stub_eth_chain_id(TESTNET_RPC_URL, "0xa5bf")
 
     result = Mpp::VerifiesChainId.call(

@@ -38,9 +38,8 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
   end
 
   test "lowercases the extracted deposit address (canonical form)" do
-    # Stripe may return EIP-55 checksummed (mixed-case) addresses. Cache
-    # key + Transfer-log comparisons happen in lowercase, so canonicalize
-    # at the source.
+    # Stripe may return EIP-55 checksummed (mixed-case) addresses; cache
+    # keys and Transfer-log comparisons happen in lowercase.
     mixed_case = "0xAbCdEf1234567890aBcDeF1234567890ABCDEF12"
 
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
@@ -127,9 +126,7 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
       currency: @currency
     )
 
-    # Cache is keyed by deposit_address (the value the on-chain transfer
-    # log references) and stores the payment_intent_id for later Stripe
-    # linkage.
+    # Keyed by deposit_address (the on-chain Transfer-log recipient).
     cached = Rails.cache.read("mpp:deposit_address:#{deposit_address}")
     assert_equal "pi_test_cache", cached
   end
@@ -238,14 +235,11 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
       currency: @currency
     )
 
-    # Verify the request included the expected parameters
     assert_requested(:post, "https://api.stripe.com/v1/payment_intents") { |req|
       body = URI.decode_www_form(req.body).to_h
       body["payment_method_types[]"] == "crypto"
     }
   end
-
-  # --- supported_tokens defense-in-depth (agent-team-5aas) ---
 
   test "succeeds when supported_tokens contains the expected contract address" do
     expected = "0x20c000000000000000000000b9537d11c60e8b50"
@@ -277,9 +271,8 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
   end
 
   test "succeeds when Stripe response omits supported_tokens (tolerant default)" do
-    # Older API responses / test fixtures may not include supported_tokens.
-    # We only fail when Stripe AFFIRMATIVELY returns a list that excludes
-    # the expected contract.
+    # Tolerant default lets older fixtures pass; only an affirmative
+    # mismatch fails. Strict mode (MPP_REQUIRE_SUPPORTED_TOKENS=1) flips this.
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
       .to_return(status: 200, body: {
         id: "pi_supports_absent",
@@ -302,8 +295,8 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
   end
 
   test "fails when Stripe returns supported_tokens that do not include the expected contract (drift guard)" do
-    # If Stripe drifts (network enum change, new default token, etc.), the
-    # 402 must NOT reach the client with a doomed deposit address.
+    # Stripe drift (network enum change, new default token) — the 402 must
+    # not reach the client with a doomed deposit address.
     expected = "0x20c000000000000000000000b9537d11c60e8b50"
     drifted  = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
 
@@ -336,9 +329,8 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
   end
 
   test "strict mode fails when supported_tokens is absent" do
-    # Production flips MPP_REQUIRE_SUPPORTED_TOKENS=1 so a Stripe regression
-    # that drops the field is caught at provision time, not silently after
-    # a doomed 402 reaches the client.
+    # MPP_REQUIRE_SUPPORTED_TOKENS=1: a Stripe regression that drops the
+    # field surfaces at provision time, not silently after the 402.
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
       .to_return(status: 200, body: {
         id: "pi_strict_absent",

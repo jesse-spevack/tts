@@ -8,16 +8,11 @@ module Mpp
       new(**kwargs).call
     end
 
-    # expected_token_address defaults to AppConfig::Mpp::TEMPO_CURRENCY_TOKEN.
-    # Stripe's PaymentIntent response on the Tempo network includes a
-    # supported_tokens array — we assert the contract we're about to bind
-    # into the challenge actually appears there. Defends against Stripe
-    # drift (different default token, network enum changes) silently
-    # provisioning the wrong contract.
-    #
-    # require_supported_tokens controls behavior when the field is absent:
-    # tolerant default (production-off, fixtures pass) or strict (production
-    # flip via MPP_REQUIRE_SUPPORTED_TOKENS=1, a missing field is a hard fail).
+    # expected_token_address: contract we assert appears in Stripe's
+    #   supported_tokens response — defense against silent drift.
+    # require_supported_tokens: when true, missing supported_tokens is a
+    #   hard fail (prod flip via MPP_REQUIRE_SUPPORTED_TOKENS=1). Default
+    #   tolerant so fixtures and older API responses keep working.
     def initialize(
       amount_cents:,
       currency:,
@@ -44,9 +39,8 @@ module Mpp
 
       payment_intent_id = payment_intent["id"]
 
-      # Cache by deposit_address — that is the value the on-chain transfer
-      # log references, so it must be the lookup key for any code paths
-      # that need to resolve an address back to a Stripe PaymentIntent.
+      # Keyed by deposit_address — the on-chain Transfer log's recipient
+      # is the lookup we'll need to resolve back to a PaymentIntent.
       Rails.cache.write(
         "mpp:deposit_address:#{deposit_address}",
         payment_intent_id,
@@ -102,18 +96,14 @@ module Mpp
         "tempo",
         "address"
       )
-      # Canonicalize to lowercase: Stripe may return EIP-55 checksummed
-      # (mixed-case) addresses, and downstream comparisons (cache key,
-      # on-chain Transfer log address) all happen in lowercase. Normalize
-      # at the source so every consumer agrees on the same string.
+      # Canonicalize: Stripe may return EIP-55 checksummed (mixed-case),
+      # but cache keys and Transfer-log comparisons all happen in lowercase.
       raw&.downcase
     end
 
-    # Defense-in-depth (agent-team-5aas): if Stripe ever drifts to provisioning
-    # a deposit for a different contract than the one we're about to embed in
-    # the challenge, we fail loud BEFORE the doomed 402 reaches the client.
-    # token_currency (e.g. "usdc") is irrelevant — the contract address is
-    # the source of truth.
+    # Asserts the contract we're about to embed in the challenge appears
+    # in Stripe's supported_tokens. Compares on contract address (source
+    # of truth), not the "usdc" token_currency literal.
     def verify_supported_tokens(payment_intent)
       tokens = payment_intent.dig(
         "next_action",
@@ -123,11 +113,6 @@ module Mpp
         "supported_tokens"
       )
 
-      # Tolerant default: a missing supported_tokens array (older API
-      # versions, fixtures) succeeds. Strict mode (MPP_REQUIRE_SUPPORTED_TOKENS=1)
-      # turns absence into a hard fail so prod can detect a Stripe regression
-      # that drops the field instead of silently letting a doomed deposit
-      # through.
       if tokens.nil?
         return nil unless require_supported_tokens
         log_warn("mpp.deposit.supported_tokens_missing", expected: expected_token_address)
@@ -140,8 +125,7 @@ module Mpp
       contract_addresses = Array(tokens).filter_map { |t| t["token_contract_address"]&.downcase }
       return nil if contract_addresses.include?(expected_token_address.downcase)
 
-      # Stripe drift: alert-worthy because the alternative is silent
-      # provisioning of a deposit for a contract we won't honor.
+      # Drift = silent provisioning of a contract we won't honor. Alert.
       log_warn("mpp.deposit.stripe_drift",
         expected: expected_token_address,
         got: contract_addresses.join(","))

@@ -8,16 +8,10 @@ module Mpp
 
     TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
-    # Allowlisted Tempo stablecoin contract addresses. The verifier accepts
-    # a signed `currency` from the challenge only if it appears here.
-    # Otherwise we'd be filtering Transfer events against arbitrary client
-    # input — even though it's HMAC-signed, an attacker who somehow obtained
-    # the secret could mint a challenge naming an unrelated contract and
-    # we'd happily query it on-chain.
-    #
-    # pathUSD is the testnet predeployed stablecoin; USDC.e is Stripe's
-    # mainnet guidance. Adding a new token is an explicit, reviewable code
-    # change.
+    # Allowlist of contract addresses the verifier will filter Transfer
+    # events against. Defense-in-depth on the HMAC: a leaked secret could
+    # otherwise mint a challenge naming any contract and we'd query it.
+    # pathUSD (testnet) + USDC.e (mainnet). Adding a new token is a code change.
     KNOWN_TOKEN_ADDRESSES = %w[
       0x20c0000000000000000000000000000000000000
       0x20c000000000000000000000b9537d11c60e8b50
@@ -27,16 +21,10 @@ module Mpp
       new(**kwargs).call
     end
 
-    # rpc_url defaults to AppConfig so production callers don't have to
-    # pass it, but tests (and any future multi-chain code path) can inject
-    # an alternate without mutating module constants.
-    #
-    # token_address is intentionally NOT a constructor argument: the
-    # verifier reads the currency the challenge was HMAC-signed under from
-    # request_data and uses that to filter Transfer events. This keeps
-    # in-flight challenges valid through a TEMPO_CURRENCY_TOKEN env flip
-    # (e.g. a rollback from USDC.e back to pathUSD) — the signed currency
-    # wins, not the current env (agent-team-4bf0).
+    # token_address is intentionally NOT a kwarg: the verifier reads the
+    # currency the challenge was HMAC-signed under and uses that for the
+    # Transfer-event filter. Keeps in-flight challenges valid across a
+    # TEMPO_CURRENCY_TOKEN env flip (rollback safety).
     def initialize(
       credential:,
       rpc_url: AppConfig::Mpp::TEMPO_RPC_URL
@@ -65,40 +53,28 @@ module Mpp
       end
       return Result.failure("Challenge has expired") if expires < Time.current
 
-      # Look up deposit_address from the MppPayment row created at 402
-      # challenge time. The challenge_id is HMAC-bound (unforgeable), so
-      # the DB row is the authority for which deposit_address belongs to
-      # this challenge — never trust the client payload for this value.
+      # DB row is the authority for the deposit_address bound to this
+      # challenge — never trust the client payload here.
       mpp_payment = MppPayment.find_by(challenge_id: challenge["id"])
       return Result.failure("Unknown challenge") unless mpp_payment
       deposit_address = mpp_payment.deposit_address
 
-      # Cache check remains as a freshness short-circuit: the cache entry
-      # expires with CHALLENGE_TTL_SECONDS, so a miss means the challenge
-      # is stale even if the DB row still exists.
+      # Cache miss = challenge is stale (entry TTL = CHALLENGE_TTL_SECONDS).
       cache_key = "mpp:deposit_address:#{deposit_address}"
       return Result.failure("Deposit address not found in cache") unless Rails.cache.read(cache_key)
 
-      # Parse the HMAC-signed request blob early so we can fail fast on
-      # malformed / unsupported challenge contents BEFORE doing any RPC
-      # work. agent-team-4bf0: currency (= token contract address) is
-      # signed into request_data and the verifier honors what was signed
-      # even if AppConfig::Mpp::TEMPO_CURRENCY_TOKEN has since flipped
-      # (mid-incident rollback). Allowlist gates the value — see
-      # KNOWN_TOKEN_ADDRESSES.
+      # Parse the HMAC-signed blob early so malformed contents fail before
+      # any RPC traffic.
       request_json = Base64.decode64(challenge["request"])
       request_data = JSON.parse(request_json)
       expected_amount = request_data["amount"]
-      # voice_tier is embedded in the HMAC-signed request blob, so any
-      # tampering is caught by the HMAC check upstream. Downstream callers
-      # still compare this against the tier of the CURRENT request's
-      # voice to catch the "pay Standard, retry Premium" case.
+      # Tier is bound by HMAC, but downstream still compares it against the
+      # current request's voice (catches "pay Standard, retry Premium").
       voice_tier = request_data["voice_tier"]&.to_sym
 
       signed_token_address = request_data["currency"]
-      # Type-guard before .downcase / .empty? — the HMAC binds the blob, but
-      # a generator bug or leaked secret could put a non-string here, and we
-      # don't want a deserializer landmine to surface as a 500.
+      # Type-guard before .downcase / .present? — a generator bug or leaked
+      # secret could put a non-string here; don't let it surface as a 500.
       unless signed_token_address.is_a?(String) && signed_token_address.present?
         log_warn("mpp.verifier.invalid_currency",
           currency_class: signed_token_address.class.name,
@@ -106,15 +82,14 @@ module Mpp
         return Result.failure("Challenge is missing or invalid currency")
       end
       unless KNOWN_TOKEN_ADDRESSES.include?(signed_token_address.downcase)
-        # Worth alerting on: either an unannounced new token, or — if HMAC
-        # secret is sound — an attempted forgery.
+        # Alert-worthy: either an unannounced token, or — if HMAC is sound —
+        # an attempted forgery.
         log_warn("mpp.verifier.unknown_currency",
           currency: signed_token_address,
           challenge_id: challenge["id"])
         return Result.failure("Unsupported challenge currency")
       end
 
-      # Phase 2: On-chain verification
       # mppx sends two credential types:
       #   "hash"      — client already submitted the tx, sends the hash
       #   "signature" — client sends a signed tx, server submits it
@@ -130,23 +105,17 @@ module Mpp
       # Replay protection
       return Result.failure("Transaction already used") if MppPayment.exists?(tx_hash: tx_hash)
 
-      # Poll for receipt — needed for "signature" type where the tx was
-      # just submitted and may not be mined yet. For "hash" type, the
-      # receipt should be available immediately.
+      # Polling needed for "signature" type — submitted tx may not be mined yet.
       receipt = poll_for_receipt(tx_hash)
       return receipt if receipt.is_a?(Result) && receipt.failure?
 
-      # Verify receipt status
       return Result.failure("Transaction not found") if receipt.nil?
       return Result.failure("Transaction reverted") unless receipt["status"] == "0x1"
 
-      # Phase 3: Transfer event log verification
       transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount, signed_token_address)
       return transfer_result if transfer_result&.failure?
 
-      # Pure verification — persistence is the caller's responsibility.
-      # The caller looks up the pending MppPayment by challenge_id (created
-      # by CreatesDepositAddress at challenge time) and marks it completed.
+      # Persistence is the caller's responsibility.
       Result.success(
         tx_hash: tx_hash,
         amount: expected_amount,
@@ -232,10 +201,7 @@ module Mpp
 
     def verify_transfer_log(receipt, deposit_address, expected_amount, token_address)
       logs = receipt["logs"] || []
-
-      # The challenge request amount is already in token base units (e.g.,
-      # "1000000" for $1 USDC with 6 decimals). Convert to integer for
-      # comparison against the on-chain Transfer event data field.
+      # Challenge amount is already in token base units (e.g. 1_000_000 for $1 at 6 decimals).
       expected_base_units = expected_amount.to_i
 
       matching_log = logs.find do |log|
@@ -244,13 +210,12 @@ module Mpp
         next false unless log["address"]&.downcase == token_address.downcase
         next false unless topics[0] == TRANSFER_TOPIC
 
-        # topics[2] contains the recipient address, zero-padded to 32 bytes
-        # Normalize both to 40-char lowercase hex for comparison
+        # topics[2] = zero-padded recipient address; normalize to 40-char lower-hex.
         log_recipient = topics[2].delete_prefix("0x").downcase.rjust(40, "0")[-40..]
         clean_deposit = deposit_address.delete_prefix("0x").downcase.rjust(40, "0")[-40..]
         next false unless log_recipient == clean_deposit
 
-        # Verify amount: data field is hex uint256 in token base units
+        # data = hex uint256 in token base units.
         log_amount = log["data"].delete_prefix("0x").to_i(16)
         log_amount == expected_base_units
       end

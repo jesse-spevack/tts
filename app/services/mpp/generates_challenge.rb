@@ -8,10 +8,8 @@ module Mpp
       new(**kwargs).call
     end
 
-    # token_address defaults to AppConfig so production callers don't have
-    # to pass it, but tests (and any future multi-token code path) can
-    # inject an alternate without mutating module constants. Mirrors the
-    # DI pattern Mpp::VerifiesCredential uses.
+    # token_address: tests inject an alternate to control which currency
+    # the challenge is signed under. Production uses the AppConfig default.
     def initialize(amount_cents:, recipient:, voice_tier:, token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
       @amount_cents = amount_cents
       @recipient = recipient
@@ -23,12 +21,10 @@ module Mpp
       realm = AppConfig::Domain::HOST
       method = "tempo"
       intent = "charge"
-      # MPP Tempo challenges use token base units and contract address, not fiat
+      # MPP challenges carry token base units + contract address, not fiat.
       token_decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
       amount_base_units = (amount_cents * (10**token_decimals)) / 100
-      # voice_tier is embedded in the request blob so tampering with the
-      # tier on retry (e.g. paying a Standard price but requesting a
-      # Premium voice) fails HMAC verification downstream.
+      # voice_tier in the HMAC blob blocks "pay Standard, retry Premium" attacks.
       request_json = JSON.generate({
         amount: amount_base_units.to_s,
         currency: token_address,

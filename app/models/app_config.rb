@@ -141,51 +141,33 @@ class AppConfig
 
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
-    # Tiered per-narration pricing. Standard voices use Google TTS Standard
-    # ($4/M chars COGS); Premium voices use Chirp3-HD ($30/M chars COGS) —
-    # 7.5× delta on the biggest input cost line justifies a split.
-    # See agent-team-0g5 for the full cost model.
+    # Standard ($4/M chars COGS) vs Premium ChirpHD ($30/M) — 7.5× delta.
     PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
     PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 150).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
-    # Tempo JSON-RPC endpoint. Mainnet (chain 4217) for production, Moderato
-    # testnet (chain 42431) elsewhere. The RPC URL and TEMPO_CURRENCY_TOKEN
-    # MUST refer to the same chain — a testnet RPC paired with a mainnet
-    # contract silently strands user payments. Mpp::VerifiesChainId (wired
-    # via config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
-    # `.presence` ensures TEMPO_RPC_URL="" still falls through to the
-    # default — empty would otherwise propagate and crash URI parsing
-    # before the guard can fire its framed error.
+    # Tempo RPC endpoint. Mainnet (chain 4217) for production, Moderato
+    # testnet (chain 42431) elsewhere. RPC URL and TEMPO_CURRENCY_TOKEN
+    # MUST target the same chain (Mpp::VerifiesChainId enforces).
+    # `.presence` ensures TEMPO_RPC_URL="" falls through to the default
+    # rather than poisoning URI parsing.
     TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "").presence || (
       Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
     )
-    # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the
-    # Moderato testnet (the testnet faucet only dispenses pathUSD). USDC.e
-    # (0x20c0...0000b9537d11c60e8b50) is USDC bridged via Stargate and is
-    # Stripe's prod guidance for mainnet MPP traffic. The TEMPO_CURRENCY_TOKEN
-    # env var determines which one is active — default stays pathUSD for
-    # testnet safety; prod sets the USDC.e address in its deploy config.
+    # pathUSD (testnet predeploy) vs USDC.e (Stripe's mainnet guidance,
+    # Stargate-bridged USDC). Default = pathUSD for testnet safety; prod
+    # sets USDC.e via deploy config.
     TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
-    # Decimals for the Tempo stablecoin. Both pathUSD and USDC.e use 6
-    # decimals, confirmed by pympp (mpp/methods/tempo/intents.py) and
-    # Stripe's machine-payments sample. On-chain Transfer event `data` is
-    # in these base units, so we convert cents -> base units before comparing.
+    # Both pathUSD and USDC.e use 6 decimals.
     TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
-    # Timeouts for the Tempo JSON-RPC call. A slow or hung RPC must not
-    # block a Rails thread indefinitely.
     TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
     TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
-    # Stripe API version for crypto PaymentIntent endpoints. Must stay
-    # on the preview track while Machine Payments Protocol support is
-    # gated there.
+    # MPP support is gated on the preview track.
     STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
-    # When true, Mpp::CreatesDepositAddress fails-closed if Stripe omits
-    # supported_tokens from the PaymentIntent response. Default off so
-    # legacy fixtures and older API versions keep working; flip to "1"
-    # in production via deploy config so a Stripe regression that drops
-    # the field can't silently let a doomed deposit through.
+    # Strict mode for CreatesDepositAddress: when "1", a Stripe response
+    # missing supported_tokens is a hard fail. Default off (fixture-safe);
+    # production flips on so dropped-field regressions surface immediately.
     REQUIRE_SUPPORTED_TOKENS = ENV["MPP_REQUIRE_SUPPORTED_TOKENS"] == "1"
   end
 end

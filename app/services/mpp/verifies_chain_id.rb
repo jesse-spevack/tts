@@ -6,25 +6,17 @@ require "resolv"
 
 module Mpp
   # Boot-time guard that the configured Tempo RPC URL actually points at
-  # the chain we expect. Catches the specific class of bug where a testnet
-  # RPC is paired with a mainnet token contract (or vice versa), which
-  # silently strands user payments.
-  #
-  # Returns Result.success when the chain matches; Result.failure on
-  # mismatch, RPC error, or timeout. The initializer translates failure
-  # into a loud boot abort in production.
+  # the chain we expect. Catches testnet-RPC-paired-with-mainnet-contract
+  # (or inverse) misconfigurations that silently strand payments.
   class VerifiesChainId
-    # Tempo chain IDs, confirmed via eth_chainId on 2026-04-20:
+    # Tempo chain IDs (confirmed via eth_chainId):
     #   rpc.tempo.xyz          -> 0x1079 = 4217  (mainnet)
     #   rpc.moderato.tempo.xyz -> 0xa5bf = 42431 (Moderato testnet)
     MAINNET_CHAIN_ID = 4217
     TESTNET_CHAIN_ID = 42431
 
-    # HTTP status codes that indicate the upstream is *temporarily* unable
-    # to answer — retry-after-a-bit semantics. 4xx outside this set means
-    # config error (bad URL, bad auth) which retries can't fix.
-    #   408 Request Timeout, 425 Too Early, 429 Too Many Requests
-    #   500/502/503/504 standard upstream-busy / gateway codes
+    # HTTP codes treated as upstream-busy (retry-able). Anything outside
+    # this set is a config error — retries don't help.
     TRANSIENT_HTTP_CODES = [ 408, 425, 429, 500, 502, 503, 504 ].freeze
 
     def self.call(**kwargs)
@@ -39,17 +31,14 @@ module Mpp
       @expected_chain_id = expected_chain_id
     end
 
-    # Picks the expected chain based on Rails env. Production must see
-    # mainnet; every other env (dev, test, staging, ci) must see testnet.
+    # Production = mainnet. Anything else (dev/test/staging/ci) = testnet.
     def self.expected_chain_id_for(env)
       env.to_s == "production" ? MAINNET_CHAIN_ID : TESTNET_CHAIN_ID
     end
 
-    # Whether the boot-time guard should actually run. Production: on by
-    # default. Other envs: off unless MPP_CHAINID_GUARD=1 is set. All envs:
-    # off when TEMPO_SKIP_CHAINID_GUARD=1 or during a rake task (so asset
-    # precompile / migrations don't require Tempo RPC reachability).
-    # Kept here (not in the initializer) so the gate is unit-testable.
+    # Production: on by default. Other envs: opt-in via MPP_CHAINID_GUARD=1.
+    # Always off under TEMPO_SKIP_CHAINID_GUARD=1 or rake (asset precompile
+    # / migrations don't need RPC reachability). Kept here for unit tests.
     def self.should_run?(env: Rails.env, env_vars: ENV, rake_task_running: rake_task_running?)
       return false if env_vars["TEMPO_SKIP_CHAINID_GUARD"] == "1"
       return false if rake_task_running
@@ -57,10 +46,8 @@ module Mpp
       env_vars["MPP_CHAINID_GUARD"] == "1"
     end
 
-    # Whether boot is currently bypassing the guard via env var. Used by
-    # the initializer to emit a WARN log on every bypassed boot (agent-team-vo2c)
-    # — without this, "TEMPO_SKIP_CHAINID_GUARD=1 — should be temporary"
-    # quietly becomes permanent post-incident.
+    # Surfaces the bypass env var so the initializer can WARN on every
+    # bypassed boot — without that, "should be temporary" goes silent.
     def self.bypassed?(env_vars: ENV)
       env_vars["TEMPO_SKIP_CHAINID_GUARD"] == "1"
     end
@@ -123,9 +110,7 @@ module Mpp
            Errno::ENETUNREACH, Errno::ETIMEDOUT, Errno::EPIPE,
            SocketError, Resolv::ResolvError, Resolv::ResolvTimeout,
            OpenSSL::SSL::SSLError, IOError
-      # Transient network errors fail-open at the initializer level so a
-      # cold-start container with a slow DNS cache, a routing flap, or a
-      # mid-rotation TLS hiccup doesn't wedge boot. Confirmed mismatches
+      # Transient errors fail-open at the initializer; confirmed mismatches
       # still fail-closed.
       Result.failure("RPC network error: #{$!.class}: #{$!.message}", code: :transient)
     rescue JSON::ParserError

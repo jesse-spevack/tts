@@ -234,22 +234,19 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 3_000, AppConfig::Tts::COST_CENTS_PER_MILLION["premium"]
   end
 
-  # --- Mpp empty-env handling (agent-team-vo2c) ---
-
   test "Mpp::TEMPO_RPC_URL is a parseable URI in this env" do
-    # Under-the-hood guarantee for the chain-id guard: an empty TEMPO_RPC_URL
-    # env var must NOT propagate to the constant — otherwise URI parsing in
-    # both VerifiesChainId#fetch_chain_id and VerifiesCredential#rpc_call
-    # raises NoMethodError before our framed errors can fire (agent-team-vo2c).
+    # Empty TEMPO_RPC_URL env var must not propagate — URI parsing later
+    # in the chain-id guard / RPC client would raise NoMethodError before
+    # our framed errors get a chance.
     uri = URI(AppConfig::Mpp::TEMPO_RPC_URL)
     assert uri.host.present?, "TEMPO_RPC_URL must always resolve to a URI with a host"
     assert_includes %w[http https], uri.scheme
   end
 
   test "Mpp::TEMPO_RPC_URL fallback uses .presence not just .fetch" do
-    # Source-level invariant: a block-form fallback (`ENV.fetch('X') { default }`)
-    # treats '' as set and returns the empty string, which then fails URI
-    # parsing. Use `.presence ||` so empty values fall through to the default.
+    # Source-level invariant: block-form `ENV.fetch('X') { default }`
+    # treats '' as set and returns the empty string. Use `.presence ||`
+    # so empty values fall through to the default.
     source = File.read(Rails.root.join("app/models/app_config.rb"))
     refute_match(/ENV\.fetch\("TEMPO_RPC_URL"\) do/, source,
       "AppConfig::Mpp::TEMPO_RPC_URL must use .presence fallback so empty env vars don't poison the URL")
