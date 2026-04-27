@@ -66,7 +66,6 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :internal do
-      resources :episodes, only: [ :update ]
       post "episodes/cost_preview" => "cost_preview#create", as: :episodes_cost_preview
     end
 
