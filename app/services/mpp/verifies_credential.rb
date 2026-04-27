@@ -100,9 +100,17 @@ module Mpp
       # a generator bug or leaked secret could put a non-string here, and we
       # don't want a deserializer landmine to surface as a 500.
       unless signed_token_address.is_a?(String) && signed_token_address.present?
+        log_warn("mpp.verifier.invalid_currency",
+          currency_class: signed_token_address.class.name,
+          challenge_id: challenge["id"])
         return Result.failure("Challenge is missing or invalid currency")
       end
       unless KNOWN_TOKEN_ADDRESSES.include?(signed_token_address.downcase)
+        # Worth alerting on: either an unannounced new token, or — if HMAC
+        # secret is sound — an attempted forgery.
+        log_warn("mpp.verifier.unknown_currency",
+          currency: signed_token_address,
+          challenge_id: challenge["id"])
         return Result.failure("Unsupported challenge currency")
       end
 

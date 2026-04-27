@@ -125,6 +125,7 @@ module Mpp
       # through.
       if tokens.nil?
         return nil unless require_supported_tokens
+        log_warn("mpp.deposit.supported_tokens_missing", expected: expected_token_address)
         return Result.failure(
           "Stripe deposit response missing supported_tokens; strict mode is on " \
           "(MPP_REQUIRE_SUPPORTED_TOKENS=1). Set to 0 to tolerate."
@@ -134,6 +135,11 @@ module Mpp
       contract_addresses = Array(tokens).filter_map { |t| t["token_contract_address"]&.downcase }
       return nil if contract_addresses.include?(expected_token_address.downcase)
 
+      # Stripe drift: alert-worthy because the alternative is silent
+      # provisioning of a deposit for a contract we won't honor.
+      log_warn("mpp.deposit.stripe_drift",
+        expected: expected_token_address,
+        got: contract_addresses.join(","))
       Result.failure(
         "Stripe deposit does not support expected token #{expected_token_address}; " \
         "got #{contract_addresses.inspect}"
