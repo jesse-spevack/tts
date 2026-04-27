@@ -3,6 +3,16 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["tab", "panel"]
 
+  // Honor a ?source=<tab> query param so other pages can deep-link straight
+  // to a specific tab (e.g. the char-limit tip on the episode card).
+  connect() {
+    const source = new URLSearchParams(window.location.search).get("source")
+    if (!source) return
+
+    const tab = this.tabTargets.find(t => t.dataset.tab === source)
+    if (tab) tab.click()
+  }
+
   switch(event) {
     const selectedTab = event.currentTarget.dataset.tab
 
@@ -25,5 +35,10 @@ export default class extends Controller {
         panel.classList.add("hidden")
       }
     })
+
+    // Notify other controllers (e.g. cost_preview) that the active tab
+    // changed so they can reset state tied to the previous source type.
+    // Dispatches as `tab-switch:changed` and bubbles through the DOM.
+    this.dispatch("changed", { detail: { selectedTab } })
   }
 }

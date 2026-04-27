@@ -15,17 +15,19 @@ class DeductsCredit
     balance = CreditBalance.for(user)
     return Result.failure("No credits available", code: :insufficient_credits) if balance.balance < cost_in_credits
 
-    balance.deduct!(cost_in_credits)
+    ActiveRecord::Base.transaction do
+      balance.deduct!(cost_in_credits)
 
-    CreditTransaction.create!(
-      user: user,
-      amount: -cost_in_credits,
-      balance_after: balance.balance,
-      transaction_type: "usage",
-      episode: episode
-    )
+      CreditTransaction.create!(
+        user: user,
+        amount: -cost_in_credits,
+        balance_after: balance.balance,
+        transaction_type: "usage",
+        episode: episode
+      )
 
-    SendsCreditDepletedNudge.call(user: user) if balance.balance.zero?
+      SendsCreditDepletedNudge.call(user: user) if balance.balance.zero?
+    end
 
     Result.success(balance)
   rescue CreditBalance::InsufficientCreditsError

@@ -72,4 +72,62 @@ class EpisodesHelperTest < ActionView::TestCase
     episode = Episode.new(source_text_length: nil)
     assert_nil processing_eta(episode)
   end
+
+  # --- episode_cost_label (agent-team-gafe) ----------------------------------
+  #
+  # Branches by account state + Episode#cost (backed by credit_cost column):
+  #   - complimentary / unlimited           → "Included"
+  #   - credit_cost IS NULL (URL deferred)  → "Checking credit cost..."
+  #   - credit_cost == 0 (free tier)        → "Free tier episode"
+  #   - credit_cost > 0                     → "1 credit" / "2 credits"
+
+  test "episode_cost_label returns 'Checking credit cost...' for deferred URL episode" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    episode = credit_user.primary_podcast.episodes.create!(
+      user: credit_user, title: "Pending URL", author: "Author",
+      description: "desc", source_type: :url,
+      source_url: "https://example.com/article", status: :preparing
+    )
+    # credit_cost defaults to NULL on a fresh URL episode pre-extract.
+    assert_nil episode.credit_cost
+
+    assert_equal "Checking credit cost...", episode_cost_label(episode)
+  end
+
+  test "episode_cost_label returns 'Included' for unlimited user regardless of credit_cost" do
+    unlimited = users(:unlimited_user)
+    episode = unlimited.primary_podcast.episodes.create!(
+      user: unlimited, title: "Whatever", author: "Author",
+      description: "desc", source_type: :paste,
+      source_text: "A" * 120, status: :complete, credit_cost: 0
+    )
+
+    assert_equal "Included", episode_cost_label(episode)
+  end
+
+  # --- char_limit_failure? -----------------------------------------------
+  # Detects the specific failure mode where the source content exceeded the
+  # user's tier character limit (ValidatesCharacterLimit#error_message).
+  # Used by the episode card to render an actionable split-and-paste tip.
+
+  test "char_limit_failure? is true when error_message matches the limit-exceeded prefix" do
+    episode = Episode.new(status: :failed, error_message: "exceeds your plan's 15,000 character limit (16,305 characters)")
+    assert char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false for other failure modes" do
+    episode = Episode.new(status: :failed, error_message: "Could not fetch URL")
+    refute char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false for non-failed episodes" do
+    episode = Episode.new(status: :complete, error_message: nil)
+    refute char_limit_failure?(episode)
+  end
+
+  test "char_limit_failure? is false when error_message is blank" do
+    episode = Episode.new(status: :failed, error_message: nil)
+    refute char_limit_failure?(episode)
+  end
 end

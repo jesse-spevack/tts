@@ -39,12 +39,14 @@ module McpToolHelpers
   def record_successful_creation(user:, episode:)
     RecordsEpisodeUsage.call(user: user)
 
-    cost_result = CalculatesAnticipatedEpisodeCost.call(
-      user: user,
-      source_type: episode.source_type,
-      text: episode.source_text
-    )
-    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost_result.data)
+    cost = CalculatesAnticipatedEpisodeCost.call(
+      EpisodeCostRequest.new(
+        user: user,
+        source_type: episode.source_type,
+        text: episode.source_text
+      )
+    ).data
+    DebitsEpisodeCredit.call(user: user, episode: episode, cost_in_credits: cost.credits)
   end
 
   private
@@ -61,7 +63,7 @@ module McpToolHelpers
     when :insufficient_credits
       "Not enough credits for this episode. Buy more at #{AppConfig::Domain::BASE_URL}/billing"
     else
-      "You've used all your free episodes this month. Upgrade at #{AppConfig::Domain::BASE_URL}/upgrade"
+      "You've used all your free episodes this month. Buy credits at #{AppConfig::Domain::BASE_URL}/billing"
     end
   end
 end

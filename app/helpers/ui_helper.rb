@@ -26,40 +26,43 @@ module UiHelper
     "block text-sm/6 font-medium text-mist-950 dark:text-white"
   end
 
-  def status_pill_label(subscription)
-    return "" if subscription.nil?
-    return "Canceling" if subscription.active? && subscription.canceling?
-    return "Active" if subscription.active?
-    return "Past Due" if subscription.past_due?
-    "Canceled"
-  end
-
-  def status_pill_classes(subscription)
-    case status_pill_label(subscription)
-    when "Active"
-      "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
-    when "Canceling", "Past Due"
-      "bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-    when "Canceled"
-      "bg-mist-100 text-mist-600 dark:bg-mist-500/10 dark:text-mist-400"
-    else
-      ""
-    end
-  end
-
-  def manage_billing_cta_label(subscription)
-    subscription&.canceled? ? "Resubscribe" : "Manage Billing"
-  end
-
-  def show_billing_section?(user, subscription)
-    user.premium? || subscription.present?
+  def show_billing_section?(user)
+    user.premium?
   end
 
   def credits_card_variant(user)
     return :balance if user.has_credits?
     return nil if user.premium?
-    return :canceled_grace if user.subscription&.canceled?
     :empty_state
+  end
+
+  # Shared Tailwind classes for the marketing primary CTA button/link.
+  # Used by home/about/blog/header to keep the pill-shaped dark button
+  # style consistent. Pass a sizing fragment (e.g. "px-4 py-1.5" or
+  # "px-5 py-2.5") to control button size per context.
+  def marketing_primary_button_classes(sizing = "px-4 py-1.5", extra: nil)
+    [
+      "inline-flex shrink-0 items-center justify-center gap-1 rounded-full",
+      "bg-mist-950 text-white hover:bg-mist-800",
+      "dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200",
+      "text-sm/7 font-medium",
+      sizing,
+      extra
+    ].compact.join(" ")
+  end
+
+  # Destination for a marketing CTA when the user is already authenticated.
+  # Mirrors SessionsController#post_login_path so signed-in clicks land
+  # where a just-authenticated user would via the signup modal. pack_size
+  # overrides the default first-pack checkout for tier-specific credit CTAs.
+  def marketing_cta_path(plan, pack_size: nil)
+    case plan
+    when "credit_pack"
+      size = pack_size || AppConfig::Credits::PACKS.first[:size]
+      checkout_path(pack_size: size)
+    else
+      new_episode_path
+    end
   end
 
   def oauth_app_badge(app)

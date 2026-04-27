@@ -1,0 +1,177 @@
+<% steps = [
+     { n: 1, label: "Find article" },
+     { n: 2, label: "Open URL tab" },
+     { n: 3, label: "Paste & convert" },
+     { n: 4, label: "Wait for episode" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: steps %>
+<% end %>
+<%= render layout: "shared/help_layout", locals: { current: :url_help } do %>
+
+  <section class="pb-12">
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Convert an article URL
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      Paste any article URL and PodRead fetches it, extracts the text, and
+      turns it into a podcast episode.
+    </p>
+
+    <%# Step body. Active state in the right-rail ToC is driven by         %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb).           %>
+    <ol role="list" class="mt-10 space-y-12">
+
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Find an article you want to listen to
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Open it in your browser and copy the URL from the address bar.
+            </p>
+            <p class="mt-3 max-w-[60ch] text-sm/6 text-pretty text-mist-500 dark:text-mist-400">
+              <strong class="font-medium text-mist-700 dark:text-mist-300">Heads up:</strong>
+              paywalled articles and pages that render in JavaScript often can't
+              be fetched by URL. If a URL fails, use the
+              <%= link_to "Paste text tab", new_episode_path(source: "paste"), class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>
+              (copy the article body from your browser) or the
+              <%= link_to "browser extension", help_extension_path, class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>
+              (it sends from inside your authenticated session).
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <div class="flex items-center gap-2 rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 h-10 overflow-hidden">
+                    <span class="text-mist-500 dark:text-mist-400">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </span>
+                    <span class="flex-1 truncate text-sm text-mist-950 dark:text-white">bitsaboutmoney.com/archive/gift-card-accountability-sink</span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Open the URL tab on the New Episode form
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              It's the default tab when you click
+              <strong class="text-mist-950 dark:text-white">+ New Episode</strong>
+              in the navigation.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <nav class="flex gap-6 border-b border-mist-200 dark:border-mist-700">
+                    <span class="border-b-2 border-mist-950 dark:border-white pb-2 text-sm font-medium text-mist-950 dark:text-white">From URL</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Paste Text</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Upload File</span>
+                  </nav>
+                  <div class="mt-4 space-y-3">
+                    <p class="text-xs font-medium text-mist-500 dark:text-mist-400">Article URL</p>
+                    <div class="h-10 w-full rounded-md border border-mist-200 dark:border-mist-700 bg-mist-50 dark:bg-mist-800/50"></div>
+                    <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                      Create Episode
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Paste the URL and click Create Episode
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Drop the URL into the field and click
+              <strong class="text-mist-950 dark:text-white">Create Episode</strong>.
+              We start fetching the article immediately.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Article URL</p>
+                    <div class="rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 py-2 text-sm text-mist-950 dark:text-white truncate">
+                      bitsaboutmoney.com/archive/gift-card-accountability-sink
+                    </div>
+                  </div>
+                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                    Create Episode
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Episode appears in your feed
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Once you submit, audio is ready in your feed in a few minutes.
+              Whether it shows up in your podcast app right away or ten
+              minutes later depends on how often your app checks for new
+              episodes — in many apps you can pull-to-refresh if you want it
+              sooner.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">Gift Card Accountability Sink</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">5:42</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Open the URL form", new_episode_path,
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+  </section>
+<% end %>

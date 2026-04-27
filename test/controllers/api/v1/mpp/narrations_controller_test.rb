@@ -144,7 +144,7 @@ module Api
         #   3. Invalid voice           → 422
         #
         # Tier-aware pricing: the resolved voice drives the challenge price
-        # (Standard = 75c, Premium = 100c) via AppConfig::Mpp::PRICE_*_CENTS.
+        # (Standard = 75c, Premium = 150c) via AppConfig::Mpp::PRICE_*_CENTS.
 
         class CreateTest < ActionDispatch::IntegrationTest
           TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
@@ -207,7 +207,7 @@ module Api
             assert_equal 75, json["challenge"]["amount"]
           end
 
-          test "POST without Payment header, voice=callum (Premium) returns 402 with price 100" do
+          test "POST without Payment header, voice=callum (Premium) returns 402 with price 150" do
             post api_v1_mpp_narrations_path,
               params: @valid_params.merge(voice: "callum"),
               as: :json
@@ -215,7 +215,7 @@ module Api
             assert_response :payment_required
             json = response.parsed_body
             assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"]
-            assert_equal 100, json["challenge"]["amount"]
+            assert_equal 150, json["challenge"]["amount"]
           end
 
           test "POST without Payment header and no voice param defaults to Voice::DEFAULT_KEY (felix/Standard/75)" do
@@ -319,7 +319,7 @@ module Api
             assert json["id"].start_with?("nar_"), "Narration id should start with nar_"
           end
 
-          test "POST with valid Payment credential (voice=callum) creates Premium-voice Narration at 100c" do
+          test "POST with valid Payment credential (voice=callum) creates Premium-voice Narration at 150c" do
             credential = valid_credential(voice_tier: :premium, amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS)
             stub_tempo_rpc_success(amount_cents: AppConfig::Mpp::PRICE_PREMIUM_CENTS)
 

@@ -139,6 +139,71 @@ class ProcessesPasteEpisodeTest < ActiveSupport::TestCase
     assert true
   end
 
+  # === Credit refund on paste-path failure (agent-team-uoqd round 2) ===
+  #
+  # Paste episodes debit at CreatesEpisode#call (see creates_episode.rb:50
+  # → DebitsEpisodeCredit). If the sync processor then fails during
+  # check_character_limit / LLM / update_and_enqueue, fail_episode must
+  # refund the credit. The refund belongs in EpisodeErrorHandling#fail_episode
+  # (Option Z) so all four Processes*Episode consumers pick it up.
+
+  test "refunds debited credit when paste episode fails on LLM error" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+
+    episode = Episode.create!(
+      podcast: podcasts(:one),
+      user: credit_user,
+      title: "Processing...",
+      author: "Processing...",
+      description: "Processing pasted text...",
+      source_type: :paste,
+      source_text: @text,
+      status: :processing
+    )
+
+    # Simulate the CreatesEpisode-time debit of 1 credit.
+    DeductsCredit.call(user: credit_user, episode: episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { Result.failure("LLM exploded") }
+
+    ProcessesPasteEpisode.call(episode: episode)
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when paste episode fails after CreatesEpisode debited it"
+  end
+
+  test "refunds debited credit when paste episode fails on unexpected error" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+
+    episode = Episode.create!(
+      podcast: podcasts(:one),
+      user: credit_user,
+      title: "Processing...",
+      author: "Processing...",
+      description: "Processing pasted text...",
+      source_type: :paste,
+      source_text: @text,
+      status: :processing
+    )
+
+    DeductsCredit.call(user: credit_user, episode: episode, cost_in_credits: 1)
+
+    # Generic StandardError path — rescue StandardError branch of #call.
+    stubs { |m| ProcessesWithLlm.call(text: m.any, episode: m.any) }.with { raise StandardError, "boom" }
+
+    ProcessesPasteEpisode.call(episode: episode)
+
+    episode.reload
+    assert_equal "failed", episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Generic failures must also refund — both rescue branches flow through fail_episode"
+  end
+
   teardown do
     Mocktail.reset
   end

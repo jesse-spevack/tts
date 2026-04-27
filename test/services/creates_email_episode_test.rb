@@ -7,6 +7,7 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   setup do
     @user = users(:one)
+    @podcast = @user.primary_podcast
     @valid_text = "A" * 150 # Above 100 char minimum
   end
 
@@ -14,8 +15,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
     result = nil
     assert_enqueued_with(job: ProcessesEmailEpisodeJob) do
       result = CreatesEmailEpisode.call(
+        podcast: @podcast,
         user: @user,
-        email_body: @valid_text
+        text: @valid_text
       )
     end
 
@@ -28,8 +30,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "creates episode with placeholder metadata" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: @valid_text
+      text: @valid_text
     )
 
     assert_equal "Processing...", result.data.title
@@ -39,8 +42,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "uses user primary_podcast" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: @valid_text
+      text: @valid_text
     )
 
     assert_equal @user.primary_podcast, result.data.podcast
@@ -48,8 +52,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "fails on empty text" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: ""
+      text: ""
     )
 
     assert result.failure?
@@ -59,8 +64,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "fails on nil text" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: nil
+      text: nil
     )
 
     assert result.failure?
@@ -69,8 +75,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "fails on text under 100 characters" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: "A" * 99
+      text: "A" * 99
     )
 
     assert result.failure?
@@ -79,8 +86,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
 
   test "succeeds on text exactly 100 characters" do
     result = CreatesEmailEpisode.call(
+      podcast: @podcast,
       user: @user,
-      email_body: "A" * 100
+      text: "A" * 100
     )
 
     assert result.success?
@@ -89,8 +97,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
   test "enqueues ProcessesEmailEpisodeJob" do
     assert_enqueued_with(job: ProcessesEmailEpisodeJob) do
       CreatesEmailEpisode.call(
+        podcast: @podcast,
         user: @user,
-        email_body: @valid_text
+        text: @valid_text
       )
     end
   end
@@ -101,8 +110,9 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
     text_over_limit = "A" * (max_chars + 1)
 
     result = CreatesEmailEpisode.call(
+      podcast: free_user.primary_podcast,
       user: free_user,
-      email_body: text_over_limit
+      text: text_over_limit
     )
 
     assert result.failure?
@@ -114,18 +124,19 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
     very_long_text = "A" * 100_000
 
     result = CreatesEmailEpisode.call(
+      podcast: unlimited_user.primary_podcast,
       user: unlimited_user,
-      email_body: very_long_text
+      text: very_long_text
     )
 
     assert result.success?
   end
 
   test "enqueues with priority 0 for premium user" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
 
     assert_enqueued_with(job: ProcessesEmailEpisodeJob, priority: 0) do
-      CreatesEmailEpisode.call(user: premium_user, email_body: @valid_text)
+      CreatesEmailEpisode.call(podcast: premium_user.primary_podcast, user: premium_user, text: @valid_text)
     end
   end
 
@@ -133,7 +144,7 @@ class CreatesEmailEpisodeTest < ActiveSupport::TestCase
     free_user = users(:free_user)
 
     assert_enqueued_with(job: ProcessesEmailEpisodeJob, priority: 10) do
-      CreatesEmailEpisode.call(user: free_user, email_body: @valid_text)
+      CreatesEmailEpisode.call(podcast: free_user.primary_podcast, user: free_user, text: @valid_text)
     end
   end
 end

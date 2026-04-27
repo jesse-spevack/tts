@@ -27,7 +27,7 @@ module Api
         end
 
         test "show returns premium tier for subscriber" do
-          user = users(:subscriber)
+          user = users(:complimentary_user)
           token = GeneratesApiToken.call(user: user)
 
           get api_v1_auth_status_path,

@@ -24,6 +24,7 @@ class GeneratesEpisodeAudio
 
     log_info "synthesizing_audio", voice: voice_name, text_bytes: content_text.bytesize
     audio_content = synthesize_audio
+    record_tts_usage
 
     gcs_episode_id = generate_episode_id
     log_info "uploading_audio", gcs_episode_id: gcs_episode_id, audio_bytes: audio_content.bytesize
@@ -35,6 +36,7 @@ class GeneratesEpisodeAudio
     log_info "updating_episode", duration_seconds: duration_seconds
     @episode.update!(
       status: :complete,
+      voice: voice_name,
       gcs_episode_id: gcs_episode_id,
       audio_size_bytes: audio_content.bytesize,
       duration_seconds: duration_seconds,
@@ -59,6 +61,15 @@ class GeneratesEpisodeAudio
       raise
     else
       @episode.update!(status: :failed, error_message: e.message)
+      # Permanent failure at the synthesis layer bypasses EpisodeErrorHandling
+      # (this service doesn't include the concern). Refund here so users
+      # aren't short a payment/credit/slot after a TTS-layer failure.
+      # Transient errors re-raise above for job retry and MUST NOT refund
+      # here; retry exhaustion handles that in the job.
+      # The `saved_change_to_status?` gate matches the other call sites —
+      # protects the free-tier counter from double-decrement if the episode
+      # was already :failed when we got here.
+      RefundsPayment.call(content: @episode) if @episode.saved_change_to_status?
     end
   end
 
@@ -68,12 +79,34 @@ class GeneratesEpisodeAudio
 
   def synthesize_audio
     config = Tts::Config.new(voice_name: voice_name)
-    synthesizer = SynthesizesAudio.new(config: config)
-    synthesizer.call(text: content_text, voice: voice_name)
+    @synthesizer = SynthesizesAudio.new(config: config)
+    @synthesizer.call(text: content_text, voice: voice_name)
+  end
+
+  def record_tts_usage
+    billed = @synthesizer&.last_billed_characters
+    return unless billed&.positive?
+
+    RecordsTtsUsage.call(
+      usable: @episode,
+      voice_id: voice_name,
+      character_count: billed
+    )
+  rescue StandardError => e
+    # Usage tracking is best-effort — never let accounting break audio generation.
+    # Log at error level with enough context to reconstruct the missed row.
+    log_error "tts_usage_record_failed",
+              usable_type: @episode.class.name,
+              usable_id: @episode.id,
+              voice_id: voice_name,
+              character_count: billed,
+              error: e.class,
+              message: e.message,
+              exception: e
   end
 
   def voice_name
-    @voice_override.presence || @episode.voice
+    @voice_name ||= @voice_override.presence || @episode.effective_voice
   end
 
   def content_text

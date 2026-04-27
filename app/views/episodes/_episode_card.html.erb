@@ -47,6 +47,13 @@
               <% end %>
             <% end %>
           </p>
+          <% if char_limit_failure?(episode) %>
+            <p class="text-sm/6 text-mist-500 dark:text-mist-400 mt-1">
+              Tip: split it across two episodes.
+              <%= link_to "Read more →", help_splitting_articles_path,
+                          class: "underline hover:text-mist-700 dark:hover:text-mist-300" %>
+            </p>
+          <% end %>
         </div>
         <% if deletable?(episode) %>
           <%= button_to episode_path(episode, page: params[:page]),

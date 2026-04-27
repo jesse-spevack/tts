@@ -1,3 +1,13 @@
+<% sections = [
+     { id: "what-is-it", label: "What is it?" },
+     { id: "prerequisites", label: "Prerequisites" },
+     { id: "install", label: "Install the plugin" },
+     { id: "usage", label: "Usage" },
+     { id: "troubleshooting", label: "Troubleshooting" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: sections %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :claude_code_help } do %>
 
   <section class="pb-12">
@@ -7,8 +17,13 @@
       <a href="https://code.claude.com" class="text-mist-950 underline dark:text-white">Claude Code</a>.
     </p>
 
+    <%# Section body. Active state in the right-rail ToC is driven by      %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb). Each      %>
+    <%# section heading is the scroll-spy target — its data-step matches   %>
+    <%# the link's data-step in shared/_help_right_toc.html.erb.           %>
     <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
-      <h3 class="text-base font-semibold text-mist-950 dark:text-white">What Is It?</h3>
+      <h3 id="what-is-it" data-scroll-spy-target="step" data-step="what-is-it" class="scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">What Is It?</h3>
       <p class="mt-3">
         The PodRead plugin teaches Claude Code how to use the
         <a href="https://github.com/jesse-spevack/podread-cli" class="text-mist-950 underline dark:text-white">podread CLI</a>.
@@ -16,14 +31,14 @@
         no commands to memorize.
       </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Prerequisites</h3>
+      <h3 id="prerequisites" data-scroll-spy-target="step" data-step="prerequisites" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Prerequisites</h3>
       <ol class="mt-3 list-decimal list-inside space-y-2">
         <li><a href="https://code.claude.com" class="text-mist-950 underline dark:text-white">Claude Code</a> installed</li>
         <li>The <strong class="text-mist-950 dark:text-white">podread</strong> CLI installed (<%= link_to "see CLI help", help_cli_path, class: "text-mist-950 underline dark:text-white" %>)</li>
         <li>Logged in to PodRead via <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">podread auth login</code></li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Install the Plugin</h3>
+      <h3 id="install" data-scroll-spy-target="step" data-step="install" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Install the Plugin</h3>
       <p class="mt-3">In Claude Code, run:</p>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>/plugin install podread@podread-cli</code></pre>
 
@@ -35,7 +50,7 @@
         <li>Then install with <code class="rounded bg-mist-50 dark:bg-mist-900 px-1.5 py-0.5">/plugin install podread@podread-cli</code></li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Usage</h3>
+      <h3 id="usage" data-scroll-spy-target="step" data-step="usage" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Usage</h3>
       <p class="mt-3">Just ask Claude in natural language:</p>
       <ul class="mt-3 space-y-3">
         <li class="flex items-start gap-3">
@@ -55,7 +70,7 @@
         Claude handles authentication checks, command construction, and waiting for processing automatically.
       </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
+      <h3 id="troubleshooting" data-scroll-spy-target="step" data-step="troubleshooting" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
 
       <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">&ldquo;podread: command not found&rdquo;</h4>
       <p class="mt-2">

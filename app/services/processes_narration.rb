@@ -103,6 +103,7 @@ class ProcessesNarration
 
     log_info "narration_synthesizing_audio", voice: narration.voice, text_bytes: wrapped.bytesize
     audio_content = synthesize_audio(wrapped)
+    record_tts_usage
 
     gcs_episode_id = generate_episode_id
     log_info "narration_uploading_audio", gcs_episode_id: gcs_episode_id, audio_bytes: audio_content.bytesize
@@ -157,8 +158,30 @@ class ProcessesNarration
 
   def synthesize_audio(text)
     config = Tts::Config.new(voice_name: narration.voice)
-    synthesizer = SynthesizesAudio.new(config: config)
-    synthesizer.call(text: text, voice: narration.voice)
+    @synthesizer = SynthesizesAudio.new(config: config)
+    @synthesizer.call(text: text, voice: narration.voice)
+  end
+
+  def record_tts_usage
+    billed = @synthesizer&.last_billed_characters
+    return unless billed&.positive?
+
+    RecordsTtsUsage.call(
+      usable: narration,
+      voice_id: narration.voice,
+      character_count: billed
+    )
+  rescue StandardError => e
+    # Usage tracking is best-effort — never let accounting break audio generation.
+    # Log at error level with enough context to reconstruct the missed row.
+    log_error "narration_tts_usage_record_failed",
+              usable_type: narration.class.name,
+              usable_id: narration.id,
+              voice_id: narration.voice,
+              character_count: billed,
+              error: e.class,
+              message: e.message,
+              exception: e
   end
 
   def generate_episode_id
@@ -206,6 +229,11 @@ class ProcessesNarration
 
   def fail_narration(error_message)
     narration.update!(status: :failed, error_message: error_message)
+    # Gate matches Episode paths (see fail_episode in EpisodeErrorHandling).
+    # Narrations today always route to MPP refund (mpp_payment is non-optional),
+    # which is already idempotent — the gate is defense-in-depth and matches
+    # call-site-wide pattern consistency.
+    RefundsPayment.call(content: narration) if narration.saved_change_to_status?
     log_warn "narration_marked_failed", narration_id: narration.id, error: error_message
   end
 end

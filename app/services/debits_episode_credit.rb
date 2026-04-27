@@ -38,6 +38,7 @@ class DebitsEpisodeCredit
     return Result.success(status: :skipped, reason: :complimentary) if user.complimentary?
     return Result.success(status: :skipped, reason: :unlimited)     if user.unlimited?
     return Result.success(status: :skipped, reason: :url_deferred)  if episode.url?
+    return Result.success(status: :skipped, reason: :no_cost)       if cost_in_credits.nil?
 
     result = DeductsCredit.call(user: user, episode: episode, cost_in_credits: cost_in_credits)
     return result if result.failure?

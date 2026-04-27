@@ -20,7 +20,14 @@ class GeneratesEpisodeAudioJob < ApplicationJob
       end
     end
   rescue ChecksAudioCircuitBreaker::Tripped => e
-    Episode.find_by(id: episode_id)&.update!(status: :failed, error_message: e.message)
+    episode = Episode.find_by(id: episode_id)
+    return unless episode
+
+    episode.update!(status: :failed, error_message: e.message)
+    # Gate protects the free-tier EpisodeUsage counter from double-decrement
+    # if the episode was already :failed (see fail_episode in
+    # EpisodeErrorHandling for the full rationale).
+    RefundsPayment.call(content: episode) if episode.saved_change_to_status?
   end
 
   def handle_retries_exhausted(error)
@@ -29,6 +36,7 @@ class GeneratesEpisodeAudioJob < ApplicationJob
 
     ChecksAudioCircuitBreaker.increment(episode.user)
     episode.update!(status: :failed, error_message: "Audio generation failed after retries: #{error.message}")
+    RefundsPayment.call(content: episode) if episode.saved_change_to_status?
   end
 
   private

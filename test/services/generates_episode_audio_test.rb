@@ -149,4 +149,187 @@ class GeneratesEpisodeAudioTest < ActiveSupport::TestCase
     @episode.reload
     assert_equal "complete", @episode.status
   end
+
+  # --- TtsUsage recording (agent-team-ff05) ---
+
+  test "records a TtsUsage row with source=actual after successful synthesis" do
+    mock_synthesizer = stub_synthesizer(audio: "fake audio content", billed_characters: 1_200)
+    _ = mock_synthesizer
+    stub_gcs
+
+    assert_difference -> { TtsUsage.count }, 1 do
+      GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+    end
+
+    usage = @episode.reload.tts_usage
+    assert_not_nil usage
+    assert_equal "actual", usage.source
+    assert_equal "google", usage.provider
+  end
+
+  test "TtsUsage character_count reflects billed count, NOT source_text.length" do
+    # source_text is "Hello, this is a test episode." (30 chars).
+    # The synthesizer reports that Google billed us for 999 characters
+    # (e.g. due to wrapping/normalization). Usage must record 999.
+    assert_equal 30, @episode.source_text.length
+
+    stub_synthesizer(audio: "fake audio", billed_characters: 999)
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    usage = @episode.reload.tts_usage
+    assert_equal 999, usage.character_count
+    assert_not_equal @episode.source_text.length, usage.character_count
+  end
+
+  test "does not create a TtsUsage row when synthesis fails" do
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_no_difference -> { TtsUsage.count } do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+  end
+
+  test "cost_cents is computed from tier + character_count" do
+    # Episode voice is Standard (derived from user fixture). Synthesizer reports
+    # 2501 billed chars → ceil(2501 * 400 / 1_000_000) = 2 cents.
+    stub_synthesizer(audio: "fake audio", billed_characters: 2_501)
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    usage = @episode.reload.tts_usage
+    assert_equal 2, usage.cost_cents
+  end
+
+  # === Credit refund on TTS synthesis failure (agent-team-uoqd round 2) ===
+  #
+  # GeneratesEpisodeAudio is the highest-traffic real-world failure path.
+  # When the synthesizer raises a permanent error, the rescue branch at
+  # generates_episode_audio.rb:62 writes status=failed directly — bypassing
+  # both the EpisodeErrorHandling concern and the API controller wire-in.
+  # A credit user whose TTS fails here currently loses the debited credit.
+
+  test "refunds debited credit when permanent synthesis error fails the episode" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    # Mirror the CreatesEpisode-time debit that already ran before the job.
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { raise StandardError, "TTS API error" }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    GeneratesEpisodeAudio.call(episode: @episode)
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when TTS synthesis hits a permanent error"
+  end
+
+  test "does not refund credits for transient errors that re-raise for retry" do
+    # Guard: transient errors bubble up for retry and do NOT mark the
+    # episode failed at this layer — so the refund must NOT fire here.
+    # (Retry exhaustion is covered in GeneratesEpisodeAudioJob.)
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with {
+      raise Google::Cloud::DeadlineExceededError, "timeout"
+    }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+
+    assert_raises(Google::Cloud::DeadlineExceededError) do
+      GeneratesEpisodeAudio.call(episode: @episode)
+    end
+
+    assert_equal 2, credit_user.reload.credits_remaining,
+      "Transient errors re-raise for retry — no refund at this layer"
+  end
+
+  # --- episodes.voice snapshot at synth time (agent-team-cue3) ---
+  #
+  # Voice stamped on the episode must equal the voice actually passed to TTS,
+  # so the show page's tier label reflects what was synthesized even if the
+  # user later changes their voice preference.
+
+  test "stamps episode.voice with user preference when no override is provided" do
+    stub_synthesizer(audio: "fake audio content", billed_characters: 100)
+    stub_gcs
+
+    # Fixture user :jesse has voice_preference = nil, so user.voice resolves
+    # to Voice::DEFAULT_STANDARD ("en-GB-Standard-D"). Before cue3 the column
+    # is empty; reading via read_attribute avoids the current delegate.
+    expected_voice = @episode.user.voice
+    assert_nil @episode.read_attribute(:voice)
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    assert_equal expected_voice, @episode.reload.read_attribute(:voice)
+  end
+
+  test "stamps episode.voice with voice_override when provided, not user preference" do
+    stub_synthesizer(audio: "fake audio content", billed_characters: 100)
+    stub_gcs
+
+    # Give the user a Standard preference; pass a Premium override. Stored
+    # value must be the override — what TTS actually received.
+    @episode.user.update!(voice_preference: "felix")
+    override = Voice::DEFAULT_CHIRP # "en-GB-Chirp3-HD-Enceladus"
+
+    refute_equal override, @episode.user.voice
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true, voice_override: override)
+
+    assert_equal override, @episode.reload.read_attribute(:voice)
+  end
+
+  test "stamped episode.voice matches the voice passed to the synthesizer" do
+    captured_voice = nil
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { |call|
+      captured_voice = call.kwargs[:voice]
+      "fake audio content"
+    }
+    stubs { mock_synthesizer.last_billed_characters }.with { 100 }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+    stub_gcs
+
+    GeneratesEpisodeAudio.call(episode: @episode, skip_feed_upload: true)
+
+    assert_not_nil captured_voice, "synthesizer should have been called with a :voice kwarg"
+    assert_equal captured_voice, @episode.reload.read_attribute(:voice)
+  end
+
+  private
+
+  def stub_synthesizer(audio:, billed_characters:)
+    mock_synthesizer = Mocktail.of(SynthesizesAudio)
+    stubs { |m| mock_synthesizer.call(text: m.any, voice: m.any) }.with { audio }
+    stubs { mock_synthesizer.last_billed_characters }.with { billed_characters }
+    stubs { |m| SynthesizesAudio.new(config: m.any) }.with { mock_synthesizer }
+    mock_synthesizer
+  end
+
+  def stub_gcs
+    mock_gcs = Mocktail.of(CloudStorage)
+    stubs { |m| mock_gcs.upload_content(content: m.any, remote_path: m.any) }.with { nil }
+    stubs { |m| CloudStorage.new(podcast_id: m.any) }.with { mock_gcs }
+    mock_gcs
+  end
 end

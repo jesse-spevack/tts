@@ -1,68 +1,78 @@
 # frozen_string_literal: true
 
 # Orchestrates the "how many credits will this episode cost?" computation that
-# the web, API v1, and MCP text-tool paths all need before they attempt to
-# create an Episode. Composes:
+# the web, API v1, MCP text-tool, email-ingest, cost-preview, and URL-async
+# paths all need. Composes:
 #
 #   ResolvesVoice.call(requested_key: nil, user:)       # user's voice tier
 #   CalculatesEpisodeCreditCost.call(source_text_length:, voice:)
 #
-# Callers pass their raw source inputs by keyword (text/url/upload) and a
-# `source_type` string describing which input to measure. This service
-# handles the branching so controllers don't have to:
+# Callers build an EpisodeCostRequest (carrying user, source_type, and any of
+# text/url/upload/source_text_length) and pass it in. This service handles
+# the source_type branching so callers don't have to:
 #
 #   source_type: "text" | "paste"      → text.to_s.length
 #   source_type: "extension"           → text.to_s.length   (API v1 treats
 #                                        extension content as a text variant)
+#   source_type: "email"               → text.to_s.length   (email-ingest
+#                                        content is a text variant)
 #   source_type: "file"  | "upload"    → upload.size (if IO-like) else
 #                                        upload.to_s.length (raw string)
-#   source_type: "url"                 → 1  (URL shortcut — real cost is
-#                                        resolved later in ProcessesUrlEpisode)
-#   anything else                      → 0
+#   source_type: "url"                 → Cost.deferred (real length isn't
+#                                        known until FetchesArticleContent
+#                                        runs inside ProcessesUrlEpisode)
+#   anything else                      → Cost.credits(computed-for-0-chars)
 #
-# Returns Result.success(Integer) with the 1-or-2 credit cost. Failure only if
-# ResolvesVoice fails, which cannot happen when requested_key is nil (stale
-# preferences silently fall through to the catalog default).
+# Callers who already know the content length (cost-preview with pre-computed
+# upload_length, or ProcessesUrlEpisode after extract knows character_count)
+# set `source_text_length` on the request. When present, it wins over
+# source_type-based extraction — so a url request with source_text_length
+# computes a known cost rather than returning Cost.deferred.
+#
+# Returns Result.success(Cost). Failure only if ResolvesVoice fails, which
+# cannot happen when requested_key is nil (stale preferences silently fall
+# through to the catalog default).
 class CalculatesAnticipatedEpisodeCost
-  def self.call(user:, source_type:, text: nil, url: nil, upload: nil)
-    new(user: user, source_type: source_type, text: text, url: url, upload: upload).call
+  def self.call(request)
+    new(request).call
   end
 
-  def initialize(user:, source_type:, text:, url:, upload:)
-    @user = user
-    @source_type = source_type
-    @text = text
-    @url = url
-    @upload = upload
+  def initialize(request)
+    @request = request
   end
 
   def call
-    voice_result = ResolvesVoice.call(requested_key: nil, user: user)
+    voice_result = ResolvesVoice.call(requested_key: nil, user: request.user)
     return voice_result if voice_result.failure?
 
-    cost = CalculatesEpisodeCreditCost.call(
-      source_text_length: source_text_length,
+    length = resolved_length
+    return Result.success(Cost.deferred) if length.nil?
+
+    credits = CalculatesEpisodeCreditCost.call(
+      source_text_length: length,
       voice: voice_result.data
     )
-    Result.success(cost)
+    Result.success(Cost.credits(credits))
   end
 
   private
 
-  attr_reader :user, :source_type, :text, :url, :upload
+  attr_reader :request
 
-  def source_text_length
-    case source_type.to_s
-    when "text", "paste", "extension"
-      text.to_s.length
+  def resolved_length
+    return request.source_text_length.to_i unless request.source_text_length.nil?
+
+    case request.source_type
+    when "text", "paste", "extension", "email"
+      request.text.to_s.length
     when "file", "upload"
-      if upload.respond_to?(:size)
-        upload.size
+      if request.upload.respond_to?(:size)
+        request.upload.size
       else
-        upload.to_s.length
+        request.upload.to_s.length
       end
     when "url"
-      1
+      nil
     else
       0
     end

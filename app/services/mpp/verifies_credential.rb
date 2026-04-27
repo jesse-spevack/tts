@@ -12,8 +12,17 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(credential:)
+    # token_address and rpc_url default to AppConfig so production callers
+    # don't have to pass them, but tests (and any future multi-token code
+    # path) can inject alternates without mutating module constants.
+    def initialize(
+      credential:,
+      token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+      rpc_url: AppConfig::Mpp::TEMPO_RPC_URL
+    )
       @credential = credential
+      @token_address = token_address
+      @rpc_url = rpc_url
     end
 
     def call
@@ -103,7 +112,7 @@ module Mpp
 
     private
 
-    attr_reader :credential
+    attr_reader :credential, :token_address, :rpc_url
 
     def decode_credential
       return Result.failure("Credential is blank") if credential.nil? || credential.empty?
@@ -144,7 +153,7 @@ module Mpp
     end
 
     def rpc_call(method, params)
-      uri = URI(AppConfig::Mpp::TEMPO_RPC_URL)
+      uri = URI(rpc_url)
       request_body = { jsonrpc: "2.0", method: method, params: params, id: 1 }.to_json
 
       http = Net::HTTP.new(uri.hostname, uri.port)
@@ -177,7 +186,6 @@ module Mpp
 
     def verify_transfer_log(receipt, deposit_address, expected_amount)
       logs = receipt["logs"] || []
-      token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
 
       # The challenge request amount is already in token base units (e.g.,
       # "1000000" for $1 USDC with 6 decimals). Convert to integer for

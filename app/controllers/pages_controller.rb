@@ -26,6 +26,21 @@ class PagesController < ApplicationController
   def add_rss_feed
   end
 
+  def splitting_articles
+  end
+
+  def url_help
+  end
+
+  def file_help
+  end
+
+  def email_help
+  end
+
+  def paste_help
+  end
+
   def extension_help
   end
 

@@ -5,6 +5,6 @@ class DeterminesJobPriority
   FREE_PRIORITY = 10
 
   def self.call(user:)
-    user.premium? ? PREMIUM_PRIORITY : FREE_PRIORITY
+    user.paid? ? PREMIUM_PRIORITY : FREE_PRIORITY
   end
 end

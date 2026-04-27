@@ -11,7 +11,7 @@ class Mpp::CreatesNarrationTest < ActiveSupport::TestCase
     # on narrations.mpp_payment_id (agent-team-kzq) rejects a second
     # Narration pointing at the same payment.
     @mpp_payment = MppPayment.create!(
-      amount_cents: 100,
+      amount_cents: 150,
       currency: "usd",
       status: :pending,
       user: users(:one)

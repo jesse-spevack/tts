@@ -233,7 +233,7 @@ class CreatesPasteEpisodeTest < ActiveSupport::TestCase
   end
 
   test "enqueues with priority 0 for premium user" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
 
     assert_enqueued_with(job: ProcessesPasteEpisodeJob, priority: 0) do
       CreatesPasteEpisode.call(podcast: @podcast, user: premium_user, text: @valid_text)

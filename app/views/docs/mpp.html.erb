@@ -31,7 +31,7 @@
           Turn any text into audio — pay per narration.
         </h1>
         <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
-          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Pricing is tiered: Standard voices cost 75¢, Premium voices cost $1.00. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
+          PodRead converts articles and text into audio. Machine Payments Protocol (MPP) lets you pay per narration with on-chain stablecoin on the Tempo network — no PodRead account required. Pricing is tiered: Standard voices cost 75¢, Premium voices cost $1.50. Authenticated users whose free tier is exhausted can also pay via MPP instead of subscribing.
         </p>
 
         <!-- Fact row: two-tier price table + meta -->
@@ -57,7 +57,7 @@
                   <td class="py-3 pl-4 pr-6">
                     <span class="inline-flex items-center rounded-full bg-mist-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-mist-100 dark:text-mist-900">Premium</span>
                   </td>
-                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.00</td>
+                  <td class="py-3 pr-6 font-serif text-xl tracking-tight text-mist-950 tabular-nums dark:text-white">$1.50</td>
                   <td class="py-3 pr-4 font-mono text-xs text-mist-700 dark:text-mist-300">elara, callum, lark, nash</td>
                 </tr>
               </tbody>
@@ -66,7 +66,7 @@
           <dl class="grid grid-cols-3 gap-6 self-start lg:grid-cols-1 lg:gap-4">
             <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
               <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Currency</dt>
-              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">pathUSD</dd>
+              <dd class="mt-1 font-serif text-xl tracking-tight text-mist-950 dark:text-white">USDC</dd>
             </div>
             <div class="border-l border-mist-300 pl-4 dark:border-mist-700">
               <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Network</dt>
@@ -87,31 +87,81 @@
           The fastest path uses the <code class="ic">mppx</code> CLI. It handles the 402 challenge, on-chain payment, and credential construction automatically.
         </p>
 
-        <figure class="mt-6 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+        <h3 class="mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Pay podread.app on mainnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Call the hosted API directly. Requires USDC.e on Tempo mainnet — see <a href="#funding" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Funding on mainnet</a> below.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
           <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
             <span class="font-mono text-mist-400">bash</span>
-            <span class="text-mist-500">one-time setup + paid request</span>
+            <span class="text-mist-500">production — mainnet</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            # Create an MPP wallet (one-time setup) and fund it with USDC.e on Tempo mainnet — see below
+            npx mppx account create
+
+            # Pay a narration on podread.app — mppx handles the 402 flow automatically
+            npx mppx https://podread.app/api/v1/mpp/narrations \\
+              -X POST -H "Content-Type: application/json" \\
+              -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
+              --rpc-url https://rpc.tempo.xyz
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <h3 id="funding" class="mt-10 scroll-mt-8 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Funding on mainnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          podread.app accepts payment in <strong class="font-semibold text-mist-950 dark:text-white">USDC.e</strong> (Stargate-bridged USDC) on Tempo at <code class="ic">0x20c0…b9537d11c60e8b50</code>. Native USDC does not exist on Tempo today.
+        </p>
+        <ol class="ml-6 mt-3 list-decimal space-y-2 text-mist-700 dark:text-mist-300">
+          <li>Hold USDC on a chain Stargate supports (Base, Arbitrum, Optimism, and Polygon all work well).</li>
+          <li>Bridge to Tempo via <a href="https://stargate.finance/bridge" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">stargate.finance/bridge</a> — USDC → USDC.e.</li>
+          <li>Send the bridged USDC.e to the address printed by <code class="ic">npx mppx account create</code>.</li>
+        </ol>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Tempo has no native gas token — gas is paid in USDC.e itself, so leave a small buffer above the narration price. About <strong class="font-semibold text-mist-950 dark:text-white">$1</strong> covers several requests.
+        </p>
+
+        <h3 class="mt-10 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Try it on testnet</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Run a self-hosted PodRead instance against Tempo's Moderato testnet. Faucet-dispensed pathUSD — no real money changes hands.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">self-hosted — testnet</span>
           </figcaption>
           <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
             # Create an MPP wallet (one-time setup)
             npx mppx account create
 
             # Fund the wallet with testnet pathUSD
-            npx mppx account fund --rpc-url https://rpc.testnet.tempo.xyz
+            npx mppx account fund --rpc-url https://rpc.moderato.tempo.xyz
 
-            # Create a narration — mppx handles the 402 flow automatically
+            # Pay a narration on your local server
             npx mppx http://your-podread-host/api/v1/mpp/narrations \\
               -X POST -H "Content-Type: application/json" \\
               -d '{"source_type":"url","url":"https://www.worksinprogress.news/p/the-secret-behind-japans-railways"}' \\
-              --rpc-url https://rpc.testnet.tempo.xyz
+              --rpc-url https://rpc.moderato.tempo.xyz
           BASH
           ) %></code></pre>
         </figure>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          Anonymous MPP calls (this example) hit <code class="ic">POST /api/v1/mpp/narrations</code> and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
+
+        <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Both examples hit <code class="ic">POST /api/v1/mpp/narrations</code> anonymously and return a <code class="ic">nar_</code>-prefixed Narration id you can poll at <code class="ic">GET /api/v1/mpp/narrations/:id</code>. Authenticated users who want to pay per episode hit <code class="ic">POST /api/v1/mpp/episodes</code> instead and get an <code class="ic">ep_</code>-prefixed Episode attached to their primary podcast. See <a href="#auth-paths" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Authentication paths</a> for the full matrix.
         </p>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.00 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.
+          Omitting <code class="ic">voice</code> defaults to <code class="ic">felix</code> (Standard, 75¢). Request a Premium voice (<code class="ic">elara</code>, <code class="ic">callum</code>, <code class="ic">lark</code>, <code class="ic">nash</code>) and the 402 challenge arrives at $1.50 instead — see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a>.
+        </p>
+
+        <h3 class="mt-10 font-serif text-xl tracking-tight text-mist-950 dark:text-white">Other clients</h3>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          PodRead accepts the mppx on-chain credential format — any client that produces it works. <a href="https://github.com/wevm/mppx" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">wevm/mppx</a> is the reference implementation used in the examples above.
+        </p>
+        <p class="mt-3 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Agents paying from a Stripe Link wallet will want <a href="https://github.com/stripe/link-cli" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">@stripe/link-cli</a>, which emits Stripe's <code class="ic">shared_payment_token</code> credential type. PodRead does not accept that credential today — support is planned.
         </p>
       </section>
 
@@ -135,7 +185,7 @@
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              Without a Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>. The amount reflects the resolved voice's tier — 75 cents for Standard (the example below), 100 cents if the request asked for a Premium voice.
+              Without a Payment credential, the server returns <strong class="font-semibold text-mist-950 dark:text-white">402 Payment Required</strong>. The amount reflects the resolved voice's tier — 75 cents for Standard (the example below), 150 cents if the request asked for a Premium voice.
             </p>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -179,7 +229,7 @@
               { name: "id", type: "string",
                 description: %(HMAC-SHA256 hex over <code class="ic">realm|method|intent|request|expires</code> signed with the server's secret — doubles as challenge identifier and tamper-check. Clients should echo it back unchanged in the credential.).html_safe },
               { name: "amount", type: "integer",
-                description: %(In <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75 for Standard, 100 = $1.00 for Premium). Distinct from <code class="ic">request.amount</code> below, which is in token base units.).html_safe },
+                description: %(In <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75 for Standard, 150 = $1.50 for Premium). Distinct from <code class="ic">request.amount</code> below, which is in token base units.).html_safe },
               { name: "currency", type: "string",
                 description: %(The <strong class="font-semibold text-mist-950 dark:text-white">ISO 4217 code</strong> (<code class="ic">"usd"</code>). Distinct from <code class="ic">request.currency</code> below, which is an ERC-20 contract address.).html_safe },
               { name: "request", type: "string",
@@ -192,7 +242,7 @@
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
                 {
                   "amount": "750000",
-                  "currency": "0x20c0000000000000000000000000000000000000",
+                  "currency": "0x20c000000000000000000000b9537d11c60e8b50",
                   "recipient": "0x1234abcd…"
                 }
               JSON
@@ -201,9 +251,9 @@
 
             <% decoded_request_fields = [
               { name: "amount", type: "string",
-                description: %(Token base units — pathUSD has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1000000</span> = $1.00 (Premium).).html_safe },
+                description: %(Token base units — the stablecoin has 6 decimals, so <span class="font-mono tabular-nums">750000</span> = $0.75 (Standard) and <span class="font-mono tabular-nums">1500000</span> = $1.50 (Premium).).html_safe },
               { name: "currency", type: "string",
-                description: %(The pathUSD token contract address on Tempo.).html_safe },
+                description: %(The ERC-20 stablecoin contract address on Tempo. On <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> this is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code>; self-hosted testnet deployments default to pathUSD at <code class="ic">0x20c0…0000</code>.).html_safe },
               { name: "recipient", type: "string",
                 description: %(The one-time Stripe-provisioned deposit address.).html_safe }
             ] %>
@@ -216,11 +266,11 @@
               <span class="font-mono text-xs text-mist-500 tabular-nums dark:text-mist-400">Step 2</span>
               <h3 class="font-serif text-xl text-mist-950 dark:text-white">Pay</h3>
             </div>
-            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a pathUSD transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
+            <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Send a USDC transfer on the Tempo network to the <code class="ic">deposit_address</code> from the challenge. The transfer must be:</p>
             <ul role="list" class="mt-4 space-y-1.5 text-mist-700 dark:text-mist-300">
               <li>To the exact <code class="ic">deposit_address</code> returned in the 402 response</li>
-              <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1000000</span> for Premium ($1.00)</li>
-              <li>Of the pathUSD token at contract <code class="ic">0x20c0…0000</code></li>
+              <li>For the exact <code class="ic">request.amount</code> from the challenge — <span class="font-mono tabular-nums">750000</span> base units for Standard voices ($0.75), <span class="font-mono tabular-nums">1500000</span> for Premium ($1.50)</li>
+              <li>Of the stablecoin whose contract address is echoed in the challenge's <code class="ic">request.currency</code> field — on <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong> that is USDC.e (Stargate-bridged USDC) at <code class="ic">0x20c0…b9537d11c60e8b50</code></li>
               <li>Completed before the challenge <code class="ic">expires</code> timestamp</li>
             </ul>
           </li>
@@ -250,7 +300,7 @@
               ) %></code></pre>
             </figure>
             <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit on your behalf via <code class="ic">eth_sendRawTransaction</code>). The signature must be an RLP-encoded signed Ethereum transaction, hex-prefixed — any valid transaction type (legacy, EIP-2930, EIP-1559) is accepted as long as it transfers the right amount of pathUSD to the challenge's deposit address.
+              The <code class="ic">payload</code> contains either <code class="ic">hash</code> (tx hash of an already-submitted transfer, shown above) or <code class="ic">signature</code> (a signed raw tx the server will submit on your behalf via <code class="ic">eth_sendRawTransaction</code>). The signature must be an RLP-encoded signed Ethereum transaction, hex-prefixed — any valid transaction type (legacy, EIP-2930, EIP-1559) is accepted as long as it transfers the right amount of the stablecoin (USDC.e on <strong class="font-semibold text-mist-950 dark:text-white">podread.app</strong>) to the challenge's deposit address.
             </p>
             <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
               <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
@@ -341,9 +391,9 @@
           <!-- Path 1 -->
           <article class="relative rounded-xl bg-white p-6 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <div class="font-mono text-xs text-mist-500 dark:text-mist-400">Path 1</div>
-            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Subscriber / credits</h3>
+            <h3 class="mt-2 font-serif text-lg text-mist-950 dark:text-white">Credits</h3>
             <p class="mt-1 font-mono text-xs text-mist-500 dark:text-mist-400">POST /api/v1/episodes</p>
-            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with an active subscription or remaining credits. No MPP. Free-tier users who are out of credits get a 402 pointing at the billing upgrade URL — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge.</p>
+            <p class="mt-4 text-base sm:text-sm text-mist-700 dark:text-mist-300">Authenticated users with remaining credits. No MPP. Free-tier users who are out of credits get a 402 pointing at the billing upgrade URL — <strong class="font-semibold text-mist-950 dark:text-white">not</strong> an MPP challenge.</p>
             <div class="mt-5 rounded-md bg-mist-50 p-3 font-mono text-xs text-mist-700 dark:bg-mist-950 dark:text-mist-300">
               <div>Authorization:</div>
               <div class="pl-4">Bearer &lt;token&gt;</div>
@@ -410,7 +460,7 @@
 
         <!-- POST /api/v1/episodes -->
         <h3 class="mt-10 font-mono text-base sm:text-sm text-mist-500 dark:text-mist-400">POST /api/v1/episodes</h3>
-        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 1 — Bearer-authenticated with active subscription or credits. The <code class="ic">voice</code> param is ignored; Episodes use the user's stored voice preference.</p>
+        <p class="mt-2 text-base sm:text-sm text-mist-700 dark:text-mist-300">Path 1 — Bearer-authenticated with credits. The <code class="ic">voice</code> param is ignored; Episodes use the user's stored voice preference.</p>
 
         <%= render "docs/responsive_table",
           headers: ["Parameter", "Type", "Required", "Description"],
@@ -446,7 +496,7 @@
       <!-- Voices -->
       <section id="voices" class="scroll-mt-8 pt-20">
         <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Voices</h2>
-        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">MPP callers may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available on the MPP paths. Voice tier determines price: Standard voices cost 75¢, Premium voices cost $1.00. The default when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (British male, Standard, 75¢). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">MPP callers may select a voice by passing a <code class="ic">voice</code> catalog key. All catalog voices are available on the MPP paths. Voice tier determines price: Standard voices cost 75¢, Premium voices cost $1.50. The default when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (British male, Standard, 75¢). Invalid keys return <strong class="font-semibold text-mist-950 dark:text-white">422</strong>.</p>
         <p class="mt-2 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">Voice resolution on MPP endpoints follows a three-step hierarchy: explicit <code class="ic">voice</code> param → user's saved preference (authenticated only) → catalog default (<code class="ic">felix</code>).</p>
 
         <div class="-mx-6 -my-2 mt-6 overflow-x-auto whitespace-nowrap lg:-mx-10">
@@ -500,7 +550,7 @@
 
         <aside class="mt-8 rounded-lg border-l-4 border-mist-400 bg-mist-50 p-4 text-sm text-mist-700 dark:border-mist-600 dark:bg-mist-900/50 dark:text-mist-300">
           <strong class="font-semibold text-mist-950 dark:text-white">Where <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> is honored.</strong>
-          The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param is read on both MPP endpoints (<code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/narrations</code> and <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/episodes</code>). It is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> read on the subscriber-credits endpoint <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/api/v1/episodes</code> — there, Episodes use the user's stored voice preference.
+          The <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">voice</code> param is read on both MPP endpoints (<code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/narrations</code> and <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/mpp/episodes</code>). It is <strong class="font-semibold text-mist-950 dark:text-white">not</strong> read on the credits endpoint <code class="rounded bg-mist-200/60 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-mist-800">/api/v1/episodes</code> — there, Episodes use the user's stored voice preference.
         </aside>
       </section>
 
@@ -512,10 +562,10 @@
         </p>
 
         <%= render "docs/responsive_table",
-          headers: ["Tier", "Price (USD)", "Base units (pathUSD)", "Voices"],
+          headers: ["Tier", "Price (USD)", "Base units (6 decimals)", "Voices"],
           rows: [
             ["Standard", "$0.75", "750,000", "wren, felix, sloane, archer, gemma, hugo, quinn, theo"],
-            ["Premium",  "$1.00", "1,000,000", "elara, callum, lark, nash"]
+            ["Premium",  "$1.50", "1,500,000", "elara, callum, lark, nash"]
           ],
           cell_class: [
             "text-mist-900 dark:text-mist-100",
@@ -526,25 +576,28 @@
         %>
 
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The default voice when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (Standard), so the cheapest successful call costs $0.75. Requesting a Premium voice shifts the entire 402 → pay → retry flow to $1.00.
+          The default voice when <code class="ic">voice</code> is omitted is <code class="ic">felix</code> (Standard), so the cheapest successful call costs $0.75. Requesting a Premium voice shifts the entire 402 → pay → retry flow to $1.50.
         </p>
 
         <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token</dt>
-            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">0x20c0…0000</dd>
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Token (podread.app)</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">USDC.e · 0x20c0…b9537d11c60e8b50</dd>
           </div>
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
             <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Decimals</dt>
             <dd class="mt-1 font-mono text-sm text-mist-900 tabular-nums dark:text-mist-100">6 (1 USD = 1,000,000)</dd>
           </div>
           <div class="rounded-lg bg-white p-4 ring-1 ring-mist-200 dark:bg-mist-900 dark:ring-white/10">
-            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">Testnet RPC</dt>
-            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">rpc.testnet.tempo.xyz</dd>
+            <dt class="text-xs font-medium text-mist-500 dark:text-mist-400">RPC</dt>
+            <dd class="mt-1 break-all font-mono text-sm text-mist-900 dark:text-mist-100">rpc.moderato.tempo.xyz</dd>
           </div>
         </dl>
+        <p class="mt-4 max-w-[65ch] text-pretty text-sm text-mist-500 dark:text-mist-400">
+          On <strong class="font-semibold text-mist-700 dark:text-mist-300">podread.app</strong>, payments are settled in <strong class="font-semibold text-mist-700 dark:text-mist-300">USDC.e</strong> — USDC bridged to Tempo via <a href="https://stargate.finance/" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Stargate</a>. It is not Circle-native USDC; token balances held on Tempo are bridge-wrapped and must be unwrapped via Stargate to redeem on other chains. Self-hosted deployments targeting Tempo's Moderato testnet can use the predeployed <strong class="font-semibold text-mist-700 dark:text-mist-300">pathUSD</strong> stablecoin (<code class="ic">0x20c0…0000</code>) instead — the faucet dispenses pathUSD, not USDC.e. The <code class="ic">request.currency</code> field in every 402 challenge echoes whichever contract the server is configured for, so clients should read it rather than hardcode either address.
+        </p>
         <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
-          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 100 = $1.00). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,000,000 for Premium).
+          The <code class="ic">amount</code> in the 402 response body is in <strong class="font-semibold text-mist-950 dark:text-white">cents</strong> (75 = $0.75, 150 = $1.50). The <code class="ic">amount</code> in the <code class="ic">WWW-Authenticate</code> header's <code class="ic">request</code> field is in <strong class="font-semibold text-mist-950 dark:text-white">token base units</strong> (750,000 for Standard, 1,500,000 for Premium).
         </p>
         <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">A challenge is bound to a specific voice tier by an HMAC-signed request blob. A Standard-priced credential cannot be redeemed against a Premium voice (or vice versa) — the server re-issues a fresh 402 at the correct price when the tiers don't match. If narration processing fails after payment succeeds, the payment is automatically refunded.</p>
       </section>
@@ -616,13 +669,13 @@
           rows: [
             ["MPP_SECRET_KEY", "random hex", "HMAC key for signing challenges and receipts. Must be stable across deploys."],
             ["MPP_PRICE_STANDARD_CENTS", "75", "Price for a Standard-voice narration, in USD cents"],
-            ["MPP_PRICE_PREMIUM_CENTS", "100", "Price for a Premium-voice narration, in USD cents"],
+            ["MPP_PRICE_PREMIUM_CENTS", "150", "Price for a Premium-voice narration, in USD cents"],
             ["MPP_CURRENCY", "usd", "Currency code"],
             ["MPP_CHALLENGE_TTL_SECONDS", "300", "How long a 402 challenge is valid"],
             ["MPP_STRIPE_API_VERSION", "2026-03-04.preview", "Stripe API version pinned to MPP preview channel"],
-            ["TEMPO_RPC_URL", "rpc.testnet.tempo.xyz", "Tempo JSON-RPC endpoint"],
-            ["TEMPO_CURRENCY_TOKEN", "0x20c0…0000", "pathUSD token contract address"],
-            ["TEMPO_TOKEN_DECIMALS", "6", "Decimal places for the stablecoin"],
+            ["TEMPO_RPC_URL", "rpc.moderato.tempo.xyz", "Tempo JSON-RPC endpoint"],
+            ["TEMPO_CURRENCY_TOKEN", "0x20c0…0000", %Q(Stablecoin contract on Tempo. Default is pathUSD (testnet faucet-dispensable). <strong class="font-semibold text-mist-700 dark:text-mist-300">podread.app</strong> overrides this to USDC.e at <code class="font-mono text-[0.9em]">0x20c0…b9537d11c60e8b50</code>.).html_safe],
+            ["TEMPO_TOKEN_DECIMALS", "6", "Decimal places for the stablecoin (both pathUSD and USDC.e are 6)"],
             ["TEMPO_RPC_OPEN_TIMEOUT_SECONDS", "5", "TCP connect timeout"],
             ["TEMPO_RPC_READ_TIMEOUT_SECONDS", "10", "Read timeout"],
             ["APP_HOST", "localhost:3000", "Used as the realm in challenges"]

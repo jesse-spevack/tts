@@ -1,12 +1,13 @@
 class Episode < ApplicationRecord
+  include SynthesizableContent
+
   has_prefix_id :ep
 
   belongs_to :podcast
   belongs_to :user
   belongs_to :mpp_payment, optional: true
   has_one :llm_usage, dependent: :destroy
-
-  delegate :voice, to: :user
+  has_one :tts_usage, as: :usable, dependent: :destroy
 
   enum :status, { pending: "pending", preparing: "preparing", processing: "processing", complete: "complete", failed: "failed" }
   enum :source_type, { file: 0, url: 1, paste: 2, extension: 3, email: 4 }
@@ -34,6 +35,8 @@ class Episode < ApplicationRecord
   default_scope { where(deleted_at: nil) }
   scope :newest_first, -> { order(created_at: :desc) }
 
+  before_validation :set_default_voice, on: :create
+
   def soft_delete!
     raise "Episode already deleted" if soft_deleted?
 
@@ -44,8 +47,15 @@ class Episode < ApplicationRecord
     deleted_at.present?
   end
 
-  after_update :refund_mpp_payment_on_failure, if: :should_refund_mpp_payment?
   after_update_commit :broadcast_status_change, if: :saved_change_to_status?
+
+  # Google voice string that was (or would be) used by TTS.
+  # Returns the stamped voice if synth has occurred, otherwise the
+  # user's current voice preference as a fallback for legacy rows
+  # and pre-synth display.
+  def effective_voice
+    voice.presence || user&.voice
+  end
 
   def audio_url
     GeneratesEpisodeAudioUrl.call(self)
@@ -64,6 +74,18 @@ class Episode < ApplicationRecord
     )
   end
 
+  # Overrides SynthesizableContent#cost to read from the persisted credit_cost
+  # column (agent-team-0rwa, absorbed by agent-team-gafe). Returns a Cost:
+  #   credit_cost IS NULL  → Cost.deferred (URL submitted, fetch pending)
+  #   credit_cost == 0     → Cost.none     (free tier / complimentary / unlimited)
+  #   credit_cost > 0      → Cost.credits(n)
+  def cost
+    return Cost.deferred if credit_cost.nil?
+    return Cost.none if credit_cost.zero?
+
+    Cost.credits(credit_cost)
+  end
+
   private
 
   def source_url_required?
@@ -79,17 +101,7 @@ class Episode < ApplicationRecord
     errors.add(:source_text, result.error) if result.failure?
   end
 
-  def should_refund_mpp_payment?
-    saved_change_to_status? && failed? && mpp_payment.present?
-  end
-
-  def refund_mpp_payment_on_failure
-    result = Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
-    return if result.success?
-
-    Rails.logger.error(
-      "event=mpp_payment_refund_failed_from_episode " \
-      "episode_id=#{id} payment_id=#{mpp_payment.prefix_id} error=#{result.error}"
-    )
+  def set_default_voice
+    self.voice ||= user&.voice
   end
 end

@@ -55,4 +55,26 @@ module EpisodesHelper
   def deletable?(episode)
     episode.user_id == Current.user&.id
   end
+
+  def char_limit_failure?(episode)
+    episode.failed? && ValidatesCharacterLimit.error?(episode.error_message)
+  end
+
+  # Per-episode cost label for the Details card on the show page.
+  #
+  # Branches by account state + episode cost (agent-team-gafe):
+  #   - complimentary / unlimited → "Included"
+  #   - credit_cost deferred (URL mid-fetch) → "Checking credit cost..."
+  #   - credit_cost == 0 (free tier) → "Free tier episode"
+  #   - credit_cost > 0 → "1 credit" / "2 credits"
+  def episode_cost_label(episode)
+    user = episode.user
+    return "Included" if user.complimentary? || user.unlimited?
+
+    cost = episode.cost
+    return "Checking credit cost..." if cost.deferred?
+    return "Free tier episode" if cost == Cost.none
+
+    pluralize(cost.credits, "credit")
+  end
 end

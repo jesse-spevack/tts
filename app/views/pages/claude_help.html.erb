@@ -1,3 +1,12 @@
+<% sections = [
+     { id: "setup", label: "Setup" },
+     { id: "example-prompts", label: "Example prompts" },
+     { id: "available-tools", label: "Available tools" },
+     { id: "troubleshooting", label: "Troubleshooting" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: sections %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :claude_help } do %>
 
   <section class="pb-12">
@@ -8,7 +17,7 @@
     </p>
 
     <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
-      <h3 class="text-base font-semibold text-mist-950 dark:text-white">Setup</h3>
+      <h3 id="setup" data-scroll-spy-target="step" data-step="setup" class="scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Setup</h3>
 
       <ol class="mt-3 list-decimal pl-5 space-y-3">
         <li>
@@ -27,7 +36,7 @@
         </li>
       </ol>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Example Prompts</h3>
+      <h3 id="example-prompts" data-scroll-spy-target="step" data-step="example-prompts" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Example Prompts</h3>
       <div class="mt-3 space-y-3">
         <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>Turn this article into a podcast episode: https://example.com/article</code></pre>
 
@@ -40,7 +49,7 @@
         <pre class="rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>What's my podcast feed URL?</code></pre>
       </div>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Available Tools</h3>
+      <h3 id="available-tools" data-scroll-spy-target="step" data-step="available-tools" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Available Tools</h3>
       <p class="mt-3">Claude has access to these PodRead tools:</p>
 
       <ul class="mt-3 space-y-2">
@@ -53,7 +62,7 @@
         <li><strong class="text-mist-950 dark:text-white">list_voices</strong> &mdash; See available voice options (change your default voice in <a href="<%= settings_path %>" class="text-mist-950 underline dark:text-white">Settings</a>)</li>
       </ul>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
+      <h3 id="troubleshooting" data-scroll-spy-target="step" data-step="troubleshooting" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
 
       <div class="mt-3 space-y-4">
         <div>
@@ -73,7 +82,7 @@
           <p class="font-medium text-mist-950 dark:text-white">Episode limit reached?</p>
           <p class="mt-1">
             Free accounts can create <%= AppConfig::Tiers::FREE_MONTHLY_EPISODES %> episodes per month.
-            <a href="<%= upgrade_path %>" class="text-mist-950 underline dark:text-white">Upgrade</a> for unlimited episodes.
+            <a href="<%= billing_path %>" class="text-mist-950 underline dark:text-white">Buy a credit pack</a> to create more.
           </p>
         </div>
       </div>

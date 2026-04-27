@@ -12,10 +12,7 @@
     { label: "Blog", href: blog_path },
     { label: "About", href: about_path },
   ],
-  actions: safe_join([
-    link_to("Login", login_path, class: "text-sm/7 font-medium text-mist-950 dark:text-white"),
-    tag.button("Get started", type: "button", data: { action: "click->signup-modal#open", plan: "free" }, class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-4 py-1.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200")
-  ], "\n    ") %>
+  actions: render("shared/marketing/auth_actions") %>
 
 <%# ===== Hero ===== %>
 <section class="py-16">
@@ -27,12 +24,17 @@
       Writing from PodRead.
     </h1>
     <p class="text-lg/8 text-mist-700 dark:text-mist-400 max-w-3xl text-pretty">
-      Essays on how we built PodRead, new features, and the ways people use it. Every post is also a PodRead episode — because that's the whole point.
+      Essays on how we built PodRead, new features, and the ways people use it.
     </p>
-    <%= tag.button "Create your first episode",
-          type: "button",
-          data: { action: "click->signup-modal#open", plan: "free" },
-          class: "inline-flex shrink-0 items-center justify-center gap-1 rounded-full bg-mist-950 px-5 py-2.5 text-sm/7 font-medium text-white hover:bg-mist-800 dark:bg-white dark:text-mist-950 dark:hover:bg-mist-200" %>
+    <% if authenticated? %>
+      <%= link_to "+ New Episode", new_episode_path,
+            class: marketing_primary_button_classes("px-5 py-2.5") %>
+    <% else %>
+      <%= tag.button "Create your first episode",
+            type: "button",
+            data: { action: "click->signup-modal#open", plan: "free" },
+            class: marketing_primary_button_classes("px-5 py-2.5") %>
+    <% end %>
   </div>
 </section>
 

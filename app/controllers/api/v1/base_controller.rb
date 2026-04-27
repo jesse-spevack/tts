@@ -10,58 +10,13 @@ module Api
       attr_reader :current_user
 
       def authenticate_token!
-        token = extract_bearer_token
+        result = AuthenticatesApiRequest.call(bearer: extract_bearer_token)
 
-        # Try API token first (CLI, browser extension)
-        if authenticate_via_api_token(token)
-          return
+        if result.success?
+          @current_user = result.data[:user]
+        else
+          render json: { error: "Unauthorized" }, status: :unauthorized
         end
-
-        # Fall back to Doorkeeper OAuth token (ChatGPT, future OAuth clients)
-        if authenticate_via_doorkeeper(token)
-          return
-        end
-
-        render json: { error: "Unauthorized" }, status: :unauthorized
-      end
-
-      def authenticate_via_api_token(token)
-        api_token = FindsApiToken.call(plain_token: token)
-        return false if api_token.nil?
-
-        user = api_token.user
-        if user.deactivated?
-          log_info "api_token_deactivated_user", user_id: user.id
-          return false
-        end
-
-        api_token.update_column(:last_used_at, Time.current)
-        @current_user = user
-        Current.api_token_prefix = api_token.token_prefix
-        log_info "api_request_authenticated",
-          user_id: api_token.user_id,
-          source: api_token.source
-        true
-      end
-
-      def authenticate_via_doorkeeper(token)
-        return false if token.blank?
-
-        doorkeeper_token = Doorkeeper::AccessToken.by_token(token)
-        return false if doorkeeper_token.nil?
-        return false if doorkeeper_token.revoked?
-        return false if doorkeeper_token.expired?
-
-        user = User.find_by(id: doorkeeper_token.resource_owner_id)
-        return false if user.nil?
-
-        if user.deactivated?
-          log_info "oauth_token_deactivated_user", user_id: user.id
-          return false
-        end
-
-        @current_user = user
-        true
       end
 
       def extract_bearer_token
@@ -70,6 +25,51 @@ module Api
 
       def extract_payment_credential
         extract_auth_scheme("Payment")
+      end
+
+      # Map a ProcessesMppRequest::Outcome to the correct HTTP response.
+      # Single place that knows which outcome symbols render which status,
+      # body, and headers. Keep this in sync with the outcomes documented
+      # on ProcessesMppRequest.
+      def render_mpp_result(result)
+        outcome = result.data
+
+        case outcome.outcome
+        when :invalid_voice
+          render json: { error: outcome.error }, status: :unprocessable_entity
+        when :challenge_issued
+          render_mpp_challenge(outcome)
+        when :challenge_provisioning_failed
+          render json: { error: "Payment provisioning failed: #{outcome.error}" },
+            status: :service_unavailable
+        when :created
+          response.headers["Payment-Receipt"] = outcome.receipt_header
+          render json: { id: outcome.record.prefix_id }, status: :created
+        when :loser_conflict
+          render json: { error: "Payment already used" }, status: :conflict
+        when :creation_failed
+          render json: { error: outcome.error }, status: :unprocessable_entity
+        else
+          raise "Unknown MPP outcome: #{outcome.outcome}"
+        end
+      end
+
+      def render_mpp_challenge(outcome)
+        challenge = outcome.challenge
+        response.headers["WWW-Authenticate"] = challenge[:header_value]
+
+        render json: {
+          error: "Payment required",
+          challenge: {
+            id: challenge[:id],
+            amount: outcome.amount_cents,
+            currency: AppConfig::Mpp::CURRENCY,
+            methods: [ "tempo" ],
+            realm: challenge[:realm],
+            expires: challenge[:expires],
+            deposit_address: outcome.deposit_address
+          }
+        }, status: :payment_required
       end
 
       # Parse a single auth scheme value from the Authorization header.

@@ -4,6 +4,23 @@
 # actually used through a Rails convention or framework mechanism that
 # debride can't see. Every entry must have a comment explaining why.
 #
+# ⚠️  ADDING TO THIS FILE IS AN ANTI-PATTERN.
+#
+# Before adding an entry, first try:
+#   1. Delete the method. Debride flagged it for a reason — if nothing calls
+#      it, the method is dead code. Deleting is almost always the right fix.
+#   2. Delete any test that exists *only* to exercise the method. A test that
+#      pins a speculative capability ("value object supports hash-key use")
+#      is still YAGNI if no production code uses that capability.
+#   3. If it's genuinely called via a Rails convention / framework mechanism
+#      debride can't trace (ActiveRecord reader, route action, lifecycle
+#      hook), then and only then whitelist it with a comment showing the
+#      implicit call site.
+#
+# Every new entry is developer-friction debt: reviewers must re-verify the
+# justification, and it becomes a landing spot for future drift. Start from
+# "delete the code" before reaching for "silence the linter."
+#
 # NOTE: the repo currently exceeds 50 findings even with `--rails`, so the
 # code_quality:debride rake task uses a RATCHET approach: it records a
 # baseline count in the task itself and fails only if the count increases.
@@ -25,6 +42,9 @@ oauth_access_grants
 oauth_access_tokens
 narration
 llm_usage
+credit_transactions
+tts_usage
+usable
 
 # ---------------------------------------------------------------------------
 # ActiveJob#perform — called dynamically by the queue executor after
@@ -56,6 +76,11 @@ cli_help
 claude_code_help
 claude_help
 chatgpt_help
+splitting_articles
+url_help
+file_help
+email_help
+paste_help
 post_login_path
 icons
 handle
@@ -91,6 +116,15 @@ process
 redirect_to_last_page
 
 # ---------------------------------------------------------------------------
+# Initializer-dispatched gate method.
+#
+# - Mpp::VerifiesChainId.should_run? (app/services/mpp/verifies_chain_id.rb:44)
+#   Called from config/initializers/mpp_chain_id_guard.rb. debride does not
+#   follow initializer callsites, so the method appears unreferenced.
+# ---------------------------------------------------------------------------
+should_run?
+
+# ---------------------------------------------------------------------------
 # Private helper methods called via implicit-self within the same class.
 #
 # debride has a known blindspot here: in a call like `bucket.file(file_path)`,
@@ -107,3 +141,34 @@ redirect_to_last_page
 scoped_path
 file_path
 local_path
+
+# ---------------------------------------------------------------------------
+# Custom helper methods whose name ends in `_path`.
+#
+# debride-erb filters `*_path` calls from its "called methods" set, treating
+# them as framework-generated Rails route helpers that are always reachable.
+# That filter also hides calls to our own helpers whose name follows the
+# Rails `_path` convention (for methods returning a URL path). Verified by
+# renaming the definition + call site to `_url` / `_href` suffixes in isolation:
+# the finding disappears, confirming it's the suffix filter and not a missing
+# call site. See commit message for PR #302 for the repro.
+#
+# - UiHelper#marketing_cta_path — called from
+#   app/views/shared/marketing/_cta_button.html.erb
+# ---------------------------------------------------------------------------
+marketing_cta_path
+
+# ---------------------------------------------------------------------------
+# SynthesizableContent concern interface (app/models/concerns/synthesizable_content.rb).
+#
+# Epic agent-team-sird (brick 2b / agent-team-bzo6) introduces a minimal
+# shared interface for Episode + Narration. These methods are exercised by
+# the shared contract test (test/models/concerns/synthesizable_content_test.rb)
+# against both consumer models.
+#
+# - SynthesizableContent#cost — value object, consumed via tts_usage today;
+#   brick 3 (agent-team-7i24) closed without adopting it as a persisted
+#   column (deferred to agent-team-0rwa). Keep the entry — it's still the
+#   named contract method on the concern.
+# ---------------------------------------------------------------------------
+cost

@@ -14,7 +14,6 @@ class User < ApplicationRecord
     class_name: "Doorkeeper::AccessToken",
     foreign_key: :resource_owner_id,
     dependent: :destroy
-  has_one :subscription, dependent: :destroy
   has_one :credit_balance, dependent: :destroy
   has_many :credit_transactions, dependent: :destroy
 
@@ -36,15 +35,37 @@ class User < ApplicationRecord
   end
 
   def premium?
-    subscription&.active? || complimentary? || unlimited?
+    complimentary? || unlimited?
   end
 
   def free?
-    standard? && !subscription&.active? && !has_credits?
+    standard? && !has_credits?
   end
 
   def credit_user?
     has_credits? && !premium?
+  end
+
+  def paid?
+    premium? || credit_user?
+  end
+
+  # Single predicate for "this user sees the credit-cost preview" (agent-team-gq88).
+  #
+  # Used on both the view (new-episode form) and the cost_preview endpoint to
+  # prevent divergence. A user is on the credit path iff:
+  #   - They are NOT premium (no active subscription, not complimentary, not
+  #     unlimited) — !premium? covers all three.
+  #   - They have EVER purchased credits — credit_balance.present? captures
+  #     users whose balance is currently zero but who are still credit-path
+  #     (they'll see the "Buy more" CTA).
+  #
+  # This intentionally differs from credit_user? which additionally requires
+  # balance > 0. A zero-balance credit user still belongs on the credit path:
+  # they should see the preview with a "not enough credits" state, not the
+  # free-tier copy.
+  def on_credit_path?
+    !premium? && credit_balance.present?
   end
 
   def voice
@@ -57,7 +78,7 @@ class User < ApplicationRecord
 
   def character_limit
     return nil if unlimited?
-    return AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT if premium? || credit_user?
+    return AppConfig::Tiers::EPISODE_CHARACTER_LIMIT if premium? || credit_user?
     AppConfig::Tiers::FREE_CHARACTER_LIMIT
   end
 

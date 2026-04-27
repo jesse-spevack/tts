@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_100000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -82,7 +82,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.index ["episode_id"], name: "index_credit_transactions_on_episode_id"
     t.index ["stripe_session_id"], name: "index_credit_transactions_on_stripe_session_id", unique: true
     t.index ["transaction_type"], name: "index_credit_transactions_on_transaction_type"
+    t.index ["user_id", "episode_id"], name: "idx_credit_transactions_usage_unique", unique: true, where: "transaction_type = 'usage'"
     t.index ["user_id"], name: "index_credit_transactions_on_user_id"
+  end
+
+  create_table "deactivations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "deactivated_at", null: false
+    t.string "reason"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_deactivations_on_user_id"
   end
 
   create_table "device_codes", force: :cascade do |t|
@@ -114,6 +124,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.string "author", null: false
     t.text "content_preview"
     t.datetime "created_at", null: false
+    t.integer "credit_cost"
     t.datetime "deleted_at"
     t.text "description", null: false
     t.integer "duration_seconds"
@@ -131,6 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.string "voice"
     t.index ["deleted_at"], name: "index_episodes_on_deleted_at"
     t.index ["gcs_episode_id"], name: "index_episodes_on_gcs_episode_id"
     t.index ["mpp_payment_id"], name: "index_episodes_on_mpp_payment_id"
@@ -297,19 +309,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "subscriptions", force: :cascade do |t|
-    t.datetime "cancel_at"
-    t.datetime "canceled_at"
+  create_table "tts_usages", force: :cascade do |t|
+    t.integer "character_count", null: false
+    t.integer "cost_cents", null: false
     t.datetime "created_at", null: false
-    t.datetime "current_period_end", null: false
-    t.integer "status", default: 0, null: false
-    t.string "stripe_price_id", null: false
-    t.string "stripe_subscription_id", null: false
+    t.string "provider", null: false
+    t.string "source", default: "actual", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["current_period_end"], name: "index_subscriptions_on_current_period_end"
-    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
-    t.index ["user_id"], name: "index_subscriptions_on_user_id", unique: true
+    t.integer "usable_id", null: false
+    t.string "usable_type", null: false
+    t.string "voice_id", null: false
+    t.string "voice_tier", null: false
+    t.index ["usable_type", "usable_id"], name: "index_tts_usages_on_usable", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -323,6 +334,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.boolean "email_episode_confirmation", default: true, null: false
     t.boolean "email_episodes_enabled", default: false, null: false
     t.string "email_ingest_token"
+    t.boolean "internal", default: false, null: false
     t.string "stripe_customer_id"
     t.datetime "updated_at", null: false
     t.string "voice_preference"
@@ -334,12 +346,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
     t.index ["stripe_customer_id"], name: "index_users_on_stripe_customer_id", unique: true
   end
 
+  create_table "webhook_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_id", null: false
+    t.string "event_type"
+    t.json "payload_summary"
+    t.string "provider", null: false
+    t.datetime "received_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["provider", "event_id"], name: "index_webhook_events_on_provider_and_event_id", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "credit_balances", "users"
   add_foreign_key "credit_transactions", "episodes"
   add_foreign_key "credit_transactions", "users"
+  add_foreign_key "deactivations", "users"
   add_foreign_key "device_codes", "users"
   add_foreign_key "episode_usages", "users"
   add_foreign_key "episodes", "mpp_payments"
@@ -355,5 +379,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_170339) do
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sent_messages", "users"
   add_foreign_key "sessions", "users"
-  add_foreign_key "subscriptions", "users"
 end

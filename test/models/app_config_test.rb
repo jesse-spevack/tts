@@ -7,8 +7,19 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 15_000, AppConfig::Tiers::FREE_CHARACTER_LIMIT
   end
 
-  test "PREMIUM_CHARACTER_LIMIT is 50000" do
-    assert_equal 50_000, AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT
+  # --- iny7 rename: PREMIUM_CHARACTER_LIMIT → EPISODE_CHARACTER_LIMIT ---
+  # Subscription is going away. The 50k cap is no longer "premium"; it's
+  # the universal per-episode cap for every paying user (credit packs and
+  # Jesse's legacy sub alike). Rename reflects that.
+
+  test "EPISODE_CHARACTER_LIMIT is 50000" do
+    assert_equal 50_000, AppConfig::Tiers::EPISODE_CHARACTER_LIMIT
+  end
+
+  test "legacy PREMIUM_CHARACTER_LIMIT constant is removed" do
+    assert_raises(NameError) do
+      AppConfig::Tiers::PREMIUM_CHARACTER_LIMIT
+    end
   end
 
   test "FREE_MONTHLY_EPISODES is 2" do
@@ -77,28 +88,18 @@ class AppConfigTest < ActiveSupport::TestCase
     assert_equal 5, AppConfig::Network::DNS_TIMEOUT_SECONDS
   end
 
-  test "Stripe module has price constants" do
-    assert_equal "test_price_monthly", AppConfig::Stripe::PRICE_ID_MONTHLY
-    assert_equal "test_price_annual", AppConfig::Stripe::PRICE_ID_ANNUAL
+  # --- Subscription pricing constants are gone post-winddown (agent-team-9rt7) ---
+  # PRICE_ID_MONTHLY, PRICE_ID_ANNUAL, and PLAN_INFO are deleted.
+  test "legacy PRICE_ID_MONTHLY constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PRICE_ID_MONTHLY }
   end
 
-  # --- PLAN_INFO map (agent-team-bwz) ---
-  # Behavior is primarily tested via Subscription#plan_name and
-  # Subscription#plan_display_price. These tests assert the module contract:
-  # a frozen lookup keyed by Stripe price ID that returns nil for unknown keys.
-
-  test "PLAN_INFO is a frozen hash" do
-    assert_kind_of Hash, AppConfig::Stripe::PLAN_INFO
-    assert AppConfig::Stripe::PLAN_INFO.frozen?, "PLAN_INFO must be frozen"
+  test "legacy PRICE_ID_ANNUAL constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PRICE_ID_ANNUAL }
   end
 
-  test "PLAN_INFO is keyed by stripe price id" do
-    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_MONTHLY
-    assert_includes AppConfig::Stripe::PLAN_INFO.keys, AppConfig::Stripe::PRICE_ID_ANNUAL
-  end
-
-  test "PLAN_INFO returns nil for unknown price id" do
-    assert_nil AppConfig::Stripe::PLAN_INFO["price_does_not_exist"]
+  test "legacy PLAN_INFO constant is removed" do
+    assert_raises(NameError) { AppConfig::Stripe::PLAN_INFO }
   end
 
   # --- Credits::PACKS catalog (agent-team-qc7t) ---
@@ -192,6 +193,24 @@ class AppConfigTest < ActiveSupport::TestCase
     end
   end
 
+  # --- Snapshot pin for Credits::PACKS pricing (agent-team-e6hd) ---
+  # Pins the [size, price_cents] pairs for every credit pack so any
+  # accidental price edit from an unrelated bead is caught by test.
+  # Bumped deliberately whenever a pricing-scoped bead changes pack
+  # prices. Established by agent-team-e6hd.
+  CREDIT_PACK_PRICING_PIN = [
+    [ 5, 999 ],
+    [ 10, 1799 ],
+    [ 20, 3299 ]
+  ].freeze
+
+  test "Credits::PACKS pricing matches the pinned snapshot" do
+    current = AppConfig::Credits::PACKS.map { |p| [ p[:size], p[:price_cents] ] }
+    assert_equal CREDIT_PACK_PRICING_PIN, current,
+      "Credit pack pricing has changed. If this change is intentional " \
+      "and scoped to a pricing bead, bump CREDIT_PACK_PRICING_PIN to the new values."
+  end
+
   test "Storage.public_feed_url returns branded URL" do
     result = AppConfig::Storage.public_feed_url("podcast_abc123")
 
@@ -203,5 +222,15 @@ class AppConfigTest < ActiveSupport::TestCase
 
     expected = "https://storage.googleapis.com/#{AppConfig::Storage::BUCKET}/podcasts/podcast_abc123/feed.xml"
     assert_equal expected, result
+  end
+
+  # --- Tts module (agent-team-ff05) ---
+
+  test "Tts::COST_CENTS_PER_MILLION standard rate is 400 (= $4/M chars)" do
+    assert_equal 400, AppConfig::Tts::COST_CENTS_PER_MILLION["standard"]
+  end
+
+  test "Tts::COST_CENTS_PER_MILLION premium rate is 3000 (= $30/M chars)" do
+    assert_equal 3_000, AppConfig::Tts::COST_CENTS_PER_MILLION["premium"]
   end
 end

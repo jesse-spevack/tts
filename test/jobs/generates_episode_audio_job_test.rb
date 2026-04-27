@@ -138,4 +138,53 @@ class GeneratesEpisodeAudioJobTest < ActiveSupport::TestCase
 
     assert_nil Rails.cache.read("audio_failures:#{@user.id}")
   end
+
+  # === Credit refund on async audio-job failure (agent-team-uoqd round 2) ===
+  #
+  # Two call sites in GeneratesEpisodeAudioJob write status=failed directly:
+  #   :23 — ChecksAudioCircuitBreaker::Tripped rescue
+  #   :31 — handle_retries_exhausted after 3 failed attempts
+  # Both bypass EpisodeErrorHandling and the API controller wire-in.
+  # A credit user hitting either path currently loses the debited credit.
+
+  test "refunds debited credit when retries exhausted" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    job = GeneratesEpisodeAudioJob.new(episode_id: @episode.id)
+    error = Google::Cloud::DeadlineExceededError.new("timeout")
+
+    job.handle_retries_exhausted(error)
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when audio-job retries are exhausted"
+  end
+
+  test "refunds debited credit when circuit breaker trips" do
+    credit_user = users(:credit_user)
+    CreditBalance.for(credit_user).update!(balance: 3)
+    @episode.update!(user: credit_user)
+
+    DeductsCredit.call(user: credit_user, episode: @episode, cost_in_credits: 1)
+    assert_equal 2, credit_user.reload.credits_remaining
+
+    # Trip the breaker for this user.
+    Rails.cache.write("audio_failures:#{credit_user.id}", 3, expires_in: 1.hour)
+
+    stubs { |m| GeneratesEpisodeAudio.call(episode: m.any, voice_override: m.any) }.with { nil }
+
+    GeneratesEpisodeAudioJob.perform_now(episode_id: @episode.id)
+
+    @episode.reload
+    assert_equal "failed", @episode.status
+    assert_match(/temporarily unavailable/, @episode.error_message)
+    assert_equal 3, credit_user.reload.credits_remaining,
+      "Credit should be refunded when the circuit breaker trips and fails the episode"
+  end
 end

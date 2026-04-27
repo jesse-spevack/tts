@@ -1,81 +1,272 @@
+<% steps = [
+     { n: 1, label: "Install" },
+     { n: 2, label: "Connect" },
+     { n: 3, label: "Click icon" },
+     { n: 4, label: "Wait for episode" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: steps %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :extension_help } do %>
 
   <section class="pb-12">
-    <h2 class="text-lg/8 font-semibold text-mist-950 dark:text-white">Browser Extension</h2>
-    <p class="mt-2 text-sm/6 text-mist-700 dark:text-mist-400">
-      Send any article to your podcast feed with one click.
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Browser extension
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      Send any article to your podcast feed with one click from your browser
+      toolbar.
     </p>
 
-    <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
-      <h3 class="text-base font-semibold text-mist-950 dark:text-white">Installation</h3>
-      <ol class="mt-3 list-decimal list-inside space-y-2">
-        <li>Install the extension from the <a href="<%= AppConfig::Extension::CHROME_WEB_STORE_URL %>" class="text-mist-950 underline dark:text-white">Chrome Web Store</a></li>
-        <li>Click the extension icon in your browser toolbar</li>
-        <li>You'll be redirected to connect your account</li>
-        <li>Once connected, you're ready to go!</li>
-      </ol>
+    <%# Step body. Active state in the right-rail ToC is driven by         %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb).           %>
+    <ol role="list" class="mt-10 space-y-12">
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">How to Use</h3>
-      <ol class="mt-3 list-decimal list-inside space-y-2">
-        <li>Navigate to any article or blog post you want to listen to</li>
-        <li>Click the <strong class="text-mist-950 dark:text-white">PodRead Extension</strong> icon in your toolbar</li>
-        <li>The icon shows a <strong class="text-mist-950 dark:text-white">green checkmark</strong> when the article is sent</li>
-        <li>Open your podcast app -- the episode will appear in your feed</li>
-      </ol>
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Install from the Chrome Web Store
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Click <strong class="text-mist-950 dark:text-white">install</strong>,
+              then pin PodRead to your toolbar so it's one click away.
+            </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Icon Badge States</h3>
-      <p class="mt-3">The extension shows a small badge on the icon to indicate status:</p>
-      <ul class="mt-3 space-y-3">
-        <li class="flex items-center gap-3">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-mist-100 dark:bg-mist-800 text-sm font-medium text-mist-500 dark:text-mist-400">--</span>
-          <span><strong class="text-mist-950 dark:text-white">No badge</strong> -- Ready to send an article</span>
-        </li>
-        <li class="flex items-center gap-3">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-blue-600 text-sm font-bold text-white">...</span>
-          <span><strong class="text-mist-950 dark:text-white">Blue dots</strong> -- Sending article</span>
-        </li>
-        <li class="flex items-center gap-3">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-green-600 text-sm font-bold text-white">&#x2713;</span>
-          <span><strong class="text-mist-950 dark:text-white">Green checkmark</strong> -- Article sent to your feed</span>
-        </li>
-        <li class="flex items-center gap-3">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-red-600 text-sm font-bold text-white">!</span>
-          <span><strong class="text-mist-950 dark:text-white">Red exclamation</strong> -- Something went wrong (page may not be an article)</span>
-        </li>
-      </ul>
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div class="flex items-center gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-mist-100 dark:bg-mist-800 text-base font-semibold text-mist-950 dark:text-white">
+                      P
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">PodRead Extension</p>
+                      <p class="truncate text-xs text-mist-500 dark:text-mist-400">chromewebstore.google.com</p>
+                    </div>
+                  </div>
+                  <button class="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+                    Add to Chrome
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Disconnecting</h3>
-      <p class="mt-3">To disconnect the extension from your account:</p>
-      <ol class="mt-3 list-decimal list-inside space-y-2">
-        <li><strong class="text-mist-950 dark:text-white">Right-click</strong> the extension icon</li>
-        <li>Select <strong class="text-mist-950 dark:text-white">Disconnect from PodRead</strong></li>
-      </ol>
-      <p class="mt-3">
-        You can also disconnect from your <%= link_to "account settings", settings_extensions_path, class: "text-mist-950 underline dark:text-white" %>.
-      </p>
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Connect your account
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              The first click on the extension icon opens a PodRead tab that
+              connects your account automatically — you'll see an
+              <strong class="text-mist-950 dark:text-white">Extension Connected</strong>
+              confirmation. After that, the extension knows where to send articles.
+            </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Troubleshooting</h3>
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-6 text-center space-y-3">
+                  <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-green-600/10 dark:bg-green-400/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600 dark:text-green-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p class="text-sm font-semibold text-mist-950 dark:text-white">Extension Connected</p>
+                  <p class="text-xs text-mist-500 dark:text-mist-400">
+                    Connecting to extension...
+                  </p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
 
-      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">"This page does not appear to be an article"</h4>
-      <p class="mt-2">
-        The extension works best on article pages with substantial text content. It may not work on:
-      </p>
-      <ul class="mt-2 list-disc list-inside space-y-1">
-        <li>Home pages or index pages</li>
-        <li>Pages with mostly images or video</li>
-        <li>Pages behind paywalls or login walls</li>
-        <li>PDFs or non-HTML content</li>
-      </ul>
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Click the icon on any article
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Open the article you want to listen to and click the PodRead icon
+              in your toolbar. A green checkmark on the icon means the article
+              was sent.
+            </p>
 
-      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">Extension shows error state</h4>
-      <p class="mt-2">
-        Try refreshing the page and clicking the icon again. If the problem persists, the page content may not be extractable.
-      </p>
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-3">
+                  <div class="flex items-center justify-end gap-2">
+                    <div class="relative">
+                      <div class="flex size-8 items-center justify-center rounded-md bg-mist-100 dark:bg-mist-800 text-sm font-semibold text-mist-950 dark:text-white">
+                        P
+                      </div>
+                      <span class="absolute -bottom-1 -right-1 inline-flex size-4 items-center justify-center rounded bg-green-600 text-[10px] font-bold text-white">&#x2713;</span>
+                    </div>
+                  </div>
+                  <p class="mt-3 text-xs text-mist-500 dark:text-mist-400">Article sent to your feed</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
 
-      <h4 class="mt-6 text-sm font-semibold text-mist-950 dark:text-white">Need to reconnect?</h4>
-      <p class="mt-2">
-        If you're logged out or need to reconnect, just click the extension icon -- you'll be redirected to the connect page automatically.
-      </p>
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Episode appears in your feed
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Once you click the extension icon, audio is ready in your feed
+              in a few minutes. Whether it shows up in your podcast app right
+              away or ten minutes later depends on how often your app checks
+              for new episodes — in many apps you can pull-to-refresh if you
+              want it sooner.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">The article you just sent</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">7:18</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Get the extension", AppConfig::Extension::CHROME_WEB_STORE_URL,
+                  target: "_blank", rel: "noopener",
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+
+    <%# More info ------------------------------------------------------- %>
+    <div class="mt-12 space-y-10">
+
+      <%# Icon badge states -------------------------------------------- %>
+      <div>
+        <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+          Icon badge states
+        </h3>
+        <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+          The extension shows a small badge on the icon to indicate status.
+        </p>
+        <ul role="list" class="mt-4 space-y-3 text-sm/6 text-mist-700 dark:text-mist-400">
+          <li class="flex items-center gap-3">
+            <span class="inline-flex size-8 items-center justify-center rounded bg-mist-100 dark:bg-mist-800 text-sm font-medium text-mist-500 dark:text-mist-400">--</span>
+            <span><strong class="text-mist-950 dark:text-white">No badge</strong> &mdash; ready to send an article</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex size-8 items-center justify-center rounded bg-blue-600 text-sm font-bold text-white">...</span>
+            <span><strong class="text-mist-950 dark:text-white">Blue dots</strong> &mdash; sending article</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex size-8 items-center justify-center rounded bg-green-600 text-sm font-bold text-white">&#x2713;</span>
+            <span><strong class="text-mist-950 dark:text-white">Green checkmark</strong> &mdash; article sent to your feed</span>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="inline-flex size-8 items-center justify-center rounded bg-red-600 text-sm font-bold text-white">!</span>
+            <span><strong class="text-mist-950 dark:text-white">Red exclamation</strong> &mdash; something went wrong (page may not be an article)</span>
+          </li>
+        </ul>
+      </div>
+
+      <%# Disconnecting ------------------------------------------------ %>
+      <div>
+        <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+          Disconnecting
+        </h3>
+        <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+          Two ways to disconnect the extension from your account:
+        </p>
+        <ul role="list" class="mt-3 max-w-[60ch] list-disc list-inside space-y-2 text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+          <li>
+            <strong class="text-mist-950 dark:text-white">Right-click</strong>
+            the extension icon and select
+            <strong class="text-mist-950 dark:text-white">Disconnect from PodRead</strong>.
+          </li>
+          <li>
+            Disconnect from your
+            <%= link_to "extension settings", settings_extensions_path, class: "text-mist-950 underline dark:text-white" %>.
+          </li>
+        </ul>
+      </div>
+
+      <%# Troubleshooting ---------------------------------------------- %>
+      <div>
+        <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+          Troubleshooting
+        </h3>
+
+        <div class="mt-4 divide-y divide-mist-950/5 dark:divide-mist-50/5 border-y border-mist-950/5 dark:border-mist-50/5">
+          <details class="group py-3">
+            <summary class="cursor-pointer list-none text-sm font-medium text-mist-950 dark:text-white marker:hidden [&amp;::-webkit-details-marker]:hidden flex items-center justify-between gap-3">
+              <span>"This page does not appear to be an article"</span>
+              <span aria-hidden="true" class="text-mist-500 transition group-open:rotate-180">&#x25BE;</span>
+            </summary>
+            <div class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              <p>The extension works best on article pages with substantial text content. It may not work on:</p>
+              <ul role="list" class="mt-2 list-disc list-inside space-y-1">
+                <li>Home pages or index pages</li>
+                <li>Pages with mostly images or video</li>
+                <li>Pages behind paywalls or login walls</li>
+                <li>PDFs or non-HTML content</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="group py-3">
+            <summary class="cursor-pointer list-none text-sm font-medium text-mist-950 dark:text-white marker:hidden [&amp;::-webkit-details-marker]:hidden flex items-center justify-between gap-3">
+              <span>Extension shows error state</span>
+              <span aria-hidden="true" class="text-mist-500 transition group-open:rotate-180">&#x25BE;</span>
+            </summary>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Try refreshing the page and clicking the icon again. If the problem
+              persists, the page content may not be extractable.
+            </p>
+          </details>
+
+          <details class="group py-3">
+            <summary class="cursor-pointer list-none text-sm font-medium text-mist-950 dark:text-white marker:hidden [&amp;::-webkit-details-marker]:hidden flex items-center justify-between gap-3">
+              <span>Need to reconnect?</span>
+              <span aria-hidden="true" class="text-mist-500 transition group-open:rotate-180">&#x25BE;</span>
+            </summary>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              If you're logged out or need to reconnect, just click the extension
+              icon &mdash; you'll be redirected to the connect page automatically.
+            </p>
+          </details>
+        </div>
+      </div>
     </div>
   </section>
 <% end %>

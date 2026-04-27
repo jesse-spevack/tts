@@ -15,18 +15,9 @@
             </p>
             <p class="text-sm text-mist-500 dark:text-mist-400">Credits never expire. Buy more below.</p>
           </div>
-        <% when :canceled_grace %>
-          <div class="space-y-1">
-            <p class="text-sm text-mist-500 dark:text-mist-400">
-              Your subscription ended on <%= Current.user.subscription.current_period_end.strftime("%B %-d, %Y") %>.
-            </p>
-            <p class="text-sm text-mist-500 dark:text-mist-400">
-              Pay-as-you-go is available if you'd like to keep creating episodes.
-            </p>
-          </div>
         <% when :empty_state %>
           <p class="text-sm font-medium text-mist-950 dark:text-white">
-            Pay as you go — no subscription required.
+            Pay as you go.
           </p>
           <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">
             Pick a pack. Credits never expire.

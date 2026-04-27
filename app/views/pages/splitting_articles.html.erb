@@ -1,0 +1,191 @@
+<% steps = [
+     { n: 1, label: "Spot the error" },
+     { n: 2, label: "Open paste tab" },
+     { n: 3, label: "Paste first half" },
+     { n: 4, label: "Repeat" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: steps %>
+<% end %>
+<%= render layout: "shared/help_layout", locals: { current: :splitting_articles } do %>
+
+  <section class="pb-12">
+    <%# Page intro -------------------------------------------------------- %>
+    <h2 class="max-w-[40ch] text-lg/8 font-semibold text-balance text-mist-950 dark:text-white">
+      Splitting long articles
+    </h2>
+    <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+      When an article exceeds your plan's character limit, episode conversion
+      will fail. You can still listen to the article — paste the text and
+      split it across two episodes. Here's how.
+    </p>
+
+    <%# Step body. Active state in the right-rail ToC is driven by         %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb).           %>
+    <ol role="list" class="mt-10 space-y-12">
+
+      <%# Step 1 --------------------------------------------------------- %>
+      <li id="step-1" data-scroll-spy-target="step" data-step="1" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 1 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Spot the error on your episode list
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              When a URL is too long, the failed episode card shows a red
+              message and a tip. That tip is what brought you here.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-1">
+                  <div class="flex items-center gap-3">
+                    <span class="flex size-2 shrink-0 rounded-full bg-rose-500"></span>
+                    <p class="truncate text-sm font-medium text-mist-950 dark:text-white">My Long Article</p>
+                  </div>
+                  <p class="pl-5 text-sm/6 text-mist-500 dark:text-mist-400">
+                    <span class="inline-flex items-center gap-1">
+                      <span class="text-red-600 dark:text-red-400">✗</span>
+                      <span>Failed</span>
+                    </span>
+                    &mdash; <span class="text-rose-600 dark:text-rose-400">exceeds your plan's 15,000 character limit (16,305 characters)</span>
+                  </p>
+                  <p class="pl-5 text-sm/6 text-mist-500 dark:text-mist-400">
+                    Tip: split it across two episodes.
+                    <span class="underline">Read more →</span>
+                  </p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 2 --------------------------------------------------------- %>
+      <li id="step-2" data-scroll-spy-target="step" data-step="2" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 2 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Open the new-episode form on the Paste tab
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Click <strong class="text-mist-950 dark:text-white">+ New Episode</strong> in the
+              navigation, then switch to the <strong class="text-mist-950 dark:text-white">Paste Text</strong>
+              tab. The button at the bottom of this guide takes you straight there.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <nav class="flex gap-6 border-b border-mist-200 dark:border-mist-700">
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">From URL</span>
+                    <span class="border-b-2 border-mist-950 dark:border-white pb-2 text-sm font-medium text-mist-950 dark:text-white">Paste Text</span>
+                    <span class="pb-2 text-sm font-medium text-mist-500 dark:text-mist-400">Upload File</span>
+                  </nav>
+                  <div class="mt-4 space-y-3">
+                    <div class="h-3 w-1/2 rounded bg-mist-100 dark:bg-mist-800"></div>
+                    <div class="h-32 w-full rounded-md border border-mist-200 dark:border-mist-700 bg-mist-50 dark:bg-mist-800/50"></div>
+                    <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                      Create Episode
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 3 --------------------------------------------------------- %>
+      <li id="step-3" data-scroll-spy-target="step" data-step="3" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 3 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Paste the first half
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Copy the article's text from your browser, paste roughly the first
+              half into the text area, and give the episode a clear title — e.g.
+              <em>"My Article (Part 1)"</em>. Paragraph breaks make natural splits.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4 space-y-3">
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Title (optional)</p>
+                    <div class="rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 px-3 py-2 text-sm text-mist-950 dark:text-white">
+                      My Article (Part 1)
+                    </div>
+                  </div>
+                  <div>
+                    <p class="mb-1 text-xs font-medium text-mist-500 dark:text-mist-400">Article Text</p>
+                    <div class="h-24 overflow-hidden rounded-md border border-mist-200 dark:border-mist-700 bg-white dark:bg-mist-800 p-3 text-xs/5 text-mist-700 dark:text-mist-300">
+                      <p>The first half of the article goes here. You don't have to be exact — pick a paragraph break near the middle and copy everything above it...</p>
+                    </div>
+                  </div>
+                  <button class="rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950">
+                    Create Episode
+                  </button>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+
+      <%# Step 4 --------------------------------------------------------- %>
+      <li id="step-4" data-scroll-spy-target="step" data-step="4" class="scroll-mt-24">
+        <article class="grid grid-cols-[auto_1fr] gap-x-4">
+          <%= render "pages/splitting_step_badge", n: 4 %>
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold text-balance text-mist-950 dark:text-white">
+              Repeat for the second half
+            </h3>
+            <p class="mt-2 max-w-[60ch] text-sm/6 text-pretty text-mist-700 dark:text-mist-400">
+              Submit the first episode, then come back, paste the rest, and title
+              it <em>"My Article (Part 2)"</em>. You'll end up with two episodes
+              that play back-to-back in your podcast app.
+            </p>
+
+            <div class="mt-4 max-w-md">
+              <%= render "shared/demo_browser_frame" do %>
+                <div class="w-full rounded-md bg-white dark:bg-mist-900 p-4">
+                  <ul role="list" class="divide-y divide-mist-950/5 dark:divide-mist-50/5">
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-yellow-500 animate-pulse"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">My Article (Part 2)</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400">Generating audio</span>
+                    </li>
+                    <li class="flex items-center gap-3 py-2">
+                      <span class="flex size-2 shrink-0 rounded-full bg-green-500"></span>
+                      <p class="truncate text-sm font-medium text-mist-950 dark:text-white">My Article (Part 1)</p>
+                      <span class="ml-auto text-xs text-mist-500 dark:text-mist-400 tabular-nums">5:42</span>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      </li>
+    </ol>
+
+    <%# CTAs ------------------------------------------------------------- %>
+    <div class="mt-12 flex flex-col gap-3 border-t border-mist-950/5 dark:border-mist-50/5 pt-8 sm:flex-row">
+      <%= link_to "Open the paste form", new_episode_path(source: "paste"),
+                  class: "inline-flex items-center justify-center rounded-md bg-mist-950 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-mist-950 hover:bg-mist-800 dark:hover:bg-mist-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mist-950 dark:focus-visible:outline-white" %>
+      <%= link_to "Back to your episodes", episodes_path,
+                  class: "inline-flex items-center justify-center rounded-md border border-mist-200 dark:border-mist-700 px-4 py-2 text-sm font-medium text-mist-950 dark:text-white hover:bg-mist-100 dark:hover:bg-mist-800" %>
+    </div>
+
+    <p class="mt-6 max-w-[60ch] text-xs text-pretty text-mist-500 dark:text-mist-400">
+      Limits today: 15,000 characters on the free plan, 50,000 on paid plans.
+      Want longer episodes? <%= link_to "Upgrade your account", settings_path, class: "underline" %>.
+    </p>
+  </section>
+<% end %>

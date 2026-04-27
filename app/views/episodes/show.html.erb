@@ -69,6 +69,23 @@
               </dd>
             </div>
           <% end %>
+
+          <% if @episode.source_text_length.present? %>
+            <div class="flex justify-between py-3">
+              <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Characters</dt>
+              <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= number_with_delimiter(@episode.source_text_length) %></dd>
+            </div>
+          <% end %>
+
+          <div class="flex justify-between py-3">
+            <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Cost</dt>
+            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= episode_cost_label(@episode) %></dd>
+          </div>
+
+          <div class="flex justify-between py-3">
+            <dt class="text-sm/6 text-mist-500 dark:text-mist-400">Voice</dt>
+            <dd class="text-sm/6 font-medium text-mist-950 dark:text-white"><%= GetsVoiceTier.call(episode: @episode).to_s.capitalize %></dd>
+          </div>
         </dl>
 
         <%# Action buttons %>

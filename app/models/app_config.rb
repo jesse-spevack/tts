@@ -12,7 +12,7 @@ class AppConfig
 
   module Tiers
     FREE_CHARACTER_LIMIT = 15_000
-    PREMIUM_CHARACTER_LIMIT = 50_000
+    EPISODE_CHARACTER_LIMIT = 50_000
     FREE_MONTHLY_EPISODES = 2
 
     FREE_VOICES = %w[wren felix sloane archer gemma hugo quinn theo].freeze
@@ -83,14 +83,7 @@ class AppConfig
   end
 
   module Stripe
-    PRICE_ID_MONTHLY = ENV.fetch("STRIPE_PRICE_ID_MONTHLY", "test_price_monthly")
-    PRICE_ID_ANNUAL = ENV.fetch("STRIPE_PRICE_ID_ANNUAL", "test_price_annual")
     WEBHOOK_SECRET = ENV.fetch("STRIPE_WEBHOOK_SECRET", "test_webhook_secret")
-
-    PLAN_INFO = {
-      PRICE_ID_MONTHLY => { name: "Premium Monthly", amount_cents: 900, display: "$9/mo" },
-      PRICE_ID_ANNUAL => { name: "Premium Annual", amount_cents: 8900, display: "$89/yr" }
-    }.freeze
   end
 
   module Credits
@@ -137,6 +130,15 @@ class AppConfig
     CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/podread-extension/icgbgfaelfomnobbkecaegeecjpdcdhd"
   end
 
+  module Tts
+    # Google Cloud TTS COGS per million input characters, in whole cents.
+    # Standard: $4/M → 400¢. Chirp3-HD premium: $30/M → 3000¢.
+    COST_CENTS_PER_MILLION = {
+      "standard" => 400,
+      "premium" => 3_000
+    }.freeze
+  end
+
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
     # Tiered per-narration pricing. Standard voices use Google TTS Standard
@@ -144,16 +146,31 @@ class AppConfig
     # 7.5× delta on the biggest input cost line justifies a split.
     # See agent-team-0g5 for the full cost model.
     PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
-    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 100).to_i
+    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 150).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
-    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "https://rpc.testnet.tempo.xyz")
+    # Tempo JSON-RPC endpoint. Mainnet (chain 4217) for production, Moderato
+    # testnet (chain 42431) for every other Rails env. The RPC URL and the
+    # TEMPO_CURRENCY_TOKEN contract MUST refer to the same chain — a testnet
+    # RPC paired with a mainnet contract silently strands user payments
+    # (agent-team-tv6e). Mpp::VerifiesChainId (wired in via the initializer
+    # config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
+    # Explicit TEMPO_RPC_URL env var wins when set.
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL") do
+      Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
+    end
+    # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the
+    # Moderato testnet (the testnet faucet only dispenses pathUSD). USDC.e
+    # (0x20c0...0000b9537d11c60e8b50) is USDC bridged via Stargate and is
+    # Stripe's prod guidance for mainnet MPP traffic. The TEMPO_CURRENCY_TOKEN
+    # env var determines which one is active — default stays pathUSD for
+    # testnet safety; prod sets the USDC.e address in its deploy config.
     TEMPO_CURRENCY_TOKEN = ENV.fetch("TEMPO_CURRENCY_TOKEN", "0x20c0000000000000000000000000000000000000")
-    # Decimals for the Tempo stablecoin (pathUSD / USDC). Confirmed by pympp
-    # (mpp/methods/tempo/intents.py) and Stripe's machine-payments sample,
-    # both of which hardcode 6. On-chain Transfer event `data` is in these
-    # base units, so we convert cents -> base units before comparing.
+    # Decimals for the Tempo stablecoin. Both pathUSD and USDC.e use 6
+    # decimals, confirmed by pympp (mpp/methods/tempo/intents.py) and
+    # Stripe's machine-payments sample. On-chain Transfer event `data` is
+    # in these base units, so we convert cents -> base units before comparing.
     TEMPO_TOKEN_DECIMALS = ENV.fetch("TEMPO_TOKEN_DECIMALS", 6).to_i
     # Timeouts for the Tempo JSON-RPC call. A slow or hung RPC must not
     # block a Rails thread indefinitely.

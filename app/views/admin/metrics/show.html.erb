@@ -1,0 +1,134 @@
+<div class="max-w-4xl mx-auto">
+  <h1 class="text-3xl font-semibold mb-8">Metrics</h1>
+
+  <div class="flex flex-col gap-3">
+    <!-- Activation -->
+    <%= render "shared/card", padding: "p-6" do %>
+      <h2 class="text-lg font-semibold mb-4">Activation</h2>
+      <table class="w-full text-sm">
+        <tr>
+          <td class="py-1 text-mist-500 dark:text-mist-400">New signups (last 7 days)</td>
+          <td class="py-1 text-right font-medium"><%= @report.activation[:signups_7d] %></td>
+        </tr>
+        <tr>
+          <td class="py-1 text-mist-500 dark:text-mist-400">New signups (last 30 days)</td>
+          <td class="py-1 text-right font-medium"><%= @report.activation[:signups_30d] %></td>
+        </tr>
+        <tr class="border-t border-mist-200 dark:border-mist-700">
+          <td class="py-1 text-mist-500 dark:text-mist-400">Activated within 7 days (last 30d cohort)</td>
+          <td class="py-1 text-right font-medium">
+            <%= @report.activation[:activated_30d] %> / <%= @report.activation[:cohort_size_30d] %>
+          </td>
+        </tr>
+        <tr>
+          <td class="py-1 text-mist-500 dark:text-mist-400">Activation rate</td>
+          <td class="py-1 text-right font-medium"><%= number_to_percentage(@report.activation[:activation_rate_30d], precision: 1) %></td>
+        </tr>
+      </table>
+      <p class="text-xs text-mist-500 dark:text-mist-400 mt-3">
+        Activation = user created at least 1 episode within 7 days of signup. Internal users excluded.
+      </p>
+    <% end %>
+
+    <!-- Cohort retention -->
+    <%= render "shared/card", padding: "p-6" do %>
+      <h2 class="text-lg font-semibold mb-4">Cohort Retention (last 12 weeks)</h2>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Signup week</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Cohort</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">W+1</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">W+2</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">W+4</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @report.cohort_retention.each do |row| %>
+            <tr class="border-b border-mist-200 dark:border-mist-700">
+              <td class="py-2"><%= row[:week_start].strftime("%Y-%m-%d") %></td>
+              <td class="py-2 text-right font-medium"><%= row[:cohort_size] %></td>
+              <% [ 1, 2, 4 ].each do |w| %>
+                <% active = row[:"active_week_#{w}"] %>
+                <% pct = row[:cohort_size].zero? ? 0 : (active.to_f / row[:cohort_size] * 100).round %>
+                <td class="py-2 text-right font-medium">
+                  <%= active %>/<%= row[:cohort_size] %>
+                  <span class="text-mist-500 dark:text-mist-400">(<%= pct %>%)</span>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+          <% if @report.cohort_retention.empty? %>
+            <tr>
+              <td colspan="5" class="py-4 text-center text-mist-500 dark:text-mist-400">No non-internal signups in the last 12 weeks</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="text-xs text-mist-500 dark:text-mist-400 mt-3">
+        Cell = users from that cohort with ≥1 episode in the relative week. Internal users excluded.
+      </p>
+    <% end %>
+
+    <!-- WAU -->
+    <%= render "shared/card", padding: "p-6" do %>
+      <h2 class="text-lg font-semibold mb-4">Weekly Active Users (last 12 weeks)</h2>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Week</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">WAU</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Cumulative users</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">WAU %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @report.wau.each do |row| %>
+            <tr class="border-b border-mist-200 dark:border-mist-700">
+              <td class="py-2"><%= row[:week_start].strftime("%Y-%m-%d") %></td>
+              <td class="py-2 text-right font-medium"><%= row[:wau] %></td>
+              <td class="py-2 text-right font-medium"><%= row[:cumulative_users] %></td>
+              <td class="py-2 text-right font-medium"><%= number_to_percentage(row[:wau_percent], precision: 1) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="text-xs text-mist-500 dark:text-mist-400 mt-3">
+        WAU = distinct non-internal users with ≥1 episode that week. Cumulative = non-internal users signed up through end of that week.
+      </p>
+    <% end %>
+
+    <!-- Failure rate -->
+    <%= render "shared/card", padding: "p-6" do %>
+      <h2 class="text-lg font-semibold mb-4">Failure Rate (last 12 weeks)</h2>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-mist-200 dark:border-mist-700">
+            <th class="py-2 text-left text-mist-500 dark:text-mist-400">Week</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Episodes</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Failed</th>
+            <th class="py-2 text-right text-mist-500 dark:text-mist-400">Fail %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @report.failure_rate.each do |row| %>
+            <tr class="border-b border-mist-200 dark:border-mist-700">
+              <td class="py-2"><%= row[:week_start].strftime("%Y-%m-%d") %></td>
+              <td class="py-2 text-right font-medium"><%= row[:total] %></td>
+              <td class="py-2 text-right font-medium"><%= row[:failed] %></td>
+              <td class="py-2 text-right font-medium"><%= number_to_percentage(row[:failure_percent], precision: 1) %></td>
+            </tr>
+          <% end %>
+          <% if @report.failure_rate.empty? %>
+            <tr>
+              <td colspan="4" class="py-4 text-center text-mist-500 dark:text-mist-400">No non-internal episodes in the last 12 weeks</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="text-xs text-mist-500 dark:text-mist-400 mt-3">
+        Includes non-internal episodes only. Statuses: pending, preparing, processing, complete, failed.
+      </p>
+    <% end %>
+  </div>
+</div>
