@@ -151,16 +151,14 @@ class AppConfig
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i
     # Tempo JSON-RPC endpoint. Mainnet (chain 4217) for production, Moderato
-    # testnet (chain 42431) for every other Rails env. The RPC URL and the
-    # TEMPO_CURRENCY_TOKEN contract MUST refer to the same chain — a testnet
-    # RPC paired with a mainnet contract silently strands user payments
-    # (agent-team-tv6e). Mpp::VerifiesChainId (wired in via the initializer
-    # config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
-    # Explicit TEMPO_RPC_URL env var wins when set, but TEMPO_RPC_URL=""
-    # falls through to the default — an empty value would otherwise cause
-    # URI parsing to raise NoMethodError before the guard can fire its
-    # framed boot error (agent-team-vo2c).
-    TEMPO_RPC_URL = ENV["TEMPO_RPC_URL"].presence || (
+    # testnet (chain 42431) elsewhere. The RPC URL and TEMPO_CURRENCY_TOKEN
+    # MUST refer to the same chain — a testnet RPC paired with a mainnet
+    # contract silently strands user payments. Mpp::VerifiesChainId (wired
+    # via config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
+    # `.presence` ensures TEMPO_RPC_URL="" still falls through to the
+    # default — empty would otherwise propagate and crash URI parsing
+    # before the guard can fire its framed error.
+    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL", "").presence || (
       Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
     )
     # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the

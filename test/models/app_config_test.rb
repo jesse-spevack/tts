@@ -247,12 +247,12 @@ class AppConfigTest < ActiveSupport::TestCase
   end
 
   test "Mpp::TEMPO_RPC_URL fallback uses .presence not just .fetch" do
-    # Source-level invariant: `ENV.fetch('TEMPO_RPC_URL') { default }`
+    # Source-level invariant: a block-form fallback (`ENV.fetch('X') { default }`)
     # treats '' as set and returns the empty string, which then fails URI
-    # parsing. Use `.presence ||` instead (agent-team-vo2c).
+    # parsing. Use `.presence ||` so empty values fall through to the default.
     source = File.read(Rails.root.join("app/models/app_config.rb"))
     refute_match(/ENV\.fetch\("TEMPO_RPC_URL"\) do/, source,
       "AppConfig::Mpp::TEMPO_RPC_URL must use .presence fallback so empty env vars don't poison the URL")
-    assert_match(/ENV\["TEMPO_RPC_URL"\]\.presence/, source)
+    assert_match(/ENV\.fetch\("TEMPO_RPC_URL", ""\)\.presence/, source)
   end
 end
