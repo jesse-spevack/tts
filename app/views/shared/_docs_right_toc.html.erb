@@ -1,0 +1,18 @@
+<%# locals: (steps:) %>
+<%# Plain-anchor "On this page" rail for /docs/* pages. `steps` is an      %>
+<%# array of [href, label] pairs. Markup matches the inlined version that   %>
+<%# previously lived in each docs/*.html.erb. No scroll-spy yet — the      %>
+<%# /help/* layout already supports it via shared/_help_right_toc, but     %>
+<%# /docs/* never wired up scroll-spy data attributes on its sections.     %>
+<nav aria-label="On this page" class="sticky top-24 py-8">
+  <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
+  <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+    <% steps.each do |href, label| %>
+      <li>
+        <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
+          <%= label %>
+        </a>
+      </li>
+    <% end %>
+  </ul>
+</nav>

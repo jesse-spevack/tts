@@ -1,0 +1,37 @@
+<%# locals: (current:) %>
+<%
+  sections = [
+    {
+      heading: "API reference",
+      links: [
+        { label: "Authentication", path: docs_authentication_path, key: :authentication },
+        { label: "Episodes", path: docs_episodes_path, key: :episodes },
+        { label: "Machine Payments", path: docs_mpp_path, key: :mpp }
+      ]
+    },
+    {
+      heading: "Walkthroughs",
+      links: [
+        { label: "MPP getting started", path: docs_mpp_getting_started_path, key: :mpp_getting_started }
+      ]
+    }
+  ]
+%>
+<nav class="space-y-6 text-sm">
+  <% sections.each do |section| %>
+    <div>
+      <h3 class="font-semibold text-mist-950 dark:text-white mb-2"><%= section[:heading] %></h3>
+      <ul role="list" class="space-y-1">
+        <% section[:links].each do |link| %>
+          <li>
+            <% if link[:key] == current %>
+              <span class="block rounded-md bg-mist-200/50 dark:bg-mist-800 px-3 py-1.5 font-medium text-mist-950 dark:text-white"><%= link[:label] %></span>
+            <% else %>
+              <%= link_to link[:label], link[:path], class: "block rounded-md px-3 py-1.5 text-mist-500 hover:text-mist-700 hover:bg-mist-100 dark:text-mist-400 dark:hover:text-mist-200 dark:hover:bg-mist-800/50" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</nav>
