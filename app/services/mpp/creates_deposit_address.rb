@@ -8,9 +8,16 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:)
+    # expected_token_address defaults to AppConfig::Mpp::TEMPO_CURRENCY_TOKEN.
+    # Stripe's PaymentIntent response on the Tempo network includes a
+    # supported_tokens array — we assert the contract we're about to bind
+    # into the challenge actually appears there. Defends against Stripe
+    # drift (different default token, network enum changes) silently
+    # provisioning the wrong contract (agent-team-5aas).
+    def initialize(amount_cents:, currency:, expected_token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
       @amount_cents = amount_cents
       @currency = currency
+      @expected_token_address = expected_token_address
     end
 
     def call
@@ -21,6 +28,9 @@ module Mpp
       unless deposit_address
         return Result.failure("Missing Tempo deposit address in Stripe response")
       end
+
+      supported_check = verify_supported_tokens(payment_intent)
+      return supported_check if supported_check&.failure?
 
       payment_intent_id = payment_intent["id"]
 
@@ -43,7 +53,7 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency
+    attr_reader :amount_cents, :currency, :expected_token_address
 
     def create_payment_intent
       client = Stripe::StripeClient.new(Stripe.api_key)
@@ -81,6 +91,34 @@ module Mpp
         "deposit_addresses",
         "tempo",
         "address"
+      )
+    end
+
+    # Defense-in-depth (agent-team-5aas): if Stripe ever drifts to provisioning
+    # a deposit for a different contract than the one we're about to embed in
+    # the challenge, we fail loud BEFORE the doomed 402 reaches the client.
+    # token_currency (e.g. "usdc") is irrelevant — the contract address is
+    # the source of truth.
+    def verify_supported_tokens(payment_intent)
+      tokens = payment_intent.dig(
+        "next_action",
+        "crypto_display_details",
+        "deposit_addresses",
+        "tempo",
+        "supported_tokens"
+      )
+
+      # Tolerate a missing supported_tokens array (e.g. older API versions
+      # or test fixtures that don't include it) — only fail when Stripe
+      # affirmatively returns tokens that don't include the expected one.
+      return nil if tokens.nil?
+
+      contract_addresses = Array(tokens).filter_map { |t| t["token_contract_address"]&.downcase }
+      return nil if contract_addresses.include?(expected_token_address.downcase)
+
+      Result.failure(
+        "Stripe deposit does not support expected token #{expected_token_address}; " \
+        "got #{contract_addresses.inspect}"
       )
     end
   end

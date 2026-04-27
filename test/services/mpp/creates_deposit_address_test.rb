@@ -218,4 +218,124 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
       body["payment_method_types[]"] == "crypto"
     }
   end
+
+  # --- supported_tokens defense-in-depth (agent-team-5aas) ---
+
+  test "succeeds when supported_tokens contains the expected contract address" do
+    expected = "0x20c000000000000000000000b9537d11c60e8b50"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_supports_match",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: {
+                address: "0xmatch",
+                supported_tokens: [
+                  { token_currency: "usdc", token_contract_address: expected }
+                ]
+              }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: expected
+    )
+
+    assert result.success?, "Matching contract should pass: #{result.error}"
+  end
+
+  test "succeeds when Stripe response omits supported_tokens (tolerant default)" do
+    # Older API responses / test fixtures may not include supported_tokens.
+    # We only fail when Stripe AFFIRMATIVELY returns a list that excludes
+    # the expected contract.
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_supports_absent",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: "0xabsent" }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: "0x20c000000000000000000000b9537d11c60e8b50"
+    )
+
+    assert result.success?, "Missing supported_tokens must not fail-closed: #{result.error}"
+  end
+
+  test "fails when Stripe returns supported_tokens that do not include the expected contract (drift guard)" do
+    # If Stripe drifts (network enum change, new default token, etc.), the
+    # 402 must NOT reach the client with a doomed deposit address.
+    expected = "0x20c000000000000000000000b9537d11c60e8b50"
+    drifted  = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_drift",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: {
+                address: "0xdrift",
+                supported_tokens: [
+                  { token_currency: "usdc", token_contract_address: drifted }
+                ]
+              }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: expected
+    )
+
+    assert result.failure?, "Drifted supported_tokens must trigger failure"
+    assert_match(/does not support expected token/, result.error)
+    assert_match(/#{Regexp.escape(expected)}/, result.error)
+  end
+
+  test "drift guard is case-insensitive on the contract address" do
+    expected_lower = "0x20c000000000000000000000b9537d11c60e8b50"
+    expected_upper = expected_lower.upcase.sub(/\A0X/, "0x")
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_case",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: {
+                address: "0xcase",
+                supported_tokens: [
+                  { token_currency: "usdc", token_contract_address: expected_upper }
+                ]
+              }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: expected_lower
+    )
+
+    assert result.success?, "Case difference must not trigger drift failure: #{result.error}"
+  end
 end
