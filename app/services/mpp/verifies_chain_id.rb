@@ -48,6 +48,14 @@ module Mpp
       env_vars["MPP_CHAINID_GUARD"] == "1"
     end
 
+    # Whether boot is currently bypassing the guard via env var. Used by
+    # the initializer to emit a WARN log on every bypassed boot (agent-team-vo2c)
+    # — without this, "TEMPO_SKIP_CHAINID_GUARD=1 — should be temporary"
+    # quietly becomes permanent post-incident.
+    def self.bypassed?(env_vars: ENV)
+      env_vars["TEMPO_SKIP_CHAINID_GUARD"] == "1"
+    end
+
     def self.rake_task_running?
       defined?(Rake.application) && Rake.application.top_level_tasks.any?
     end
@@ -85,8 +93,13 @@ module Mpp
 
       response = http.request(request)
 
+      # 5xx is treated as transient too — a rolling deploy must not wedge
+      # on a momentary upstream blip (agent-team-vo2c). 4xx is non-transient
+      # because it indicates a config problem (bad URL, bad auth) that
+      # retries cannot fix.
       unless response.is_a?(Net::HTTPSuccess)
-        return Result.failure("RPC HTTP error: #{response.code}")
+        code = response.code.to_i >= 500 ? :transient : nil
+        return Result.failure("RPC HTTP error: #{response.code}", code: code)
       end
 
       body = JSON.parse(response.body)
@@ -100,8 +113,10 @@ module Mpp
       return Result.failure("RPC returned empty result") if hex.nil? || hex.empty?
 
       Integer(hex, 16)
-    rescue Net::OpenTimeout, Net::ReadTimeout
-      Result.failure("RPC timeout")
+    rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ECONNRESET, SocketError
+      # Transient network errors fail-open at the initializer level —
+      # confirmed mismatches still fail-closed (agent-team-vo2c).
+      Result.failure("RPC network error: #{$!.class}: #{$!.message}", code: :transient)
     rescue JSON::ParserError
       Result.failure("RPC returned invalid JSON")
     rescue ArgumentError

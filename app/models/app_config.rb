@@ -156,10 +156,13 @@ class AppConfig
     # RPC paired with a mainnet contract silently strands user payments
     # (agent-team-tv6e). Mpp::VerifiesChainId (wired in via the initializer
     # config/initializers/mpp_chain_id_guard.rb) fails boot on mismatch.
-    # Explicit TEMPO_RPC_URL env var wins when set.
-    TEMPO_RPC_URL = ENV.fetch("TEMPO_RPC_URL") do
+    # Explicit TEMPO_RPC_URL env var wins when set, but TEMPO_RPC_URL=""
+    # falls through to the default — an empty value would otherwise cause
+    # URI parsing to raise NoMethodError before the guard can fire its
+    # framed boot error (agent-team-vo2c).
+    TEMPO_RPC_URL = ENV["TEMPO_RPC_URL"].presence || (
       Rails.env.production? ? "https://rpc.tempo.xyz" : "https://rpc.moderato.tempo.xyz"
-    end
+    )
     # pathUSD (0x20c0...0000) is Tempo's predeployed stablecoin used on the
     # Moderato testnet (the testnet faucet only dispenses pathUSD). USDC.e
     # (0x20c0...0000b9537d11c60e8b50) is USDC bridged via Stargate and is

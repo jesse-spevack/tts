@@ -173,3 +173,12 @@ marketing_cta_path
 #   named contract method on the concern.
 # ---------------------------------------------------------------------------
 cost
+
+# ---------------------------------------------------------------------------
+# Mpp::VerifiesChainId#bypassed? (agent-team-vo2c).
+#
+# Called from config/initializers/mpp_chain_id_guard.rb at boot time.
+# Debride doesn't trace initializer code, so it sees only the unit test
+# call sites in test/services/mpp/verifies_chain_id_test.rb.
+# ---------------------------------------------------------------------------
+bypassed?

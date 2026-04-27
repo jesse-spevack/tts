@@ -86,6 +86,24 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     )
   end
 
+  # --- bypassed?: surface the silent-skip env var (agent-team-vo2c) ---
+
+  test "bypassed? returns true when TEMPO_SKIP_CHAINID_GUARD=1" do
+    # Initializer uses this to emit a WARN log on every bypassed boot —
+    # without it the env var quietly stays set post-incident.
+    assert Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "1" })
+  end
+
+  test "bypassed? returns false when env var is unset" do
+    refute Mpp::VerifiesChainId.bypassed?(env_vars: {})
+  end
+
+  test "bypassed? returns false for non-1 values (treats only '1' as opt-out)" do
+    refute Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "true" })
+    refute Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "0" })
+    refute Mpp::VerifiesChainId.bypassed?(env_vars: { "TEMPO_SKIP_CHAINID_GUARD" => "" })
+  end
+
   # --- matching chain: success ---
 
   test "succeeds when mainnet RPC returns mainnet chain id and prod is expected" do
@@ -174,7 +192,7 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     assert_match(/RPC error: Invalid request/, result.error)
   end
 
-  test "fails on RPC timeout" do
+  test "fails on RPC timeout (tagged as transient for fail-open)" do
     stub_request(:post, TESTNET_RPC_URL).to_timeout
 
     result = Mpp::VerifiesChainId.call(
@@ -183,7 +201,67 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     )
 
     assert result.failure?
-    assert_match(/RPC timeout/, result.error)
+    assert_match(/network error/, result.error)
+    assert_equal :transient, result.code,
+      "Net timeouts must be tagged :transient so the initializer can fail-open"
+  end
+
+  test "fails on connection refused (transient)" do
+    stub_request(:post, TESTNET_RPC_URL).to_raise(Errno::ECONNREFUSED)
+
+    result = Mpp::VerifiesChainId.call(
+      rpc_url: TESTNET_RPC_URL,
+      expected_chain_id: TESTNET_CHAIN_ID
+    )
+
+    assert result.failure?
+    assert_equal :transient, result.code
+  end
+
+  test "tags 5xx HTTP responses as transient" do
+    # A 502/503 during a Kamal rolling deploy should not wedge boot
+    # (agent-team-vo2c). The initializer downgrades :transient codes
+    # to a WARN log and continues booting; only confirmed mismatches
+    # fail-closed.
+    stub_request(:post, TESTNET_RPC_URL)
+      .to_return(status: 503, body: "")
+
+    result = Mpp::VerifiesChainId.call(
+      rpc_url: TESTNET_RPC_URL,
+      expected_chain_id: TESTNET_CHAIN_ID
+    )
+
+    assert result.failure?
+    assert_equal :transient, result.code
+  end
+
+  test "does not tag 4xx HTTP responses as transient (config error)" do
+    # 400/404 means the URL is wrong, not a transient blip — retrying
+    # won't help. Stay fail-closed so it surfaces in deploy.
+    stub_request(:post, TESTNET_RPC_URL).to_return(status: 404, body: "")
+
+    result = Mpp::VerifiesChainId.call(
+      rpc_url: TESTNET_RPC_URL,
+      expected_chain_id: TESTNET_CHAIN_ID
+    )
+
+    assert result.failure?
+    refute_equal :transient, result.code,
+      "4xx is a config error, must NOT fail-open"
+  end
+
+  test "does not tag a confirmed chain mismatch as transient" do
+    # Mismatch is THE bug the guard exists to catch. Must always fail-closed.
+    stub_eth_chain_id(TESTNET_RPC_URL, "0xa5bf")
+
+    result = Mpp::VerifiesChainId.call(
+      rpc_url: TESTNET_RPC_URL,
+      expected_chain_id: MAINNET_CHAIN_ID
+    )
+
+    assert result.failure?
+    refute_equal :transient, result.code,
+      "Confirmed mismatch must never fail-open"
   end
 
   test "fails when result is missing" do
