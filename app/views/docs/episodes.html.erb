@@ -1,23 +1,21 @@
 <% content_for :title, "Episodes — PodRead API" %>
 
-<div class="relative isolate" data-controller="copy-docs">
-  <!-- Background tint -->
-  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+<% content_for :right_toc do %>
+  <%= render "shared/docs_right_toc", steps: [
+    ["#summary", "Endpoints"],
+    ["#create", "Create an episode"],
+    ["#show", "Fetch an episode"],
+    ["#source-types", "Source types"],
+    ["#status", "Status lifecycle"],
+    ["#list", "List episodes"],
+    ["#delete", "Delete an episode"],
+    ["#errors", "Error responses"]
+  ] %>
+<% end %>
 
-  <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 px-6 lg:px-10 xl:grid-cols-[minmax(0,1fr)_220px]">
-    <!-- Main column -->
-    <div class="min-w-0 pb-24" data-copy-docs-target="source">
-    <!-- Docs nav -->
-    <nav class="pt-8 text-sm" data-copy-skip>
-      <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-mist-500 dark:text-mist-400">
-        <li><%= link_to "Authentication", docs_authentication_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
-        <li class="font-medium text-mist-950 dark:text-white" aria-current="page">Episodes</li>
-        <li><%= link_to "Machine Payments", docs_mpp_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
-      </ul>
-    </nav>
-
+<%= render layout: "shared/docs_layout", locals: { current: :episodes } do %>
     <!-- Hero -->
-    <header class="pt-8 pb-12">
+    <header class="pb-12">
       <div class="flex items-center gap-x-3 text-sm">
         <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
           <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
@@ -347,31 +345,4 @@
         Next: Machine Payments →
       <% end %>
     </div>
-    </div>
-
-    <!-- Right-rail TOC -->
-    <nav aria-label="On this page" class="hidden xl:block">
-      <div class="sticky top-24 py-8">
-        <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
-        <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
-          <% [
-            ["#summary", "Endpoints"],
-            ["#create", "Create an episode"],
-            ["#show", "Fetch an episode"],
-            ["#source-types", "Source types"],
-            ["#status", "Status lifecycle"],
-            ["#list", "List episodes"],
-            ["#delete", "Delete an episode"],
-            ["#errors", "Error responses"]
-          ].each do |href, label| %>
-            <li>
-              <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
-                <%= label %>
-              </a>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-    </nav>
-  </div>
-</div>
+<% end %>

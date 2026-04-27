@@ -68,10 +68,11 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/mpp.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # MPP-scoped bead edits the file. Last bumped for agent-team-70dc
-  # (add cross-link to /docs/mpp/getting-started in Quick Start),
-  # replacing the pre-70dc snapshot from agent-team-3ore.
-  MPP_DOCS_SHA256 = "49b68a26d32b6c8e40c9cf8e4e002883507c1600de2a410168ce5492d60cfb15"
+  # MPP-scoped bead edits the file. Last bumped for agent-team-udkz
+  # (left-rail nav layout — moved outer chrome and right TOC into
+  # shared/_docs_layout + shared/_docs_right_toc), replacing the
+  # pre-udkz snapshot from agent-team-70dc.
+  MPP_DOCS_SHA256 = "e13c4bcea7d6160e3570aa055da114f8df89b7f78e99ddb511cedb13e1b00d76"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
@@ -105,8 +106,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/episodes.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # episodes-scoped bead edits the file. Established by agent-team-zhnc.
-  EPISODES_DOCS_SHA256 = "6c3dd2a816a0a528faab606092e29de04c1da6210dff89221f9649b197eb3c9f"
+  # episodes-scoped bead edits the file. Last bumped for agent-team-udkz
+  # (left-rail nav layout), established by agent-team-zhnc.
+  EPISODES_DOCS_SHA256 = "e9ba0855b782f7c4244b2cae8466c48d5f3ed28c9078a6fc90ed3ccb2c26b26c"
 
   test "app/views/docs/episodes.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/episodes.html.erb")
@@ -129,8 +131,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/authentication.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # authentication-scoped bead edits the file. Established by agent-team-zhnc.
-  AUTHENTICATION_DOCS_SHA256 = "83a61c9ffdc048f30eb2b22391932ffe8c380486a56121a03c884e184d438792"
+  # authentication-scoped bead edits the file. Last bumped for
+  # agent-team-udkz (left-rail nav layout), established by agent-team-zhnc.
+  AUTHENTICATION_DOCS_SHA256 = "71eb60819f9168e0bef31dd009ab9dcce15150aa030cc86b182b3ae431035094"
 
   test "app/views/docs/authentication.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/authentication.html.erb")
