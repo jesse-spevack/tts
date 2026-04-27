@@ -13,11 +13,21 @@ module Mpp
     # supported_tokens array — we assert the contract we're about to bind
     # into the challenge actually appears there. Defends against Stripe
     # drift (different default token, network enum changes) silently
-    # provisioning the wrong contract (agent-team-5aas).
-    def initialize(amount_cents:, currency:, expected_token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
+    # provisioning the wrong contract.
+    #
+    # require_supported_tokens controls behavior when the field is absent:
+    # tolerant default (production-off, fixtures pass) or strict (production
+    # flip via MPP_REQUIRE_SUPPORTED_TOKENS=1, a missing field is a hard fail).
+    def initialize(
+      amount_cents:,
+      currency:,
+      expected_token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
+      require_supported_tokens: AppConfig::Mpp::REQUIRE_SUPPORTED_TOKENS
+    )
       @amount_cents = amount_cents
       @currency = currency
       @expected_token_address = expected_token_address
+      @require_supported_tokens = require_supported_tokens
     end
 
     def call
@@ -53,7 +63,7 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency, :expected_token_address
+    attr_reader :amount_cents, :currency, :expected_token_address, :require_supported_tokens
 
     def create_payment_intent
       client = Stripe::StripeClient.new(Stripe.api_key)
@@ -108,10 +118,18 @@ module Mpp
         "supported_tokens"
       )
 
-      # Tolerate a missing supported_tokens array (e.g. older API versions
-      # or test fixtures that don't include it) — only fail when Stripe
-      # affirmatively returns tokens that don't include the expected one.
-      return nil if tokens.nil?
+      # Tolerant default: a missing supported_tokens array (older API
+      # versions, fixtures) succeeds. Strict mode (MPP_REQUIRE_SUPPORTED_TOKENS=1)
+      # turns absence into a hard fail so prod can detect a Stripe regression
+      # that drops the field instead of silently letting a doomed deposit
+      # through.
+      if tokens.nil?
+        return nil unless require_supported_tokens
+        return Result.failure(
+          "Stripe deposit response missing supported_tokens; strict mode is on " \
+          "(MPP_REQUIRE_SUPPORTED_TOKENS=1). Set to 0 to tolerate."
+        )
+      end
 
       contract_addresses = Array(tokens).filter_map { |t| t["token_contract_address"]&.downcase }
       return nil if contract_addresses.include?(expected_token_address.downcase)

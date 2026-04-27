@@ -181,5 +181,11 @@ class AppConfig
     # on the preview track while Machine Payments Protocol support is
     # gated there.
     STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
+    # When true, Mpp::CreatesDepositAddress fails-closed if Stripe omits
+    # supported_tokens from the PaymentIntent response. Default off so
+    # legacy fixtures and older API versions keep working; flip to "1"
+    # in production via deploy config so a Stripe regression that drops
+    # the field can't silently let a doomed deposit through.
+    REQUIRE_SUPPORTED_TOKENS = ENV["MPP_REQUIRE_SUPPORTED_TOKENS"] == "1"
   end
 end

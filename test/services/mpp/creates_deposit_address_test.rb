@@ -309,6 +309,63 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     assert_match(/#{Regexp.escape(expected)}/, result.error)
   end
 
+  test "strict mode fails when supported_tokens is absent" do
+    # Production flips MPP_REQUIRE_SUPPORTED_TOKENS=1 so a Stripe regression
+    # that drops the field is caught at provision time, not silently after
+    # a doomed 402 reaches the client.
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_strict_absent",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: "0xstrict_absent" }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: "0x20c000000000000000000000b9537d11c60e8b50",
+      require_supported_tokens: true
+    )
+
+    assert result.failure?, "Strict mode must fail-closed on missing supported_tokens"
+    assert_match(/missing supported_tokens/, result.error)
+  end
+
+  test "strict mode succeeds when supported_tokens is present and matches" do
+    expected = "0x20c000000000000000000000b9537d11c60e8b50"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_strict_match",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: {
+                address: "0xstrict_match",
+                supported_tokens: [
+                  { token_currency: "usdc", token_contract_address: expected }
+                ]
+              }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      expected_token_address: expected,
+      require_supported_tokens: true
+    )
+
+    assert result.success?, "Strict mode must succeed when token matches: #{result.error}"
+  end
+
   test "drift guard is case-insensitive on the contract address" do
     expected_lower = "0x20c000000000000000000000b9537d11c60e8b50"
     expected_upper = expected_lower.upcase.sub(/\A0X/, "0x")
