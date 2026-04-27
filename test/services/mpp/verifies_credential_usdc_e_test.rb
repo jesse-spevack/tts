@@ -181,6 +181,19 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     end
   end
 
+  test "rejects challenge whose signed currency is not a string (type-guard)" do
+    # HMAC binds the request blob, but a future generator bug or leaked
+    # secret could put a non-string in `currency`. The verifier must clean-
+    # reject, not crash with NoMethodError on .empty? / .downcase.
+    [ nil, 42, { "x" => 1 }, [], true ].each do |bad_currency|
+      credential = forge_credential_with_currency(bad_currency)
+      result = Mpp::VerifiesCredential.call(credential: credential)
+      assert result.failure?, "Expected failure for currency=#{bad_currency.inspect}"
+      assert_match(/missing or invalid currency/, result.error,
+        "Expected clean rejection for currency=#{bad_currency.inspect}, got: #{result.error}")
+    end
+  end
+
   test "rejects challenge whose signed currency is not in the allowlist" do
     # Defense-in-depth: even though the HMAC binds currency, an unexpected
     # value (typo, future drift) must not let the verifier query an
@@ -344,6 +357,37 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   def amount_to_hex(amount_cents)
     base_units = (amount_cents * (10**AppConfig::Mpp::TEMPO_TOKEN_DECIMALS)) / 100
     "0x" + base_units.to_s(16).rjust(64, "0")
+  end
+
+  # Build a credential with arbitrary `currency` value, HMAC-signed with
+  # the real secret. Bypasses GeneratesChallenge (which always emits a
+  # string) so we can exercise the type-guard in the verifier.
+  def forge_credential_with_currency(currency_value)
+    realm = AppConfig::Domain::HOST
+    method = "tempo"
+    intent = "charge"
+    request_json = JSON.generate(
+      amount: @amount_base_units,
+      currency: currency_value,
+      recipient: @deposit_address,
+      voice_tier: "premium"
+    )
+    request_b64 = Base64.strict_encode64(request_json)
+    expires = (Time.current + AppConfig::Mpp::CHALLENGE_TTL_SECONDS).iso8601
+    hmac_data = "#{realm}|#{method}|#{intent}|#{request_json}|#{expires}"
+    id = OpenSSL::HMAC.hexdigest("SHA256", AppConfig::Mpp::SECRET_KEY, hmac_data)
+
+    MppPayment.create!(
+      amount_cents: @amount_cents, currency: @currency, challenge_id: id,
+      deposit_address: @deposit_address,
+      stripe_payment_intent_id: "pi_forged_#{SecureRandom.hex(4)}",
+      status: :pending
+    )
+
+    Base64.strict_encode64(JSON.generate(
+      challenge: { id: id, realm: realm, method: method, intent: intent, request: request_b64, expires: expires },
+      payload: { type: "hash", hash: @tx_hash }
+    ))
   end
 
   # Temporarily swap AppConfig::Mpp::TEMPO_CURRENCY_TOKEN for a block.

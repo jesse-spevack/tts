@@ -96,8 +96,11 @@ module Mpp
       voice_tier = request_data["voice_tier"]&.to_sym
 
       signed_token_address = request_data["currency"]
-      if signed_token_address.nil? || signed_token_address.empty?
-        return Result.failure("Challenge is missing currency")
+      # Type-guard before .downcase / .empty? — the HMAC binds the blob, but
+      # a generator bug or leaked secret could put a non-string here, and we
+      # don't want a deserializer landmine to surface as a 500.
+      unless signed_token_address.is_a?(String) && signed_token_address.present?
+        return Result.failure("Challenge is missing or invalid currency")
       end
       unless KNOWN_TOKEN_ADDRESSES.include?(signed_token_address.downcase)
         return Result.failure("Unsupported challenge currency")
