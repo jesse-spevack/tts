@@ -8,9 +8,9 @@ require "googleauth"
 #
 # Mirrors GeneratesEpisodeDownloadUrl: the GCS bucket is private, so anonymous
 # GET on a raw https://storage.googleapis.com/<bucket>/... URL returns
-# AccessDenied. Narrations live at gs://<BUCKET>/narrations/<gcs_episode_id>.mp3
-# and need an IAM-signed URL to be reachable by an MPP buyer holding the
-# returned audio_url.
+# AccessDenied. Narration audio is uploaded by ProcessesNarration to
+# gs://<BUCKET>/narrations/<gcs_episode_id>.mp3 and needs an IAM-signed URL
+# to be reachable by an MPP buyer holding the returned audio_url.
 #
 # Uses IAM signBlob API because GCE metadata server credentials can't sign
 # URLs directly (no private key). The VM's service account must have
