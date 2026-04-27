@@ -45,7 +45,6 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
 
     challenge_result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @deposit_address,
       voice_tier: :premium,
       token_address: USDC_E_CONTRACT
@@ -148,7 +147,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
 
     # Sign the challenge under pathUSD (the pre-rollback token).
     challenge = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents, currency: @currency,
+      amount_cents: @amount_cents,
       recipient: deposit_address, voice_tier: :premium,
       token_address: PATH_USD_CONTRACT
     ).data
@@ -215,7 +214,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     )
 
     challenge = Mpp::GeneratesChallenge.call(
-      amount_cents: @amount_cents, currency: @currency,
+      amount_cents: @amount_cents,
       recipient: deposit_address, voice_tier: :premium,
       token_address: unknown_token
     ).data
@@ -255,7 +254,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
       expected_token_address: USDC_E_CONTRACT
     )
     challenge = Mpp::GeneratesChallenge.call(
-      amount_cents: amount_cents, currency: @currency,
+      amount_cents: amount_cents,
       recipient: deposit_address, voice_tier: :standard,
       token_address: USDC_E_CONTRACT
     ).data

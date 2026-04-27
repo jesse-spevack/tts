@@ -11,10 +11,9 @@ module Mpp
     # token_address defaults to AppConfig so production callers don't have
     # to pass it, but tests (and any future multi-token code path) can
     # inject an alternate without mutating module constants. Mirrors the
-    # DI pattern Mpp::VerifiesCredential adopted in agent-team-kpxs.
-    def initialize(amount_cents:, currency:, recipient:, voice_tier:, token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
+    # DI pattern Mpp::VerifiesCredential uses.
+    def initialize(amount_cents:, recipient:, voice_tier:, token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
       @amount_cents = amount_cents
-      @currency = currency
       @recipient = recipient
       @voice_tier = voice_tier
       @token_address = token_address
@@ -64,6 +63,6 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency, :recipient, :voice_tier, :token_address
+    attr_reader :amount_cents, :recipient, :voice_tier, :token_address
   end
 end

@@ -652,7 +652,6 @@ module Api
               travel_to(expires_offset) do
                 ::Mpp::GeneratesChallenge.call(
                   amount_cents: amount_cents,
-                  currency: @currency,
                   recipient: deposit_address,
                   voice_tier: voice_tier
                 ).data
@@ -660,7 +659,6 @@ module Api
             else
               ::Mpp::GeneratesChallenge.call(
                 amount_cents: amount_cents,
-                currency: @currency,
                 recipient: deposit_address,
                 voice_tier: voice_tier
               ).data

@@ -230,7 +230,6 @@ class MppDoubleSpendNarrationsIntegrationTest < ActionDispatch::IntegrationTest
 
     challenge = ::Mpp::GeneratesChallenge.call(
       amount_cents: amount_cents,
-      currency: @currency,
       recipient: deposit_address,
       voice_tier: voice_tier
     ).data

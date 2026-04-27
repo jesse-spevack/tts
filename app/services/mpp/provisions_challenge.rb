@@ -39,7 +39,6 @@ module Mpp
       # the HMAC so neither can be swapped at verification time.
       challenge_result = Mpp::GeneratesChallenge.call(
         amount_cents: amount_cents,
-        currency: currency,
         recipient: deposit_address,
         voice_tier: voice_tier
       )

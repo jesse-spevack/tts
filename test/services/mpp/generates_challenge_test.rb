@@ -15,7 +15,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "returns a successful Result with challenge data" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -27,7 +26,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge includes id as HMAC-SHA256" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -41,7 +39,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge includes realm" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -53,7 +50,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge includes method set to tempo" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -65,7 +61,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge includes intent set to charge" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -77,7 +72,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge includes request as base64 JSON with amount currency and recipient" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -100,7 +94,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "voice_tier is embedded in the request blob when passed explicitly" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: 50,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: :standard
     )
@@ -114,7 +107,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) do
       Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
-        currency: @currency,
         recipient: @recipient
       )
     end
@@ -123,10 +115,10 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "different voice_tiers yield different challenge ids (HMAC is tier-bound)" do
     freeze_time do
       standard = Mpp::GeneratesChallenge.call(
-        amount_cents: 50, currency: @currency, recipient: @recipient, voice_tier: :standard
+        amount_cents: 50, recipient: @recipient, voice_tier: :standard
       )
       premium = Mpp::GeneratesChallenge.call(
-        amount_cents: 50, currency: @currency, recipient: @recipient, voice_tier: :premium
+        amount_cents: 50, recipient: @recipient, voice_tier: :premium
       )
 
       assert_not_equal standard.data[:id], premium.data[:id],
@@ -138,7 +130,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     freeze_time do
       result = Mpp::GeneratesChallenge.call(
         amount_cents: @amount_cents,
-        currency: @currency,
         recipient: @recipient,
         voice_tier: @voice_tier
       )
@@ -154,14 +145,12 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge id is deterministic given same inputs and secret" do
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -172,14 +161,12 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge id changes when amount changes" do
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: 150,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: 200,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
@@ -190,14 +177,12 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge id changes when recipient changes" do
     result1 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: "0x1111111111111111111111111111111111111111",
       voice_tier: @voice_tier
     )
 
     result2 = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: "0x2222222222222222222222222222222222222222",
       voice_tier: @voice_tier
     )
@@ -208,7 +193,6 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
   test "challenge can be serialized to a WWW-Authenticate header value" do
     result = Mpp::GeneratesChallenge.call(
       amount_cents: @amount_cents,
-      currency: @currency,
       recipient: @recipient,
       voice_tier: @voice_tier
     )
