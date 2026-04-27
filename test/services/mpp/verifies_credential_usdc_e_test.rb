@@ -14,6 +14,8 @@ require "test_helper"
 # challenge is signed under; VerifiesCredential then filters Transfer events
 # against that signed value, regardless of env.
 class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
+  include ActiveSupport::Testing::ConstantStubbing
+
   TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
   # Canonical addresses from Stripe's MPP docs:
@@ -167,7 +169,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     # USDC.e, but the on-chain Transfer was for pathUSD (matching the
     # signed currency). Swap the constant to make the env-flip explicit;
     # the verifier must NOT consult it.
-    with_currency_token(USDC_E_CONTRACT) do
+    stub_const(AppConfig::Mpp, :TEMPO_CURRENCY_TOKEN, USDC_E_CONTRACT) do
       stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
         .to_return(status: 200, body: rpc_receipt_body(
           token_address: PATH_USD_CONTRACT,
@@ -388,19 +390,5 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
       challenge: { id: id, realm: realm, method: method, intent: intent, request: request_b64, expires: expires },
       payload: { type: "hash", hash: @tx_hash }
     ))
-  end
-
-  # Temporarily swap AppConfig::Mpp::TEMPO_CURRENCY_TOKEN for a block.
-  # Used to simulate a mid-window env flip without touching ENV directly.
-  # Minitest/Ruby has no stub_const, so we suppress the redefinition warning
-  # and restore the original after the block.
-  def with_currency_token(value)
-    original = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
-    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
-    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, value)
-    yield
-  ensure
-    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
-    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, original)
   end
 end
