@@ -499,4 +499,36 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
       assert_select %(a[href="#troubleshooting"])
     end
   end
+
+  # --- Claude help page (agent-team-1eym / epic agent-team-ypqj) ------------
+  #
+  # Reference doc, not a 4-step walkthrough. Sections are Setup / Example
+  # Prompts / Available Tools / Troubleshooting, so the right-rail ToC uses
+  # the unnumbered shape — `_help_right_toc.html.erb` accepts `{ id:, label: }`
+  # items. Same shared partial as the walkthrough pages, same scroll-spy
+  # controller; data-step keys are id strings instead of step numbers.
+
+  test "claude help page renders successfully" do
+    get help_claude_path
+    assert_response :success
+  end
+
+  test "claude help page mounts the scroll-spy controller" do
+    get help_claude_path
+    assert_select %([data-controller~="scroll-spy"])
+    assert_select %([data-scroll-spy-target="step"]), 4,
+      "Expected 4 section headings (Setup / Example Prompts / Available Tools / Troubleshooting)"
+    assert_select %([data-scroll-spy-target="link"]), 4,
+      "Expected 4 nav links matching the 4 sections"
+  end
+
+  test "claude help page renders the right-rail ToC with section anchors" do
+    get help_claude_path
+    assert_select %(nav[aria-label="On this page"]) do
+      assert_select %(a[href="#setup"])
+      assert_select %(a[href="#example-prompts"])
+      assert_select %(a[href="#available-tools"])
+      assert_select %(a[href="#troubleshooting"])
+    end
+  end
 end
