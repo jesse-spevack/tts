@@ -8,8 +8,6 @@ class ProcessesNarration
 
   class ProcessingError < StandardError; end
 
-  GCS_NARRATION_SCOPE = "narrations"
-
   def self.call(narration:)
     new(narration: narration).call
   end
@@ -215,7 +213,7 @@ class ProcessesNarration
   end
 
   def cloud_storage
-    @cloud_storage ||= CloudStorage.new(podcast_id: GCS_NARRATION_SCOPE)
+    @cloud_storage ||= CloudStorage.new(podcast_id: nil)
   end
 
   def cleanup_orphaned_audio
