@@ -1,0 +1,266 @@
+<% content_for :title, "MPP getting started — PodRead" %>
+
+<div class="relative isolate" data-controller="copy-docs">
+  <!-- Background tint -->
+  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+
+  <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-16 px-6 lg:px-10 xl:grid-cols-[minmax(0,1fr)_220px]">
+    <!-- Main column -->
+    <div class="min-w-0 pb-24" data-copy-docs-target="source">
+      <!-- Docs nav -->
+      <nav class="pt-8 text-sm" data-copy-skip>
+        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-mist-500 dark:text-mist-400">
+          <li><%= link_to "Authentication", docs_authentication_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+          <li><%= link_to "Episodes", docs_episodes_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+          <li><%= link_to "Machine Payments", docs_mpp_path, class: "hover:text-mist-950 dark:hover:text-white" %></li>
+          <li class="font-medium text-mist-950 dark:text-white" aria-current="page">Getting started</li>
+        </ul>
+      </nav>
+
+      <!-- Hero -->
+      <header class="pt-8 pb-12">
+        <div class="flex items-center gap-x-3 text-sm">
+          <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+            <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
+            Walkthrough
+          </span>
+          <%= render "docs/copy_for_llm_button" %>
+        </div>
+        <div class="mt-3 text-sm text-mist-500 dark:text-mist-400">
+          End-to-end MPP setup — from empty wallet to first paid narration.
+        </div>
+        <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
+          MPP getting started
+        </h1>
+        <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
+          The <%= link_to "MPP API reference", docs_mpp_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> documents the protocol. This page walks through the funding flow that gets you from zero to a working MPP wallet — which is non-trivial because Tempo is new, has no native gas token, and most popular wallets do not yet recognize its bridged USDC. Plan on 15 minutes the first time.
+        </p>
+      </header>
+
+      <!-- Prerequisites -->
+      <section id="prerequisites" class="scroll-mt-8 pt-8">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">1. Prerequisites</h2>
+        <ul role="list" class="mt-6 space-y-3 text-mist-700 dark:text-mist-300 list-disc pl-5">
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">Rabby browser extension.</strong>
+            Use <a href="https://rabby.io" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Rabby</a>, not Coinbase Wallet. Coinbase Wallet's token list does <strong class="font-semibold text-mist-950 dark:text-white">not</strong> include Tempo's USDC.e — it will silently show a zero balance after you bridge, and you will lose 30 minutes trying to figure out why. Rabby works.
+          </li>
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">~$5 USDC plus a small amount of ETH</strong> on a Stargate-supported L2. Base is recommended (cheapest gas). Arbitrum, Optimism, and Polygon also work.
+          </li>
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">Node.js with <code class="ic">npx</code></strong> for the mppx CLI. No global install needed.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Set up Rabby -->
+      <section id="rabby" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">2. Set up Rabby</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Install <a href="https://rabby.io" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Rabby</a> and either import an existing seed phrase or create a new wallet. Rabby is open source and has the cleanest UX for unusual chains.
+        </p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Tempo is not in Rabby's default network list yet, so add it manually under <strong class="font-semibold text-mist-950 dark:text-white">Settings → More → Add custom network</strong>:
+        </p>
+        <%= render "docs/responsive_table",
+          headers: ["Field", "Value"],
+          rows: [
+            ["Network name", "Tempo"],
+            ["RPC URL", "https://rpc.tempo.xyz"],
+            ["Chain ID", "4217"],
+            ["Block explorer", "https://explore.tempo.xyz"],
+            ["Native currency symbol", "—"]
+          ],
+          cell_class: [
+            "font-mono text-mist-900 dark:text-mist-100",
+            "font-mono text-mist-700 dark:text-mist-300"
+          ]
+        %>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Tempo has no native gas token — gas is paid in USDC.e via fee abstraction. If Rabby insists on a symbol, leave it blank or use a placeholder.
+        </p>
+      </section>
+
+      <!-- Stargate bridge -->
+      <section id="bridge" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">3. Get USDC.e on Tempo via Stargate</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Tempo's USDC.e is bridged-via-Stargate. There is no other route to USDC.e on Tempo today, and there is no Circle-native USDC on Tempo at all. Stargate's <strong class="font-semibold text-mist-950 dark:text-white">Custom Address</strong> feature lets you bridge directly to your mppx wallet so you never have to do a Tempo-side transfer (more on why that matters in the pitfalls section).
+        </p>
+        <ol role="list" class="mt-4 ml-6 list-decimal space-y-2 text-mist-700 dark:text-mist-300">
+          <li>Open <a href="https://stargate.finance/bridge" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">stargate.finance/bridge</a> and connect Rabby.</li>
+          <li><strong class="font-semibold text-mist-950 dark:text-white">From:</strong> Base · USDC.</li>
+          <li><strong class="font-semibold text-mist-950 dark:text-white">To:</strong> Tempo · USDC.e.</li>
+          <li>Toggle <strong class="font-semibold text-mist-950 dark:text-white">Custom Address ON</strong> and paste your mppx wallet address (you'll get this in the next step — come back here after running <code class="ic">npx mppx account list</code>).</li>
+          <li>Bridge. Stargate's fee is ~$0.06 USDC plus a few cents of Base ETH gas.</li>
+        </ol>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The bridged tokens land directly in your mppx wallet on Tempo. You do not need to (and currently <em>cannot easily</em>) move them around on Tempo afterward.
+        </p>
+      </section>
+
+      <!-- Create mppx wallet -->
+      <section id="mppx" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">4. Create your mppx wallet</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The mppx CLI manages a separate wallet — distinct from Rabby — that signs MPP requests on your behalf. The private key is stored locally.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">one-time setup</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            # Create the mppx wallet (one-time)
+            npx mppx account create
+
+            # Show the address
+            npx mppx account list
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The address printed by <code class="ic">npx mppx account list</code> is what you paste into <strong class="font-semibold text-mist-950 dark:text-white">Stargate's Custom Address field</strong> in step 3. Bridge after creating the wallet, not before — you need the address first.
+        </p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          mppx writes the private key to a local file. Back it up the same way you would any other wallet seed.
+        </p>
+      </section>
+
+      <!-- Make a paid request -->
+      <section id="request" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">5. Make a paid narration request</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          With the wallet funded, hit the mainnet API. mppx handles the 402 challenge, the on-chain payment in USDC.e, and the credential construction automatically.
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">production — mainnet</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            npx mppx https://podread.app/api/v1/mpp/narrations \\
+              -X POST -H "Content-Type: application/json" \\
+              -d '{"source_type":"text","text":"Hello"}' \\
+              --rpc-url https://rpc.tempo.xyz
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          On success the server returns <code class="ic">{"id":"nar_..."}</code>. Save that id — you'll use it to fetch the audio in the next step.
+        </p>
+      </section>
+
+      <!-- Retrieve audio -->
+      <section id="audio" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">6. Retrieve your narration audio</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Audio generation is asynchronous — typically 10-30 seconds for short text. Poll the narration endpoint:
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <figcaption class="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs">
+            <span class="font-mono text-mist-400">bash</span>
+            <span class="text-mist-500">poll for audio</span>
+          </figcaption>
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            curl https://podread.app/api/v1/mpp/narrations/nar_<id> | jq
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          When <code class="ic">status</code> reads <code class="ic">complete</code>, the response includes an <code class="ic">audio_url</code> field. That URL is a signed download link — open it in a browser, or:
+        </p>
+
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 shadow-lg ring-1 ring-mist-900/10 dark:shadow-none dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            curl -L -o test.mp3 "<audio_url>"
+          BASH
+          ) %></code></pre>
+        </figure>
+
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The signed URL expires after <strong class="font-semibold text-mist-950 dark:text-white"><%= AppConfig::Storage::SIGNED_URL_EXPIRY_SECONDS / 60 %> minutes</strong>. Re-poll <code class="ic">GET /api/v1/mpp/narrations/:id</code> for a fresh URL if needed. The narration record itself is kept for 24 hours after creation; after that the GET returns 404.
+        </p>
+      </section>
+
+      <!-- Common pitfalls -->
+      <section id="pitfalls" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">7. Common pitfalls</h2>
+        <ul role="list" class="mt-6 space-y-4 text-mist-700 dark:text-mist-300 list-disc pl-5">
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">Coinbase Wallet does not support Tempo's USDC.e.</strong>
+            The token list silently omits it, so a bridged balance shows as zero. Use Rabby.
+          </li>
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">Tempo has no native gas token.</strong>
+            Gas is paid in USDC.e via fee abstraction. Rabby's pre-flight gas check still expects a native balance, so a direct Tempo-side ERC-20 send may fail with a "Not enough gas" warning even though the chain itself would accept it. The workaround is what step 3 does — use Stargate's Custom Address feature to deposit directly into the mppx wallet, skipping the Tempo-side transfer entirely. mppx itself signs Tempo transactions correctly.
+          </li>
+          <li>
+            <strong class="font-semibold text-mist-950 dark:text-white">Network mismatch when signing.</strong>
+            Make sure Rabby's active network (the pill at the bottom of the extension popup) matches what the dapp expects when you click "Bridge" or "Approve". Stargate's source-chain selector and Rabby's active network must agree.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Cost breakdown -->
+      <section id="costs" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">8. Cost breakdown</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Approximate, in USD, for a single Standard-tier narration funded fresh from Base:
+        </p>
+
+        <%= render "docs/responsive_table",
+          headers: ["Item", "Cost", "Notes"],
+          rows: [
+            ["Narration (Standard tier)", "$0.75 USDC.e", "wren, felix, sloane, archer, gemma, hugo, quinn, theo"],
+            ["Narration (Premium tier)", "$1.50 USDC.e", "elara, callum, lark, nash"],
+            ["Stargate bridge fee", "~$0.06 USDC", "Per bridge, regardless of amount"],
+            ["Base ETH gas (bridge tx)", "~$0.01 - $0.10", "Varies with Base congestion"],
+            ["Tempo gas (paid in USDC.e)", "~$0.05", "Approximate; mppx pays this for you"]
+          ],
+          cell_class: [
+            "text-mist-900 dark:text-mist-100",
+            "font-mono tabular-nums text-mist-700 dark:text-mist-300",
+            "text-mist-700 dark:text-mist-300"
+          ]
+        %>
+
+        <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Bridging once and making several narrations amortizes the bridge fee. ~$5 USDC is a comfortable starter balance — covers several Standard narrations plus headroom for gas and the bridge round-trip.
+        </p>
+      </section>
+    </div>
+
+    <!-- Right-rail TOC -->
+    <nav aria-label="On this page" class="hidden xl:block">
+      <div class="sticky top-24 py-8">
+        <div class="font-mono text-xs text-mist-500 dark:text-mist-400">On this page</div>
+        <ul role="list" class="mt-4 space-y-2.5 border-l border-mist-200 dark:border-mist-800">
+          <% [
+            ["#prerequisites", "1. Prerequisites"],
+            ["#rabby", "2. Set up Rabby"],
+            ["#bridge", "3. Bridge via Stargate"],
+            ["#mppx", "4. Create mppx wallet"],
+            ["#request", "5. Make a request"],
+            ["#audio", "6. Retrieve audio"],
+            ["#pitfalls", "7. Common pitfalls"],
+            ["#costs", "8. Cost breakdown"]
+          ].each do |href, label| %>
+            <li>
+              <a href="<%= href %>" class="-ml-px block border-l border-transparent pl-4 text-sm text-mist-600 hover:border-mist-700 hover:text-mist-950 dark:text-mist-400 dark:hover:border-mist-300 dark:hover:text-white">
+                <%= label %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>

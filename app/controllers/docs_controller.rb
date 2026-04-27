@@ -4,6 +4,9 @@ class DocsController < ApplicationController
   def mpp
   end
 
+  def mpp_getting_started
+  end
+
   def authentication
   end
 
