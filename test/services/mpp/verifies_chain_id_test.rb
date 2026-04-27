@@ -246,36 +246,39 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     end
   end
 
-  test "tags 5xx HTTP responses as transient" do
-    # A 502/503 during a Kamal rolling deploy should not wedge boot
-    # (agent-team-vo2c). The initializer downgrades :transient codes
-    # to a WARN log and continues booting; only confirmed mismatches
-    # fail-closed.
-    stub_request(:post, TESTNET_RPC_URL)
-      .to_return(status: 503, body: "")
+  test "tags transient HTTP codes (408/425/429/5xx) as transient" do
+    # Each code in TRANSIENT_HTTP_CODES indicates upstream-busy / retry-able.
+    # The initializer downgrades :transient to WARN and boots; only confirmed
+    # mismatches fail-closed.
+    Mpp::VerifiesChainId::TRANSIENT_HTTP_CODES.each do |status|
+      stub_request(:post, TESTNET_RPC_URL).to_return(status: status, body: "")
 
-    result = Mpp::VerifiesChainId.call(
-      rpc_url: TESTNET_RPC_URL,
-      expected_chain_id: TESTNET_CHAIN_ID
-    )
+      result = Mpp::VerifiesChainId.call(
+        rpc_url: TESTNET_RPC_URL,
+        expected_chain_id: TESTNET_CHAIN_ID
+      )
 
-    assert result.failure?
-    assert_equal :transient, result.code
+      assert result.failure?, "Expected failure for HTTP #{status}"
+      assert_equal :transient, result.code,
+        "Expected HTTP #{status} to be tagged :transient"
+    end
   end
 
-  test "does not tag 4xx HTTP responses as transient (config error)" do
-    # 400/404 means the URL is wrong, not a transient blip — retrying
-    # won't help. Stay fail-closed so it surfaces in deploy.
-    stub_request(:post, TESTNET_RPC_URL).to_return(status: 404, body: "")
+  test "does not tag non-transient 4xx HTTP responses as transient (config error)" do
+    # 400/401/403/404 mean the URL/auth is wrong — retries can't help.
+    # Stay fail-closed so the misconfiguration surfaces during deploy.
+    [ 400, 401, 403, 404 ].each do |status|
+      stub_request(:post, TESTNET_RPC_URL).to_return(status: status, body: "")
 
-    result = Mpp::VerifiesChainId.call(
-      rpc_url: TESTNET_RPC_URL,
-      expected_chain_id: TESTNET_CHAIN_ID
-    )
+      result = Mpp::VerifiesChainId.call(
+        rpc_url: TESTNET_RPC_URL,
+        expected_chain_id: TESTNET_CHAIN_ID
+      )
 
-    assert result.failure?
-    refute_equal :transient, result.code,
-      "4xx is a config error, must NOT fail-open"
+      assert result.failure?, "Expected failure for HTTP #{status}"
+      refute_equal :transient, result.code,
+        "HTTP #{status} is a config error, must NOT fail-open"
+    end
   end
 
   test "does not tag a confirmed chain mismatch as transient" do

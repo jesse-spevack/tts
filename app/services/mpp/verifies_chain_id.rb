@@ -20,6 +20,13 @@ module Mpp
     MAINNET_CHAIN_ID = 4217
     TESTNET_CHAIN_ID = 42431
 
+    # HTTP status codes that indicate the upstream is *temporarily* unable
+    # to answer — retry-after-a-bit semantics. 4xx outside this set means
+    # config error (bad URL, bad auth) which retries can't fix.
+    #   408 Request Timeout, 425 Too Early, 429 Too Many Requests
+    #   500/502/503/504 standard upstream-busy / gateway codes
+    TRANSIENT_HTTP_CODES = [ 408, 425, 429, 500, 502, 503, 504 ].freeze
+
     def self.call(**kwargs)
       new(**kwargs).call
     end
@@ -95,12 +102,8 @@ module Mpp
 
       response = http.request(request)
 
-      # 5xx is treated as transient too — a rolling deploy must not wedge
-      # on a momentary upstream blip (agent-team-vo2c). 4xx is non-transient
-      # because it indicates a config problem (bad URL, bad auth) that
-      # retries cannot fix.
       unless response.is_a?(Net::HTTPSuccess)
-        code = response.code.to_i >= 500 ? :transient : nil
+        code = TRANSIENT_HTTP_CODES.include?(response.code.to_i) ? :transient : nil
         return Result.failure("RPC HTTP error: #{response.code}", code: code)
       end
 
