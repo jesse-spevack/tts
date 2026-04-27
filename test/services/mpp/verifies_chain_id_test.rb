@@ -218,6 +218,34 @@ class Mpp::VerifiesChainIdTest < ActiveSupport::TestCase
     assert_equal :transient, result.code
   end
 
+  test "tags additional network failure classes as transient" do
+    # Cold-start containers and rotating infra surface a wider class of
+    # transient failures than the original (timeout / refused / reset /
+    # SocketError) set. Without these, fail-closed behavior tempts
+    # operators into setting TEMPO_SKIP_CHAINID_GUARD=1 permanently.
+    [
+      Errno::EHOSTUNREACH,
+      Errno::ENETUNREACH,
+      Errno::ETIMEDOUT,
+      Errno::EPIPE,
+      Resolv::ResolvError.new("DNS lookup failed"),
+      Resolv::ResolvTimeout,
+      OpenSSL::SSL::SSLError,
+      IOError
+    ].each do |error_class|
+      stub_request(:post, TESTNET_RPC_URL).to_raise(error_class)
+
+      result = Mpp::VerifiesChainId.call(
+        rpc_url: TESTNET_RPC_URL,
+        expected_chain_id: TESTNET_CHAIN_ID
+      )
+
+      assert result.failure?, "Expected failure for #{error_class}"
+      assert_equal :transient, result.code,
+        "Expected #{error_class} to be tagged :transient"
+    end
+  end
+
   test "tags 5xx HTTP responses as transient" do
     # A 502/503 during a Kamal rolling deploy should not wedge boot
     # (agent-team-vo2c). The initializer downgrades :transient codes

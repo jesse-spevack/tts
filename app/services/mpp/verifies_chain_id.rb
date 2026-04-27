@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "openssl"
+require "resolv"
 
 module Mpp
   # Boot-time guard that the configured Tempo RPC URL actually points at
@@ -113,9 +115,15 @@ module Mpp
       return Result.failure("RPC returned empty result") if hex.nil? || hex.empty?
 
       Integer(hex, 16)
-    rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ECONNRESET, SocketError
-      # Transient network errors fail-open at the initializer level —
-      # confirmed mismatches still fail-closed (agent-team-vo2c).
+    rescue Net::OpenTimeout, Net::ReadTimeout,
+           Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH,
+           Errno::ENETUNREACH, Errno::ETIMEDOUT, Errno::EPIPE,
+           SocketError, Resolv::ResolvError, Resolv::ResolvTimeout,
+           OpenSSL::SSL::SSLError, IOError
+      # Transient network errors fail-open at the initializer level so a
+      # cold-start container with a slow DNS cache, a routing flap, or a
+      # mid-rotation TLS hiccup doesn't wedge boot. Confirmed mismatches
+      # still fail-closed.
       Result.failure("RPC network error: #{$!.class}: #{$!.message}", code: :transient)
     rescue JSON::ParserError
       Result.failure("RPC returned invalid JSON")
