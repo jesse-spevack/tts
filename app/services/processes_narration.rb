@@ -195,7 +195,7 @@ class ProcessesNarration
   end
 
   def upload_audio(audio_content, gcs_episode_id)
-    @uploaded_audio_path = "episodes/#{gcs_episode_id}.mp3"
+    @uploaded_audio_path = "narrations/#{gcs_episode_id}.mp3"
     cloud_storage.upload_content(
       content: audio_content,
       remote_path: @uploaded_audio_path

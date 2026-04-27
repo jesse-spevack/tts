@@ -198,7 +198,7 @@ class ProcessesNarrationTest < ActiveSupport::TestCase
 
     upload_calls = Mocktail.calls(mock_gcs, :upload_content)
     assert_equal 1, upload_calls.size
-    assert_match %r{episodes/.*\.mp3}, upload_calls.first.args.last || upload_calls.first.kwargs[:remote_path]
+    assert_match %r{narrations/.*\.mp3}, upload_calls.first.args.last || upload_calls.first.kwargs[:remote_path]
   end
 
   # --- TtsUsage recording (agent-team-ff05) ---
