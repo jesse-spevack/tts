@@ -2,15 +2,17 @@
 
 require "test_helper"
 
-# Tests that the MPP verification flow works correctly when TEMPO_CURRENCY_TOKEN
-# is configured to USDC.e (0x20c000000000000000000000b9537d11c60e8b50), which
-# is Stripe's prod guidance for mainnet traffic, rather than pathUSD (the
-# testnet default 0x20c0000000000000000000000000000000000000).
+# Tests that the MPP verification flow works correctly when challenges are
+# signed under USDC.e (0x20c000000000000000000000b9537d11c60e8b50), Stripe's
+# prod guidance for mainnet traffic, rather than pathUSD (the testnet default
+# 0x20c0000000000000000000000000000000000000).
 #
-# Scope: agent-team-arak (swap MPP production payment token to USDC.e).
-# These tests inject `token_address:` into VerifiesCredential to simulate
-# a prod-configured env without touching module constants. The env-driven
-# default is covered by the lock-in test at the bottom of this file.
+# Scope: agent-team-arak (swap MPP production payment token to USDC.e),
+# updated for agent-team-4bf0 (verifier honors the HMAC-signed currency
+# from the challenge, not the current TEMPO_CURRENCY_TOKEN env). Tests inject
+# `token_address:` into Mpp::GeneratesChallenge to control what currency the
+# challenge is signed under; VerifiesCredential then filters Transfer events
+# against that signed value, regardless of env.
 class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
@@ -29,20 +31,13 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     # Standard MPP setup: create deposit address via stubbed Stripe, then sign
     # the challenge against that address and persist the MppPayment row.
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
-      .to_return(status: 200, body: {
-        id: "pi_usdc_#{SecureRandom.hex(4)}",
-        next_action: {
-          crypto_display_details: {
-            deposit_addresses: {
-              tempo: { address: @deposit_address }
-            }
-          }
-        }
-      }.to_json, headers: { "Content-Type" => "application/json" })
+      .to_return(status: 200, body: stripe_response_body(@deposit_address, USDC_E_CONTRACT),
+                 headers: { "Content-Type" => "application/json" })
 
     deposit_result = Mpp::CreatesDepositAddress.call(
       amount_cents: @amount_cents,
-      currency: @currency
+      currency: @currency,
+      expected_token_address: USDC_E_CONTRACT
     )
     @payment_intent_id = deposit_result.data[:payment_intent_id]
 
@@ -50,7 +45,8 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
       amount_cents: @amount_cents,
       currency: @currency,
       recipient: @deposit_address,
-      voice_tier: :premium
+      voice_tier: :premium,
+      token_address: USDC_E_CONTRACT
     )
     @challenge = challenge_result.data
 
@@ -76,30 +72,24 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     ))
   end
 
-  # --- 1. Token-filter-respects-env ---
+  # --- 1. Token-filter-respects-signed-currency ---
 
-  test "verifier filters Transfer events by the USDC.e contract when env is USDC.e" do
+  test "verifier filters Transfer events by the USDC.e contract when challenge was signed under USDC.e" do
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
       .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
 
-    result = Mpp::VerifiesCredential.call(
-      credential: @valid_credential,
-      token_address: USDC_E_CONTRACT
-    )
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
     assert result.success?, "Expected USDC.e Transfer to be accepted, got: #{result.error}"
   end
 
   # --- 2. Correct-token accepted (USDC.e) ---
 
-  test "accepts a Transfer event whose log address matches the USDC.e env" do
+  test "accepts a Transfer event whose log address matches the signed USDC.e currency" do
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
       .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
 
-    result = Mpp::VerifiesCredential.call(
-      credential: @valid_credential,
-      token_address: USDC_E_CONTRACT
-    )
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
     assert result.success?, "USDC.e Transfer should credit the payment"
     assert_equal @tx_hash, result.data[:tx_hash]
@@ -111,10 +101,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
       .to_return(status: 200, body: rpc_receipt_body(token_address: upper))
 
-    result = Mpp::VerifiesCredential.call(
-      credential: @valid_credential,
-      token_address: USDC_E_CONTRACT
-    )
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
     assert result.success?,
       "Case of log address must not affect acceptance: #{result.error}"
@@ -122,37 +109,119 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
 
   # --- 3. Wrong-token rejected (critical safety) ---
 
-  test "rejects a pathUSD Transfer event when env is configured for USDC.e" do
-    # Prod safety: once TEMPO_CURRENCY_TOKEN flips to USDC.e, a user who
-    # accidentally sends pathUSD (old docs, cached wallet config) must NOT
-    # be silently credited. The verifier has to reject it.
+  test "rejects a pathUSD Transfer event when challenge was signed under USDC.e" do
+    # Prod safety: a user who accidentally sends pathUSD against a USDC.e-
+    # signed challenge (old docs, cached wallet config) must NOT be silently
+    # credited. The verifier has to reject it.
     stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
       .to_return(status: 200, body: rpc_receipt_body(token_address: PATH_USD_CONTRACT))
 
-    result = Mpp::VerifiesCredential.call(
-      credential: @valid_credential,
-      token_address: USDC_E_CONTRACT
-    )
+    result = Mpp::VerifiesCredential.call(credential: @valid_credential)
 
     assert result.failure?,
-      "pathUSD Transfer must be rejected when env is USDC.e"
+      "pathUSD Transfer must be rejected when challenge was signed for USDC.e"
     assert_match(/No matching Transfer event/, result.error,
       "Rejection reason should indicate no matching Transfer log")
   end
 
-  test "rejects USDC.e Transfer when env is still pathUSD (symmetric safety)" do
-    # Mirror of the above — proves the filter is symmetric and there is no
-    # hidden 'accept anything starting with 0x20c0' shortcut.
-    stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
-      .to_return(status: 200, body: rpc_receipt_body(token_address: USDC_E_CONTRACT))
+  # --- 3b. Mid-rollback safety (agent-team-4bf0) ---
 
-    result = Mpp::VerifiesCredential.call(
-      credential: @valid_credential,
-      token_address: PATH_USD_CONTRACT
+  test "verifier honors signed pathUSD currency even when env is currently USDC.e (rollback safety)" do
+    # Scenario: a challenge was issued under pathUSD, the operator flips
+    # TEMPO_CURRENCY_TOKEN to USDC.e mid-window, and the user submits the
+    # tx within the 5-min TTL. The verifier MUST honor the signed currency
+    # (pathUSD) — querying USDC.e Transfer events would strand the user's
+    # payment for no reason. Stubs ENV at the AppConfig layer to simulate
+    # the post-flip env state.
+    deposit_address = "0xrollback#{SecureRandom.hex(16)}"
+
+    # Provision deposit address against the OLD (pathUSD) supported_tokens.
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: stripe_response_body(deposit_address, PATH_USD_CONTRACT))
+
+    deposit_result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents, currency: @currency,
+      expected_token_address: PATH_USD_CONTRACT
     )
 
-    assert result.failure?, "USDC.e Transfer must be rejected when env is pathUSD"
-    assert_match(/No matching Transfer event/, result.error)
+    # Sign the challenge under pathUSD (the pre-rollback token).
+    challenge = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents, currency: @currency,
+      recipient: deposit_address, voice_tier: :premium,
+      token_address: PATH_USD_CONTRACT
+    ).data
+
+    MppPayment.create!(
+      amount_cents: @amount_cents, currency: @currency,
+      challenge_id: challenge[:id], deposit_address: deposit_address,
+      stripe_payment_intent_id: deposit_result.data[:payment_intent_id],
+      status: :pending
+    )
+
+    credential = Base64.strict_encode64(JSON.generate(
+      challenge: challenge.slice(:id, :realm, :method, :intent, :request, :expires),
+      payload: { type: "hash", hash: @tx_hash }
+    ))
+
+    # Simulate env flip: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN now reports
+    # USDC.e, but the on-chain Transfer was for pathUSD (matching the
+    # signed currency). Swap the constant to make the env-flip explicit;
+    # the verifier must NOT consult it.
+    with_currency_token(USDC_E_CONTRACT) do
+      stub_request(:post, AppConfig::Mpp::TEMPO_RPC_URL)
+        .to_return(status: 200, body: rpc_receipt_body(
+          token_address: PATH_USD_CONTRACT,
+          deposit_address: deposit_address
+        ))
+
+      result = Mpp::VerifiesCredential.call(credential: credential)
+
+      assert result.success?,
+        "Verifier must honor the signed pathUSD currency post-rollback, got: #{result.error}"
+    end
+  end
+
+  test "rejects challenge whose signed currency is not in the allowlist" do
+    # Defense-in-depth: even though the HMAC binds currency, an unexpected
+    # value (typo, future drift) must not let the verifier query an
+    # arbitrary contract. Reject cleanly without falling back to env.
+    unknown_token = "0xdeadbeefcafef00d000000000000000000000000"
+    deposit_address = "0xunknown#{SecureRandom.hex(16)}"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: stripe_response_body(deposit_address, unknown_token))
+
+    # Skip the supported_tokens assertion in CreatesDepositAddress by
+    # passing the matching expected_token_address — we want to test the
+    # verifier's allowlist, not the deposit-address service.
+    deposit_result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents, currency: @currency,
+      expected_token_address: unknown_token
+    )
+
+    challenge = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents, currency: @currency,
+      recipient: deposit_address, voice_tier: :premium,
+      token_address: unknown_token
+    ).data
+
+    MppPayment.create!(
+      amount_cents: @amount_cents, currency: @currency,
+      challenge_id: challenge[:id], deposit_address: deposit_address,
+      stripe_payment_intent_id: deposit_result.data[:payment_intent_id],
+      status: :pending
+    )
+
+    credential = Base64.strict_encode64(JSON.generate(
+      challenge: challenge.slice(:id, :realm, :method, :intent, :request, :expires),
+      payload: { type: "hash", hash: @tx_hash }
+    ))
+
+    # No RPC stub needed — we should reject before getting that far.
+    result = Mpp::VerifiesCredential.call(credential: credential)
+
+    assert result.failure?, "Unknown signed currency must be rejected"
+    assert_match(/Unsupported challenge currency/, result.error)
   end
 
   # --- 4. Decimals unchanged across the swap ---
@@ -164,21 +233,16 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     deposit_address = "0xstd#{SecureRandom.hex(16)}"
 
     stub_request(:post, "https://api.stripe.com/v1/payment_intents")
-      .to_return(status: 200, body: {
-        id: "pi_std_#{SecureRandom.hex(4)}",
-        next_action: {
-          crypto_display_details: {
-            deposit_addresses: { tempo: { address: deposit_address } }
-          }
-        }
-      }.to_json)
+      .to_return(status: 200, body: stripe_response_body(deposit_address, USDC_E_CONTRACT))
 
     deposit_result = Mpp::CreatesDepositAddress.call(
-      amount_cents: amount_cents, currency: @currency
+      amount_cents: amount_cents, currency: @currency,
+      expected_token_address: USDC_E_CONTRACT
     )
     challenge = Mpp::GeneratesChallenge.call(
       amount_cents: amount_cents, currency: @currency,
-      recipient: deposit_address, voice_tier: :standard
+      recipient: deposit_address, voice_tier: :standard,
+      token_address: USDC_E_CONTRACT
     ).data
 
     MppPayment.create!(
@@ -200,10 +264,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
         amount_cents: amount_cents
       ))
 
-    result = Mpp::VerifiesCredential.call(
-      credential: credential,
-      token_address: USDC_E_CONTRACT
-    )
+    result = Mpp::VerifiesCredential.call(credential: credential)
 
     assert result.success?,
       "Standard tier $0.75 in USDC.e should verify (both tokens are 6 decimals): #{result.error}"
@@ -224,8 +285,7 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     # Researcher (agent-team-nukj) confirmed testnet.tempo.xyz is a legacy
     # alias for rpc.moderato.tempo.xyz (both resolve to chain 42431). The
     # default should be the canonical host so future DNS deprecation of the
-    # alias doesn't take prod down. Currently fails — Implementer will fix
-    # in agent-team-kpxs by changing app/models/app_config.rb:151.
+    # alias doesn't take prod down.
     assert_equal "https://rpc.moderato.tempo.xyz", AppConfig::Mpp::TEMPO_RPC_URL
   end
 
@@ -255,6 +315,27 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
     }.to_json
   end
 
+  # Mirror of the Stripe PaymentIntent shape that CreatesDepositAddress
+  # parses, including supported_tokens (agent-team-5aas) so the new
+  # contract-address assertion sees the matching value.
+  def stripe_response_body(deposit_address, token_contract_address)
+    {
+      id: "pi_usdc_#{SecureRandom.hex(4)}",
+      next_action: {
+        crypto_display_details: {
+          deposit_addresses: {
+            tempo: {
+              address: deposit_address,
+              supported_tokens: [
+                { token_currency: "usdc", token_contract_address: token_contract_address }
+              ]
+            }
+          }
+        }
+      }
+    }.to_json
+  end
+
   def pad_address(address)
     clean = address.delete_prefix("0x").downcase
     "0x" + clean.rjust(64, "0")
@@ -263,5 +344,19 @@ class Mpp::VerifiesCredentialUsdcETest < ActiveSupport::TestCase
   def amount_to_hex(amount_cents)
     base_units = (amount_cents * (10**AppConfig::Mpp::TEMPO_TOKEN_DECIMALS)) / 100
     "0x" + base_units.to_s(16).rjust(64, "0")
+  end
+
+  # Temporarily swap AppConfig::Mpp::TEMPO_CURRENCY_TOKEN for a block.
+  # Used to simulate a mid-window env flip without touching ENV directly.
+  # Minitest/Ruby has no stub_const, so we suppress the redefinition warning
+  # and restore the original after the block.
+  def with_currency_token(value)
+    original = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
+    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
+    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, value)
+    yield
+  ensure
+    AppConfig::Mpp.send(:remove_const, :TEMPO_CURRENCY_TOKEN)
+    AppConfig::Mpp.const_set(:TEMPO_CURRENCY_TOKEN, original)
   end
 end

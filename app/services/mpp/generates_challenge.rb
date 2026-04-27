@@ -8,11 +8,16 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:, recipient:, voice_tier:)
+    # token_address defaults to AppConfig so production callers don't have
+    # to pass it, but tests (and any future multi-token code path) can
+    # inject an alternate without mutating module constants. Mirrors the
+    # DI pattern Mpp::VerifiesCredential adopted in agent-team-kpxs.
+    def initialize(amount_cents:, currency:, recipient:, voice_tier:, token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN)
       @amount_cents = amount_cents
       @currency = currency
       @recipient = recipient
       @voice_tier = voice_tier
+      @token_address = token_address
     end
 
     def call
@@ -22,7 +27,6 @@ module Mpp
       # MPP Tempo challenges use token base units and contract address, not fiat
       token_decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
       amount_base_units = (amount_cents * (10**token_decimals)) / 100
-      token_address = AppConfig::Mpp::TEMPO_CURRENCY_TOKEN
       # voice_tier is embedded in the request blob so tampering with the
       # tier on retry (e.g. paying a Standard price but requesting a
       # Premium voice) fails HMAC verification downstream.
@@ -60,6 +64,6 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency, :recipient, :voice_tier
+    attr_reader :amount_cents, :currency, :recipient, :voice_tier, :token_address
   end
 end

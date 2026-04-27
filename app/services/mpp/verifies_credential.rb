@@ -8,20 +8,40 @@ module Mpp
 
     TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
+    # Allowlisted Tempo stablecoin contract addresses. The verifier accepts
+    # a signed `currency` from the challenge only if it appears here.
+    # Otherwise we'd be filtering Transfer events against arbitrary client
+    # input — even though it's HMAC-signed, an attacker who somehow obtained
+    # the secret could mint a challenge naming an unrelated contract and
+    # we'd happily query it on-chain.
+    #
+    # pathUSD is the testnet predeployed stablecoin; USDC.e is Stripe's
+    # mainnet guidance. Adding a new token is an explicit, reviewable code
+    # change.
+    KNOWN_TOKEN_ADDRESSES = %w[
+      0x20c0000000000000000000000000000000000000
+      0x20c000000000000000000000b9537d11c60e8b50
+    ].freeze
+
     def self.call(**kwargs)
       new(**kwargs).call
     end
 
-    # token_address and rpc_url default to AppConfig so production callers
-    # don't have to pass them, but tests (and any future multi-token code
-    # path) can inject alternates without mutating module constants.
+    # rpc_url defaults to AppConfig so production callers don't have to
+    # pass it, but tests (and any future multi-chain code path) can inject
+    # an alternate without mutating module constants.
+    #
+    # token_address is intentionally NOT a constructor argument: the
+    # verifier reads the currency the challenge was HMAC-signed under from
+    # request_data and uses that to filter Transfer events. This keeps
+    # in-flight challenges valid through a TEMPO_CURRENCY_TOKEN env flip
+    # (e.g. a rollback from USDC.e back to pathUSD) — the signed currency
+    # wins, not the current env (agent-team-4bf0).
     def initialize(
       credential:,
-      token_address: AppConfig::Mpp::TEMPO_CURRENCY_TOKEN,
       rpc_url: AppConfig::Mpp::TEMPO_RPC_URL
     )
       @credential = credential
-      @token_address = token_address
       @rpc_url = rpc_url
     end
 
@@ -59,6 +79,30 @@ module Mpp
       cache_key = "mpp:deposit_address:#{deposit_address}"
       return Result.failure("Deposit address not found in cache") unless Rails.cache.read(cache_key)
 
+      # Parse the HMAC-signed request blob early so we can fail fast on
+      # malformed / unsupported challenge contents BEFORE doing any RPC
+      # work. agent-team-4bf0: currency (= token contract address) is
+      # signed into request_data and the verifier honors what was signed
+      # even if AppConfig::Mpp::TEMPO_CURRENCY_TOKEN has since flipped
+      # (mid-incident rollback). Allowlist gates the value — see
+      # KNOWN_TOKEN_ADDRESSES.
+      request_json = Base64.decode64(challenge["request"])
+      request_data = JSON.parse(request_json)
+      expected_amount = request_data["amount"]
+      # voice_tier is embedded in the HMAC-signed request blob, so any
+      # tampering is caught by the HMAC check upstream. Downstream callers
+      # still compare this against the tier of the CURRENT request's
+      # voice to catch the "pay Standard, retry Premium" case.
+      voice_tier = request_data["voice_tier"]&.to_sym
+
+      signed_token_address = request_data["currency"]
+      if signed_token_address.nil? || signed_token_address.empty?
+        return Result.failure("Challenge is missing currency")
+      end
+      unless KNOWN_TOKEN_ADDRESSES.include?(signed_token_address.downcase)
+        return Result.failure("Unsupported challenge currency")
+      end
+
       # Phase 2: On-chain verification
       # mppx sends two credential types:
       #   "hash"      — client already submitted the tx, sends the hash
@@ -86,16 +130,7 @@ module Mpp
       return Result.failure("Transaction reverted") unless receipt["status"] == "0x1"
 
       # Phase 3: Transfer event log verification
-      request_json = Base64.decode64(challenge["request"])
-      request_data = JSON.parse(request_json)
-      expected_amount = request_data["amount"]
-      # voice_tier is embedded in the HMAC-signed request blob, so any
-      # tampering is caught by the HMAC check upstream. Downstream callers
-      # still compare this against the tier of the CURRENT request's
-      # voice to catch the "pay Standard, retry Premium" case.
-      voice_tier = request_data["voice_tier"]&.to_sym
-
-      transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount)
+      transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount, signed_token_address)
       return transfer_result if transfer_result&.failure?
 
       # Pure verification — persistence is the caller's responsibility.
@@ -112,7 +147,7 @@ module Mpp
 
     private
 
-    attr_reader :credential, :token_address, :rpc_url
+    attr_reader :credential, :rpc_url
 
     def decode_credential
       return Result.failure("Credential is blank") if credential.nil? || credential.empty?
@@ -184,7 +219,7 @@ module Mpp
       Result.failure("RPC returned invalid JSON")
     end
 
-    def verify_transfer_log(receipt, deposit_address, expected_amount)
+    def verify_transfer_log(receipt, deposit_address, expected_amount, token_address)
       logs = receipt["logs"] || []
 
       # The challenge request amount is already in token base units (e.g.,
