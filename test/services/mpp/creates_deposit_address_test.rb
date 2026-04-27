@@ -37,6 +37,32 @@ class Mpp::CreatesDepositAddressTest < ActiveSupport::TestCase
     assert result.success?
   end
 
+  test "lowercases the extracted deposit address (canonical form)" do
+    # Stripe may return EIP-55 checksummed (mixed-case) addresses. Cache
+    # key + Transfer-log comparisons happen in lowercase, so canonicalize
+    # at the source.
+    mixed_case = "0xAbCdEf1234567890aBcDeF1234567890ABCDEF12"
+
+    stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+      .to_return(status: 200, body: {
+        id: "pi_case_norm",
+        next_action: {
+          crypto_display_details: {
+            deposit_addresses: {
+              tempo: { address: mixed_case }
+            }
+          }
+        }
+      }.to_json)
+
+    result = Mpp::CreatesDepositAddress.call(
+      amount_cents: @amount_cents,
+      currency: @currency
+    )
+
+    assert_equal mixed_case.downcase, result.data[:deposit_address]
+  end
+
   test "extracts deposit address from next_action crypto_display_details" do
     deposit_address = "0xdeposit_address_abc123"
 

@@ -95,13 +95,18 @@ module Mpp
     end
 
     def extract_deposit_address(payment_intent)
-      payment_intent.dig(
+      raw = payment_intent.dig(
         "next_action",
         "crypto_display_details",
         "deposit_addresses",
         "tempo",
         "address"
       )
+      # Canonicalize to lowercase: Stripe may return EIP-55 checksummed
+      # (mixed-case) addresses, and downstream comparisons (cache key,
+      # on-chain Transfer log address) all happen in lowercase. Normalize
+      # at the source so every consumer agrees on the same string.
+      raw&.downcase
     end
 
     # Defense-in-depth (agent-team-5aas): if Stripe ever drifts to provisioning
