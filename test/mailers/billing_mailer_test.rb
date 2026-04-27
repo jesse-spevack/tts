@@ -2,21 +2,17 @@
 
 require "test_helper"
 
-# iny7 decision 3: sweep ALL 5 billing mailer templates to remove
+# iny7 decision 3: sweep ALL billing mailer templates to remove
 # subscription upsell language. The hardest case is credit_depleted, which
 # currently pitches "$9/month" — an offer that no longer exists.
 #
-# cancellation / subscription_ended / welcome stay functional for Jesse's
-# winding-down subscription, but their copy should not introduce NEW
-# subscriptions or reference a subscription plan that's no longer on sale.
-#
+# Post-winddown (agent-team-9rt7), welcome/cancellation/subscription_ended
+# mailers were removed with the rest of the subscription code.
 # upgrade_nudge either gets rewritten to pitch credit packs or deleted +
 # all callers removed. Pick the lightest-weight option and assert here.
 class BillingMailerTest < ActionMailer::TestCase
   setup do
-    @user = users(:subscriber)
-    @subscription = @user.subscription
-    @ends_at = 1.month.from_now
+    @user = users(:one)
   end
 
   # --- credit_depleted: worst offender, pitches $9/month today ---
@@ -43,40 +39,6 @@ class BillingMailerTest < ActionMailer::TestCase
       "credit_depleted must offer the credit-pack path forward")
     assert_match(%r{/billing}, body,
       "credit_depleted must link to /billing")
-  end
-
-  # --- welcome: no "subscription lives in Settings" language ---
-
-  test "welcome mail does not describe a subscription" do
-    mail = BillingMailer.welcome(@user, subscription: @subscription)
-    body = mail.body.to_s
-
-    refute_match(/subscription lives in Settings/i, body,
-      "welcome must not anchor the UX around a subscription after iny7")
-    refute_match(/Thanks for subscribing/i, body,
-      "welcome must not say 'Thanks for subscribing' — users buy credits now")
-  end
-
-  # --- cancellation: stays functional but no resubscribe upsell ---
-
-  test "cancellation mail does not pitch resubscribing" do
-    mail = BillingMailer.cancellation(@user, ends_at: @ends_at)
-    body = mail.body.to_s
-
-    refute_match(/resubscribe/i, body,
-      "cancellation must not point users at a resubscribe flow post-iny7")
-  end
-
-  # --- subscription_ended: functional, no new subscription pitch ---
-
-  test "subscription_ended mail does not pitch a new subscription" do
-    mail = BillingMailer.subscription_ended(@user)
-    body = mail.body.to_s
-
-    refute_match(/pick it back up/i, body,
-      "subscription_ended must not tell users to resubscribe")
-    refute_match(/subscribe/i, body,
-      "subscription_ended must not pitch a new subscription")
   end
 
   # --- upgrade_nudge: rewritten for credits OR deleted with callers ---

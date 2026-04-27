@@ -44,12 +44,12 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_empty cookies[:session_id].to_s
   end
 
-  # --- Premium plans are no longer a checkout flow (iny7) ---
-  # iny7 deletes the public subscription signup surfaces. `premium_monthly`
-  # and `premium_annual` are no longer valid `plan` values for the magic-link
-  # round-trip: post-login redirect must fall through to after_authentication_url
-  # (new_episode_path) rather than sending the user to a Stripe subscription
-  # checkout. No flash either way — the point is that a stale pre-iny7 link
+  # --- Premium plans are no longer a checkout flow (iny7 + winddown) ---
+  # iny7 deleted the public subscription signup surfaces; agent-team-9rt7
+  # finished the winddown by deleting the subscription code entirely.
+  # `premium_monthly` and `premium_annual` are no longer valid `plan` values
+  # for the magic-link round-trip: post-login redirect must fall through to
+  # after_authentication_url (new_episode_path). A stale pre-iny7 link
   # shouldn't route users into a dead premium checkout.
 
   test "verify with premium_monthly plan does NOT redirect to subscription checkout" do
@@ -165,21 +165,21 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "premium price IDs are NOT mapped to plan handlers after iny7" do
     # The previous parametric test required every PRICE_ID_* constant in
-    # AppConfig::Stripe to have a plan handler. iny7 deletes the premium
-    # plan handlers. This assertion inverts the expectation: a user arriving
-    # at auth with plan=premium_* must NOT land on a Stripe subscription
-    # checkout with that price_id.
+    # AppConfig::Stripe to have a plan handler. iny7 + the winddown delete
+    # the premium plan handlers. This assertion inverts the expectation: a
+    # user arriving at auth with plan=premium_* must land on the default
+    # post-login destination (new_episode_path), NOT a Stripe checkout with
+    # any price_id.
     %w[premium_monthly premium_annual].each do |plan|
       delete session_url if cookies[:session_id].present?
 
       token = GeneratesAuthToken.call(user: @user)
       get auth_url, params: { token: token, plan: plan }
 
-      location = @response.redirect_url.to_s.sub(%r{\Ahttps?://[^/]+}, "")
-      refute_equal checkout_path(price_id: AppConfig::Stripe::PRICE_ID_MONTHLY), location,
-        "Plan '#{plan}' must not redirect to a subscription checkout"
-      refute_equal checkout_path(price_id: AppConfig::Stripe::PRICE_ID_ANNUAL), location,
-        "Plan '#{plan}' must not redirect to a subscription checkout"
+      assert_redirected_to new_episode_path,
+        "Plan '#{plan}' must redirect to the default post-login destination"
+      refute_match(/price_id=/, @response.redirect_url,
+        "Plan '#{plan}' must not redirect to a Stripe checkout")
     end
   end
 

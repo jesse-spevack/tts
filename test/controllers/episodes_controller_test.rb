@@ -713,29 +713,6 @@ class EpisodesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 3, credit_user.reload.credits_remaining
   end
 
-  test "subscriber with zero credits is gated (premium subscription bypass removed)" do
-    # Regression guard: subscribers whose credit_user? returns false (due
-    # to premium? short-circuit) must still be gated. Only complimentary
-    # and unlimited account_types bypass credit deduction.
-    subscriber = users(:subscriber) # has active_subscription fixture
-    subscriber.update!(voice_preference: "callum") # Premium voice
-    # Ensure zero credit balance (subscribers don't typically have one)
-    CreditBalance.for(subscriber).update!(balance: 0)
-    sign_in_as subscriber
-
-    long_text = "A" * 20_001
-
-    assert_no_difference -> { Episode.count } do
-      assert_no_difference -> { CreditTransaction.count } do
-        post episodes_url, params: { text: long_text }
-      end
-    end
-
-    # Behaviour on the web path is redirect + flash (matches existing
-    # permission-gate style). The corresponding API v1 path returns 402.
-    assert_response :redirect
-  end
-
   # === New-episode form: credit cost preview UI (agent-team-gq88) ===
   #
   # The hardcoded "This episode will use 1 credit" copy is a lie post-cga5

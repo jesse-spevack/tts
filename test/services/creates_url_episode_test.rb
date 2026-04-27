@@ -172,7 +172,7 @@ class CreatesUrlEpisodeTest < ActiveSupport::TestCase
   end
 
   test "enqueues with priority 0 for premium user" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
     podcast = premium_user.primary_podcast
 
     assert_enqueued_with(job: ProcessesUrlEpisodeJob, priority: 0) do

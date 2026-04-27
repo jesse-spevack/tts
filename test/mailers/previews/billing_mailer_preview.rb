@@ -3,17 +3,7 @@ class BillingMailerPreview < ActionMailer::Preview
     BillingMailer.upgrade_nudge(User.first)
   end
 
-  def welcome
-    user = User.joins(:subscription).first || User.first
-    subscription = user.subscription || Subscription.new(stripe_subscription_id: "sub_preview")
-    BillingMailer.welcome(user, subscription: subscription)
-  end
-
-  def cancellation
-    BillingMailer.cancellation(User.first, ends_at: 1.month.from_now)
-  end
-
-  def subscription_ended
-    BillingMailer.subscription_ended(User.first)
+  def credit_depleted
+    BillingMailer.credit_depleted(User.first)
   end
 end

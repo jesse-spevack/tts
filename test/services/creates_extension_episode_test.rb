@@ -103,7 +103,7 @@ class CreatesExtensionEpisodeTest < ActiveSupport::TestCase
   end
 
   test "enqueues with priority 0 for premium user" do
-    premium_user = users(:subscriber)
+    premium_user = users(:complimentary_user)
 
     assert_enqueued_with(job: ProcessesFileEpisodeJob, priority: 0) do
       CreatesExtensionEpisode.call(**@valid_params.merge(user: premium_user))

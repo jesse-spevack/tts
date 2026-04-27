@@ -104,12 +104,14 @@ class EpisodesController < ApplicationController
     end
   end
 
+  FREE_LIMIT_REACHED_FLASH = "You've used your #{AppConfig::Tiers::FREE_MONTHLY_EPISODES} free episodes this month. " \
+                             "Buy a credit pack to create more."
+
   def require_can_view_new
     result = ChecksEpisodeCreationPermission.call(user: Current.user)
     return if result.success?
 
-    flash[:alert] = "You've used your 2 free episodes this month! " \
-                    "Upgrade to Premium for unlimited episodes, or buy a credit pack."
+    flash[:alert] = FREE_LIMIT_REACHED_FLASH
     redirect_to episodes_path
   end
 
@@ -129,8 +131,7 @@ class EpisodesController < ApplicationController
     when :insufficient_credits
       "You don't have enough credits for this episode. Buy a credit pack to continue."
     else
-      "You've used your 2 free episodes this month! " \
-      "Upgrade to Premium for unlimited episodes, or buy a credit pack."
+      FREE_LIMIT_REACHED_FLASH
     end
   end
 

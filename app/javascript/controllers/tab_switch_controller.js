@@ -3,6 +3,16 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["tab", "panel"]
 
+  // Honor a ?source=<tab> query param so other pages can deep-link straight
+  // to a specific tab (e.g. the char-limit tip on the episode card).
+  connect() {
+    const source = new URLSearchParams(window.location.search).get("source")
+    if (!source) return
+
+    const tab = this.tabTargets.find(t => t.dataset.tab === source)
+    if (tab) tab.click()
+  }
+
   switch(event) {
     const selectedTab = event.currentTarget.dataset.tab
 

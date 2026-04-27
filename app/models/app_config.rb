@@ -83,14 +83,7 @@ class AppConfig
   end
 
   module Stripe
-    PRICE_ID_MONTHLY = ENV.fetch("STRIPE_PRICE_ID_MONTHLY", "test_price_monthly")
-    PRICE_ID_ANNUAL = ENV.fetch("STRIPE_PRICE_ID_ANNUAL", "test_price_annual")
     WEBHOOK_SECRET = ENV.fetch("STRIPE_WEBHOOK_SECRET", "test_webhook_secret")
-
-    PLAN_INFO = {
-      PRICE_ID_MONTHLY => { name: "Premium Monthly", amount_cents: 900, display: "$9/mo" },
-      PRICE_ID_ANNUAL => { name: "Premium Annual", amount_cents: 8900, display: "$89/yr" }
-    }.freeze
   end
 
   module Credits

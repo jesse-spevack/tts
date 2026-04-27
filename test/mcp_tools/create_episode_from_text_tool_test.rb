@@ -52,8 +52,8 @@ class CreateEpisodeFromTextToolTest < ActiveSupport::TestCase
     assert_equal(-2, transaction.amount)
   end
 
-  test "subscriber with zero credits gets insufficient-credits error without creating Episode" do
-    subscriber = users(:subscriber)
+  test "credit user with zero credits gets insufficient-credits error without creating Episode" do
+    subscriber = users(:credit_user)
     CreditBalance.for(subscriber).update!(balance: 0)
 
     long_text = "A" * 1_000 # any length — balance is 0, cost is 1

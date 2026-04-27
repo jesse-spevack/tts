@@ -1,3 +1,15 @@
+<% sections = [
+     { id: "install", label: "Install" },
+     { id: "log-in", label: "Log in" },
+     { id: "create-an-episode", label: "Create an episode" },
+     { id: "choose-a-voice", label: "Choose a voice" },
+     { id: "manage-episodes", label: "Manage episodes" },
+     { id: "get-your-feed", label: "Get your feed" },
+     { id: "more-info", label: "More info" }
+   ] %>
+<% content_for :right_toc do %>
+  <%= render "shared/help_right_toc", steps: sections %>
+<% end %>
 <%= render layout: "shared/help_layout", locals: { current: :cli_help } do %>
 
   <section class="pb-12">
@@ -6,22 +18,27 @@
       Create podcast episodes from your terminal with the <strong class="text-mist-950 dark:text-white">podread</strong> CLI.
     </p>
 
+    <%# Section body. Active state in the right-rail ToC is driven by      %>
+    <%# aria-current="step", set by the scroll-spy controller mounted on   %>
+    <%# the help_layout root (see shared/_help_layout.html.erb). Each      %>
+    <%# section heading is the scroll-spy target — its data-step matches   %>
+    <%# the link's data-step in shared/_help_right_toc.html.erb.           %>
     <div class="mt-6 text-sm/6 text-mist-700 dark:text-mist-400">
-      <h3 class="text-base font-semibold text-mist-950 dark:text-white">Install</h3>
+      <h3 id="install" data-scroll-spy-target="step" data-step="install" class="scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Install</h3>
       <p class="mt-3">Homebrew (macOS / Linux):</p>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>brew install jesse-spevack/tap/podread</code></pre>
 
       <p class="mt-4">Or with curl:</p>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>curl -fsSL https://raw.githubusercontent.com/jesse-spevack/podread-cli/main/install.sh | sh</code></pre>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Log In</h3>
+      <h3 id="log-in" data-scroll-spy-target="step" data-step="log-in" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Log In</h3>
       <p class="mt-3">Connect the CLI to your PodRead account:</p>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>podread auth login</code></pre>
       <p class="mt-3">
         A browser window opens where you confirm a device code. Once confirmed, the CLI is authenticated.
       </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Create an Episode</h3>
+      <h3 id="create-an-episode" data-scroll-spy-target="step" data-step="create-an-episode" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Create an Episode</h3>
       <p class="mt-3">From a URL:</p>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>podread episode create --url https://example.com/article</code></pre>
 
@@ -35,22 +52,22 @@
         The CLI waits for processing to finish by default (usually 1-5 minutes). Add <strong class="text-mist-950 dark:text-white">--no-wait</strong> to return immediately.
       </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Choose a Voice</h3>
+      <h3 id="choose-a-voice" data-scroll-spy-target="step" data-step="choose-a-voice" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Choose a Voice</h3>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>podread voices
 podread episode create --url https://example.com/article --voice alloy</code></pre>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Manage Episodes</h3>
+      <h3 id="manage-episodes" data-scroll-spy-target="step" data-step="manage-episodes" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Manage Episodes</h3>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>podread episode list              # recent episodes
 podread episode status &lt;id&gt;       # check processing status
 podread episode delete &lt;id&gt;</code></pre>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">Get Your Feed</h3>
+      <h3 id="get-your-feed" data-scroll-spy-target="step" data-step="get-your-feed" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">Get Your Feed</h3>
       <pre class="mt-2 rounded-lg bg-mist-50 dark:bg-mist-900 p-4 text-sm text-mist-950 dark:text-mist-200 overflow-x-auto"><code>podread feed</code></pre>
       <p class="mt-3">
         Add the URL to any podcast app. New episodes appear automatically.
       </p>
 
-      <h3 class="mt-8 text-base font-semibold text-mist-950 dark:text-white">More Info</h3>
+      <h3 id="more-info" data-scroll-spy-target="step" data-step="more-info" class="mt-8 scroll-mt-24 text-base font-semibold text-mist-950 dark:text-white">More Info</h3>
       <p class="mt-3">
         Full documentation and source code are available on
         <a href="https://github.com/jesse-spevack/podread-cli" class="text-mist-950 underline dark:text-white">GitHub</a>.

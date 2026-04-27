@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_24_050243) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_100000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -309,21 +309,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_050243) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "subscriptions", force: :cascade do |t|
-    t.datetime "cancel_at"
-    t.datetime "canceled_at"
-    t.datetime "created_at", null: false
-    t.datetime "current_period_end", null: false
-    t.integer "status", default: 0, null: false
-    t.string "stripe_price_id", null: false
-    t.string "stripe_subscription_id", null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["current_period_end"], name: "index_subscriptions_on_current_period_end"
-    t.index ["stripe_subscription_id"], name: "index_subscriptions_on_stripe_subscription_id", unique: true
-    t.index ["user_id"], name: "index_subscriptions_on_user_id", unique: true
-  end
-
   create_table "tts_usages", force: :cascade do |t|
     t.integer "character_count", null: false
     t.integer "cost_cents", null: false
@@ -394,5 +379,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_050243) do
   add_foreign_key "podcast_memberships", "users"
   add_foreign_key "sent_messages", "users"
   add_foreign_key "sessions", "users"
-  add_foreign_key "subscriptions", "users"
 end

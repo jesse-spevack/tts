@@ -13,10 +13,10 @@ class ChecksEpisodeCreationPermission
   def call
     return Result.success if user.complimentary? || user.unlimited?
 
-    if user.free?
-      check_free_quota
-    else
+    if user.on_credit_path?
       check_credit_balance
+    else
+      check_free_quota
     end
   end
 
