@@ -35,7 +35,13 @@ class CloudStorage
 
   private
 
+  # When podcast_id is set, paths are scoped under podcasts/<podcast_id>/.
+  # When podcast_id is nil, paths are passed through unchanged — used by
+  # callers (e.g. ProcessesNarration) that don't belong to a podcast and
+  # should write at top-level prefixes like narrations/.
   def scoped_path(path)
+    return path if @podcast_id.nil?
+
     "podcasts/#{@podcast_id}/#{path}"
   end
 
