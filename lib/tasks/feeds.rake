@@ -55,6 +55,27 @@ namespace :feeds do
     log "Done! #{succeeded} succeeded, #{failed} failed (#{total} total)"
   end
 
+  desc "Rewrite legacy verynormal-branded podcast titles and descriptions to PodRead defaults"
+  task rebrand_verynormal_defaults: :environment do
+    # Old defaults seeded by db/migrate/20251111064218_backfill_podcasts_for_existing_users.rb:
+    #   title:       "<email>'s Very Normal Podcast"
+    #   description: "My podcast created with tts.verynormal.dev"
+    # Only rewrite rows whose fields still match those exact patterns; never
+    # clobber a row a user has customized.
+    stale_title_pattern = "% Very Normal Podcast"
+    stale_description = "My podcast created with tts.verynormal.dev"
+    new_title = "PodRead Podcast"
+    new_description = "My podcast created with #{AppConfig::Domain::HOST}"
+
+    title_updates = Podcast.where("title LIKE ?", stale_title_pattern)
+                           .update_all(title: new_title)
+    description_updates = Podcast.where(description: stale_description)
+                                 .update_all(description: new_description)
+
+    log "Rewrote #{title_updates} stale title(s) to #{new_title.inspect}"
+    log "Rewrote #{description_updates} stale description(s) to #{new_description.inspect}"
+  end
+
   def log(message, level: :info)
     puts message
     Rails.logger.public_send(level, "[feeds] #{message}")

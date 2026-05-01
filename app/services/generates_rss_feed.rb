@@ -67,8 +67,10 @@ class GeneratesRssFeed
     xml.link podcast_config["link"]
     if podcast_config["feed_url"]
       xml.tag! "atom:link", href: podcast_config["feed_url"], rel: "self", type: "application/rss+xml"
-      xml.tag! "itunes:new-feed-url", podcast_config["feed_url"]
     end
+    xml.lastBuildDate Time.current.rfc2822
+    newest_pub_date = episodes.maximum(:created_at)
+    xml.pubDate newest_pub_date.rfc2822 if newest_pub_date
     xml.language podcast_config["language"]
     xml.tag! "itunes:author", podcast_config["author"]
     xml.tag! "itunes:email", podcast_config["email"]

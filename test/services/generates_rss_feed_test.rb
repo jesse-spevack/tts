@@ -73,10 +73,37 @@ class GeneratesRssFeedTest < ActiveSupport::TestCase
     assert result.include?('rel="self"')
   end
 
-  test "includes itunes:new-feed-url tag for feed migration" do
+  test "does not emit itunes:new-feed-url tag (feed has not migrated)" do
     result = GeneratesRssFeed.call(podcast: @podcast)
 
-    expected_url = "https://example.com/feeds/#{@podcast.podcast_id}.xml"
-    assert result.include?("<itunes:new-feed-url>#{expected_url}</itunes:new-feed-url>")
+    refute result.include?("itunes:new-feed-url"),
+      "feed should not advertise a permanent migration when the URL has not changed"
+  end
+
+  test "emits well-formed lastBuildDate at render time" do
+    travel_to(Time.utc(2026, 5, 1, 12, 0, 0)) do
+      expected = Time.current.rfc2822
+      result = GeneratesRssFeed.call(podcast: @podcast)
+
+      assert result.include?("<lastBuildDate>#{expected}</lastBuildDate>"),
+        "expected <lastBuildDate>#{expected}</lastBuildDate> in feed"
+    end
+  end
+
+  test "emits channel-level pubDate matching newest item before any <item>" do
+    result = GeneratesRssFeed.call(podcast: @podcast)
+
+    newest_created_at = @podcast.episodes
+                                .where(status: :complete, deleted_at: nil)
+                                .maximum(:created_at)
+    assert newest_created_at.present?, "fixture sanity: expected at least one complete episode"
+
+    pubdate_tag = "<pubDate>#{newest_created_at.rfc2822}</pubDate>"
+    first_pubdate = result.index(pubdate_tag)
+    first_item = result.index("<item>")
+    assert first_pubdate, "expected a <pubDate> with newest item's timestamp"
+    assert first_item, "expected at least one <item> in the feed"
+    assert first_pubdate < first_item,
+      "expected channel-level <pubDate> before the first <item> (got pubDate at #{first_pubdate}, item at #{first_item})"
   end
 end
