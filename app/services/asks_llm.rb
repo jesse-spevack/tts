@@ -5,7 +5,7 @@ class AsksLlm
 
   # NOTE: The structured output config below (generationConfig with responseSchema)
   # is Gemini-specific. If switching to a different provider, update the ask method.
-  DEFAULT_MODEL = "gemini-2.5-flash"
+  DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
   PROVIDER = :vertexai
 
   # JSON schema for structured output - guarantees valid JSON responses
