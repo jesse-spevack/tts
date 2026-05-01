@@ -62,17 +62,33 @@ namespace :feeds do
     #   description: "My podcast created with tts.verynormal.dev"
     # Only rewrite rows whose fields still match those exact patterns; never
     # clobber a row a user has customized.
+    #
+    # Title format mirrors CreatesDefaultPodcast for new users:
+    #   "PodRead Podcast: <email>"
     stale_title_pattern = "% Very Normal Podcast"
     stale_description = "My podcast created with tts.verynormal.dev"
-    new_title = "PodRead Podcast"
     new_description = "My podcast created with #{AppConfig::Domain::HOST}"
 
-    title_updates = Podcast.where("title LIKE ?", stale_title_pattern)
-                           .update_all(title: new_title)
+    # Title rewrite is per-row because it interpolates the owning user's email.
+    # N is small (handful of backfilled rows), so a find_each loop is fine.
+    stale_title_scope = Podcast.where("title LIKE ?", stale_title_pattern)
+    orphans = stale_title_scope.left_joins(:users).where(users: { id: nil })
+    if orphans.exists?
+      orphan_ids = orphans.pluck(:podcast_id)
+      abort "ERROR: #{orphan_ids.length} podcast(s) match the stale title pattern but have no associated user; refusing to rewrite to a generic title. Orphan podcast_ids: #{orphan_ids.join(", ")}"
+    end
+
+    title_updates = 0
+    stale_title_scope.includes(:users).find_each do |podcast|
+      email = podcast.users.first&.email_address
+      podcast.update!(title: "PodRead Podcast: #{email}")
+      title_updates += 1
+    end
+
     description_updates = Podcast.where(description: stale_description)
                                  .update_all(description: new_description)
 
-    log "Rewrote #{title_updates} stale title(s) to #{new_title.inspect}"
+    log "Rewrote #{title_updates} stale title(s) to \"PodRead Podcast: <email>\""
     log "Rewrote #{description_updates} stale description(s) to #{new_description.inspect}"
   end
 
