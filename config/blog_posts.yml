@@ -1,6 +1,12 @@
 # Curated PodRead-themed posts from verynormal.info.
 # Rendered on /blog. Add entries as new PodRead posts are published.
 
+- title: "No more PodRead subscription"
+  url: "https://verynormal.info/no-more-podread-subscription/"
+  published_on: 2026-04-30
+  excerpt: "PodRead is moving from unlimited monthly subscriptions to credit packs — because AI inference is not zero marginal cost."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/04/jessespevack_A_simple_robotic_arm_attached_to_radio_device_wi_4ec7ddc8-d046-4d7a-8eda-af46d309036a_2.png"
+
 - title: "Pay per narration"
   url: "https://verynormal.info/pay-per-narration/"
   published_on: 2026-04-19
