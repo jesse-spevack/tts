@@ -8,8 +8,6 @@ class ProcessesNarration
 
   class ProcessingError < StandardError; end
 
-  GCS_NARRATION_SCOPE = "narrations"
-
   def self.call(narration:)
     new(narration: narration).call
   end
@@ -195,7 +193,7 @@ class ProcessesNarration
   end
 
   def upload_audio(audio_content, gcs_episode_id)
-    @uploaded_audio_path = "episodes/#{gcs_episode_id}.mp3"
+    @uploaded_audio_path = "narrations/#{gcs_episode_id}.mp3"
     cloud_storage.upload_content(
       content: audio_content,
       remote_path: @uploaded_audio_path
@@ -215,7 +213,7 @@ class ProcessesNarration
   end
 
   def cloud_storage
-    @cloud_storage ||= CloudStorage.new(podcast_id: GCS_NARRATION_SCOPE)
+    @cloud_storage ||= CloudStorage.new(podcast_id: nil)
   end
 
   def cleanup_orphaned_audio

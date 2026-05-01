@@ -46,6 +46,12 @@ module Api
 
         test "show includes audio_url when narration is complete" do
           narration = narrations(:completed)
+          # Stub the signed-URL generator — it talks to GCS/IAM in real life,
+          # which we don't want to exercise from a controller integration test.
+          # Service-level coverage lives in GeneratesNarrationAudioUrlTest.
+          stubbed_url = "https://storage.googleapis.com/test/narrations/#{narration.gcs_episode_id}.mp3?X-Goog-Signature=abc"
+          Mocktail.replace(GeneratesNarrationAudioUrl)
+          stubs { |m| GeneratesNarrationAudioUrl.call(m.any) }.with { stubbed_url }
 
           get api_v1_mpp_narration_path(narration.prefix_id), as: :json
 
@@ -58,6 +64,8 @@ module Api
 
         test "show includes duration_seconds when narration is complete" do
           narration = narrations(:completed)
+          Mocktail.replace(GeneratesNarrationAudioUrl)
+          stubs { |m| GeneratesNarrationAudioUrl.call(m.any) }.with { "https://example.com/signed.mp3" }
 
           get api_v1_mpp_narration_path(narration.prefix_id), as: :json
 

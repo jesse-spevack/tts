@@ -6,10 +6,6 @@ module Api
     # (cookie-based), used by the Stimulus cost_preview_controller on the
     # new-episode form to reactively show "This will cost N credits" as the
     # user types, switches voice, or picks a file.
-    #
-    # NOT the same as Api::Internal::EpisodesController, which handles the
-    # generator service's PATCH callback with X-Generator-Secret header auth.
-    # Different auth model → different controller.
     class CostPreviewController < ApplicationController
       # Session-authenticated JSON endpoint called by same-origin JS. The
       # Stimulus controller forwards the Rails CSRF token in the

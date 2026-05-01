@@ -1,0 +1,29 @@
+<%# locals: (current:) %>
+<%# Mirrors shared/_help_layout.html.erb so /docs and /help share one      %>
+<%# left-rail layout. Each docs page provides its own hero (badge, large    %>
+<%# serif title, lead paragraph) inside the yielded body — no shared page  %>
+<%# header here. Pages opt into the right-rail "On this page" ToC by        %>
+<%# setting content_for(:right_toc) { render "shared/docs_right_toc",       %>
+<%# steps: [["#anchor", "Label"], ...] }.                                   %>
+<% has_right_toc = content_for?(:right_toc) %>
+<div class="relative isolate" data-controller="copy-docs">
+  <div class="absolute inset-x-0 top-0 -z-10 h-[480px] bg-linear-to-b from-mist-50 to-transparent dark:from-mist-900/40"></div>
+  <div class="mx-auto max-w-7xl px-6 lg:px-10">
+    <div class="flex gap-10 pt-8">
+      <aside class="hidden md:block w-48 shrink-0" data-copy-skip>
+        <%= render "shared/docs_nav", current: current %>
+      </aside>
+      <div class="min-w-0 flex-1 pb-24" data-copy-docs-target="source">
+        <div class="md:hidden mb-8" data-copy-skip>
+          <%= render "shared/docs_nav", current: current %>
+        </div>
+        <%= yield %>
+      </div>
+      <% if has_right_toc %>
+        <div class="hidden xl:block w-[220px] shrink-0">
+          <%= yield :right_toc %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -18,13 +18,61 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  # --- agent-team-70dc: getting-started walkthrough ---
+
+  test "GET /docs/mpp/getting-started renders the walkthrough" do
+    get docs_mpp_getting_started_path
+
+    assert_response :ok
+    assert_select "h1", text: /MPP getting started/i
+    # Sections we promised in the spec.
+    assert_select "section#prerequisites"
+    assert_select "section#rabby"
+    assert_select "section#bridge"
+    assert_select "section#mppx"
+    assert_select "section#request"
+    assert_select "section#audio"
+    assert_select "section#pitfalls"
+    assert_select "section#costs"
+  end
+
+  test "GET /docs/mpp/getting-started does not require authentication" do
+    get docs_mpp_getting_started_path
+
+    assert_response :ok
+  end
+
+  test "GET /docs/mpp/getting-started warns about Coinbase Wallet token-list gap" do
+    get docs_mpp_getting_started_path
+
+    assert_response :ok
+    assert_match(/Coinbase Wallet/, response.body)
+    assert_match(/Rabby/, response.body)
+  end
+
+  test "GET /docs/mpp/getting-started documents Tempo network params" do
+    get docs_mpp_getting_started_path
+
+    assert_response :ok
+    assert_match("rpc.tempo.xyz", response.body)
+    assert_match("4217", response.body)
+  end
+
+  test "GET /docs/mpp links to getting-started walkthrough" do
+    get docs_mpp_path
+
+    assert_response :ok
+    assert_select "a[href=?]", docs_mpp_getting_started_path
+  end
+
   # --- Snapshot pin for docs/mpp.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # MPP-scoped bead edits the file. Last bumped for agent-team-3ore
-  # (add 'Other clients' subsection — mppx + @stripe/link-cli
-  # positioning), replacing the pre-3ore snapshot from agent-team-cd53.
-  MPP_DOCS_SHA256 = "fb60b0c194c20598efb133163388a458ee90ddf71e86dbcc8c457709648304a7"
+  # MPP-scoped bead edits the file. Last bumped for agent-team-udkz
+  # (left-rail nav layout — moved outer chrome and right TOC into
+  # shared/_docs_layout + shared/_docs_right_toc), replacing the
+  # pre-udkz snapshot from agent-team-70dc.
+  MPP_DOCS_SHA256 = "e13c4bcea7d6160e3570aa055da114f8df89b7f78e99ddb511cedb13e1b00d76"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
@@ -58,8 +106,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/episodes.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # episodes-scoped bead edits the file. Established by agent-team-zhnc.
-  EPISODES_DOCS_SHA256 = "6c3dd2a816a0a528faab606092e29de04c1da6210dff89221f9649b197eb3c9f"
+  # episodes-scoped bead edits the file. Last bumped for agent-team-udkz
+  # (left-rail nav layout), established by agent-team-zhnc.
+  EPISODES_DOCS_SHA256 = "e9ba0855b782f7c4244b2cae8466c48d5f3ed28c9078a6fc90ed3ccb2c26b26c"
 
   test "app/views/docs/episodes.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/episodes.html.erb")
@@ -82,8 +131,9 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/authentication.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # authentication-scoped bead edits the file. Established by agent-team-zhnc.
-  AUTHENTICATION_DOCS_SHA256 = "83a61c9ffdc048f30eb2b22391932ffe8c380486a56121a03c884e184d438792"
+  # authentication-scoped bead edits the file. Last bumped for
+  # agent-team-udkz (left-rail nav layout), established by agent-team-zhnc.
+  AUTHENTICATION_DOCS_SHA256 = "71eb60819f9168e0bef31dd009ab9dcce15150aa030cc86b182b3ae431035094"
 
   test "app/views/docs/authentication.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/authentication.html.erb")

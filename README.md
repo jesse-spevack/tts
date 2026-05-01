@@ -131,12 +131,6 @@ bin/importmap audit
 | `APP_HOST` | Production hostname |
 | `MAILER_FROM_ADDRESS` | Email sender address |
 
-### Optional
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GENERATOR_CALLBACK_SECRET` | Secret for internal episode API callbacks | - |
-
 ## Architecture
 
 ### Request Flow
