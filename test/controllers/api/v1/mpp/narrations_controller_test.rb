@@ -192,14 +192,16 @@ module Api
             assert_match(/\APayment /, response.headers["WWW-Authenticate"])
           end
 
-          test "POST without Payment header returns challenge body with id/amount/currency/methods" do
+          test "POST without Payment header returns challenge body with id/prices/currency/methods" do
             post api_v1_mpp_narrations_path, params: @valid_params, as: :json
 
             assert_response :payment_required
             json = response.parsed_body
             assert json["challenge"].present?, "Expected 'challenge' key in 402 body"
             assert json["challenge"]["id"].present?
-            assert json["challenge"]["amount"].present?
+            assert json["challenge"]["prices"].present?
+            assert json["challenge"]["prices"]["tempo"].present?
+            assert json["challenge"]["prices"]["stripe"].present?
             assert json["challenge"]["currency"].present?
             assert json["challenge"]["methods"].present?
           end
@@ -241,30 +243,37 @@ module Api
             assert_equal [ "tempo", "stripe" ], json["challenge"]["methods"]
           end
 
-          test "POST without Payment header, voice=felix (Standard) returns 402 with price 75" do
+          test "POST without Payment header, voice=felix (Standard) returns 402 with per-scheme prices" do
             post api_v1_mpp_narrations_path,
               params: @valid_params.merge(voice: "felix"),
               as: :json
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
-            assert_equal 75, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS, json["challenge"]["prices"]["stripe"]
+            assert_equal 75, json["challenge"]["prices"]["tempo"]
+            assert_equal 150, json["challenge"]["prices"]["stripe"]
           end
 
-          test "POST without Payment header, voice=callum (Premium) returns 402 with price 150" do
+          test "POST without Payment header, voice=callum (Premium) returns 402 with per-scheme prices" do
             post api_v1_mpp_narrations_path,
               params: @valid_params.merge(voice: "callum"),
               as: :json
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"]
-            assert_equal 150, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["stripe"]
+            assert_equal 200, json["challenge"]["prices"]["tempo"]
+            assert_equal 250, json["challenge"]["prices"]["stripe"]
+            assert_not_equal json["challenge"]["prices"]["tempo"],
+              json["challenge"]["prices"]["stripe"],
+              "Premium tier must quote different prices per scheme (Tempo $2.00 vs SPT $2.50)"
           end
 
-          test "POST without Payment header and no voice param defaults to Voice::DEFAULT_KEY (felix/Standard/75)" do
-            # DEFAULT_KEY is 'felix', which is Standard tier → 75c
+          test "POST without Payment header and no voice param defaults to Voice::DEFAULT_KEY (felix/Standard)" do
+            # DEFAULT_KEY is 'felix', which is Standard tier
             assert_equal "felix", Voice::DEFAULT_KEY
             assert_equal :standard, Voice.find(Voice::DEFAULT_KEY).tier
 
@@ -272,8 +281,8 @@ module Api
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
-            assert_equal 75, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal 75, json["challenge"]["prices"]["tempo"]
           end
 
           # -------------------------------------------------------------------

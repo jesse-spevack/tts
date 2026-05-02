@@ -78,7 +78,10 @@ module Api
             # clients should parse the WWW-Authenticate header to
             # discover the stripe challenge id.
             id: tempo_challenge[:id],
-            amount: outcome.amount_cents,
+            prices: {
+              tempo: outcome.tempo_amount_cents,
+              stripe: outcome.stripe_amount_cents
+            },
             currency: AppConfig::Mpp::CURRENCY,
             methods: [ "tempo", "stripe" ],
             realm: tempo_challenge[:realm],

@@ -2,10 +2,10 @@
 
 module Mpp
   # Provisions a 402 challenge: allocates a Tempo deposit address and
-  # signs parallel tempo + stripe challenges against a shared price and
-  # expiry. Persists one pending MppPayment row per challenge_id (one
-  # per method, since challenge_id is method-bound via HMAC); the unused
-  # row is swept by CleanupStaleMppPaymentsJob after CHALLENGE_TTL_SECONDS.
+  # signs parallel tempo + stripe challenges, each at its own per-scheme
+  # price. Persists one pending MppPayment row per challenge_id (one per
+  # method) at the matching scheme's amount; the unused row is swept by
+  # CleanupStaleMppPaymentsJob after CHALLENGE_TTL_SECONDS.
   class ProvisionsChallenge
     Provisioned = Data.define(:tempo_challenge, :stripe_challenge, :deposit_address)
 
@@ -13,17 +13,18 @@ module Mpp
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:, voice_tier:)
-      @amount_cents = amount_cents
+    def initialize(tempo_amount_cents:, stripe_amount_cents:, currency:, voice_tier:)
+      @tempo_amount_cents = tempo_amount_cents
+      @stripe_amount_cents = stripe_amount_cents
       @currency = currency
       @voice_tier = voice_tier
     end
 
     def call
-      # Provision the deposit address first so the Tempo challenge can
-      # bind to it; both challenges share amount, expiry, and voice_tier.
+      # The deposit-address PI charges in fiat cents and lives on the
+      # tempo-method side, so it gets the tempo amount.
       deposit_result = Mpp::CreatesDepositAddress.call(
-        amount_cents: amount_cents,
+        amount_cents: tempo_amount_cents,
         currency: currency
       )
       return deposit_result unless deposit_result.success?
@@ -32,7 +33,7 @@ module Mpp
       payment_intent_id = deposit_result.data[:payment_intent_id]
 
       tempo_challenge = Mpp::GeneratesChallenge.call(
-        amount_cents: amount_cents,
+        amount_cents: tempo_amount_cents,
         currency: currency,
         recipient: deposit_address,
         voice_tier: voice_tier,
@@ -40,16 +41,14 @@ module Mpp
       ).data
 
       stripe_challenge = Mpp::GeneratesChallenge.call(
-        amount_cents: amount_cents,
+        amount_cents: stripe_amount_cents,
         currency: currency,
         voice_tier: voice_tier,
         method: :stripe
       ).data
 
-      # The stripe row's stripe_payment_intent_id is populated by
-      # VerifiesSptCredential at verify time.
       MppPayment.create!(
-        amount_cents: amount_cents,
+        amount_cents: tempo_amount_cents,
         currency: currency,
         challenge_id: tempo_challenge[:id],
         deposit_address: deposit_address,
@@ -58,7 +57,7 @@ module Mpp
       )
 
       MppPayment.create!(
-        amount_cents: amount_cents,
+        amount_cents: stripe_amount_cents,
         currency: currency,
         challenge_id: stripe_challenge[:id],
         status: :pending
@@ -75,6 +74,6 @@ module Mpp
 
     private
 
-    attr_reader :amount_cents, :currency, :voice_tier
+    attr_reader :tempo_amount_cents, :stripe_amount_cents, :currency, :voice_tier
   end
 end

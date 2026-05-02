@@ -141,12 +141,14 @@ class AppConfig
 
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
-    # Tiered per-narration pricing. Standard voices use Google TTS Standard
-    # ($4/M chars COGS); Premium voices use Chirp3-HD ($30/M chars COGS) —
-    # 7.5× delta on the biggest input cost line justifies a split.
-    # See agent-team-0g5 for the full cost model.
-    PRICE_STANDARD_CENTS = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
-    PRICE_PREMIUM_CENTS = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 150).to_i
+    # Tiered per-narration pricing, split by payment scheme. Tempo is on-chain
+    # with near-zero per-tx cost; SPT (Stripe) bills 2.9% + $0.30 per redemption,
+    # so SPT prices are bumped to absorb that fee. Standard vs Premium tiering
+    # remains driven by Chirp3-HD COGS (~7.5× input cost vs Google Standard).
+    PRICE_STANDARD_CENTS     = ENV.fetch("MPP_PRICE_STANDARD_CENTS", 75).to_i
+    PRICE_PREMIUM_CENTS      = ENV.fetch("MPP_PRICE_PREMIUM_CENTS", 200).to_i
+    SPT_PRICE_STANDARD_CENTS = ENV.fetch("MPP_SPT_PRICE_STANDARD_CENTS", 150).to_i
+    SPT_PRICE_PREMIUM_CENTS  = ENV.fetch("MPP_SPT_PRICE_PREMIUM_CENTS", 250).to_i
     CURRENCY = ENV.fetch("MPP_CURRENCY", "usd")
     CHARACTER_LIMIT = 20_000
     CHALLENGE_TTL_SECONDS = ENV.fetch("MPP_CHALLENGE_TTL_SECONDS", 300).to_i

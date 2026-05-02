@@ -68,11 +68,10 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/mpp.html.erb ---
   # Pins the file's exact bytes so any accidental copy sweep from an
   # unrelated bead is caught by test. Bumped deliberately whenever an
-  # MPP-scoped bead edits the file. Last bumped for agent-team-udkz
-  # (left-rail nav layout — moved outer chrome and right TOC into
-  # shared/_docs_layout + shared/_docs_right_toc), replacing the
-  # pre-udkz snapshot from agent-team-70dc.
-  MPP_DOCS_SHA256 = "e13c4bcea7d6160e3570aa055da114f8df89b7f78e99ddb511cedb13e1b00d76"
+  # MPP-scoped bead edits the file. Last bumped for agent-team-k71e.7
+  # (link-cli flip to supported + per-scheme pricing + stripe-method
+  # protocol branch), replacing the pre-k71e.7 snapshot from agent-team-udkz.
+  MPP_DOCS_SHA256 = "0daa00498663a47fc6fe9efc33e8b3bb9004ad0db3c724c04ff012e44b53525b"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
@@ -80,6 +79,74 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_equal MPP_DOCS_SHA256, current,
       "docs/mpp.html.erb has changed. If this change is intentional " \
       "and scoped to an MPP bead, bump MPP_DOCS_SHA256 to the new hash."
+  end
+
+  # --- agent-team-bmiz: link-cli walkthrough ---
+
+  test "GET /docs/mpp/link-cli renders the walkthrough" do
+    get docs_mpp_link_cli_path
+
+    assert_response :ok
+    assert_select "h1", text: /link-cli/i
+    assert_select "section#install"
+    assert_select "section#login"
+    assert_select "section#payment-methods"
+    assert_select "section#probe"
+    assert_select "section#spend-request"
+    assert_select "section#approve"
+    assert_select "section#pay"
+    assert_select "section#poll"
+  end
+
+  test "GET /docs/mpp/link-cli does not require authentication" do
+    get docs_mpp_link_cli_path
+
+    assert_response :ok
+  end
+
+  test "GET /docs/mpp/link-cli notes the zsh quoting requirement for csmrpd_* ids" do
+    get docs_mpp_link_cli_path
+
+    assert_response :ok
+    assert_match(/zsh/i, response.body)
+    assert_match(/csmrpd_/, response.body)
+  end
+
+  test "GET /docs/mpp/link-cli advertises PodRead's networkId" do
+    get docs_mpp_link_cli_path
+
+    assert_response :ok
+    assert_match("profile_61UbsYpl4SxclGNZQA6UbsYpSGSQ2OwdqYukbeHlQOwS", response.body)
+  end
+
+  test "GET /docs/mpp/link-cli documents the per-scheme prices for both tiers" do
+    get docs_mpp_link_cli_path
+
+    assert_response :ok
+    assert_match(/\$0\.75/, response.body)
+    assert_match(/\$1\.50/, response.body)
+    assert_match(/\$2\.00/, response.body)
+    assert_match(/\$2\.50/, response.body)
+  end
+
+  test "GET /docs/mpp links to the link-cli walkthrough" do
+    get docs_mpp_path
+
+    assert_response :ok
+    assert_select "a[href=?]", docs_mpp_link_cli_path
+  end
+
+  # --- Snapshot pin for docs/mpp/link_cli.html.erb ---
+  # Pins the new walkthrough's bytes per the snapshot-pin convention.
+  # Established by agent-team-bmiz.
+  MPP_LINK_CLI_DOCS_SHA256 = "ea5c98c70abd63709bba3b98cb7a9d791e3607130861fd982570e8dc65ddd9b3"
+
+  test "app/views/docs/mpp_link_cli.html.erb bytes match the pinned snapshot" do
+    path = Rails.root.join("app/views/docs/mpp_link_cli.html.erb")
+    current = Digest::SHA256.hexdigest(File.read(path))
+    assert_equal MPP_LINK_CLI_DOCS_SHA256, current,
+      "docs/mpp_link_cli.html.erb has changed. If this change is intentional " \
+      "and scoped to an MPP bead, bump MPP_LINK_CLI_DOCS_SHA256 to the new hash."
   end
 
   # --- iny7: docs/episodes content rewrite ---

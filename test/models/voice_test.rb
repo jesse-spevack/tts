@@ -66,17 +66,30 @@ class VoiceTest < ActiveSupport::TestCase
     refute Voice.find("callum").standard?
   end
 
-  test "price_cents returns PRICE_PREMIUM_CENTS for premium voices" do
+  test "price_cents defaults to tempo scheme and returns PRICE_PREMIUM_CENTS for premium voices" do
     assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, Voice.find("callum").price_cents
+    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, Voice.find("callum").price_cents(scheme: :tempo)
   end
 
-  test "price_cents returns PRICE_STANDARD_CENTS for standard voices" do
+  test "price_cents defaults to tempo scheme and returns PRICE_STANDARD_CENTS for standard voices" do
     assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, Voice.find("felix").price_cents
+    assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, Voice.find("felix").price_cents(scheme: :tempo)
   end
 
-  test "default price_cents values reflect the locked rates (75 standard, 150 premium)" do
-    assert_equal 75, AppConfig::Mpp::PRICE_STANDARD_CENTS
-    assert_equal 150, AppConfig::Mpp::PRICE_PREMIUM_CENTS
+  test "price_cents(scheme: :stripe) returns SPT prices" do
+    assert_equal AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS, Voice.find("felix").price_cents(scheme: :stripe)
+    assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, Voice.find("callum").price_cents(scheme: :stripe)
+  end
+
+  test "default price values reflect locked per-scheme rates" do
+    assert_equal 75,  AppConfig::Mpp::PRICE_STANDARD_CENTS
+    assert_equal 200, AppConfig::Mpp::PRICE_PREMIUM_CENTS
+    assert_equal 150, AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS
+    assert_equal 250, AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS
+  end
+
+  test "price_cents raises ArgumentError for unsupported scheme" do
+    assert_raises(ArgumentError) { Voice.find("felix").price_cents(scheme: :ach) }
   end
 
   test "google_voice_for returns google_voice for valid preference" do

@@ -58,6 +58,7 @@ Rails.application.routes.draw do
   # API documentation
   get "docs/mpp", to: "docs#mpp", as: :docs_mpp
   get "docs/mpp/getting-started", to: "docs#mpp_getting_started", as: :docs_mpp_getting_started
+  get "docs/mpp/link-cli", to: "docs#mpp_link_cli", as: :docs_mpp_link_cli
   get "docs/authentication", to: "docs#authentication", as: :docs_authentication
   get "docs/episodes", to: "docs#episodes", as: :docs_episodes
 
