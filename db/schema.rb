@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_24_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_02_030113) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -155,6 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_24_100000) do
   create_table "llm_usages", force: :cascade do |t|
     t.decimal "cost_cents", precision: 10, scale: 4
     t.datetime "created_at", null: false
+    t.integer "duration_ms"
     t.integer "episode_id", null: false
     t.integer "input_tokens", null: false
     t.string "model_id", null: false

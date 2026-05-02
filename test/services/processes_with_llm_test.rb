@@ -168,6 +168,24 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
     assert true
   end
 
+  test "passes positive integer duration_ms to RecordsLlmUsage" do
+    mock_response = mock_llm_response(
+      content: { title: "T", author: "A", description: "D", content: "C" }.to_json
+    )
+    stub_llm_client(mock_response)
+
+    captured_duration = nil
+    stubs { |m| RecordsLlmUsage.call(episode: m.any, response: m.any, duration_ms: m.any) }.with do |call|
+      captured_duration = call.kwargs[:duration_ms]
+      LlmUsage.new
+    end
+
+    ProcessesWithLlm.call(text: @text, episode: @episode)
+
+    assert_kind_of Integer, captured_duration
+    assert captured_duration >= 0, "expected non-negative duration_ms, got #{captured_duration.inspect}"
+  end
+
   test "uses BuildsPasteProcessingPrompt for paste source type" do
     long_text = "A" * 150
     @episode.update!(source_type: :paste, source_text: long_text)
@@ -204,6 +222,6 @@ class ProcessesWithLlmTest < ActiveSupport::TestCase
   end
 
   def stub_record_usage
-    stubs { |m| RecordsLlmUsage.call(episode: m.any, response: m.any) }.with { LlmUsage.new }
+    stubs { |m| RecordsLlmUsage.call(episode: m.any, response: m.any, duration_ms: m.any) }.with { LlmUsage.new }
   end
 end
