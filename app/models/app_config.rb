@@ -179,7 +179,7 @@ class AppConfig
     # Stripe API version for crypto PaymentIntent endpoints. Must stay
     # on the preview track while Machine Payments Protocol support is
     # gated there.
-    STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
+    STRIPE_API_VERSION = ENV.fetch("STRIPE_API_VERSION", "2026-03-04.preview")
     # The merchant's Stripe Profile ID, advertised as networkId in
     # method="stripe" MPP challenges. mppx 0.6.13's decoder (link-cli
     # decode.ts:75-98) requires methodDetails.networkId on the challenge;
