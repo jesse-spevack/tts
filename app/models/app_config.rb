@@ -180,15 +180,15 @@ class AppConfig
     # on the preview track while Machine Payments Protocol support is
     # gated there.
     STRIPE_API_VERSION = ENV.fetch("MPP_STRIPE_API_VERSION", "2026-03-04.preview")
-    # Stripe MPP namespace identifier for shared_payment_token (SPT)
-    # challenges. mppx 0.6.13's stripe challenge decoder (link-cli
-    # decode.ts:75-98) requires this field — without it mppx throws
-    # "Invalid stripe challenge request: methodDetails.networkId: missing".
-    # TODO(insider): real value pending — see bd note on agent-team-k71e.1.
-    # Default placeholder is fine for issuance: mppx only validates
-    # presence/string-shape. The networkId is echoed back in the credential
-    # at retry time and (will be) cross-checked by Mpp::VerifiesSptCredential
-    # in k71e.5; until then any non-blank string round-trips correctly.
-    STRIPE_NETWORK_ID = ENV.fetch("MPP_STRIPE_NETWORK_ID", "stripe_network_placeholder")
+    # The merchant's Stripe Profile ID, advertised as networkId in
+    # method="stripe" MPP challenges. mppx 0.6.13's decoder (link-cli
+    # decode.ts:75-98) requires methodDetails.networkId on the challenge;
+    # missing field throws "Invalid stripe challenge request:
+    # methodDetails.networkId: missing". The placeholder default is safe
+    # for issuance — mppx only validates presence/string-shape, and the
+    # SPT itself carries merchant binding (Stripe's reference verifier
+    # mppx/dist/stripe/server/Charge.js does not cross-check networkId
+    # on the merchant side).
+    STRIPE_NETWORK_ID = ENV.fetch("STRIPE_NETWORK_ID", "stripe_network_placeholder")
   end
 end
