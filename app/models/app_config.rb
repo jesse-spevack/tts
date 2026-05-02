@@ -176,19 +176,13 @@ class AppConfig
     # block a Rails thread indefinitely.
     TEMPO_RPC_OPEN_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_OPEN_TIMEOUT_SECONDS", 5).to_i
     TEMPO_RPC_READ_TIMEOUT_SECONDS = ENV.fetch("TEMPO_RPC_READ_TIMEOUT_SECONDS", 10).to_i
-    # Stripe API version for crypto PaymentIntent endpoints. Must stay
-    # on the preview track while Machine Payments Protocol support is
-    # gated there.
+    # Pinned to the preview track while shared_payment_granted_token
+    # is private-preview only.
     STRIPE_API_VERSION = ENV.fetch("STRIPE_API_VERSION", "2026-03-04.preview")
-    # The merchant's Stripe Profile ID, advertised as networkId in
-    # method="stripe" MPP challenges. mppx 0.6.13's decoder (link-cli
-    # decode.ts:75-98) requires methodDetails.networkId on the challenge;
-    # missing field throws "Invalid stripe challenge request:
-    # methodDetails.networkId: missing". The placeholder default is safe
-    # for issuance — mppx only validates presence/string-shape, and the
-    # SPT itself carries merchant binding (Stripe's reference verifier
-    # mppx/dist/stripe/server/Charge.js does not cross-check networkId
-    # on the merchant side).
+    # Merchant's Stripe Profile ID, advertised as networkId in
+    # stripe-method 402 challenges. The placeholder default is safe for
+    # issuance — mppx only validates presence/string-shape, and the SPT
+    # carries merchant binding so we don't validate it server-side.
     STRIPE_NETWORK_ID = ENV.fetch("STRIPE_NETWORK_ID", "stripe_network_placeholder")
   end
 end

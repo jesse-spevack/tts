@@ -3,20 +3,9 @@
 require "net/http"
 
 module Mpp
-  # On-chain verification of an mppx tempo-method credential. Extracted from
-  # Mpp::VerifiesCredential as part of agent-team-k71e.4: the dispatcher in
-  # VerifiesCredential routes by challenge.method, and this class owns the
-  # tempo branch (the original behavior, byte-for-byte). The stripe branch
-  # lives in Mpp::VerifiesSptCredential.
-  #
-  # Inputs:
-  #   challenge:    parsed challenge hash from the credential
-  #   payload:      parsed payload hash (carries hash or signature)
-  #   mpp_payment:  pre-loaded MppPayment row (challenge_id ↔ deposit_address)
-  #
-  # Output: same Result shape as the prior monolithic VerifiesCredential —
-  # success(tx_hash:, amount:, recipient:, challenge_id:, voice_tier:) on
-  # green, descriptive Result.failure on every other branch.
+  # On-chain verification of a tempo-method credential: confirms the
+  # client paid the right amount to the right deposit address by
+  # inspecting the Transfer event on the receipt.
   class VerifiesTempoCredential
     include StructuredLogging
 
@@ -26,9 +15,8 @@ module Mpp
       new(**kwargs).call
     end
 
-    # token_address and rpc_url default to AppConfig so production callers
-    # don't have to pass them, but tests (and any future multi-token code
-    # path) can inject alternates without mutating module constants.
+    # token_address and rpc_url default to AppConfig; tests can inject
+    # alternates without mutating module constants.
     def initialize(
       challenge:,
       payload:,
@@ -46,16 +34,13 @@ module Mpp
     def call
       deposit_address = mpp_payment.deposit_address
 
-      # Cache check remains as a freshness short-circuit: the cache entry
-      # expires with CHALLENGE_TTL_SECONDS, so a miss means the challenge
-      # is stale even if the DB row still exists.
+      # Cache miss means the challenge is stale even if the DB row remains;
+      # the cache entry expires with CHALLENGE_TTL_SECONDS.
       cache_key = "mpp:deposit_address:#{deposit_address}"
       return Result.failure("Deposit address not found in cache") unless Rails.cache.read(cache_key)
 
-      # Phase 2: On-chain verification
-      # mppx sends two credential types:
-      #   "hash"      — client already submitted the tx, sends the hash
-      #   "signature" — client sends a signed tx, server submits it
+      # mppx sends either a hash (client-submitted tx) or signature
+      # (client signs, server submits).
       tx_hash = if payload["hash"].present?
         payload["hash"]
       elsif payload["signature"].present?
@@ -65,35 +50,25 @@ module Mpp
       end
       return Result.failure("Missing tx_hash or signature in payload") if tx_hash.nil? || tx_hash.empty?
 
-      # Replay protection
       return Result.failure("Transaction already used") if MppPayment.exists?(tx_hash: tx_hash)
 
-      # Poll for receipt — needed for "signature" type where the tx was
-      # just submitted and may not be mined yet. For "hash" type, the
-      # receipt should be available immediately.
+      # Signature path may not be mined yet; hash path is usually immediate.
       receipt = poll_for_receipt(tx_hash)
       return receipt if receipt.is_a?(Result) && receipt.failure?
 
-      # Verify receipt status
       return Result.failure("Transaction not found") if receipt.nil?
       return Result.failure("Transaction reverted") unless receipt["status"] == "0x1"
 
-      # Phase 3: Transfer event log verification
       request_json = Base64.decode64(challenge["request"])
       request_data = JSON.parse(request_json)
       expected_amount = request_data["amount"]
-      # voice_tier is embedded in the HMAC-signed request blob, so any
-      # tampering is caught by the HMAC check upstream. Downstream callers
-      # still compare this against the tier of the CURRENT request's
-      # voice to catch the "pay Standard, retry Premium" case.
+      # voice_tier is HMAC-bound. The caller also compares this against
+      # the current request's voice tier to catch retry-with-different-tier.
       voice_tier = request_data["voice_tier"]&.to_sym
 
       transfer_result = verify_transfer_log(receipt, deposit_address, expected_amount)
       return transfer_result if transfer_result&.failure?
 
-      # Pure verification — persistence is the caller's responsibility.
-      # The caller looks up the pending MppPayment by challenge_id (created
-      # by CreatesDepositAddress at challenge time) and marks it completed.
       Result.success(
         tx_hash: tx_hash,
         amount: expected_amount,
@@ -161,10 +136,6 @@ module Mpp
 
     def verify_transfer_log(receipt, deposit_address, expected_amount)
       logs = receipt["logs"] || []
-
-      # The challenge request amount is already in token base units (e.g.,
-      # "1000000" for $1 USDC with 6 decimals). Convert to integer for
-      # comparison against the on-chain Transfer event data field.
       expected_base_units = expected_amount.to_i
 
       matching_log = logs.find do |log|
@@ -173,13 +144,12 @@ module Mpp
         next false unless log["address"]&.downcase == token_address.downcase
         next false unless topics[0] == TRANSFER_TOPIC
 
-        # topics[2] contains the recipient address, zero-padded to 32 bytes
-        # Normalize both to 40-char lowercase hex for comparison
+        # topics[2] is the recipient zero-padded to 32 bytes; trim and
+        # normalize both sides to 40-char lowercase hex.
         log_recipient = topics[2].delete_prefix("0x").downcase.rjust(40, "0")[-40..]
         clean_deposit = deposit_address.delete_prefix("0x").downcase.rjust(40, "0")[-40..]
         next false unless log_recipient == clean_deposit
 
-        # Verify amount: data field is hex uint256 in token base units
         log_amount = log["data"].delete_prefix("0x").to_i(16)
         log_amount == expected_base_units
       end

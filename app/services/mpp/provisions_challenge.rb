@@ -1,23 +1,11 @@
 # frozen_string_literal: true
 
 module Mpp
-  # Provisions a 402 Payment Required challenge: allocates a Stripe-backed
-  # crypto deposit address (used by the Tempo on-chain path), HMAC-signs
-  # parallel tempo + stripe challenges against a single price/expiry, and
-  # persists one pending MppPayment row per challenge_id.
-  #
-  # The two-row design is a deliberate trade-off (see bd note on
-  # agent-team-k71e.1): each method's challenge_id is unique because the
-  # method is part of the HMAC pre-image, and Mpp::VerifiesCredential
-  # looks up its MppPayment row via challenge_id (verifies_credential.rb:52).
-  # Persisting one row per challenge keeps that lookup unchanged across
-  # methods. The client picks ONE method at retry time; the other row
-  # stays pending and gets swept by CleanupStaleMppPaymentsJob after
-  # CHALLENGE_TTL_SECONDS.
-  #
-  # Returns Result.success(Provisioned) on success. Controller owns
-  # the response rendering (WWW-Authenticate header + 402 JSON body);
-  # this service owns the business logic.
+  # Provisions a 402 challenge: allocates a Tempo deposit address and
+  # signs parallel tempo + stripe challenges against a shared price and
+  # expiry. Persists one pending MppPayment row per challenge_id (one
+  # per method, since challenge_id is method-bound via HMAC); the unused
+  # row is swept by CleanupStaleMppPaymentsJob after CHALLENGE_TTL_SECONDS.
   class ProvisionsChallenge
     Provisioned = Data.define(:tempo_challenge, :stripe_challenge, :deposit_address)
 
@@ -32,11 +20,8 @@ module Mpp
     end
 
     def call
-      # Step 1: provision the Stripe PaymentIntent + Tempo deposit address
-      # FIRST so the on-chain recipient is known before we sign the tempo
-      # challenge. The stripe-method challenge does not need this — but
-      # we issue both challenges from the same provisioning call to keep
-      # them aligned on amount/expiry/voice_tier.
+      # Provision the deposit address first so the Tempo challenge can
+      # bind to it; both challenges share amount, expiry, and voice_tier.
       deposit_result = Mpp::CreatesDepositAddress.call(
         amount_cents: amount_cents,
         currency: currency
@@ -46,9 +31,6 @@ module Mpp
       deposit_address = deposit_result.data[:deposit_address]
       payment_intent_id = deposit_result.data[:payment_intent_id]
 
-      # Step 2: sign each challenge. Tempo binds the deposit_address into
-      # its HMAC; stripe binds AppConfig::Mpp::STRIPE_NETWORK_ID instead
-      # (SPTs are not chain-bound, so there's no per-charge address).
       tempo_challenge = Mpp::GeneratesChallenge.call(
         amount_cents: amount_cents,
         currency: currency,
@@ -64,12 +46,8 @@ module Mpp
         method: :stripe
       ).data
 
-      # Step 3: persist one pending MppPayment row per challenge_id.
-      # The tempo row carries deposit_address + the deposit-PI; the
-      # stripe row carries neither (Mpp::VerifiesSptCredential, k71e.5,
-      # will populate stripe_payment_intent_id with the SPT-redemption PI
-      # at verify time). VerifiesCredential resolves its row via
-      # challenge_id, so each method's verifier sees its own row.
+      # The stripe row's stripe_payment_intent_id is populated by
+      # VerifiesSptCredential at verify time.
       MppPayment.create!(
         amount_cents: amount_cents,
         currency: currency,

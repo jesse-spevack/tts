@@ -1,67 +1,20 @@
 # frozen_string_literal: true
 
 module Mpp
-  # Redeems a Stripe shared_payment_token (SPT) credential by calling
-  # Stripe::PaymentIntent.create in confirm-and-charge mode and translating
-  # the response into a verifier Result. Single Stripe round-trip per
-  # credential — Stripe collapses validate + charge for SPT.
+  # Redeems a Stripe shared_payment_token by calling PaymentIntent.create
+  # with the token as a one-time payment source. Stripe collapses validate
+  # and charge into a single round-trip.
   #
-  # Per agent-team-p6wb spike findings (and mppx 0.6.x reference impl
-  # at dist/stripe/server/Charge.js):
+  # Returns Result.success(tx_hash: <pi_id>) on a fresh succeeded charge.
+  # Failures carry a code: :replay, :requires_action, :transient,
+  # :card_declined, or :stripe_error.
   #
-  #   Stripe::PaymentIntent.create(
-  #     {
-  #       amount: <challenge.request.amount>,        # fiat cents
-  #       currency: <challenge.request.currency>,    # ISO code, e.g. "usd"
-  #       confirm: true,
-  #       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-  #       shared_payment_granted_token: spt
-  #     },
-  #     {
-  #       idempotency_key: "mppx_<challenge.id>_<spt>",
-  #       stripe_version: AppConfig::Mpp::STRIPE_API_VERSION
-  #     }
-  #   )
-  #
-  # `shared_payment_granted_token` is a Stripe Machine Payments private-preview
-  # field not yet in stripe-ruby 19.x's typed API. It rides through cleanly
-  # via the StripeClient#raw_request path (same pattern PodRead already uses
-  # in Mpp::CreatesDepositAddress for crypto deposits).
-  #
-  # Output:
-  #
-  #   - status=succeeded AND no idempotent-replayed header → Result.success
-  #     with tx_hash (= PaymentIntent id) so the rest of the pipeline
-  #     (FinalizesNarration / FinalizesEpisode / GeneratesReceipt) flows
-  #     unchanged.
-  #
-  #   - idempotent-replayed: true → Result.failure with reason: :replay.
-  #     Stripe still returns the original PaymentIntent on a replayed
-  #     idempotency key; the response header is the only signal.
-  #     ProcessesMppRequest treats any verifier failure as a 402 re-challenge
-  #     so the client can mint a fresh SPT.
-  #
-  #   - status=requires_action → Result.failure with reason: :requires_action.
-  #     3DS/SCA cannot be resolved in the agent flow — re-challenge.
-  #
-  #   - Stripe::CardError or other Stripe::StripeError → Result.failure
-  #     classified by decline_code: try_again_later / processing_error are
-  #     transient (Result.failure with permanent: false so the controller
-  #     can render 503 instead of 402); everything else is permanent.
-  #
-  # NOTE: this verifier does NOT cross-check networkId from the challenge
-  # request blob against any merchant-side identifier. Stripe's reference
-  # verifier (mppx/dist/stripe/server/Charge.js) does not validate networkId
-  # — the SPT itself carries merchant binding via Stripe's API. Adding a
-  # check here would reject legitimate retries that re-mint an SPT against
-  # the same networkId on a fresh challenge. See agent-team-k71e.1 bd notes.
+  # shared_payment_granted_token is private-preview and not in stripe-ruby
+  # 19.x's typed API, so we use raw_request. The SPT carries merchant
+  # binding via Stripe's API — no need to cross-check networkId.
   class VerifiesSptCredential
     include StructuredLogging
 
-    # Stripe decline codes that indicate a transient issue worth retrying.
-    # Per agent-team-p6wb finding 5: try_again_later and processing_error
-    # surface as transient so the controller can render 503 (vs. the default
-    # 402 re-challenge that follows from a permanent decline).
     TRANSIENT_DECLINE_CODES = %w[try_again_later processing_error].freeze
 
     def self.call(**kwargs)
@@ -185,10 +138,8 @@ module Mpp
       )
     end
 
-    # Stripe surfaces decline_code in two places depending on which class
-    # constructed the error: ErrorObject#decline_code on the parsed body
-    # (when stripe-ruby populated json_body), or directly off the json body
-    # hash. Check both so we don't miss it on raw_request responses.
+    # raw_request can surface decline_code either on the parsed
+    # ErrorObject or only in json_body — check both.
     def decline_code_for(error)
       if error.error.respond_to?(:decline_code) && error.error&.decline_code
         return error.error.decline_code
