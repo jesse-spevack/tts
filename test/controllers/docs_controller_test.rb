@@ -71,7 +71,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # MPP-scoped bead edits the file. Last bumped for agent-team-k71e.7
   # (link-cli flip to supported + per-scheme pricing + stripe-method
   # protocol branch), replacing the pre-k71e.7 snapshot from agent-team-udkz.
-  MPP_DOCS_SHA256 = "0daa00498663a47fc6fe9efc33e8b3bb9004ad0db3c724c04ff012e44b53525b"
+  MPP_DOCS_SHA256 = "744d0ff4d167aae0f3192a603a504df15374104ed3cae8f6942c9d391da8fea7"
 
   test "app/views/docs/mpp.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp.html.erb")
