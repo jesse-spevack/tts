@@ -47,16 +47,12 @@ module Mpp
       # get a transient "payment finalized but narration pending" failure,
       # which would surface as a 500 on a client's idempotent retry.
       ActiveRecord::Base.transaction do
-        # Stripe-scheme rows (deposit_address blank) carry the SPT-redemption
-        # PI id in tx_hash; copy it into stripe_payment_intent_id so
-        # Mpp::RefundsPayment can refund the customer if anything downstream
-        # fails. Tempo rows already have the deposit-PI id in
-        # stripe_payment_intent_id from ProvisionsChallenge — leave it.
         update_attrs = {
           status: "completed",
           tx_hash: tx_hash,
           updated_at: Time.current
         }
+        # stripe-scheme rows: tx_hash is the SPT PI; tempo rows have it set in ProvisionsChallenge.
         update_attrs[:stripe_payment_intent_id] = tx_hash if mpp_payment.deposit_address.blank?
 
         rows_updated = MppPayment
