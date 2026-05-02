@@ -18,13 +18,15 @@ class ProcessesWithLlm
     log_info "llm_request_started", input_chars: text.length
 
     prompt = build_prompt
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     response = llm_client.ask(prompt)
+    duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
 
     log_info "llm_response_received", input_tokens: response.input_tokens, output_tokens: response.output_tokens
 
     parsed = parse_response(response.content)
     validated = validate_and_sanitize(parsed)
-    RecordsLlmUsage.call(episode: episode, response: response)
+    RecordsLlmUsage.call(episode: episode, response: response, duration_ms: duration_ms)
 
     log_info "llm_request_completed", extracted_title: validated[:title]
 
