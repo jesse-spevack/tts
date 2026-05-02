@@ -4,23 +4,30 @@ require "test_helper"
 
 class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
   setup do
-    @amount_cents = 100
+    @tempo_amount_cents = 200
+    @stripe_amount_cents = 250
     @currency = "usd"
     @deposit_address = "0x1234567890abcdef1234567890abcdef12345678"
     @payment_intent_id = "pi_test_abc123"
-    # agent-team-909 removed the :premium default on ProvisionsChallenge.
-    # Tests that don't care which tier use @voice_tier.
     @voice_tier = :premium
 
     Mocktail.replace(Mpp::CreatesDepositAddress)
-    stubs { |_m| Mpp::CreatesDepositAddress.call(amount_cents: @amount_cents, currency: @currency) }
+    stubs { |_m| Mpp::CreatesDepositAddress.call(amount_cents: @tempo_amount_cents, currency: @currency) }
       .with { Result.success(deposit_address: @deposit_address, payment_intent_id: @payment_intent_id) }
   end
 
-  test "returns Provisioned with tempo_challenge, stripe_challenge, and deposit_address on success" do
-    result = Mpp::ProvisionsChallenge.call(
-      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
+  def call_provision(**overrides)
+    Mpp::ProvisionsChallenge.call(
+      tempo_amount_cents: @tempo_amount_cents,
+      stripe_amount_cents: @stripe_amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      **overrides
     )
+  end
+
+  test "returns Provisioned with tempo_challenge, stripe_challenge, and deposit_address on success" do
+    result = call_provision
 
     assert result.success?
     assert_kind_of Mpp::ProvisionsChallenge::Provisioned, result.data
@@ -35,48 +42,52 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
   end
 
   test "signs the tempo challenge with the provisioned deposit_address as recipient" do
-    result = Mpp::ProvisionsChallenge.call(
-      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
-    )
+    result = call_provision
 
     request = JSON.parse(Base64.decode64(result.data.tempo_challenge[:request]))
     assert_equal @deposit_address, request["recipient"]
   end
 
   test "stripe challenge request blob includes networkId and fiat-cents amount" do
-    # mppx 0.6.13 stripe decoder requires networkId; without it the client
-    # throws before retrying. Fiat cents (not on-chain base units) match
-    # what the merchant will pass to Stripe::PaymentIntent.create at
-    # verify time (k71e.5).
-    result = Mpp::ProvisionsChallenge.call(
-      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
-    )
+    result = call_provision
 
     request = JSON.parse(Base64.decode64(result.data.stripe_challenge[:request]))
-    assert_equal @amount_cents.to_s, request["amount"]
+    assert_equal @stripe_amount_cents.to_s, request["amount"]
     assert_equal @currency, request["currency"]
     assert_equal AppConfig::Mpp::STRIPE_NETWORK_ID, request["networkId"]
   end
 
-  test "persists two pending MppPayment rows — one per challenge_id" do
+  test "tempo and stripe challenge request blobs carry their own per-scheme amount (evo5)" do
+    result = call_provision
+
+    tempo_decoded = JSON.parse(Base64.decode64(result.data.tempo_challenge[:request]))
+    stripe_decoded = JSON.parse(Base64.decode64(result.data.stripe_challenge[:request]))
+
+    decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
+    expected_tempo_base_units = (@tempo_amount_cents * (10**decimals)) / 100
+    assert_equal expected_tempo_base_units.to_s, tempo_decoded["amount"]
+    assert_equal @stripe_amount_cents.to_s, stripe_decoded["amount"]
+  end
+
+  test "persists two pending MppPayment rows at their per-scheme amounts (evo5)" do
     assert_difference -> { MppPayment.count }, 2 do
-      Mpp::ProvisionsChallenge.call(
-        amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
-      )
+      call_provision
     end
 
-    rows = MppPayment.order(:created_at).last(2)
-    rows.each do |row|
-      assert_equal "pending", row.status
-      assert_equal @amount_cents, row.amount_cents
-      assert_equal @currency, row.currency
-    end
+    result = call_provision
+    tempo_row = MppPayment.find_by!(challenge_id: result.data.tempo_challenge[:id])
+    stripe_row = MppPayment.find_by!(challenge_id: result.data.stripe_challenge[:id])
+
+    assert_equal "pending", tempo_row.status
+    assert_equal "pending", stripe_row.status
+    assert_equal @tempo_amount_cents, tempo_row.amount_cents
+    assert_equal @stripe_amount_cents, stripe_row.amount_cents
+    assert_equal @currency, tempo_row.currency
+    assert_equal @currency, stripe_row.currency
   end
 
   test "tempo MppPayment row carries deposit_address and the deposit-PI; stripe row carries neither" do
-    result = Mpp::ProvisionsChallenge.call(
-      amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
-    )
+    result = call_provision
 
     tempo_row = MppPayment.find_by!(challenge_id: result.data.tempo_challenge[:id])
     stripe_row = MppPayment.find_by!(challenge_id: result.data.stripe_challenge[:id])
@@ -92,21 +103,23 @@ class Mpp::ProvisionsChallengeTest < ActiveSupport::TestCase
   end
 
   test "returns the deposit failure result when provisioning fails" do
-    stubs { |_m| Mpp::CreatesDepositAddress.call(amount_cents: @amount_cents, currency: @currency) }
+    stubs { |_m| Mpp::CreatesDepositAddress.call(amount_cents: @tempo_amount_cents, currency: @currency) }
       .with { Result.failure("Stripe down") }
 
     assert_no_difference -> { MppPayment.count } do
-      result = Mpp::ProvisionsChallenge.call(
-        amount_cents: @amount_cents, currency: @currency, voice_tier: @voice_tier
-      )
+      result = call_provision
       refute result.success?
       assert_equal "Stripe down", result.error
     end
   end
 
-  test "voice_tier is required — omitting raises ArgumentError (agent-team-909)" do
+  test "voice_tier is required — omitting raises ArgumentError" do
     assert_raises(ArgumentError) do
-      Mpp::ProvisionsChallenge.call(amount_cents: @amount_cents, currency: @currency)
+      Mpp::ProvisionsChallenge.call(
+        tempo_amount_cents: @tempo_amount_cents,
+        stripe_amount_cents: @stripe_amount_cents,
+        currency: @currency
+      )
     end
   end
 end

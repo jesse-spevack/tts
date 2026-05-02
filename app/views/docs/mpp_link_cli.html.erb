@@ -1,0 +1,218 @@
+<% content_for :title, "MPP via @stripe/link-cli — PodRead" %>
+
+<% content_for :right_toc do %>
+  <%= render "shared/docs_right_toc", steps: [
+    ["#install", "1. Install link-cli"],
+    ["#login", "2. Authenticate"],
+    ["#payment-methods", "3. List payment methods"],
+    ["#probe", "4. Probe for the challenge"],
+    ["#spend-request", "5. Create a spend request"],
+    ["#approve", "6. Approve in the Link app"],
+    ["#pay", "7. Pay the endpoint"],
+    ["#poll", "8. Poll for audio"],
+    ["#pricing", "Pricing"]
+  ] %>
+<% end %>
+
+<%= render layout: "shared/docs_layout", locals: { current: :mpp_link_cli } do %>
+      <!-- Hero -->
+      <header class="pb-12">
+        <div class="flex items-center gap-x-3 text-sm">
+          <span class="inline-flex items-center gap-x-1.5 rounded-full bg-mist-900 py-1 pl-1 pr-2.5 font-mono text-xs text-white dark:bg-mist-100 dark:text-mist-900">
+            <span class="size-1.5 rounded-full bg-emerald-400 dark:bg-emerald-500"></span>
+            Walkthrough
+          </span>
+          <%= render "docs/copy_for_llm_button" %>
+        </div>
+        <div class="mt-3 text-sm text-mist-500 dark:text-mist-400">
+          End-to-end MPP payment via @stripe/link-cli — fiat-rails alternative to on-chain mppx.
+        </div>
+        <h1 class="mt-6 font-serif text-5xl tracking-tight text-balance text-mist-950 sm:text-6xl dark:text-white">
+          Pay PodRead with @stripe/link-cli
+        </h1>
+        <p class="mt-6 max-w-[65ch] text-pretty text-lg leading-8 text-mist-700 dark:text-mist-300">
+          The <%= link_to "MPP API reference", docs_mpp_path, class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> documents the protocol; this page walks through the eight commands that take you from an empty terminal to a paid narration using <a href="https://github.com/stripe/link-cli" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">@stripe/link-cli</a> and a Stripe Link wallet. No on-chain wallet, no Tempo bridging — just a Link account and a Node.js install.
+        </p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          PodRead's MPP endpoints advertise both <code class="ic">tempo</code> and <code class="ic">stripe</code> challenges in the same 402 response. link-cli reads the stripe-method challenge, mints a Stripe shared payment token (SPT) you approve in the Link app, and replays the request with the credential.
+        </p>
+      </header>
+
+      <!-- 1. Install -->
+      <section id="install" class="scroll-mt-8 pt-8">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">1. Install link-cli</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Install globally so the <code class="ic">link-cli</code> binary is on your PATH.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            npm i -g @stripe/link-cli
+            link-cli --version
+          BASH
+          ) %></code></pre>
+        </figure>
+      </section>
+
+      <!-- 2. Login -->
+      <section id="login" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">2. Authenticate</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Pair the CLI with your Stripe Link account. The <code class="ic">--client-name</code> label is what you'll see when approving requests in the Link app — pick something you'll recognize.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            link-cli auth login --client-name podread-cli
+          BASH
+          ) %></code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          A device-pairing flow opens — confirm in the Link app to finish.
+        </p>
+      </section>
+
+      <!-- 3. Payment methods -->
+      <section id="payment-methods" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">3. List payment methods</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          List the cards/bank accounts attached to your Link wallet and copy the id of the one you'll spend from.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            link-cli payment-methods list
+          BASH
+          ) %></code></pre>
+        </figure>
+        <aside class="mt-6 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-mist-700 dark:border-amber-600 dark:bg-amber-950/30 dark:text-mist-300">
+          <strong class="font-semibold text-mist-950 dark:text-white">zsh quoting gotcha:</strong>
+          Stripe payment-method ids look like <code class="ic">csmrpd_*ABC123</code> — the literal <code class="ic">*</code> is part of the id, not a glob. In zsh (the default macOS shell) this expands as a wildcard and the command will fail with <code class="ic">no matches found</code>. Always quote these ids:
+          <pre class="mt-3 overflow-x-auto rounded bg-mist-950 p-3 font-mono text-xs text-mist-100">link-cli ... --payment-method 'csmrpd_*ABC123'</pre>
+        </aside>
+      </section>
+
+      <!-- 4. Probe -->
+      <section id="probe" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">4. Probe for the challenge</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Hit the endpoint without a credential to read the 402 challenge. The <code class="ic">WWW-Authenticate</code> header carries both methods; you want the stripe one's <code class="ic">networkId</code> and amount. <code class="ic">link-cli mpp decode</code> extracts these for you, but a plain curl works too.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            # Option A — let link-cli decode
+            link-cli mpp decode https://podread.app/api/v1/mpp/narrations \\
+              -X POST \\
+              -d '{"text":"Hello, world.","voice":"callum","title":"Hello"}'
+
+            # Option B — raw curl (read the WWW-Authenticate header)
+            curl -i -X POST https://podread.app/api/v1/mpp/narrations \\
+              -H "Content-Type: application/json" \\
+              -d '{"text":"Hello, world.","voice":"callum","title":"Hello"}'
+          BASH
+          ) %></code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          The stripe-method challenge will carry PodRead's <code class="ic">networkId</code> — <code class="ic">profile_61UbsYpl4SxclGNZQA6UbsYpSGSQ2OwdqYukbeHlQOwS</code> — and an amount in cents that depends on the requested voice's tier (see <a href="#pricing" class="underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300">Pricing</a> below).
+        </p>
+      </section>
+
+      <!-- 5. Spend request -->
+      <section id="spend-request" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">5. Create a spend request</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          A spend request is the SPT precursor — it tells Stripe "I want to authorize this much from this payment method to this merchant network." The amount must match the stripe challenge from Step 4 exactly. Standard (felix) is 150 cents; Premium (callum/elara/lark/nash) is 250 cents.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            link-cli spend-request create \\
+              --credential-type shared_payment_token \\
+              --network-id profile_61UbsYpl4SxclGNZQA6UbsYpSGSQ2OwdqYukbeHlQOwS \\
+              --amount 250 \\
+              --currency usd \\
+              --payment-method 'csmrpd_*ABC123' \\
+              --request-approval
+          BASH
+          ) %></code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Note the resulting <code class="ic">lsrq_…</code> id — you'll pass it back in Step 7. The <code class="ic">--request-approval</code> flag pushes the request to your Link app; without it the spend request stays in the <code class="ic">pending_approval</code> state forever.
+        </p>
+      </section>
+
+      <!-- 6. Approve -->
+      <section id="approve" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">6. Approve in the Link app</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Open the Link app on your phone. You should see a pending approval matching the <code class="ic">--client-name</code> you set in Step 2. Tap to approve. The CLI will print confirmation once Stripe propagates the approval — usually within a couple of seconds.
+        </p>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          From this point the SPT is mintable for that spend request. <code class="ic">link-cli mpp pay</code> in the next step does the actual minting + redemption against PodRead.
+        </p>
+      </section>
+
+      <!-- 7. Pay -->
+      <section id="pay" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">7. Pay the endpoint</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          <code class="ic">link-cli mpp pay</code> mints an SPT against the approved spend request, builds the credential (base64url JSON of <code class="ic">{challenge, payload: {spt}}</code>), and replays the request with <code class="ic">Authorization: Payment …</code>. On success PodRead returns 201 with a <code class="ic">nar_…</code> id and a <code class="ic">Payment-Receipt</code> header.
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            link-cli mpp pay https://podread.app/api/v1/mpp/narrations \\
+              --spend-request-id 'lsrq_*XYZ789' \\
+              --method POST \\
+              --data '{"text":"Hello, world.","voice":"callum","title":"Hello"}' \\
+              --format json
+          BASH
+          ) %></code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Same zsh quoting rule applies to the <code class="ic">lsrq_…</code> id. The response body will look like:
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:json, <<~JSON
+            { "id": "nar_aB3xK9mQ2pL7" }
+          JSON
+          ) %></code></pre>
+        </figure>
+      </section>
+
+      <!-- 8. Poll -->
+      <section id="poll" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">8. Poll for audio</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Narrations synthesize asynchronously. Poll the show endpoint until <code class="ic">audio_url</code> appears (typically 10–30 seconds for Standard, longer for Premium / long inputs).
+        </p>
+        <figure class="mt-4 overflow-hidden rounded-xl bg-mist-950 ring-1 ring-mist-900/10 dark:ring-white/10">
+          <pre class="overflow-x-auto p-5 font-mono text-[13px] leading-6 text-mist-100"><code class="highlight"><%= highlight(:bash, <<~BASH
+            curl https://podread.app/api/v1/mpp/narrations/nar_aB3xK9mQ2pL7
+          BASH
+          ) %></code></pre>
+        </figure>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          Status progresses through <code class="ic">pending</code> → <code class="ic">preparing</code> → <code class="ic">processing</code> → <code class="ic">complete</code>. Once complete the response includes a signed <code class="ic">audio_url</code> good for 5 minutes; download the mp3 before it expires. Anonymous narrations are garbage-collected 24 hours after creation.
+        </p>
+      </section>
+
+      <!-- Pricing -->
+      <section id="pricing" class="scroll-mt-8 pt-16">
+        <h2 class="font-serif text-3xl tracking-tight text-mist-950 dark:text-white">Pricing</h2>
+        <p class="mt-4 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          SPT prices include Stripe's per-redemption fee (2.9% + $0.30) — that's why the SPT row sits a bit above the on-chain Tempo row. The <code class="ic">amount</code> you pass to <code class="ic">spend-request create</code> must match the stripe-method challenge from Step 4 exactly; a mismatch will fail HMAC verification on retry.
+        </p>
+        <%= render "docs/responsive_table",
+          headers: ["Tier", "Voices", "Tempo (USD)", "Stripe SPT (USD)"],
+          rows: [
+            ["Standard", "wren, felix, sloane, archer, gemma, hugo, quinn, theo", "$0.75", "$1.50"],
+            ["Premium",  "elara, callum, lark, nash",                              "$2.00", "$2.50"]
+          ],
+          cell_class: [
+            "text-mist-900 dark:text-mist-100",
+            "font-mono text-mist-700 dark:text-mist-300",
+            "font-serif text-mist-950 tabular-nums dark:text-white",
+            "font-serif text-mist-950 tabular-nums dark:text-white"
+          ]
+        %>
+        <p class="mt-6 max-w-[65ch] text-pretty text-mist-700 dark:text-mist-300">
+          See the <%= link_to "MPP API reference Pricing section", "#{docs_mpp_path}#pricing", class: "underline decoration-mist-300 underline-offset-4 hover:decoration-mist-700 dark:decoration-mist-700 dark:hover:decoration-mist-300" %> for the full per-scheme breakdown.
+        </p>
+      </section>
+<% end %>

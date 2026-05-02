@@ -106,7 +106,7 @@ module Api
           # 402 Challenge — Bearer valid, no Payment credential
           # -------------------------------------------------------------------
 
-          test "Bearer valid, no Payment header, voice=felix (Standard) returns 402 at 75c" do
+          test "Bearer valid, no Payment header, voice=felix (Standard) returns 402 with per-scheme prices" do
             user = users(:free_user)
             token = GeneratesApiToken.call(user: user)
 
@@ -121,11 +121,13 @@ module Api
             assert_match(/\APayment /, response.headers["WWW-Authenticate"])
 
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
-            assert_equal 75, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS, json["challenge"]["prices"]["stripe"]
+            assert_equal 75, json["challenge"]["prices"]["tempo"]
+            assert_equal 150, json["challenge"]["prices"]["stripe"]
           end
 
-          test "Bearer valid, no Payment header, voice=callum (Premium) returns 402 at 150c" do
+          test "Bearer valid, no Payment header, voice=callum (Premium) returns 402 with per-scheme prices" do
             user = users(:free_user)
             token = GeneratesApiToken.call(user: user)
 
@@ -136,13 +138,15 @@ module Api
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"]
-            assert_equal 150, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["stripe"]
+            assert_equal 200, json["challenge"]["prices"]["tempo"]
+            assert_equal 250, json["challenge"]["prices"]["stripe"]
           end
 
-          test "Bearer valid, no Payment header, no voice param defaults to Voice::DEFAULT_KEY (felix/Standard/75)" do
-            # DEFAULT_KEY is 'felix', Standard tier → 75c. No voice_preference
-            # on the user means ResolvesVoice falls through to DEFAULT_KEY.
+          test "Bearer valid, no Payment header, no voice param defaults to Voice::DEFAULT_KEY (felix/Standard)" do
+            # DEFAULT_KEY is 'felix', Standard tier. No voice_preference on the
+            # user means ResolvesVoice falls through to DEFAULT_KEY.
             assert_equal "felix", Voice::DEFAULT_KEY
             assert_equal :standard, Voice.find(Voice::DEFAULT_KEY).tier
 
@@ -156,8 +160,8 @@ module Api
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["amount"]
-            assert_equal 75, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal 75, json["challenge"]["prices"]["tempo"]
           end
 
           test "402 response body includes challenge details" do
@@ -173,7 +177,9 @@ module Api
             json = response.parsed_body
             assert json["challenge"].present?, "Expected 'challenge' key in 402 body"
             assert json["challenge"]["id"].present?
-            assert json["challenge"]["amount"].present?
+            assert json["challenge"]["prices"].present?
+            assert json["challenge"]["prices"]["tempo"].present?
+            assert json["challenge"]["prices"]["stripe"].present?
             assert json["challenge"]["currency"].present?
             assert json["challenge"]["methods"].present?
           end
@@ -444,11 +450,11 @@ module Api
           # 402 re-challenge — credential/price mismatch and malformed inputs
           # -------------------------------------------------------------------
 
-          test "Bearer + Standard-tier credential + voice=callum → 402 re-challenge at 150c" do
-            # Attacker holds a Standard-priced credential (75c) but requests
-            # a Premium voice (150c). voice_tier is embedded in the HMAC-signed
-            # request blob, so the credential's tier won't match the request
-            # voice's tier — re-issue 402.
+          test "Bearer + Standard-tier credential + voice=callum → 402 re-challenge at Premium prices" do
+            # Attacker holds a Standard-priced credential but requests a Premium
+            # voice. voice_tier is embedded in the HMAC-signed request blob, so
+            # the credential's tier won't match the request voice's tier —
+            # re-issue 402 quoting Premium prices for both schemes.
             user = users(:free_user)
             token = GeneratesApiToken.call(user: user)
             credential = valid_credential(
@@ -466,8 +472,10 @@ module Api
               "Standard-priced credential must not satisfy a Premium voice request"
             assert response.headers["WWW-Authenticate"].present?
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"],
-              "Re-challenge must be at the requested voice's Premium price"
+            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["tempo"],
+              "Re-challenge must be at the requested voice's Premium tempo price"
+            assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["stripe"],
+              "Re-challenge must be at the requested voice's Premium SPT price"
           end
 
           test "Bearer + malformed Payment header returns 402 re-challenge" do
@@ -604,10 +612,10 @@ module Api
           # User default voice (ResolvesVoice hierarchy: requested → saved → catalog)
           # -------------------------------------------------------------------
 
-          test "user with saved voice_preference=callum, no voice param → resolves to callum (Premium, 150c)" do
+          test "user with saved voice_preference=callum, no voice param → resolves to callum (Premium)" do
             # Step 2 of ResolvesVoice hierarchy: authenticated user's saved
             # voice_preference fills in when no :voice param is sent. 'callum'
-            # is Premium tier, so the 402 challenge must come in at 150c.
+            # is Premium tier, so the 402 challenge must quote Premium prices.
             user = users(:free_user)
             user.update!(voice_preference: "callum")
             token = GeneratesApiToken.call(user: user)
@@ -619,8 +627,8 @@ module Api
 
             assert_response :payment_required
             json = response.parsed_body
-            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["amount"]
-            assert_equal 150, json["challenge"]["amount"]
+            assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, json["challenge"]["prices"]["tempo"]
+            assert_equal 200, json["challenge"]["prices"]["tempo"]
           end
 
           test "user with saved voice_preference=callum + Premium credential, no voice param → 201 with voice_override=callum" do

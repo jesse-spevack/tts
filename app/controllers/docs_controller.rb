@@ -7,6 +7,9 @@ class DocsController < ApplicationController
   def mpp_getting_started
   end
 
+  def mpp_link_cli
+  end
+
   def authentication
   end
 
