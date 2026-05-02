@@ -55,18 +55,34 @@ module Api
       end
 
       def render_mpp_challenge(outcome)
-        challenge = outcome.challenge
-        response.headers["WWW-Authenticate"] = challenge[:header_value]
+        tempo_challenge = outcome.tempo_challenge
+        stripe_challenge = outcome.stripe_challenge
+
+        # RFC 9110 challenge-list: comma-separated Payment-scheme entries.
+        # mppx 0.6.13's Challenge.deserializeList regex-splits on /Payment\s+/gi
+        # so a single comma-joined header value yields the same parsed
+        # challenge list as multiple WWW-Authenticate headers would. The
+        # single-header form is the natural Rails fit since
+        # response.headers[k] = v overwrites prior values.
+        response.headers["WWW-Authenticate"] = [
+          tempo_challenge[:header_value],
+          stripe_challenge[:header_value]
+        ].join(", ")
 
         render json: {
           error: "Payment required",
           challenge: {
-            id: challenge[:id],
+            # The body's "id" stays bound to the tempo challenge for
+            # backwards compatibility — existing on-chain clients (and
+            # tests) read challenge.id from the body. Stripe-method
+            # clients should parse the WWW-Authenticate header to
+            # discover the stripe challenge id.
+            id: tempo_challenge[:id],
             amount: outcome.amount_cents,
             currency: AppConfig::Mpp::CURRENCY,
-            methods: [ "tempo" ],
-            realm: challenge[:realm],
-            expires: challenge[:expires],
+            methods: [ "tempo", "stripe" ],
+            realm: tempo_challenge[:realm],
+            expires: tempo_challenge[:expires],
             deposit_address: outcome.deposit_address
           }
         }, status: :payment_required
