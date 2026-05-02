@@ -87,8 +87,8 @@
         </figure>
         <aside class="mt-6 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 text-sm text-mist-700 dark:border-amber-600 dark:bg-amber-950/30 dark:text-mist-300">
           <strong class="font-semibold text-mist-950 dark:text-white">zsh quoting gotcha:</strong>
-          Stripe payment-method ids look like <code class="ic">csmrpd*AYjcA829FgAAANOA</code> — the literal <code class="ic">*</code> is part of the id, not a glob. In zsh (the default macOS shell) this expands as a wildcard and the command will fail with <code class="ic">no matches found</code>. Always single-quote these ids:
-          <pre class="mt-3 overflow-x-auto rounded bg-mist-950 p-3 font-mono text-xs text-mist-100">link-cli ... --payment-method-id 'csmrpd*AYjcA829FgAAANOA'</pre>
+          Stripe payment-method ids look like <code class="ic">csmrpd_*ABC123</code> — the literal <code class="ic">*</code> is part of the id, not a glob. In zsh (the default macOS shell) this expands as a wildcard and the command will fail with <code class="ic">no matches found</code>. Always single-quote these ids:
+          <pre class="mt-3 overflow-x-auto rounded bg-mist-950 p-3 font-mono text-xs text-mist-100">link-cli ... --payment-method-id 'csmrpd_*ABC123'</pre>
         </aside>
       </section>
 
@@ -133,7 +133,7 @@
               --network-id profile_61UbsYpl4SxclGNZQA6UbsYpSGSQ2OwdqYukbeHlQOwS \\
               --amount 150 \\
               --currency usd \\
-              --payment-method-id 'csmrpd*AYjcA829FgAAANOA' \\
+              --payment-method-id 'csmrpd_*ABC123' \\
               --context "PodRead narration synthesis (Standard tier / Felix voice). One-time charge to convert an article into an MP3 podcast episode." \\
               --line-item 'name:Standard narration (Felix),quantity:1,unit_amount:150' \\
               --total 'type:total,display_text:Standard narration,amount:150' \\
