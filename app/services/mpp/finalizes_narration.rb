@@ -47,13 +47,17 @@ module Mpp
       # get a transient "payment finalized but narration pending" failure,
       # which would surface as a 500 on a client's idempotent retry.
       ActiveRecord::Base.transaction do
+        update_attrs = {
+          status: "completed",
+          tx_hash: tx_hash,
+          updated_at: Time.current
+        }
+        # stripe-scheme rows: tx_hash is the SPT PI; tempo rows have it set in ProvisionsChallenge.
+        update_attrs[:stripe_payment_intent_id] = tx_hash if mpp_payment.deposit_address.blank?
+
         rows_updated = MppPayment
           .where(id: mpp_payment.id, status: "pending")
-          .update_all(
-            status: "completed",
-            tx_hash: tx_hash,
-            updated_at: Time.current
-          )
+          .update_all(update_attrs)
 
         if rows_updated == 1
           mpp_payment.reload
