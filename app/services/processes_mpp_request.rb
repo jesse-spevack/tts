@@ -21,16 +21,17 @@
 #
 # Returns a Result whose .data is a Result::Outcome carrying:
 #
-#   outcome: Symbol — :invalid_voice | :challenge_issued |
+#   outcome:          Symbol — :invalid_voice | :challenge_issued |
 #                     :challenge_provisioning_failed | :created |
 #                     :loser_conflict | :creation_failed
-#   record:          the Narration or Episode (when :created), else nil
-#   challenge:       challenge Hash (for :challenge_issued)
-#   deposit_address: deposit String (for :challenge_issued)
-#   amount_cents:    Integer (for :challenge_issued — needed in body)
-#   voice_tier:      Symbol (for :challenge_issued — logged)
-#   receipt_header:  String (for :created — Payment-Receipt value)
-#   error:           String (for :creation_failed, :challenge_provisioning_failed)
+#   record:           the Narration or Episode (when :created), else nil
+#   tempo_challenge:  challenge Hash (for :challenge_issued)
+#   stripe_challenge: challenge Hash (for :challenge_issued)
+#   deposit_address:  deposit String (for :challenge_issued)
+#   amount_cents:     Integer (for :challenge_issued — needed in body)
+#   voice_tier:       Symbol (for :challenge_issued — logged)
+#   receipt_header:   String (for :created — Payment-Receipt value)
+#   error:            String (for :creation_failed, :challenge_provisioning_failed)
 #
 # Controller renders via Api::V1::BaseController#render_mpp_result.
 class ProcessesMppRequest
@@ -39,7 +40,8 @@ class ProcessesMppRequest
   Outcome = Data.define(
     :outcome,
     :record,
-    :challenge,
+    :tempo_challenge,
+    :stripe_challenge,
     :deposit_address,
     :amount_cents,
     :voice_tier,
@@ -195,19 +197,22 @@ class ProcessesMppRequest
       return outcome(:challenge_provisioning_failed, error: result.error)
     end
 
-    challenge = result.data.challenge
+    tempo_challenge = result.data.tempo_challenge
+    stripe_challenge = result.data.stripe_challenge
     deposit_address = result.data.deposit_address
 
     log_info "mpp_challenge_issued",
       user_id: user&.id,
-      challenge_id: challenge[:id],
+      tempo_challenge_id: tempo_challenge[:id],
+      stripe_challenge_id: stripe_challenge[:id],
       amount_cents: amount_cents,
       currency: currency,
       voice_tier: voice_tier
 
     outcome(
       :challenge_issued,
-      challenge: challenge,
+      tempo_challenge: tempo_challenge,
+      stripe_challenge: stripe_challenge,
       deposit_address: deposit_address,
       amount_cents: amount_cents,
       voice_tier: voice_tier
@@ -223,7 +228,8 @@ class ProcessesMppRequest
       Outcome.new(
         outcome: symbol,
         record: kwargs[:record],
-        challenge: kwargs[:challenge],
+        tempo_challenge: kwargs[:tempo_challenge],
+        stripe_challenge: kwargs[:stripe_challenge],
         deposit_address: kwargs[:deposit_address],
         amount_cents: kwargs[:amount_cents],
         voice_tier: kwargs[:voice_tier],

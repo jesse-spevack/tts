@@ -204,6 +204,43 @@ module Api
             assert json["challenge"]["methods"].present?
           end
 
+          # -------------------------------------------------------------------
+          # 402 Challenge — parallel tempo + stripe methods (agent-team-k71e.1)
+          # -------------------------------------------------------------------
+
+          test "402 advertises both method=tempo and method=stripe in WWW-Authenticate" do
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            header = response.headers["WWW-Authenticate"]
+            assert header.present?
+            assert_includes header, 'method="tempo"'
+            assert_includes header, 'method="stripe"'
+          end
+
+          test "402 WWW-Authenticate splits to exactly 2 challenges via the mppx /Payment\\s+/i regex" do
+            # AC #3: parses correctly per RFC 9110 multi-challenge grammar.
+            # mppx 0.6.13's Challenge.deserializeList uses /Payment\s+/gi to
+            # split a comma-joined header into per-method challenges. Mirror
+            # that here so the test reflects what link-cli actually does.
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            header = response.headers["WWW-Authenticate"]
+
+            challenges = header.split(/Payment\s+/i).reject(&:empty?)
+            assert_equal 2, challenges.size,
+              "Expected exactly 2 Payment challenges, got #{challenges.size}: #{header.inspect}"
+          end
+
+          test "402 body methods array advertises both tempo and stripe" do
+            post api_v1_mpp_narrations_path, params: @valid_params, as: :json
+
+            assert_response :payment_required
+            json = response.parsed_body
+            assert_equal [ "tempo", "stripe" ], json["challenge"]["methods"]
+          end
+
           test "POST without Payment header, voice=felix (Standard) returns 402 with price 75" do
             post api_v1_mpp_narrations_path,
               params: @valid_params.merge(voice: "felix"),

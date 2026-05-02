@@ -71,7 +71,8 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_equal :challenge_issued, result.data.outcome
-    assert_not_nil result.data.challenge
+    assert_not_nil result.data.tempo_challenge
+    assert_not_nil result.data.stripe_challenge
     assert_not_nil result.data.deposit_address
     assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, result.data.amount_cents
     assert_equal :standard, result.data.voice_tier

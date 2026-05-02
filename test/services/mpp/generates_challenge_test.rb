@@ -227,4 +227,210 @@ class Mpp::GeneratesChallengeTest < ActiveSupport::TestCase
     assert_includes header_value, "request="
     assert_includes header_value, "expires="
   end
+
+  test "method defaults to tempo when not specified (backwards compatibility)" do
+    # Existing callers (Mpp::ProvisionsChallenge prior to k71e.1) call without
+    # a method: kwarg. Default must remain tempo so the on-chain path is
+    # unchanged.
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      recipient: @recipient,
+      voice_tier: @voice_tier
+    )
+
+    assert_equal "tempo", result.data[:method]
+  end
+
+  # ========================================================================
+  # Stripe-method challenge issuance (agent-team-k71e.1)
+  # ========================================================================
+  #
+  # PodRead must advertise a parallel method='stripe' challenge for SPT-paying
+  # clients (e.g. @stripe/link-cli). Same HMAC machinery, different request
+  # blob: networkId replaces recipient (SPTs are not chain-bound; networkId
+  # is Stripe MPP's namespace discriminator).
+
+  test "stripe method: returns a successful Result with challenge data" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    assert result.success?
+    assert result.data.present?
+  end
+
+  test "stripe method: challenge[:method] is 'stripe'" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    assert_equal "stripe", result.data[:method]
+  end
+
+  test "stripe method: request blob includes amount, currency, networkId, voice_tier (mppx decode contract)" do
+    # mppx 0.6.13's stripe decoder (link-cli decode.ts:75-98) requires
+    # amount, currency, and methodDetails.networkId or networkId. Without
+    # networkId mppx throws "Invalid stripe challenge request".
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert decoded["amount"].present?, "stripe challenge request must include amount"
+    assert decoded["currency"].present?, "stripe challenge request must include currency"
+    assert decoded["networkId"].present?, "stripe challenge request must include networkId"
+    assert_equal "premium", decoded["voice_tier"]
+  end
+
+  test "stripe method: amount is fiat cents as string (Stripe API convention)" do
+    # Stripe MPP works in fiat cents, not on-chain base units. The amount
+    # field in the stripe request blob is the same integer the merchant
+    # passes to Stripe::PaymentIntent.create at verify time.
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: 150,
+      currency: @currency,
+      voice_tier: :premium,
+      method: :stripe
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert_equal "150", decoded["amount"]
+    assert_equal @currency, decoded["currency"]
+  end
+
+  test "stripe method: networkId comes from AppConfig::Mpp::STRIPE_NETWORK_ID" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert_equal AppConfig::Mpp::STRIPE_NETWORK_ID, decoded["networkId"]
+  end
+
+  test "stripe method: header_value advertises Payment scheme with method='stripe'" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    header = result.data[:header_value]
+    assert header.start_with?("Payment ")
+    assert_includes header, 'method="stripe"'
+    assert_includes header, 'intent="charge"'
+  end
+
+  test "stripe method: HMAC id is deterministic and tier-bound" do
+    freeze_time do
+      standard = Mpp::GeneratesChallenge.call(
+        amount_cents: 50, currency: @currency, voice_tier: :standard, method: :stripe
+      )
+      premium = Mpp::GeneratesChallenge.call(
+        amount_cents: 50, currency: @currency, voice_tier: :premium, method: :stripe
+      )
+
+      assert_match(/\A[0-9a-f]{64}\z/, standard.data[:id])
+      assert_not_equal standard.data[:id], premium.data[:id],
+        "swapping voice_tier must invalidate the HMAC for stripe-method challenges too"
+    end
+  end
+
+  test "stripe method: HMAC id differs from tempo-method id for the same inputs" do
+    # Method is part of the HMAC pre-image, so a swapped method (e.g.
+    # client claiming tempo when issuer signed stripe) must fail HMAC.
+    freeze_time do
+      tempo = Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        recipient: @recipient,
+        voice_tier: @voice_tier,
+        method: :tempo
+      )
+      stripe = Mpp::GeneratesChallenge.call(
+        amount_cents: @amount_cents,
+        currency: @currency,
+        voice_tier: @voice_tier,
+        method: :stripe
+      )
+
+      assert_not_equal tempo.data[:id], stripe.data[:id]
+    end
+  end
+
+  test "stripe method: existing Mpp::VerifiesHmac validates the challenge unmodified" do
+    # AC #4: VerifiesHmac handles both methods without modification.
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    challenge = {
+      "id" => result.data[:id],
+      "realm" => result.data[:realm],
+      "method" => result.data[:method],
+      "intent" => result.data[:intent],
+      "request" => result.data[:request],
+      "expires" => result.data[:expires]
+    }
+
+    hmac_result = Mpp::VerifiesHmac.call(challenge: challenge)
+    assert hmac_result.success?, "VerifiesHmac must accept stripe-method challenges unchanged: #{hmac_result.error}"
+  end
+
+  test "stripe method: tampering with networkId in the request blob invalidates the HMAC" do
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    decoded["networkId"] = "attacker_network"
+    tampered_request = Base64.strict_encode64(JSON.generate(decoded))
+
+    challenge = {
+      "id" => result.data[:id],
+      "realm" => result.data[:realm],
+      "method" => result.data[:method],
+      "intent" => result.data[:intent],
+      "request" => tampered_request,
+      "expires" => result.data[:expires]
+    }
+
+    hmac_result = Mpp::VerifiesHmac.call(challenge: challenge)
+    refute hmac_result.success?
+  end
+
+  test "stripe method: recipient kwarg is ignored if passed (stripe is not chain-bound)" do
+    # Defensive: a caller who passes recipient: alongside method: :stripe
+    # should not see it leak into the challenge. Recipient is meaningless
+    # for SPT — networkId is the namespace.
+    result = Mpp::GeneratesChallenge.call(
+      amount_cents: @amount_cents,
+      currency: @currency,
+      recipient: @recipient,
+      voice_tier: @voice_tier,
+      method: :stripe
+    )
+
+    decoded = JSON.parse(Base64.decode64(result.data[:request]))
+    assert_nil decoded["recipient"], "stripe challenge request must not include a recipient field"
+  end
 end
