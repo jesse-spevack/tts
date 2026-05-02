@@ -36,14 +36,18 @@ module Mpp
       # no refund callback fires (Narration#after_update won't because
       # no Narration exists), stranding the money.
       ActiveRecord::Base.transaction do
+        update_attrs = {
+          status: "completed",
+          tx_hash: tx_hash,
+          user_id: user.id,
+          updated_at: Time.current
+        }
+        # stripe-scheme rows: tx_hash is the SPT PI; tempo rows have it set in ProvisionsChallenge.
+        update_attrs[:stripe_payment_intent_id] = tx_hash if mpp_payment.deposit_address.blank?
+
         rows_updated = MppPayment
           .where(id: mpp_payment.id, status: "pending")
-          .update_all(
-            status: "completed",
-            tx_hash: tx_hash,
-            user_id: user.id,
-            updated_at: Time.current
-          )
+          .update_all(update_attrs)
 
         if rows_updated == 1
           mpp_payment.reload

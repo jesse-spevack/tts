@@ -143,6 +143,62 @@ class Mpp::RefundsPaymentTest < ActiveSupport::TestCase
     assert @completed_payment.refund_error.present?, "expected refund_error to be recorded"
   end
 
+  # --- SPT refund integration (agent-team-k71e.6) ---
+  #
+  # When the SPT path was added (k71e.4 + k71e.5), the redemption PI id
+  # ended up in mpp_payment.tx_hash but never in stripe_payment_intent_id.
+  # That broke refunds for every SPT-paid row: the guard at
+  # refunds_payment.rb:17 bails on `stripe_payment_intent_id.blank?`.
+  #
+  # This test reproduces the bug end-to-end against the REAL finalizer
+  # (no Mocktail of FinalizesNarration / FinalizesEpisode — see bead
+  # constraints). On main it goes red because RefundsPayment never
+  # reaches Stripe::Refund.create.
+
+  test "SPT-paid row produced via the real finalizer can be refunded via Stripe" do
+    spt_pi_id = "pi_spt_refund_test_#{SecureRandom.hex(8)}"
+
+    # Mimic Mpp::ProvisionsChallenge's stripe-method row: pending,
+    # no deposit_address, no stripe_payment_intent_id. After the SPT
+    # is redeemed, Mpp::FinalizesNarration runs with tx_hash set to
+    # the SPT-redemption PI id.
+    mpp_payment = MppPayment.create!(
+      amount_cents: 150,
+      currency: "usd",
+      challenge_id: "chid_#{SecureRandom.hex(4)}",
+      deposit_address: nil,
+      stripe_payment_intent_id: nil,
+      status: :pending
+    )
+
+    finalize_result = Mpp::FinalizesNarration.call(
+      mpp_payment: mpp_payment,
+      tx_hash: spt_pi_id,
+      params: { source_type: "text", text: "x" * 50, title: "T", voice: "felix" }
+    )
+    assert finalize_result.success?, "Setup precondition: finalizer must succeed"
+    mpp_payment.reload
+    assert_equal "completed", mpp_payment.status, "Setup precondition: row is completed"
+
+    refund_stub = stub_request(:post, "https://api.stripe.com/v1/refunds")
+      .with(body: hash_including("payment_intent" => spt_pi_id))
+      .to_return(status: 200, body: {
+        id: "re_test_spt_123",
+        status: "succeeded",
+        payment_intent: spt_pi_id
+      }.to_json)
+
+    result = Mpp::RefundsPayment.call(mpp_payment: mpp_payment)
+
+    assert result.success?,
+      "SPT-paid row must refund successfully — currently fails because " \
+      "FinalizesNarration drops the SPT PI id and RefundsPayment bails " \
+      "on stripe_payment_intent_id.blank?"
+    assert_requested(refund_stub, at_least_times: 1)
+    mpp_payment.reload
+    assert_equal "refunded", mpp_payment.status
+  end
+
   private
 
   def assert_no_requested_stripe_refund
