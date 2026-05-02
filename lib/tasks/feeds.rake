@@ -55,6 +55,43 @@ namespace :feeds do
     log "Done! #{succeeded} succeeded, #{failed} failed (#{total} total)"
   end
 
+  desc "Rewrite legacy verynormal-branded podcast titles and descriptions to PodRead defaults"
+  task rebrand_verynormal_defaults: :environment do
+    # Old defaults seeded by db/migrate/20251111064218_backfill_podcasts_for_existing_users.rb:
+    #   title:       "<email>'s Very Normal Podcast"
+    #   description: "My podcast created with tts.verynormal.dev"
+    # Only rewrite rows whose fields still match those exact patterns; never
+    # clobber a row a user has customized.
+    #
+    # Title format mirrors CreatesDefaultPodcast for new users:
+    #   "PodRead Podcast: <email>"
+    stale_title_pattern = "% Very Normal Podcast"
+    stale_description = "My podcast created with tts.verynormal.dev"
+    new_description = "My podcast created with #{AppConfig::Domain::HOST}"
+
+    # Title rewrite is per-row because it interpolates the owning user's email.
+    # N is small (handful of backfilled rows), so a find_each loop is fine.
+    stale_title_scope = Podcast.where("title LIKE ?", stale_title_pattern)
+    orphans = stale_title_scope.left_joins(:users).where(users: { id: nil })
+    if orphans.exists?
+      orphan_ids = orphans.pluck(:podcast_id)
+      abort "ERROR: #{orphan_ids.length} podcast(s) match the stale title pattern but have no associated user; refusing to rewrite to a generic title. Orphan podcast_ids: #{orphan_ids.join(", ")}"
+    end
+
+    title_updates = 0
+    stale_title_scope.includes(:users).find_each do |podcast|
+      email = podcast.users.first&.email_address
+      podcast.update!(title: "PodRead Podcast: #{email}")
+      title_updates += 1
+    end
+
+    description_updates = Podcast.where(description: stale_description)
+                                 .update_all(description: new_description)
+
+    log "Rewrote #{title_updates} stale title(s) to \"PodRead Podcast: <email>\""
+    log "Rewrote #{description_updates} stale description(s) to #{new_description.inspect}"
+  end
+
   def log(message, level: :info)
     puts message
     Rails.logger.public_send(level, "[feeds] #{message}")
