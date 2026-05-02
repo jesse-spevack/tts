@@ -626,6 +626,289 @@ module Api
             "0x" + base_units.to_s(16).rjust(64, "0")
           end
         end
+
+        # =====================================================================
+        # === CREATE — anonymous MPP SPT path (agent-team-k71e.2)           ===
+        # =====================================================================
+        #
+        # These tests exercise POST /api/v1/mpp/narrations from the
+        # perspective of a Stripe Link wallet client (e.g. @stripe/link-cli).
+        # The flow:
+        #
+        #   1. POST without credential  → 402 with WWW-Authenticate carrying
+        #      both tempo and stripe Payment-scheme challenges (k71e.1 — live).
+        #   2. Client splits the header on /Payment\s+/i, picks the
+        #      method="stripe" challenge.
+        #   3. Client builds an SPT credential — base64url-no-padding of
+        #      JSON {challenge: <stripe_challenge>, payload: {spt: "spt_..."}}
+        #      — and retries with `Authorization: Payment <encoded>`.
+        #   4. Server verifies the SPT via Stripe::PaymentIntent.create with
+        #      shared_payment_granted_token + idempotency_key (k71e.5 — not
+        #      yet shipped). On success, returns 201 + Payment-Receipt.
+        #   5. On replay (Stripe returns idempotent-replayed: true), server
+        #      returns 402 with a fresh challenge.
+        #
+        # These tests are TDD red-phase: they MUST fail on current main
+        # because Mpp::VerifiesCredential rejects credentials whose
+        # payload lacks {hash} or {signature}. They will pass once
+        # k71e.4 (dispatcher) + k71e.5 (SPT verifier) ship.
+        #
+        # Stripe API is stubbed via WebMock. The deposit-address stub
+        # (existing) handles the 402 challenge step; the SPT-redemption
+        # stub (new) handles the verify-time PaymentIntent.create call.
+        # The two are differentiated by request-body content:
+        # shared_payment_granted_token is present on the SPT call only.
+
+        class CreateSptTest < ActionDispatch::IntegrationTest
+          setup do
+            @valid_params = {
+              title: "Test Article",
+              author: "Test Author",
+              description: "A test article description",
+              content: "This is the full content of the article. " * 50,
+              url: "https://example.com/article",
+              source_type: "url"
+            }
+
+            @currency = AppConfig::Mpp::CURRENCY
+            @deposit_address = "0xdeposit#{SecureRandom.hex(16)}"
+            @spt = "spt_test_#{SecureRandom.hex(16)}"
+            @stripe_pi_id = "pi_test_#{SecureRandom.hex(8)}"
+
+            Stripe.api_key = "sk_test_fake"
+
+            # Provisioning a 402 challenge calls CreatesDepositAddress for
+            # the tempo-method side. Stub the deposit-address PI creation
+            # so 402 issuance works regardless of test scenario. The
+            # SPT-redemption stub below targets a DIFFERENT body shape
+            # (shared_payment_granted_token), so the two stubs do not
+            # conflict — WebMock matches by body keys.
+            stub_stripe_deposit_address(address: @deposit_address)
+          end
+
+          # -------------------------------------------------------------------
+          # Happy path — link-cli-style anonymous SPT redemption
+          # -------------------------------------------------------------------
+
+          test "POST with SPT credential (method=stripe) creates Narration and returns 201" do
+            stripe_challenge = trigger_402_and_pick_stripe_challenge
+            credential = build_spt_credential(stripe_challenge: stripe_challenge, spt: @spt)
+            stub_stripe_spt_redemption_success(spt: @spt, payment_intent_id: @stripe_pi_id)
+
+            assert_difference "Narration.count", 1 do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params.merge(voice: "felix"),
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            assert_response :created,
+              "SPT credential should yield 201 once k71e.4 + k71e.5 ship — " \
+              "currently fails because VerifiesCredential rejects {spt} payload."
+          end
+
+          test "POST with SPT credential sets Payment-Receipt header" do
+            stripe_challenge = trigger_402_and_pick_stripe_challenge
+            credential = build_spt_credential(stripe_challenge: stripe_challenge, spt: @spt)
+            stub_stripe_spt_redemption_success(spt: @spt, payment_intent_id: @stripe_pi_id)
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              headers: payment_only_header(credential),
+              as: :json
+
+            assert_response :created
+            assert response.headers["Payment-Receipt"].present?,
+              "SPT-redeemed response must carry Payment-Receipt header"
+          end
+
+          test "POST with SPT credential returns Narration JSON with nar_-prefixed id" do
+            stripe_challenge = trigger_402_and_pick_stripe_challenge
+            credential = build_spt_credential(stripe_challenge: stripe_challenge, spt: @spt)
+            stub_stripe_spt_redemption_success(spt: @spt, payment_intent_id: @stripe_pi_id)
+
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              headers: payment_only_header(credential),
+              as: :json
+
+            assert_response :created
+            json = response.parsed_body
+            assert json["id"].present?,
+              "SPT-redeemed Narration must have an id in the response body"
+            assert json["id"].start_with?("nar_"),
+              "Narration id should start with nar_ (got #{json["id"].inspect})"
+          end
+
+          # -------------------------------------------------------------------
+          # Idempotent replay — Stripe returns idempotent-replayed: true
+          # -------------------------------------------------------------------
+          #
+          # Per agent-team-p6wb spike (failure taxonomy #1): if Stripe
+          # returns the `idempotent-replayed: true` response header, the
+          # SPT has already been redeemed. The merchant must treat this
+          # as a permanent failure for that SPT and re-issue a fresh
+          # 402 challenge so the client can mint a new SPT.
+
+          test "POST with already-redeemed SPT (idempotent-replayed: true) returns 402 with new challenge" do
+            stripe_challenge = trigger_402_and_pick_stripe_challenge
+            credential = build_spt_credential(stripe_challenge: stripe_challenge, spt: @spt)
+            spt_stub = stub_stripe_spt_redemption_replay(spt: @spt, payment_intent_id: @stripe_pi_id)
+
+            assert_no_difference "Narration.count" do
+              post api_v1_mpp_narrations_path,
+                params: @valid_params.merge(voice: "felix"),
+                headers: payment_only_header(credential),
+                as: :json
+            end
+
+            # Once k71e.5's verifier ships, the SPT-redemption stub MUST be
+            # invoked — that's the whole point of the replay path. A test
+            # that only asserts the eventual 402 would falsely pass on
+            # current main (where the verifier rejects the credential
+            # without ever calling Stripe). Asserting the stub was hit
+            # also pins the contract: the verifier must hit Stripe with
+            # the SPT before deciding replay vs fresh.
+            assert_requested(spt_stub, at_least_times: 1)
+
+            assert_response :payment_required,
+              "Replayed SPT must yield 402 (not 201) — Stripe's idempotent-replayed " \
+              "header marks this SPT as already-spent."
+            assert response.headers["WWW-Authenticate"].present?,
+              "Replay 402 must advertise a fresh challenge so the client can re-mint."
+          end
+
+          private
+
+          def payment_only_header(credential)
+            { "Authorization" => "Payment #{credential}" }
+          end
+
+          # POST without credential to drive the real 402 → ProvisionsChallenge
+          # flow (creates MppPayment rows, signs HMAC challenges, sets
+          # WWW-Authenticate). Returns the parsed stripe-method challenge
+          # hash extracted from the WWW-Authenticate header — the same
+          # object an SPT client would build its credential from.
+          def trigger_402_and_pick_stripe_challenge
+            post api_v1_mpp_narrations_path,
+              params: @valid_params.merge(voice: "felix"),
+              as: :json
+            assert_response :payment_required,
+              "Setup precondition: 402 from no-credential POST"
+
+            header = response.headers["WWW-Authenticate"]
+            assert header.present?, "Setup precondition: WWW-Authenticate present on 402"
+
+            challenges = parse_payment_challenges(header)
+            stripe = challenges.find { |c| c[:method] == "stripe" }
+            assert stripe, "Setup precondition: stripe-method challenge advertised in WWW-Authenticate"
+            stripe
+          end
+
+          # Parse a comma-joined `WWW-Authenticate: Payment ..., Payment ...`
+          # header into individual challenge hashes. Mirrors mppx 0.6.13's
+          # Challenge.deserializeList: split on /Payment\s+/gi, drop empties,
+          # then key=value-pair-parse each entry.
+          def parse_payment_challenges(header)
+            header.split(/Payment\s+/i).reject(&:empty?).map do |entry|
+              fields = {}
+              entry.scan(/(\w+)="([^"]*)"/) { |k, v| fields[k.to_sym] = v }
+              fields
+            end
+          end
+
+          # Match mppx Credential.serialize: base64url-encoded JSON of
+          # {challenge, payload}, NO padding. The challenge is the parsed
+          # stripe-method entry from the WWW-Authenticate header (id, realm,
+          # method, intent, request, expires); the payload carries the SPT.
+          def build_spt_credential(stripe_challenge:, spt:)
+            credential_hash = {
+              challenge: {
+                id: stripe_challenge[:id],
+                realm: stripe_challenge[:realm],
+                method: stripe_challenge[:method],
+                intent: stripe_challenge[:intent],
+                request: stripe_challenge[:request],
+                expires: stripe_challenge[:expires]
+              },
+              payload: {
+                spt: spt
+              }
+            }
+
+            Base64.urlsafe_encode64(JSON.generate(credential_hash), padding: false)
+          end
+
+          # The deposit-address stub (issued at challenge time). Mirrors
+          # CreateTest#stub_stripe_deposit_address byte-for-byte so the
+          # 402-issuance side of the flow works identically.
+          def stub_stripe_deposit_address(address:)
+            stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+              .with { |req| !req.body.to_s.include?("shared_payment_granted_token") }
+              .to_return(status: 200, body: {
+                id: "pi_test_#{SecureRandom.hex(8)}",
+                object: "payment_intent",
+                amount: AppConfig::Mpp::PRICE_PREMIUM_CENTS,
+                currency: @currency,
+                status: "requires_action",
+                next_action: {
+                  type: "crypto_display_details",
+                  crypto_display_details: {
+                    deposit_addresses: {
+                      tempo: { address: address }
+                    }
+                  }
+                }
+              }.to_json, headers: { "Content-Type" => "application/json" })
+          end
+
+          # Stub the SPT-redemption call k71e.5's verifier will make:
+          # POST /v1/payment_intents with shared_payment_granted_token in
+          # the body, returns a succeeded PaymentIntent. Match on the
+          # presence of `shared_payment_granted_token` so this stub does
+          # not collide with the deposit-address stub.
+          def stub_stripe_spt_redemption_success(spt:, payment_intent_id:)
+            stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+              .with { |req| req.body.to_s.include?("shared_payment_granted_token") &&
+                            req.body.to_s.include?(spt) }
+              .to_return(
+                status: 200,
+                body: {
+                  id: payment_intent_id,
+                  object: "payment_intent",
+                  amount: AppConfig::Mpp::PRICE_STANDARD_CENTS,
+                  currency: @currency,
+                  status: "succeeded"
+                }.to_json,
+                headers: { "Content-Type" => "application/json" }
+              )
+          end
+
+          # Same as above but signals replay via the idempotent-replayed
+          # response header. Per spike: Stripe still returns the original
+          # PaymentIntent object on a replayed idempotency_key; the
+          # `idempotent-replayed: true` response header is the only
+          # discriminator between fresh and replayed redemptions.
+          def stub_stripe_spt_redemption_replay(spt:, payment_intent_id:)
+            stub_request(:post, "https://api.stripe.com/v1/payment_intents")
+              .with { |req| req.body.to_s.include?("shared_payment_granted_token") &&
+                            req.body.to_s.include?(spt) }
+              .to_return(
+                status: 200,
+                body: {
+                  id: payment_intent_id,
+                  object: "payment_intent",
+                  amount: AppConfig::Mpp::PRICE_STANDARD_CENTS,
+                  currency: @currency,
+                  status: "succeeded"
+                }.to_json,
+                headers: {
+                  "Content-Type" => "application/json",
+                  "idempotent-replayed" => "true"
+                }
+              )
+          end
+        end
       end
     end
   end
