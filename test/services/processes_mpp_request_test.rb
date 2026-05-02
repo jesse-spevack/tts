@@ -71,13 +71,15 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
 
     assert result.success?
     assert_equal :challenge_issued, result.data.outcome
-    assert_not_nil result.data.challenge
+    assert_not_nil result.data.tempo_challenge
+    assert_not_nil result.data.stripe_challenge
     assert_not_nil result.data.deposit_address
-    assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS, result.data.amount_cents
+    assert_equal AppConfig::Mpp::PRICE_STANDARD_CENTS,     result.data.tempo_amount_cents
+    assert_equal AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS, result.data.stripe_amount_cents
     assert_equal :standard, result.data.voice_tier
   end
 
-  test "no credential, premium voice returns challenge at Premium price" do
+  test "no credential, premium voice returns challenge at Premium per-scheme prices" do
     stub_stripe_deposit_address
     result = ProcessesMppRequest.call(
       finalizer: ::Mpp::FinalizesEpisode,
@@ -87,7 +89,8 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
     )
 
     assert_equal :challenge_issued, result.data.outcome
-    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, result.data.amount_cents
+    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS,     result.data.tempo_amount_cents
+    assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, result.data.stripe_amount_cents
     assert_equal :premium, result.data.voice_tier
   end
 
@@ -113,8 +116,14 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
 
   test "ProvisionsChallenge failure returns :challenge_provisioning_failed" do
     Mocktail.replace(::Mpp::ProvisionsChallenge)
-    stubs { |m| ::Mpp::ProvisionsChallenge.call(amount_cents: m.any, currency: m.any, voice_tier: m.any) }
-      .with { Result.failure("stripe_down") }
+    stubs { |m|
+      ::Mpp::ProvisionsChallenge.call(
+        tempo_amount_cents: m.any,
+        stripe_amount_cents: m.any,
+        currency: m.any,
+        voice_tier: m.any
+      )
+    }.with { Result.failure("stripe_down") }
 
     result = ProcessesMppRequest.call(
       finalizer: ::Mpp::FinalizesNarration,
@@ -257,8 +266,9 @@ class ProcessesMppRequestTest < ActiveSupport::TestCase
     )
 
     assert_equal :challenge_issued, result.data.outcome
-    # Re-challenge is at the REQUESTED voice's price, not the credential's
-    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS, result.data.amount_cents
+    # Re-challenge is at the REQUESTED voice's prices, not the credential's
+    assert_equal AppConfig::Mpp::PRICE_PREMIUM_CENTS,     result.data.tempo_amount_cents
+    assert_equal AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS, result.data.stripe_amount_cents
     assert_equal :premium, result.data.voice_tier
   end
 

@@ -3,13 +3,14 @@
 class RecordsLlmUsage
   include EpisodeLogging
 
-  def self.call(episode:, response:)
-    new(episode: episode, response: response).call
+  def self.call(episode:, response:, duration_ms: nil)
+    new(episode: episode, response: response, duration_ms: duration_ms).call
   end
 
-  def initialize(episode:, response:)
+  def initialize(episode:, response:, duration_ms: nil)
     @episode = episode
     @response = response
+    @duration_ms = duration_ms
   end
 
   def call
@@ -27,7 +28,8 @@ class RecordsLlmUsage
       provider: "vertex_ai",
       input_tokens: response.input_tokens,
       output_tokens: response.output_tokens,
-      cost_cents: total_cost_cents
+      cost_cents: total_cost_cents,
+      duration_ms: duration_ms
     )
 
     log_info "llm_usage_recorded", llm_usage_id: usage.id, model: response.model_id, cost_cents: total_cost_cents.round(4)
@@ -37,7 +39,7 @@ class RecordsLlmUsage
 
   private
 
-  attr_reader :episode, :response
+  attr_reader :episode, :response, :duration_ms
 
   def llm_client
     @llm_client ||= AsksLlm.new

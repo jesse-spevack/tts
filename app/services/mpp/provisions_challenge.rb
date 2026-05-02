@@ -1,32 +1,30 @@
 # frozen_string_literal: true
 
 module Mpp
-  # Provisions a 402 Payment Required challenge: allocates a Stripe
-  # PaymentIntent with a crypto deposit address, HMAC-signs the
-  # challenge against that address, and persists a pending MppPayment
-  # row that binds challenge_id ↔ deposit_address ↔ payment_intent_id.
-  #
-  # Returns Result.success(Provisioned) on success. Controller owns
-  # the response rendering (WWW-Authenticate header + 402 JSON body);
-  # this service owns the business logic.
+  # Provisions a 402 challenge: allocates a Tempo deposit address and
+  # signs parallel tempo + stripe challenges, each at its own per-scheme
+  # price. Persists one pending MppPayment row per challenge_id (one per
+  # method) at the matching scheme's amount; the unused row is swept by
+  # CleanupStaleMppPaymentsJob after CHALLENGE_TTL_SECONDS.
   class ProvisionsChallenge
-    Provisioned = Data.define(:challenge, :deposit_address)
+    Provisioned = Data.define(:tempo_challenge, :stripe_challenge, :deposit_address)
 
     def self.call(**kwargs)
       new(**kwargs).call
     end
 
-    def initialize(amount_cents:, currency:, voice_tier:)
-      @amount_cents = amount_cents
+    def initialize(tempo_amount_cents:, stripe_amount_cents:, currency:, voice_tier:)
+      @tempo_amount_cents = tempo_amount_cents
+      @stripe_amount_cents = stripe_amount_cents
       @currency = currency
       @voice_tier = voice_tier
     end
 
     def call
-      # Step 1: provision the Stripe PaymentIntent + deposit address
-      # FIRST so the real on-chain recipient is known before we sign.
+      # The deposit-address PI charges in fiat cents and lives on the
+      # tempo-method side, so it gets the tempo amount.
       deposit_result = Mpp::CreatesDepositAddress.call(
-        amount_cents: amount_cents,
+        amount_cents: tempo_amount_cents,
         currency: currency
       )
       return deposit_result unless deposit_result.success?
@@ -34,36 +32,48 @@ module Mpp
       deposit_address = deposit_result.data[:deposit_address]
       payment_intent_id = deposit_result.data[:payment_intent_id]
 
-      # Step 2: sign the HMAC challenge with the real deposit_address
-      # as recipient. Binds the on-chain destination + voice tier into
-      # the HMAC so neither can be swapped at verification time.
-      challenge_result = Mpp::GeneratesChallenge.call(
-        amount_cents: amount_cents,
+      tempo_challenge = Mpp::GeneratesChallenge.call(
+        amount_cents: tempo_amount_cents,
         currency: currency,
         recipient: deposit_address,
-        voice_tier: voice_tier
-      )
-      challenge = challenge_result.data
+        voice_tier: voice_tier,
+        method: :tempo
+      ).data
 
-      # Step 3: persist a pending MppPayment linking challenge_id to
-      # the deposit_address and stripe_payment_intent_id.
-      # VerifiesCredential resolves deposit_address from this row (not
-      # client payload) at verification time; refund accounting uses
-      # stripe_payment_intent_id.
-      MppPayment.create!(
-        amount_cents: amount_cents,
+      stripe_challenge = Mpp::GeneratesChallenge.call(
+        amount_cents: stripe_amount_cents,
         currency: currency,
-        challenge_id: challenge[:id],
+        voice_tier: voice_tier,
+        method: :stripe
+      ).data
+
+      MppPayment.create!(
+        amount_cents: tempo_amount_cents,
+        currency: currency,
+        challenge_id: tempo_challenge[:id],
         deposit_address: deposit_address,
         stripe_payment_intent_id: payment_intent_id,
         status: :pending
       )
 
-      Result.success(Provisioned.new(challenge: challenge, deposit_address: deposit_address))
+      MppPayment.create!(
+        amount_cents: stripe_amount_cents,
+        currency: currency,
+        challenge_id: stripe_challenge[:id],
+        status: :pending
+      )
+
+      Result.success(
+        Provisioned.new(
+          tempo_challenge: tempo_challenge,
+          stripe_challenge: stripe_challenge,
+          deposit_address: deposit_address
+        )
+      )
     end
 
     private
 
-    attr_reader :amount_cents, :currency, :voice_tier
+    attr_reader :tempo_amount_cents, :stripe_amount_cents, :currency, :voice_tier
   end
 end

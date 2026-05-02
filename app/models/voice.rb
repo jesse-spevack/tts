@@ -19,11 +19,16 @@ class Voice
     # Backwards-compat alias. Prefer #premium?.
     alias_method :chirphd?, :premium?
 
-    # MPP price for one narration with this voice, in cents.
-    def price_cents
-      case tier
-      when :premium then AppConfig::Mpp::PRICE_PREMIUM_CENTS
-      when :standard then AppConfig::Mpp::PRICE_STANDARD_CENTS
+    # MPP price for one narration with this voice, in cents. Per-scheme
+    # because SPT redemptions absorb a Stripe fee that on-chain Tempo does
+    # not. Defaults to :tempo for backwards compatibility with pre-evo5 callers.
+    def price_cents(scheme: :tempo)
+      case [ scheme.to_sym, tier ]
+      when [ :tempo, :standard ]  then AppConfig::Mpp::PRICE_STANDARD_CENTS
+      when [ :tempo, :premium ]   then AppConfig::Mpp::PRICE_PREMIUM_CENTS
+      when [ :stripe, :standard ] then AppConfig::Mpp::SPT_PRICE_STANDARD_CENTS
+      when [ :stripe, :premium ]  then AppConfig::Mpp::SPT_PRICE_PREMIUM_CENTS
+      else raise ArgumentError, "Unsupported (scheme, tier): (#{scheme.inspect}, #{tier.inspect})"
       end
     end
   end

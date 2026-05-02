@@ -1,6 +1,12 @@
 # Curated PodRead-themed posts from verynormal.info.
 # Rendered on /blog. Add entries as new PodRead posts are published.
 
+- title: "Welcome to the singularity: Buying a narration with link-cli"
+  url: "https://verynormal.info/welcome-to-the-singularity-buying-a-narration-with-link-cli/"
+  published_on: 2026-05-02
+  excerpt: "Stripe's CLI gives agents single-use shared payment tokens. PodRead now accepts them."
+  cover_image_url: "https://storage.ghost.io/c/9d/e6/9de6b1dc-3027-4aa6-bf3a-74509d4c3619/content/images/2026/05/jessespevack_A_simple_robotic_arm_passing_a_gift_card_to_anot_4cbdbddc-5ef6-4df3-9023-9690ec28fc98_2.png"
+
 - title: "No more PodRead subscription"
   url: "https://verynormal.info/no-more-podread-subscription/"
   published_on: 2026-04-30

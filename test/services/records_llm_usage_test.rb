@@ -51,6 +51,22 @@ class RecordsLlmUsageTest < ActiveSupport::TestCase
     assert_equal @episode, result.episode
   end
 
+  test "persists duration_ms when provided" do
+    stub_llm_client
+
+    RecordsLlmUsage.call(episode: @episode, response: @response, duration_ms: 1234)
+
+    assert_equal 1234, LlmUsage.last.duration_ms
+  end
+
+  test "duration_ms is null when omitted" do
+    stub_llm_client
+
+    RecordsLlmUsage.call(episode: @episode, response: @response)
+
+    assert_nil LlmUsage.last.duration_ms
+  end
+
   private
 
   def stub_llm_client(input_price: 0.25, output_price: 1.25)
