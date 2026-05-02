@@ -39,8 +39,8 @@ module Mpp
         # Stripe-scheme rows (deposit_address blank) carry the SPT-redemption
         # PI id in tx_hash; copy it into stripe_payment_intent_id so
         # Mpp::RefundsPayment can refund the customer if anything downstream
-        # fails (agent-team-k71e.6). Tempo rows already have the deposit-PI
-        # id in stripe_payment_intent_id from ProvisionsChallenge — leave it.
+        # fails. Tempo rows already have the deposit-PI id in
+        # stripe_payment_intent_id from ProvisionsChallenge — leave it.
         update_attrs = {
           status: "completed",
           tx_hash: tx_hash,
