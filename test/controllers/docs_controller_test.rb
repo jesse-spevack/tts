@@ -104,12 +104,12 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
-  test "GET /docs/mpp/link-cli notes the zsh quoting requirement for csmrpd_* ids" do
+  test "GET /docs/mpp/link-cli notes the zsh quoting requirement for csmrpd* ids" do
     get docs_mpp_link_cli_path
 
     assert_response :ok
     assert_match(/zsh/i, response.body)
-    assert_match(/csmrpd_/, response.body)
+    assert_match(/csmrpd\*/, response.body)
   end
 
   test "GET /docs/mpp/link-cli advertises PodRead's networkId" do
@@ -139,7 +139,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/mpp/link_cli.html.erb ---
   # Pins the new walkthrough's bytes per the snapshot-pin convention.
   # Established by agent-team-bmiz.
-  MPP_LINK_CLI_DOCS_SHA256 = "ea5c98c70abd63709bba3b98cb7a9d791e3607130861fd982570e8dc65ddd9b3"
+  MPP_LINK_CLI_DOCS_SHA256 = "c2bcae0e97f9aa76fdacab2e7dd2cd5ec5e6b7317d307275cb2f9e42162a96b8"
 
   test "app/views/docs/mpp_link_cli.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp_link_cli.html.erb")
