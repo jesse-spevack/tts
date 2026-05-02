@@ -1,24 +1,11 @@
 # frozen_string_literal: true
 
 module Mpp
-  # Builds an HMAC-signed MPP 402 challenge. PodRead supports two
-  # payment methods, both negotiated via parallel challenges in the
-  # WWW-Authenticate header (RFC 9110 challenge-list):
-  #
-  #   - method: :tempo  — on-chain payment via a Tempo deposit address.
-  #     The challenge request blob carries amount/currency/recipient/voice_tier
-  #     where amount is in token base units and currency is the token
-  #     contract address.
-  #
-  #   - method: :stripe — Stripe shared_payment_token (SPT) redemption
-  #     via @stripe/link-cli or any other Stripe Link wallet client.
-  #     The challenge request blob carries amount/currency/networkId/voice_tier
-  #     where amount is fiat cents (string) and currency is the fiat ISO
-  #     code. networkId is Stripe MPP's namespace discriminator.
-  #
-  # The HMAC pre-image includes the method, so swapping methods between
-  # issuance and retry invalidates the credential. Both methods share the
-  # same Mpp::VerifiesHmac without modification.
+  # Builds an HMAC-signed MPP 402 challenge for either method:
+  # tempo (on-chain via a Tempo deposit address, amount in token base
+  # units) or stripe (SPT redemption, amount in fiat cents). Method is
+  # part of the HMAC pre-image, so swapping methods between issuance
+  # and retry invalidates the credential.
   class GeneratesChallenge
     include StructuredLogging
 
@@ -42,9 +29,7 @@ module Mpp
       realm = AppConfig::Domain::HOST
       method_str = @method.to_s
       intent = "charge"
-      # voice_tier is embedded in the request blob so tampering with the
-      # tier on retry (e.g. paying a Standard price but requesting a
-      # Premium voice) fails HMAC verification downstream.
+      # voice_tier in the blob blocks "pay Standard, retry Premium" via HMAC.
       request_json = JSON.generate(request_blob)
       request_b64 = Base64.strict_encode64(request_json)
       expires = (Time.current + AppConfig::Mpp::CHALLENGE_TTL_SECONDS).iso8601
@@ -83,10 +68,7 @@ module Mpp
       end
     end
 
-    # Tempo MPP challenges quote in token base units against a token
-    # contract address — both ends of the on-chain Transfer event log
-    # use these units, so converting cents -> base units here keeps
-    # VerifiesCredential's verify_transfer_log comparison straightforward.
+    # Quote in token base units to match the on-chain Transfer event.
     def tempo_request_blob
       token_decimals = AppConfig::Mpp::TEMPO_TOKEN_DECIMALS
       amount_base_units = (amount_cents * (10**token_decimals)) / 100
@@ -99,14 +81,8 @@ module Mpp
       }
     end
 
-    # Stripe MPP challenges quote in fiat cents against the ISO currency
-    # code — these are the same values the merchant will pass to
-    # Stripe::PaymentIntent.create at SPT redemption time (k71e.5).
-    # networkId is required by mppx's stripe decoder; without it the
-    # client throws before even attempting payment. See the bd note on
-    # agent-team-k71e.1 for the (still open) insider question on what
-    # the real production value should be — the placeholder in
-    # AppConfig::Mpp::STRIPE_NETWORK_ID round-trips correctly until then.
+    # Fiat cents + ISO code — same values passed to PaymentIntent.create
+    # at SPT redemption. mppx's decoder requires networkId.
     def stripe_request_blob
       {
         amount: amount_cents.to_s,
