@@ -45,6 +45,7 @@ jobs:
           fetch_secret RAILS_MASTER_KEY rails-master-key
           fetch_secret RESEND_API_KEY resend-api-key
           fetch_secret RESEND_WEBHOOK_SECRET resend-webhook-secret
+          fetch_secret ANDROID_CERT_FINGERPRINTS android-cert-fingerprints
           fetch_secret APP_HOST mailer-host
           fetch_secret MAILER_FROM_ADDRESS mailer-from-address
           fetch_secret GOOGLE_CLOUD_BUCKET google-cloud-bucket
@@ -83,6 +84,7 @@ jobs:
           RAILS_MASTER_KEY=$RAILS_MASTER_KEY
           RESEND_API_KEY=$RESEND_API_KEY
           RESEND_WEBHOOK_SECRET=$RESEND_WEBHOOK_SECRET
+          ANDROID_CERT_FINGERPRINTS=$ANDROID_CERT_FINGERPRINTS
           APP_HOST=$APP_HOST
           MAILER_FROM_ADDRESS=$MAILER_FROM_ADDRESS
           GOOGLE_CLOUD_BUCKET=$GOOGLE_CLOUD_BUCKET
