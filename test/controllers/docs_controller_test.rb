@@ -139,7 +139,7 @@ class DocsControllerTest < ActionDispatch::IntegrationTest
   # --- Snapshot pin for docs/mpp/link_cli.html.erb ---
   # Pins the new walkthrough's bytes per the snapshot-pin convention.
   # Established by agent-team-bmiz.
-  MPP_LINK_CLI_DOCS_SHA256 = "ea5c98c70abd63709bba3b98cb7a9d791e3607130861fd982570e8dc65ddd9b3"
+  MPP_LINK_CLI_DOCS_SHA256 = "9dd4ce340fca600818f18643de7cfc5723a0ac01d4f9d9a11902fc85e5827337"
 
   test "app/views/docs/mpp_link_cli.html.erb bytes match the pinned snapshot" do
     path = Rails.root.join("app/views/docs/mpp_link_cli.html.erb")
