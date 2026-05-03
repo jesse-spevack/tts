@@ -15,6 +15,10 @@ Rails.application.routes.draw do
   get ".well-known/oauth-protected-resource", to: "well_known#oauth_protected_resource"
   get ".well-known/oauth-authorization-server", to: "well_known#oauth_authorization_server"
 
+  # Android App Links — declares the PodRead Android app as a verified handler
+  # for https://podread.app/auth?token=... so magic-link emails open the app.
+  get "/.well-known/assetlinks.json", to: "well_known#assetlinks", defaults: { format: :json }
+
   root "pages#home"
 
   namespace :admin do
@@ -85,6 +89,7 @@ Rails.application.routes.draw do
       namespace :auth do
         resource :device_codes, only: [ :create ]
         resource :device_tokens, only: [ :create ]
+        resource :sessions, only: [ :create ]
         resource :status, only: [ :show ]
       end
     end

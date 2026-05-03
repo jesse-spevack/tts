@@ -21,6 +21,20 @@ class WellKnownController < ActionController::API
     }
   end
 
+  # GET /.well-known/assetlinks.json
+  # Android App Links — declares the PodRead Android app as a verified handler
+  # for https://podread.app/auth so magic-link emails open the app directly.
+  def assetlinks
+    render json: [ {
+      relation: [ "delegate_permission/common.handle_all_urls" ],
+      target: {
+        namespace: "android_app",
+        package_name: "app.podread.android",
+        sha256_cert_fingerprints: AppConfig::Android.cert_fingerprints
+      }
+    } ]
+  end
+
   # GET /.well-known/oauth-authorization-server
   # RFC 8414 — describes OAuth server capabilities and endpoints
   def oauth_authorization_server

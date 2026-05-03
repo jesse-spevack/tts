@@ -3,7 +3,7 @@ class ApiToken < ApplicationRecord
 
   # source distinguishes how the token was issued. Prefix avoids shadowing
   # the :user association with an enum-generated .user scope.
-  enum :source, { user: "user", extension: "extension" }, prefix: true
+  enum :source, { user: "user", extension: "extension", android: "android" }, prefix: true
 
   validates :token_digest, presence: true, uniqueness: true
   validates :token_prefix, presence: true
