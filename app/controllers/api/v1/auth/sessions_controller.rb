@@ -3,6 +3,8 @@ module Api
     module Auth
       class SessionsController < BaseController
         skip_before_action :authenticate_token!
+        rate_limit to: 100, within: 1.minute, only: :create,
+          with: -> { render json: { error: "rate_limited" }, status: :too_many_requests }
 
         def create
           result = AuthenticatesMagicLink.call(token: params[:token])

@@ -140,11 +140,7 @@ class AppConfig
   end
 
   module Android
-    # SHA-256 cert fingerprints (debug + release) authorized to bind the
-    # app.podread.android package to https://podread.app/auth via App Links.
-    # Read fresh from ENV on each call so deploys can rotate fingerprints
-    # without restarting Rails. Returns [] when unset so the assetlinks.json
-    # endpoint stays valid (200 with empty array) instead of 500.
+    # Read fresh from ENV per call so deploys can rotate fingerprints without restart.
     def self.cert_fingerprints
       ENV.fetch("ANDROID_CERT_FINGERPRINTS", "")
         .split(",")

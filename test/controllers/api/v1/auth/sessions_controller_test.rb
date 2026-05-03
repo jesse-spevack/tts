@@ -5,6 +5,7 @@ module Api
     module Auth
       class SessionsControllerTest < ActionDispatch::IntegrationTest
         setup do
+          Rails.cache.clear
           @user = users(:one)
         end
 
@@ -38,6 +39,18 @@ module Api
           post api_v1_auth_sessions_path, params: { token: token }
           assert_response :unauthorized
           assert_equal "invalid_or_expired", response.parsed_body["error"]
+        end
+
+        test "rate-limits the 101st request within the window" do
+          100.times do
+            post api_v1_auth_sessions_path, params: { token: "garbage" }
+            assert_response :unauthorized
+          end
+
+          post api_v1_auth_sessions_path, params: { token: "garbage" }
+
+          assert_response :too_many_requests
+          assert_equal "rate_limited", response.parsed_body["error"]
         end
       end
     end

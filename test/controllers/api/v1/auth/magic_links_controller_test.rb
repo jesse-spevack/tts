@@ -5,8 +5,6 @@ module Api
     module Auth
       class MagicLinksControllerTest < ActionDispatch::IntegrationTest
         setup do
-          # Rails 8 `rate_limit` uses Rails.cache; clear the per-IP counter so
-          # state doesn't leak across tests in the same process.
           Rails.cache.clear
         end
 
@@ -86,8 +84,6 @@ module Api
 
           assert_response :too_many_requests
           assert_equal "rate_limited", response.parsed_body["error"]
-          # Service called exactly 10 times — the 11th request was rate-limited
-          # before reaching the action body.
           verify(times: 10) { |m| SendsMagicLink.call(email_address: m.any) }
         end
       end
