@@ -310,6 +310,17 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.credits_remaining
   end
 
+  test "credits_remaining returns nil for unlimited user" do
+    user = users(:unlimited_user)
+    assert_nil user.credits_remaining
+  end
+
+  test "credits_remaining returns nil for unlimited user even with rollover credits" do
+    user = users(:unlimited_user)
+    CreditBalance.for(user).add!(3)
+    assert_nil user.credits_remaining
+  end
+
   test "has_credits? returns true for user with positive balance" do
     user = users(:credit_user)
     assert user.has_credits?
@@ -322,6 +333,17 @@ class UserTest < ActiveSupport::TestCase
 
   test "has_credits? returns false for user without credit_balance" do
     user = users(:complimentary_user)
+    refute user.has_credits?
+  end
+
+  test "has_credits? returns false for unlimited user" do
+    user = users(:unlimited_user)
+    refute user.has_credits?
+  end
+
+  test "has_credits? returns false for unlimited user even with rollover credits" do
+    user = users(:unlimited_user)
+    CreditBalance.for(user).add!(3)
     refute user.has_credits?
   end
 

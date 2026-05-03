@@ -83,11 +83,12 @@ class User < ApplicationRecord
   end
 
   def credits_remaining
+    return nil if unlimited?
     credit_balance&.balance || 0
   end
 
   def has_credits?
-    credits_remaining > 0
+    credits_remaining.to_i > 0
   end
 
   def email

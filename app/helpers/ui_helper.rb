@@ -31,6 +31,7 @@ module UiHelper
   end
 
   def credits_card_variant(user)
+    return :unlimited if user.unlimited?
     return :balance if user.has_credits?
     return nil if user.premium?
     :empty_state

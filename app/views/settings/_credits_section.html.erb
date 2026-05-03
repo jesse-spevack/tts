@@ -8,6 +8,13 @@
     <div class="md:col-span-2">
       <div class="rounded-xl bg-white p-6 shadow-sm ring-1 ring-mist-950/5 dark:bg-mist-800 dark:ring-white/10">
         <% case variant %>
+        <% when :unlimited %>
+          <p class="text-sm font-medium text-mist-950 dark:text-white">
+            You have unlimited episode credits.
+          </p>
+          <p class="mt-1 text-sm text-mist-500 dark:text-mist-400">
+            Create as many episodes as you like.
+          </p>
         <% when :balance %>
           <div class="space-y-1">
             <p class="text-sm text-mist-500 dark:text-mist-400">
@@ -23,14 +30,16 @@
             Pick a pack. Credits never expire.
           </p>
         <% end %>
-        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <% AppConfig::Credits::PACKS.each do |pack| %>
-            <%= render "settings/credit_pack_card",
-                       pack: pack,
-                       highlight: pack[:size] == 20,
-                       submit_label: (variant == :balance ? "Buy More Credits" : "Buy Credit Pack") %>
-          <% end %>
-        </div>
+        <% unless variant == :unlimited %>
+          <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <% AppConfig::Credits::PACKS.each do |pack| %>
+              <%= render "settings/credit_pack_card",
+                         pack: pack,
+                         highlight: pack[:size] == 20,
+                         submit_label: (variant == :balance ? "Buy More Credits" : "Buy Credit Pack") %>
+            <% end %>
+          </div>
+        <% end %>
       </div>
     </div>
   </section>

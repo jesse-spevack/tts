@@ -8,26 +8,27 @@ class UiHelperTest < ActionView::TestCase
   # --- credits_card_variant ---
   #
   # Drives the Credits section on /settings. Returns:
+  #   :unlimited   — unlimited tier; show "unlimited credits" copy, no packs.
   #   :balance     — user has credits (any tier); show balance + "Buy More Credits".
   #   :empty_state — !premium, 0 credits (free user).
-  #   nil          — hide the card entirely (premium with 0 credits).
+  #   nil          — hide the card entirely (complimentary with 0 credits).
 
   test "credits_card_variant returns :balance for user with credits" do
     assert_equal :balance, credits_card_variant(users(:credit_user))
   end
 
-  test "credits_card_variant returns :balance for premium user with rollover credits" do
+  test "credits_card_variant returns :unlimited for unlimited user with rollover credits" do
     user = users(:unlimited_user)
     CreditBalance.for(user).add!(3)
-    assert_equal :balance, credits_card_variant(user)
+    assert_equal :unlimited, credits_card_variant(user)
   end
 
   test "credits_card_variant returns nil for complimentary user with zero credits" do
     assert_nil credits_card_variant(users(:complimentary_user))
   end
 
-  test "credits_card_variant returns nil for unlimited user with zero credits" do
-    assert_nil credits_card_variant(users(:unlimited_user))
+  test "credits_card_variant returns :unlimited for unlimited user with zero credits" do
+    assert_equal :unlimited, credits_card_variant(users(:unlimited_user))
   end
 
   test "credits_card_variant returns :empty_state for free user" do

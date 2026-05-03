@@ -305,8 +305,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "section#billing"
   end
 
-  test "credits card renders for premium user with leftover credits (rollover case)" do
-    # Premium + credits > 0 — covers the "bought pack, then got a complimentary upgrade" edge case.
+  test "credits card renders unlimited copy for unlimited user with leftover credits" do
     user = users(:unlimited_user)
     CreditBalance.for(user).add!(3)
     sign_in_as(user)
@@ -316,8 +315,8 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "section#credits", count: 1
     assert_select "section#credits" do
-      assert_select "*", text: /3/
-      assert_select "input[type=submit][value=?]", "Buy More Credits"
+      assert_select "*", text: /unlimited episode credits/i
+      assert_select "input[type=submit]", count: 0
     end
   end
 
@@ -334,14 +333,17 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "section#credits *", text: /1 episode credits/, count: 0
   end
 
-  test "credits card does NOT render for unlimited user with zero credits" do
-    # Unlimited users are premium? = true → card hides unless they have credits.
+  test "credits card renders unlimited copy for unlimited user with zero credits" do
     sign_in_as(users(:unlimited_user))
 
     get settings_path
 
     assert_response :success
-    assert_select "section#credits", count: 0
+    assert_select "section#credits", count: 1
+    assert_select "section#credits" do
+      assert_select "*", text: /unlimited episode credits/i
+      assert_select "input[type=submit]", count: 0
+    end
   end
 
   # --- Three-pack credit purchase UI (agent-team-qc7t) ---
