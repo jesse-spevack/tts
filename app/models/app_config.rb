@@ -139,6 +139,16 @@ class AppConfig
     }.freeze
   end
 
+  module Android
+    # Read fresh from ENV per call so deploys can rotate fingerprints without restart.
+    def self.cert_fingerprints
+      ENV.fetch("ANDROID_CERT_FINGERPRINTS", "")
+        .split(",")
+        .map(&:strip)
+        .reject(&:empty?)
+    end
+  end
+
   module Mpp
     SECRET_KEY = ENV.fetch("MPP_SECRET_KEY") { SecureRandom.hex(32) }
     # Tiered per-narration pricing, split by payment scheme. Tempo is on-chain
