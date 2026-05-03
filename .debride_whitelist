@@ -71,6 +71,7 @@ determine_layout
 home
 marketing_home
 add_rss_feed
+assetlinks
 extension_help
 cli_help
 claude_code_help
